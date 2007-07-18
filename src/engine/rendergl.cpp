@@ -48,6 +48,7 @@ PFNGLDELETEFRAMEBUFFERSEXTPROC      glDeleteFramebuffers_      = NULL;
 PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_         = NULL;
 PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_    = NULL;
 PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_ = NULL;
+PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmap_          = NULL;
 
 // GL_ARB_shading_language_100, GL_ARB_shader_objects, GL_ARB_fragment_shader, GL_ARB_vertex_shader
 PFNGLCREATEPROGRAMOBJECTARBPROC       glCreateProgramObject_      = NULL;
@@ -270,6 +271,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glGenFramebuffers_         = (PFNGLGENFRAMEBUFFERSEXTPROC)        getprocaddress("glGenFramebuffersEXT");
         glFramebufferTexture2D_    = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)   getprocaddress("glFramebufferTexture2DEXT");
         glFramebufferRenderbuffer_ = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)getprocaddress("glFramebufferRenderbufferEXT");
+        glGenerateMipmap_          = (PFNGLGENERATEMIPMAPEXTPROC)         getprocaddress("glGenerateMipmapEXT");
         hasFBO = true;
         //conoutf("Using GL_EXT_framebuffer_object extension.");
     }
@@ -383,10 +385,11 @@ void recomputecamera()
     }
 }
 
-void project(float fovy, float aspect, int farplane)
+void project(float fovy, float aspect, int farplane, bool flipx = false, bool flipy = false)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    if(flipx || flipy) glScalef(flipx ? -1 : 1, flipy ? -1 : 1, 1);
     gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
 }
@@ -628,7 +631,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
-    project(90.0f, 1.0f, farplane);
+    project(90.0f, 1.0f, farplane, true, true);
 
     transplayer();
 

@@ -49,6 +49,7 @@ extern PFNGLDELETEFRAMEBUFFERSEXTPROC      glDeleteFramebuffers_;
 extern PFNGLGENFRAMEBUFFERSEXTPROC         glGenFramebuffers_;
 extern PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    glFramebufferTexture2D_;
 extern PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbuffer_;
+extern PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmap_;
 
 // GL_EXT_draw_range_elements
 extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
