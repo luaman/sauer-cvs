@@ -158,7 +158,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
     //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     if(mipit && pixels)
     {
-        if(canhwmipmap(format))
+        if(canhwmipmap(format) && (hasNP2 || (w&(w-1) && h&(h-1))))
         {
             glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels); 
             glGenerateMipmap_(target);
@@ -205,20 +205,31 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
         if(t->h > 1) t->h /= 2;
     }
     if(maxtexsize<0) glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
+    GLenum format = texformat(t->bpp);
+    if((!mipit || canhwmipmap(format)) && !hasNP2 && (t->w&(t->w-1) || t->h&(t->h-1)))
+    {
+        int w = 1, h = 1;
+        while(w<t->w) w *= 2;
+        while(h<t->h) h *= 2;
+        if((maxtexsize && w > maxtexsize) || (t->w - w)/2 < (w - t->w)/2) w /= 2;
+        if((maxtexsize && h > maxtexsize) || (t->h - h)/2 < (h - t->h)/2) h /= 2;
+        t->w = w;
+        t->h = h;
+    }
     if(maxtexsize) while(t->w > maxtexsize || t->h > maxtexsize)
     {
-        t->w /= 2; 
+        t->w /= 2;
         t->h /= 2;
     }
     if(t->w != t->xs || t->h != t->ys)
     {
-        if(gluScaleImage(texformat(t->bpp), t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels))
+        if(gluScaleImage(format, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels))
         {
             t->w = t->xs;
             t->h = t->ys;
         }
     }
-    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, texformat(t->bpp));
+    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, format);
     SDL_FreeSurface(s);
     return t;
 }

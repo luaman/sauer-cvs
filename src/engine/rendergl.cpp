@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasCM = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -290,7 +290,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     }
     else conoutf("WARNING: No cube map texture support. (no reflective glass)");
 
-    if(!strstr(exts, "GL_ARB_texture_non_power_of_two")) conoutf("WARNING: Non-power-of-two textures not supported!");
+    if(strstr(exts, "GL_ARB_texture_non_power_of_two")) 
+    {
+        hasNP2 = true;
+        //conoutf("Using GL_ARB_texture_non_power_of_two extension.");
+    }
+    else conoutf("WARNING: Non-power-of-two textures not supported!");
 
     if(strstr(exts, "GL_EXT_texture_compression_s3tc"))
     {
