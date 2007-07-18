@@ -98,7 +98,11 @@ VAR(hwmipmap, 0, 1, 1);
 
 bool canhwmipmap(GLenum format)
 {
+#ifdef __APPLE__
+    return false;
+#else
     return hwmipmap && hasFBO && format==GL_RGB;
+#endif
 }
 
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
