@@ -98,12 +98,7 @@ VAR(hwmipmap, 0, 1, 1);
 
 bool canhwmipmap(GLenum format)
 {
-    if(hwmipmap && hasFBO) switch(format)
-    {
-        case GL_RGB:
-        case GL_RGBA: return true;
-    }
-    return false;
+    return hwmipmap && hasFBO && format==GL_RGB;
 }
 
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
