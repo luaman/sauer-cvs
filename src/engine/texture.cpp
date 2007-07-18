@@ -96,6 +96,16 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
 VARP(mintexcompresssize, 0, 1<<10, 1<<12);
 VAR(hwmipmap, 0, 1, 1);
 
+bool canhwmipmap(GLenum format)
+{
+    if(hwmipmap && hasFBO) switch(format)
+    {
+        case GL_RGB:
+        case GL_RGBA: return true;
+    }
+    return false;
+}
+
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
 {
     GLenum target = subtarget;
@@ -149,7 +159,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
     //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     if(mipit && pixels)
     {
-        if(hwmipmap && hasFBO)
+        if(canhwmipmap(format))
         {
             glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels); 
             glGenerateMipmap_(target);
@@ -670,10 +680,15 @@ GLuint cubemapfromsky(int size)
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
         gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, size, size, GL_UNSIGNED_BYTE, scaled);
-        createtexture(!i ? tex : 0, size, size, scaled, 3, true, GL_RGB5, cubemapsides[i].target);
+        createtexture(!i ? tex : 0, size, size, scaled, 3, !canhwmipmap(GL_RGB), GL_RGB5, cubemapsides[i].target);
         delete[] pixels;
     }
     delete[] scaled;
+    if(canhwmipmap(GL_RGB))
+    {
+        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    }
     return tex;
 }
 
@@ -697,8 +712,9 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
             s_strcat(sname, wildcard+1);
         }
         surface[i] = texturedata(sname, NULL, msg);
-        if(!surface[i])
+        if(!surface[i] || (i > 0 && surface[i]->format->BitsPerPixel!=surface[0]->format->BitsPerPixel))
         {
+            if(surface[i] && msg) conoutf("cubemap texture %s has differing bpp", sname);
             loopj(i) SDL_FreeSurface(surface[j]);
             return NULL;
         }
@@ -710,11 +726,17 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
     t->xs = t->w = surface[0]->w;
     t->ys = t->h = surface[0]->h;
     glGenTextures(1, &t->gl);
+    GLenum format = texformat(surface[0]->format->BitsPerPixel);
     loopi(6)
     {
         SDL_Surface *s = surface[i];
-        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit, texformat(s->format->BitsPerPixel), cubemapsides[i].target);
+        createtexture(!i ? t->gl : 0, s->w, s->h, s->pixels, 3, mipit && !canhwmipmap(format), format, cubemapsides[i].target);
         SDL_FreeSurface(s);
+    }
+    if(mipit && canhwmipmap(format))
+    {
+        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     }
     return t;
 }
@@ -775,7 +797,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
     int texsize = rendersize < 1<<envmapsize ? rendersize : 1<<envmapsize;
     GLuint tex, rendertex = 0;
     glGenTextures(1, &tex);
-    if(hwmipmap && hasFBO && texsize < rendersize)
+    if(canhwmipmap(GL_RGB) && texsize < rendersize)
     {
         glGenTextures(1, &rendertex);
         createtexture(rendertex, rendersize, rendersize, NULL, 3, true);
@@ -784,7 +806,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
     glViewport(0, 0, rendersize, rendersize);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     float yaw = 0, pitch = 0;
-    uchar *pixels = hwmipmap && hasFBO ? NULL : new uchar[3*rendersize*rendersize];
+    uchar *pixels = canhwmipmap(GL_RGB) ? NULL : new uchar[3*rendersize*rendersize];
     loopi(6)
     {
         const cubemapside &side = cubemapsides[i];
@@ -804,32 +826,32 @@ GLuint genenvmap(const vec &o, int envmapsize)
                 yaw = 90; pitch = 90; break;
         }
         drawcubemap(rendersize, o, yaw, pitch);
-        if(hwmipmap && hasFBO && texsize < rendersize)
+        if(canhwmipmap(GL_RGB))
         {
-            glBindTexture(GL_TEXTURE_2D, rendertex);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, rendersize, rendersize);
-            glGenerateMipmap_(GL_TEXTURE_2D);
+            if(texsize < rendersize)
+            {
+                glBindTexture(GL_TEXTURE_2D, rendertex);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, rendersize, rendersize);
+                glGenerateMipmap_(GL_TEXTURE_2D);
 
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            glOrtho(0, rendersize, 0, rendersize, -1, 1);
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glOrtho(0, rendersize, 0, rendersize, -1, 1);
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
 
-            glEnable(GL_TEXTURE_2D);
-            glDisable(GL_DEPTH_TEST);
-            glColor3f(1, 1, 1);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2f(0, 0);
-            glTexCoord2f(0, 1); glVertex2f(0, texsize);
-            glTexCoord2f(1, 1); glVertex2f(texsize, texsize);
-            glTexCoord2f(1, 0); glVertex2f(texsize, 0);
-            glEnd();
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_TEXTURE_2D);
-        }
-        if(hwmipmap && hasFBO)
-        {
+                glEnable(GL_TEXTURE_2D);
+                glDisable(GL_DEPTH_TEST);
+                glColor3f(1, 1, 1);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0, 0); glVertex2f(0, 0);
+                glTexCoord2f(0, 1); glVertex2f(0, texsize);
+                glTexCoord2f(1, 1); glVertex2f(texsize, texsize);
+                glTexCoord2f(1, 0); glVertex2f(texsize, 0);
+                glEnd();
+                glEnable(GL_DEPTH_TEST);
+                glDisable(GL_TEXTURE_2D);
+            }
             createtexture(tex, texsize, texsize, NULL, 3, false, GL_RGB5, side.target);
             glCopyTexSubImage2D(side.target, 0, 0, 0, 0, 0, texsize, texsize);
         }
@@ -840,7 +862,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
             createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
         }
     }
-    if(hwmipmap && hasFBO && texsize < rendersize)
+    if(canhwmipmap(GL_RGB) && texsize < rendersize)
     {
         glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
         glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
