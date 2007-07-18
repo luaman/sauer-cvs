@@ -131,6 +131,7 @@ static void renderflares()
 static GLushort *hemiindices = NULL;
 static vec *hemiverts = NULL;
 static int heminumverts = 0, heminumindices = 0;
+static GLuint hemivbuf = 0, hemiebuf = 0;
 
 static void subdivide(int depth, int face);
 
@@ -175,7 +176,26 @@ static void inithemisphere(int hres, int depth)
         hemiverts[heminumverts++] = vec(cosf(a), sinf(a), 0.0f);
     }
     loopi(hres) genface(depth, 0, i+1, 1+(i+1)%hres);
+
+    if(hasVBO)
+    {
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            if(!hemivbuf) glGenBuffers_(1, &hemivbuf);
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, hemivbuf);
+            glBufferData_(GL_ARRAY_BUFFER_ARB, heminumverts*sizeof(vec), hemiverts, GL_STATIC_DRAW_ARB);
+            DELETEA(hemiverts);
+        }
+ 
+        if(!hemiebuf) glGenBuffers_(1, &hemiebuf);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, hemiebuf);
+        glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, heminumindices*sizeof(GLushort), hemiindices, GL_STATIC_DRAW_ARB);
+        DELETEA(hemiindices);
+    }
 }
+
+static GLuint expmodtex[2] = {0, 0};
+static GLuint lastexpmodtex = 0;
 
 static GLuint createexpmodtex(int size, float minval)
 {
@@ -200,51 +220,112 @@ static struct expvert
     vec pos;
     float u, v, s, t;
 } *expverts = NULL;
+static GLuint expvbuf = 0;
 
-static GLuint expmodtex[2] = {0, 0};
-static GLuint lastexpmodtex = 0;
-static GLUquadricObj *qsphere = NULL;
+static void animateexplosion()
+{
+    static int lastexpmillis = 0;
+    if(expverts && lastexpmillis == lastmillis)
+    {
+        if(hasVBO) glBindBuffer_(GL_ARRAY_BUFFER_ARB, expvbuf);
+        return;
+    }
+    lastexpmillis = lastmillis;
+    vec center = vec(13.0f, 2.3f, 7.1f);  //only update once per frame! - so use the same center for all...
+    if(!expverts) expverts = new expvert[heminumverts];
+    loopi(heminumverts)
+    {
+        expvert &e = expverts[i];
+        vec &v = hemiverts[i];
+        //texgen - scrolling billboard
+        e.u = v.x*0.5f + 0.0004f*lastmillis;
+        e.v = v.y*0.5f + 0.0004f*lastmillis;
+        //ensure the mod texture is wobbled
+        e.s = v.x*0.5f + 0.5f;
+        e.t = v.y*0.5f + 0.5f;
+        //wobble - similar to shader code
+        float wobble = v.dot(center) + 0.002f*lastmillis;
+        wobble -= floor(wobble);
+        wobble = 1.0f + fabs(wobble - 0.5f)*0.5f;
+        e.pos = vec(v).mul(wobble);
+    }
+
+    if(hasVBO)
+    {
+        if(!expvbuf) glGenBuffers_(1, &expvbuf);
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, expvbuf);
+        glBufferData_(GL_ARRAY_BUFFER_ARB, heminumverts*sizeof(expvert), expverts, GL_STREAM_DRAW_ARB);
+    }
+}
+
+static struct spherevert
+{
+    vec pos;
+    float s, t;
+} *sphereverts = NULL;
+static GLushort *sphereindices = NULL;
+static int spherenumverts = 0, spherenumindices = 0;
+static GLuint spherevbuf = 0, sphereebuf = 0;
+
+static void initsphere(int slices, int stacks)
+{
+    DELETEA(sphereverts);
+    spherenumverts = (stacks+1)*(slices+1);
+    sphereverts = new spherevert[spherenumverts];
+    float ds = 1.0f/slices, dt = 1.0f/stacks, t = 1.0f;
+    loopi(stacks+1)
+    {
+        float rho = M_PI*(1-t), s = 0.0f;
+        loopj(slices+1)
+        {
+            float theta = j==slices ? 0 : 2*M_PI*s;
+            spherevert &v = sphereverts[i*(slices+1) + j];
+            v.pos = vec(-sin(theta)*sin(rho), cos(theta)*sin(rho), cos(rho));
+            v.s = s;
+            v.t = t;
+            s += ds;
+        }
+        t -= dt;
+    }
+
+    DELETEA(sphereindices);
+    spherenumindices = stacks*slices*3*2;
+    sphereindices = new ushort[spherenumindices];
+    GLushort *curindex = sphereindices;
+    loopi(stacks)
+    {
+        loopk(slices)
+        {
+            int j = i%2 ? slices-k-1 : k;
+
+            *curindex++ = i*(slices+1)+j;
+            *curindex++ = (i+1)*(slices+1)+j;
+            *curindex++ = i*(slices+1)+j+1;
+
+            *curindex++ = i*(slices+1)+j+1;
+            *curindex++ = (i+1)*(slices+1)+j;
+            *curindex++ = (i+1)*(slices+1)+j+1;
+        }
+    }
+
+    if(hasVBO)
+    {
+        if(!spherevbuf) glGenBuffers_(1, &spherevbuf);
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, spherevbuf);
+        glBufferData_(GL_ARRAY_BUFFER_ARB, spherenumverts*sizeof(spherevert), sphereverts, GL_STATIC_DRAW_ARB);
+        DELETEA(sphereverts);
+ 
+        if(!sphereebuf) glGenBuffers_(1, &sphereebuf);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, sphereebuf);
+        glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, spherenumindices*sizeof(GLushort), sphereindices, GL_STATIC_DRAW_ARB);
+        DELETEA(sphereindices);
+    }
+}
 
 VARP(explosion2d, 0, 0, 1);
 
 static void setupexplosion()
 {
-    if(!hemiindices) inithemisphere(5, 2);
-   
-    if(renderpath==R_FIXEDFUNCTION)
-    {
-        static int lastexpmillis = 0;
-        if(lastexpmillis != lastmillis || !expverts)
-        {
-            vec center = vec(13.0f, 2.3f, 7.1f);  //only update once per frame! - so use the same center for all...
-            lastexpmillis = lastmillis;
-            if(!expverts) expverts = new expvert[heminumverts];
-            loopi(heminumverts)
-            {
-                expvert &e = expverts[i];
-                vec &v = hemiverts[i];
-                //texgen - scrolling billboard
-                e.u = v.x*0.5f + 0.0004f*lastmillis;
-                e.v = v.y*0.5f + 0.0004f*lastmillis;
-                //ensure the mod texture is wobbled
-                e.s = v.x*0.5f + 0.5f;
-                e.t = v.y*0.5f + 0.5f;
-                //wobble - similar to shader code
-                float wobble = v.dot(center) + 0.002f*lastmillis;
-                wobble -= floor(wobble);
-                wobble = 1.0f + fabs(wobble - 0.5f)*0.5f;
-                e.pos = vec(v).mul(wobble);
-            }
-        }
-    }
-    else
-    {
-        static Shader *expl2dshader = NULL, *expl3dshader = NULL;
-        if(!expl2dshader) expl2dshader = lookupshaderbyname("explosion2d");
-        if(!expl3dshader) expl3dshader = lookupshaderbyname("explosion3d");
-        (explosion2d ? expl2dshader : expl3dshader)->set();
-    }
-
     if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
     {
         if(!expmodtex[0]) expmodtex[0] = createexpmodtex(64, 0);
@@ -252,45 +333,76 @@ static void setupexplosion()
         lastexpmodtex = 0;
     }
 
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        static Shader *expl2dshader = NULL, *expl3dshader = NULL;
+        if(!expl2dshader) expl2dshader = lookupshaderbyname("explosion2d");
+        if(!expl3dshader) expl3dshader = lookupshaderbyname("explosion3d");
+        (explosion2d ? expl2dshader : expl3dshader)->set();
+    }
+
     if(renderpath==R_FIXEDFUNCTION || explosion2d)
     {
+        if(!hemiverts && !hemivbuf) inithemisphere(5, 2);
+        if(renderpath==R_FIXEDFUNCTION) animateexplosion();
+        if(hasVBO)
+        {
+            if(renderpath!=R_FIXEDFUNCTION) glBindBuffer_(GL_ARRAY_BUFFER_ARB, hemivbuf);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, hemiebuf);
+        }
+
+        expvert *verts = renderpath==R_FIXEDFUNCTION ? (hasVBO ? 0 : expverts) : (expvert *)hemiverts;
+
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), renderpath==R_FIXEDFUNCTION ? &expverts->pos : hemiverts);
-    }
-    else if(!qsphere)
-    {
-        qsphere = gluNewQuadric();
-        if(qsphere)
+        glVertexPointer(3, GL_FLOAT, renderpath==R_FIXEDFUNCTION ? sizeof(expvert) : sizeof(vec), verts);
+
+        if(renderpath==R_FIXEDFUNCTION)
         {
-            gluQuadricDrawStyle(qsphere, GLU_FILL);
-            gluQuadricOrientation(qsphere, GLU_OUTSIDE);
-            gluQuadricTexture(qsphere, GL_TRUE);
-        }
-    }
-
-    if(renderpath==R_FIXEDFUNCTION)
-    {
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->u);
-
-        if(maxtmus>=2)
-        {
-            setuptmu(0, "C * T", "= Ca");
-
-            glActiveTexture_(GL_TEXTURE1_ARB);
-            glClientActiveTexture_(GL_TEXTURE1_ARB);
-
-            glEnable(GL_TEXTURE_2D);
-            setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &expverts->s);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &verts->u);
 
-            glActiveTexture_(GL_TEXTURE0_ARB);
-            glClientActiveTexture_(GL_TEXTURE0_ARB);
+            if(maxtmus>=2)
+            {
+                setuptmu(0, "C * T", "= Ca");
+
+                glActiveTexture_(GL_TEXTURE1_ARB);
+                glClientActiveTexture_(GL_TEXTURE1_ARB);
+
+                glEnable(GL_TEXTURE_2D);
+                setuptmu(1, "P * Ta x 4", "Pa * Ta x 4");
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, sizeof(expvert), &verts->s);
+
+                glActiveTexture_(GL_TEXTURE0_ARB);
+                glClientActiveTexture_(GL_TEXTURE0_ARB);
+            }
         }
+    }
+    else
+    {
+        if(!sphereverts && !spherevbuf) initsphere(12, 6);
+
+        if(hasVBO)
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, spherevbuf);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, sphereebuf);
+        }
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(spherevert), &sphereverts->pos);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(spherevert), &sphereverts->s);
     }
 }
- 
+
+static void drawexpverts(int numverts, int numindices, GLushort *indices)
+{
+    if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, numverts-1, numindices, GL_UNSIGNED_SHORT, indices);
+    else glDrawElements(GL_TRIANGLES, numindices, GL_UNSIGNED_SHORT, indices);
+    xtraverts += numindices;
+    glde++;
+}
+
 static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
 {
     if((renderpath!=R_FIXEDFUNCTION || maxtmus>=2) && lastexpmodtex != expmodtex[inside ? 1 : 0])
@@ -307,8 +419,7 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
         {
             glColor4ub(r, g, b, i ? a/2 : a);
             if(i) glDepthFunc(GL_GEQUAL);
-            if(qsphere) gluSphere(qsphere, 1, 12, 6);
-            xtraverts += 12*6;
+            drawexpverts(spherenumverts, spherenumindices, sphereindices);
             if(i) glDepthFunc(GL_LESS);
         }
         return;
@@ -326,25 +437,19 @@ static void drawexplosion(bool inside, uchar r, uchar g, uchar b, uchar a)
             if(!reflecting)
             {
                 glCullFace(GL_BACK);
-                if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-                else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-                xtraverts += heminumindices;
-                glde++;
+                drawexpverts(heminumverts, heminumindices, hemiindices);
                 glCullFace(GL_FRONT);
             }
             glScalef(1, 1, -1);
         }
-        if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, 0, heminumverts-1, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-        else glDrawElements(GL_TRIANGLES, heminumindices, GL_UNSIGNED_SHORT, hemiindices);
-        xtraverts += heminumindices;
-        glde++;
+        drawexpverts(heminumverts, heminumindices, hemiindices);
         if(i) glDepthFunc(GL_LESS);
     }
 }
 
 static void cleanupexplosion()
 {
-    if(renderpath==R_FIXEDFUNCTION || explosion2d) glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
     if(renderpath==R_FIXEDFUNCTION)
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -366,8 +471,16 @@ static void cleanupexplosion()
     }
     else
     {
+        if(explosion2d) glDisableClientState(GL_TEXTURE_COORD_ARRAY); 
+
         foggedshader->set();
         if(reflecting && refracting) setfogplane(1, refracting);
+    }
+
+    if(hasVBO) 
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     }
 }
 

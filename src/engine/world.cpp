@@ -418,7 +418,7 @@ VAR(showentradius, 0, 1, 1);
 void renderentradius(extentity &e)
 {
     if(!showentradius) return;
-    float radius = 0.0f, angle = 0.0f;
+    float radius = 0.0f, angle = 0.0f, ring = 0.0f;
     vec dir(0, 0, 0);
     float color[3] = {0, 1, 1};
     switch(e.type)
@@ -454,6 +454,7 @@ void renderentradius(extentity &e)
         case ET_MAPMODEL:
         case ET_PLAYERSTART:
             radius = 4;
+            if(e.type==ET_MAPMODEL && e.attr3) ring = checktriggertype(e.attr3, TRIG_COLLIDE) ? 20 : 12;
             vecfromyawpitch(e.attr1, 0, 1, 0, dir);
             break;
 
@@ -480,6 +481,18 @@ void renderentradius(extentity &e)
             glBegin(GL_LINES);
             glVertex3fv(e.o.v);
             glVertex3fv(e.attached->o.v);
+            glEnd();
+        }
+        if(ring)
+        {
+            glBegin(GL_LINE_LOOP);
+            loopi(16)
+            {
+                vec p(e.o);
+                p.x += ring*cosf(2*M_PI*i/16.0f);
+                p.y += ring*sinf(2*M_PI*i/16.0f);
+                glVertex3fv(p.v);
+            }
             glEnd();
         }
         if(dir.iszero()) loopk(3)
