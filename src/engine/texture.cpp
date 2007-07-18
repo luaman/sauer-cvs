@@ -101,7 +101,12 @@ bool canhwmipmap(GLenum format)
 #ifdef __APPLE__
     return false;
 #else
-    return hwmipmap && hasFBO && format==GL_RGB;
+    if(hwmipmap && hasFBO) switch(format)
+    {
+        case GL_RGB:
+        case GL_RGBA: return true;
+    }
+    return false;
 #endif
 }
 
