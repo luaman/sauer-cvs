@@ -19,7 +19,7 @@ Shader *lookupshaderbyname(const char *name)
     return s && s->altshader ? s->altshader : s;
 }
 
-static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name)
+static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name, bool msg = true)
 {
     glGenPrograms_(1, &idx);
     glBindProgram_(type, idx);
@@ -27,12 +27,17 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
     glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, (GLsizei)strlen(def), def);
     GLint err;
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
-    if(err!=-1)
+    if(msg && err!=-1)
     {
         conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
         loopi(err) putchar(*def++);
         puts(" <<HERE>> ");
         while(*def) putchar(*def++);
+    }
+    if(err!=-1)
+    {
+        glDeletePrograms_(1, &idx);
+        idx = 0;
     }
 }
 
@@ -50,13 +55,13 @@ static void showglslinfo(GLhandleARB obj, char *tname, char *name)
     }
 }
 
-static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tname, char *name) 
+static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tname, char *name, bool msg = true) 
 {
     const GLcharARB *source = (const GLcharARB*)(def + strspn(def, " \t\r\n")); 
     obj = glCreateShaderObject_(type);
     glShaderSource_(obj, 1, &source, NULL);
     glCompileShader_(obj);
-    showglslinfo(obj, tname, name);
+    if(msg) showglslinfo(obj, tname, name);
     GLint success;
     glGetObjectParameteriv_(obj, GL_OBJECT_COMPILE_STATUS_ARB, &success);
     if(!success) 
@@ -66,7 +71,7 @@ static void compileglslshader(GLenum type, GLhandleARB &obj, char *def, char *tn
     }
 }  
 
-static void linkglslprogram(Shader &s)
+static void linkglslprogram(Shader &s, bool msg = true)
 {
     s.program = glCreateProgramObject_();
     GLint success = 0;
@@ -100,7 +105,7 @@ static void linkglslprogram(Shader &s)
     {
         if(s.program)
         {
-            showglslinfo(s.program, "PROG", s.name);
+            if(msg) showglslinfo(s.program, "PROG", s.name);
             glDeleteObject_(s.program);
             s.program = 0;
         }
@@ -407,7 +412,7 @@ VARFN(shaders, useshaders, 0, 1, 1, initwarning());
 VARF(shaderprecision, 0, 0, 2, initwarning());
 VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
 
-Shader *newshader(int type, char *name, char *vs, char *ps)
+Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NULL)
 {
     char *rname = newstring(name);
     Shader &s = shaders[rname];
@@ -416,20 +421,28 @@ Shader *newshader(int type, char *name, char *vs, char *ps)
     loopi(MAXSHADERDETAIL) s.fastshader[i] = &s;
     memset(s.extvertparams, 0, sizeof(s.extvertparams));
     memset(s.extpixparams, 0, sizeof(s.extpixparams));
+    if(variant) loopv(variant->defaultparams) s.defaultparams.add(variant->defaultparams[i]);
+    else loopv(curparams) s.defaultparams.add(curparams[i]);
     if(renderpath!=R_FIXEDFUNCTION)
     {
         if(type & SHADER_GLSLANG)
         {
-            compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name);
-            compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name);
+            compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name, !variant);
+            compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name, !variant);
             linkglslprogram(s);
         }
         else
         {
-            compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name);
-            compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name);
+            compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name, !variant);
+            compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant);
+        }
+        if(!s.program && !s.vs && !s.ps)
+        {
+            shaders.remove(rname);
+            return NULL;
         }
     }
+    if(variant) variant->variants.add(&s);
     return &s;
 }
 
@@ -533,10 +546,8 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps)
         psdl.put(pspragma, strlen(pspragma)+1);
        
         s_sprintfd(name)("<dynlight %d>%s", i+1, s.name);
-        Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf()); 
+        Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf(), &s); 
         if(!variant) return;
-        loopv(s.defaultparams) variant->defaultparams.add(s.defaultparams[i]);
-        s.variants.add(variant); 
     }
 }
 
@@ -558,15 +569,10 @@ void shader(int *type, char *name, char *vs, char *ps)
         }
     }
     Shader *s = newshader(*type, name, vs, ps);
-    if(s)
+    if(s && renderpath!=R_FIXEDFUNCTION)
     {
-        loopv(curparams) s->defaultparams.add(curparams[i]);
-
-        if(renderpath!=R_FIXEDFUNCTION)
-        {
-            // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
-            if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
-        }
+        // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
+        if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
     }
     curparams.setsize(0);
 }

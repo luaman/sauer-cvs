@@ -23,6 +23,7 @@ PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_     = NULL;
  
 // GL_ARB_vertex_program, GL_ARB_fragment_program
 PFNGLGENPROGRAMSARBPROC            glGenPrograms_            = NULL;
+PFNGLDELETEPROGRAMSARBPROC         glDeletePrograms_         = NULL;
 PFNGLBINDPROGRAMARBPROC            glBindProgram_            = NULL;
 PFNGLPROGRAMSTRINGARBPROC          glProgramString_          = NULL;
 PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_  = NULL;
@@ -183,6 +184,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     else
     {
         glGenPrograms_ =            (PFNGLGENPROGRAMSARBPROC)           getprocaddress("glGenProgramsARB");
+        glDeletePrograms_ =         (PFNGLDELETEPROGRAMSARBPROC)        getprocaddress("glDeleteProgramsARB");
         glBindProgram_ =            (PFNGLBINDPROGRAMARBPROC)           getprocaddress("glBindProgramARB");
         glProgramString_ =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
         glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");

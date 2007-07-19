@@ -1,5 +1,6 @@
 // GL_ARB_vertex_program, GL_ARB_fragment_program
 extern PFNGLGENPROGRAMSARBPROC            glGenPrograms_;
+extern PFNGLDELETEPROGRAMSARBPROC         glDeletePrograms_;
 extern PFNGLBINDPROGRAMARBPROC            glBindProgram_;
 extern PFNGLPROGRAMSTRINGARBPROC          glProgramString_;
 extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_;
@@ -93,6 +94,11 @@ struct Shader
 
     Shader() : name(NULL), type(SHADER_DEFAULT), vs(0), ps(0), program(0), vsobj(0), psobj(0), altshader(NULL), used(false)
     {}
+
+    ~Shader()
+    {
+        DELETEA(name);
+    }
 
     void allocenvparams(Slot *slot = NULL);
     void flushenvparams(Slot *slot = NULL);
