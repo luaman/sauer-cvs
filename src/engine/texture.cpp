@@ -163,7 +163,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
     //component = format == GL_RGB ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     if(mipit && pixels)
     {
-        if(canhwmipmap(format) && (hasNP2 || (w&(w-1) && h&(h-1))))
+        if(canhwmipmap(format) && (hasNP2 || !(w&(w-1) || h&(h-1))))
         {
             glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels); 
             glGenerateMipmap_(target);
