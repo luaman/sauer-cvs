@@ -95,8 +95,8 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
 
 VAR(maxtexsize, 1, 0, 0);
 VARP(texreduce, 0, 0, 12);
-VARP(mintexcompresssize, 0, 1<<10, 1<<12);
-VAR(hwmipmap, 0, 1, 1);
+VARP(texcompress, 0, 1<<10, 1<<12);
+VARP(hwmipmap, 0, 1, 1);
 
 bool canhwmipmap(GLenum format)
 {
@@ -122,7 +122,7 @@ GLenum compressedformat(GLenum format, int w, int h)
 #define GL_COMPRESSED_RGB_S3TC_DXT1_EXT GL_COMPRESSED_RGB_ARB
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT GL_COMPRESSED_RGBA_ARB
 #endif
-    if(hasTC && mintexcompresssize && max(w, h) >= mintexcompresssize) switch(format)
+    if(hasTC && texcompress && max(w, h) >= texcompress) switch(format)
     {
         case GL_RGB5:
         case GL_RGB8:
