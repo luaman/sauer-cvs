@@ -933,7 +933,7 @@ static struct partmap { int type; int color; } partmaps[] =
     { 16, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
     { 17, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
     { 18, 0x3232FF}, // 26 water  
-    { 19, 0xFFC8C8}  // 27 yellow: fireball1
+    { 19, 0x80FF80}  // 27 yellow: fireball1
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
