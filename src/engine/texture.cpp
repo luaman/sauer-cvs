@@ -701,8 +701,8 @@ GLuint cubemapfromsky(int size)
     delete[] scaled;
     if(canhwmipmap(GL_RGB))
     {
-        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
         glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     }
     return tex;
 }
@@ -750,8 +750,8 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
     }
     if(mipit && canhwmipmap(format))
     {
-        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
         glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     }
     return t;
 }
@@ -867,7 +867,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
                 glEnable(GL_DEPTH_TEST);
                 glDisable(GL_TEXTURE_2D);
             }
-            createtexture(tex, texsize, texsize, NULL, 3, false, GL_RGB5, side.target);
+            createtexture(tex, texsize, texsize, NULL, 3, true, GL_RGB5, side.target);
             glCopyTexSubImage2D(side.target, 0, 0, 0, 0, 0, texsize, texsize);
         }
         else
@@ -877,11 +877,7 @@ GLuint genenvmap(const vec &o, int envmapsize)
             createtexture(tex, texsize, texsize, pixels, 3, true, GL_RGB5, side.target);
         }
     }
-    if(canhwmipmap(GL_RGB) && texsize < rendersize)
-    {
-        glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    }
+    if(canhwmipmap(GL_RGB) && texsize < rendersize) glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     if(pixels) delete[] pixels;
     if(rendertex) glDeleteTextures(1, &rendertex);
     glViewport(0, 0, screen->w, screen->h);
