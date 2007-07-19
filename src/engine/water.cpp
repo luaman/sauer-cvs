@@ -705,7 +705,7 @@ void addreflection(materialsurface &m)
                 if(depthfmt ? stencilfmt : find<stencilfmts) glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, reflectiondb);
                 if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT) break;
             }
-            while(!depthfmt && depthfmts[find]);
+            while(!depthfmt && depthfmts[++find]);
             if(!depthfmt)
             {
                 glBindRenderbuffer_(GL_RENDERBUFFER_EXT, 0);
