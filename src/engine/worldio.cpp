@@ -392,9 +392,8 @@ void load_world(const char *mname, const char *cname)        // still supports a
     worldroot = NULL;
 
     show_out_of_renderloop_progress(0, "loading entities...");
-    vector<extentity *> &ents = et->getents();
-    ents.deletecontentsp();
 
+    vector<extentity *> &ents = et->getents();
     char *ebuf = new char[et->extraentinfosize()];
     loopi(hdr.numents)
     {

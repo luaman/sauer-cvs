@@ -917,6 +917,8 @@ void resetmap()
     setvar("gamespeed", 100);
     setvar("paused", 0);
     setvar("wireframe", 0);
+
+    et->getents().deletecontentsp();
 }
 
 void startmap(const char *name)
@@ -950,7 +952,6 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     memset(hdr.reserved, 0, sizeof(hdr.reserved));
     texmru.setsize(0);
     freeocta(worldroot);
-    et->getents().setsize(0);
     worldroot = newcubes(F_EMPTY);
     loopi(4) solidfaces(worldroot[i]);
 
