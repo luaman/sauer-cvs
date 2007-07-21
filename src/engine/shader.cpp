@@ -769,10 +769,8 @@ void renderfullscreenshader(int w, int h)
             glGenTextures(NUMSCALE, rendertarget);
             if(hasFBO) glGenFramebuffers_(NUMSCALE-1, fsfb);
         }
-        char *pixels = new char[w*h*3];
         loopi(NUMSCALE)
-            createtexture(rendertarget[i], w>>i, h>>i, pixels, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
-        delete[] pixels;
+            createtexture(rendertarget[i], w>>i, h>>i, NULL, 3, false, GL_RGB, GL_TEXTURE_RECTANGLE_ARB);
         fs_w = w;
         fs_h = h;
         if(fsfb[0])

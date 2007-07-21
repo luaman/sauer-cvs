@@ -93,7 +93,8 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
     return m;
 }
 
-VAR(maxtexsize, 1, 0, 0);
+VAR(hwtexsize, 1, 0, 0);
+VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
 VARP(texcompress, 0, 1<<10, 1<<12);
 VARP(hwmipmap, 0, 1, 1);
@@ -132,6 +133,19 @@ GLenum compressedformat(GLenum format, int w, int h)
     return format;
 }
 
+int formatsize(GLenum format)
+{
+    switch(format)
+    {
+        case GL_LUMINANCE:
+        case GL_ALPHA: return 1;
+        case GL_LUMINANCE_ALPHA: return 2;
+        case GL_RGB: return 3;
+        case GL_RGBA: return 4;
+        default: return 4;
+    }
+}
+
 void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, GLenum component, GLenum subtarget)
 {
     GLenum target = subtarget;
@@ -167,10 +181,20 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             format = GL_RGB;
             break;
     }
+    uchar *scaled = NULL;
+    int sizelimit = maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize;
+    if(pixels && max(w, h) > sizelimit && (!mipit || sizelimit < hwtexsize))
+    {
+        int oldw = w, oldh = h;
+        while(w > sizelimit || h > sizelimit) { w /= 2; h /= 2; }
+        scaled = new uchar[w*h*formatsize(format)];
+        gluScaleImage(format, oldw, oldh, type, pixels, w, h, type, scaled);
+        pixels = scaled;
+    }
     if(mipit && pixels)
     {
         GLenum compressed = compressedformat(component, w, h);
-        if(canhwmipmap(compressed) && (hasNP2 || !(w&(w-1) || h&(h-1))))
+        if(canhwmipmap(compressed) && w<=hwtexsize && h<=hwtexsize && (hasNP2 || !(w&(w-1) || h&(h-1))))
         {
             glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels); 
             if(subtarget==target) glGenerateMipmap_(target);
@@ -181,6 +205,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         }
     }
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
+    if(scaled) delete[] scaled;
 }
 
 hashtable<char *, Texture> textures;
@@ -201,23 +226,23 @@ static GLenum texformat(int bpp)
 
 static void resizetexture(int &w, int &h, bool mipit = true, GLenum format = GL_RGB)
 {
-    if(!maxtexsize) glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
     if(mipit && !canhwmipmap(format)) return;
+    int sizelimit = maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize;
     int w2 = w, h2 = h;
     if(!hasNP2 && (w&(w-1) || h&(h-1)))
     {
         w2 = h2 = 1;
         while(w2 < w) w2 *= 2;
         while(h2 < h) h2 *= 2;
-        if((maxtexsize && w2 > maxtexsize) || (w - w2)/2 < (w2 - w)/2) w2 /= 2;
-        if((maxtexsize && h2 > maxtexsize) || (h - h2)/2 < (h2 - h)/2) h2 /= 2;
+        if(w2 > sizelimit || (w - w2)/2 < (w2 - w)/2) w2 /= 2;
+        if(h2 > sizelimit || (h - h2)/2 < (h2 - h)/2) h2 /= 2;
     }
-    while(w2 > maxtexsize || h2 > maxtexsize)
+    if(mipit && !canhwmipmap(compressedformat(format, w2, h2))) return; 
+    while(w2 > sizelimit || h2 > sizelimit)
     {
         w2 /= 2;
         h2 /= 2;
     }
-    if(mipit && !canhwmipmap(compressedformat(format, w2, h2))) return; 
     w = w2;
     h = h2;
 }
@@ -228,19 +253,19 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
     Texture *t = &textures[key];
     t->name = key;
     t->bpp = s->format->BitsPerPixel;
-    t->w = t->xs = s->w;
-    t->h = t->ys = s->h;
+    int w = t->xs = s->w;
+    int h = t->ys = s->h;
     glGenTextures(1, &t->gl);
     if(canreduce) loopi(texreduce)
     {
-        if(t->w > 1) t->w /= 2;
-        if(t->h > 1) t->h /= 2;
+        if(w > 1) w /= 2;
+        if(h > 1) h /= 2;
     }
     GLenum format = texformat(t->bpp);
-    resizetexture(t->w, t->h, mipit, format);
-    if(t->w != t->xs || t->h != t->ys) 
-        gluScaleImage(format, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels);
-    createtexture(t->gl, t->w, t->h, s->pixels, clamp, mipit, format);
+    resizetexture(w, h, mipit, format);
+    if(w != t->xs || h != t->ys) 
+        gluScaleImage(format, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, s->pixels);
+    createtexture(t->gl, w, h, s->pixels, clamp, mipit, format);
     SDL_FreeSurface(s);
     return t;
 }
@@ -691,17 +716,25 @@ GLuint cubemapfromsky(int size)
 {
     extern Texture *sky[6];
     if(!sky[0]) return 0;
-    int w = min(size, sky[0]->w), h = min(size, sky[0]->h);
-    resizetexture(w, h, true, GL_RGB5);
     GLuint tex;
+    int w, h, tw, th;
+    uchar *pixels = NULL;
     glGenTextures(1, &tex);
-    uchar *pixels = new uchar[3*max(w, sky[0]->w)*max(h, sky[0]->h)];
     loopi(6)
     {
         glBindTexture(GL_TEXTURE_2D, sky[i]->gl);
+        if(!pixels)
+        {
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tw);
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &th);
+            w = min(size, tw);
+            h = min(size, th);
+            resizetexture(w, h, true, GL_RGB5);
+            pixels = new uchar[3*max(size, tw)*max(size, th)]; 
+        }
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        if(sky[i]->w!=w || sky[i]->h!=h) gluScaleImage(GL_RGB, sky[i]->w, sky[i]->h, GL_UNSIGNED_BYTE, pixels, w, h, GL_UNSIGNED_BYTE, pixels);
+        if(tw!=w || th!=h) gluScaleImage(GL_RGB, tw, th, GL_UNSIGNED_BYTE, pixels, w, h, GL_UNSIGNED_BYTE, pixels);
         createtexture(!i ? tex : 0, w, h, pixels, 3, true, GL_RGB5, cubemapsides[i].target);
     }
     delete[] pixels;
@@ -743,20 +776,20 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
     t = &textures[key];
     t->name = key;
     t->bpp = surface[0]->format->BitsPerPixel;
-    t->xs = t->w = surface[0]->w;
-    t->ys = t->h = surface[0]->h;
+    int w = t->xs = surface[0]->w;
+    int h = t->ys = surface[0]->h;
     GLenum format = texformat(surface[0]->format->BitsPerPixel);
-    resizetexture(t->w, t->h, mipit, format);
+    resizetexture(w, h, mipit, format);
     glGenTextures(1, &t->gl);
     loopi(6)
     {
         SDL_Surface *s = surface[i];
-        if(s->w != t->w || s->h != t->h)
-            gluScaleImage(format, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, t->w, t->h, GL_UNSIGNED_BYTE, s->pixels);
-        createtexture(!i ? t->gl : 0, t->w, t->h, s->pixels, 3, mipit, format, cubemapsides[i].target);
+        if(s->w != w || s->h != h)
+            gluScaleImage(format, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, s->pixels);
+        createtexture(!i ? t->gl : 0, w, h, s->pixels, 3, mipit, format, cubemapsides[i].target);
         SDL_FreeSurface(s);
     }
-    if(mipit && canhwmipmap(compressedformat(format, t->w, t->h))) glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
+    if(mipit && canhwmipmap(compressedformat(format, w, h))) glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     return t;
 }
 
@@ -809,9 +842,9 @@ VAR(aaenvmap, 0, 1, 1);
 
 GLuint genenvmap(const vec &o, int envmapsize)
 {
-    if(!maxtexsize) glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&maxtexsize);
-    int rendersize = 1;
-    while(rendersize*2 < min(maxtexsize, min(screen->w, screen->h))) rendersize *= 2;
+    int rendersize = 1, sizelimit = min(hwtexsize, min(screen->w, screen->h));
+    if(maxtexsize) sizelimit = min(sizelimit, maxtexsize);
+    while(rendersize*2 < sizelimit) rendersize *= 2;
     int texsize = min(rendersize, 1<<envmapsize);
     if(!aaenvmap) rendersize = texsize;
     GLuint tex, rendertex = 0;

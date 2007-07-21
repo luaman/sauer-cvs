@@ -132,7 +132,7 @@ struct Shader
 struct Texture
 {
     char *name;
-    int xs, ys, w, h, bpp;
+    int xs, ys, bpp;
     GLuint gl;
     uchar *alphamask;
 

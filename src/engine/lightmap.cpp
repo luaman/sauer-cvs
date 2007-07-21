@@ -1256,7 +1256,7 @@ void initlights()
             if(!lm.converted) convert_lightmap(lm, lightmaps[i+1]);
             data = lm.converted;
         }
-        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, 0, false);
+        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, 0, true);
     }
 }
 

@@ -669,6 +669,7 @@ void addreflection(materialsurface &m)
     char *buf = NULL;
     int size = 1<<reflectsize;
     if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
+    while(size>hwtexsize) size /= 2;
     if((waterreflect || waterrefract) && !ref->tex)
     {
         glGenTextures(1, &ref->tex);

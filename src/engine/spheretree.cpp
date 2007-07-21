@@ -78,8 +78,8 @@ struct SphereLeaf : SphereTree
             }
             float s = tri.tc[0] + u*(tri.tc[2] - tri.tc[0]) + v*(tri.tc[4] - tri.tc[0]),
                   t = tri.tc[1] + u*(tri.tc[3] - tri.tc[1]) + v*(tri.tc[5] - tri.tc[1]);
-            int si = int(s*tri.tex->w), ti = int(t*tri.tex->h);
-            if(!(tri.tex->alphamask[ti*((tri.tex->w+7)/8) + si/8] & (1<<(si%8)))) return false;
+            int si = int(s*tri.tex->xs), ti = int(t*tri.tex->ys);
+            if(!(tri.tex->alphamask[ti*((tri.tex->xs+7)/8) + si/8] & (1<<(si%8)))) return false;
         }
         dist = f;
         return true;
