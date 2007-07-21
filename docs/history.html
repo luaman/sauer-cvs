@@ -165,12 +165,16 @@
 </div>
 
 <ul>
+<li>added "-v" command-line option for controlling vsync</li>
+<li>added "-k" command-line option for adding mod directories</li> 
+<li>added "-q" command-line option to set per-user home directories</li>
+<li>added "-r" command-line option to load "init.cfg" on startup</li>
+<li>added "init.cfg" so init settings can be changed from in-game and take effect on restart without needing command-line</li>
 <li>now uses hardware-accelerated mipmap generation when available</li>
 <li>added "gui2d" var for making all menus/scoreboard 2D</li>
 <li>added "texreduce" var for scaling texture quality down</li>
 <li>added dynamic lighting system</li>
 <li>new "gridlookup" var controls whether cursor grid size is looked up from cube under cursor</li>
-<li>added "init.cfg" so init settings can be changed from in-game and take effect on restart without needing command-line</li>
 <li>refactored gameplay and moved some of it server-side</li>
 <li>autoteam now only selects good/evil</li>
 <li>experimental server-side demo recording</li>
@@ -178,7 +182,6 @@
 <li>made yaw/pitch of playermodels interpolated in multiplayer</li>
 <li>VBOs now supported on animated models</li>
 <li>added support for custom fonts</li>
-<li>added -v command-line option for controlling vsync</li>
 <li>added "lava" material</li>
 <li>added "goto" command for spectators</li>
 <li>made models share meshes/rendering data if same md2/md3 file is loaded for better memory usage</li>
