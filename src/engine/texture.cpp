@@ -93,7 +93,7 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
     return m;
 }
 
-VAR(hwtexsize, 1, 0, 0);
+int hwtexsize = 0;
 VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
 VARP(texcompress, 0, 1<<10, 1<<12);
