@@ -61,7 +61,7 @@ VARF(vsync, -1, -1, 1, initwarning());
 
 void writeinitcfg()
 {
-    FILE *f = fopen("init.cfg", "w");
+    FILE *f = openfile("init.cfg", "w");
     if(!f) return;
     fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
     fprintf(f, "scr_w %d\n", scr_w);
@@ -102,7 +102,7 @@ void screenshot(char *filename)
         s_sprintf(buf)("screenshot_%d.bmp", lastmillis);
         filename = buf;
     }
-    SDL_SaveBMP(image, filename);
+    SDL_SaveBMP(image, findfile(filename, "wb"));
     SDL_FreeSurface(image);
 }
 
@@ -406,6 +406,8 @@ int main(int argc, char **argv)
     {
         if(argv[i][0]=='-') switch(argv[i][1])
         {
+            case 'q': sethomedir(&argv[i][2]); break;
+            case 'k': addpackagedir(&argv[i][2]); break;
             case 'r': execfile(argv[i][2] ? &argv[i][2] : (char *)"init.cfg"); restoredinits = true; break;
             case 'd': dedicated = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); if(!findarg(argc, argv, "-h")) scr_h = (scr_w*3)/4; break;

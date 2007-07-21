@@ -93,7 +93,7 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
     return m;
 }
 
-int hwtexsize = 0;
+VAR(hwtexsize, 1, 0, 0);
 VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
 VARP(texcompress, 0, 1<<10, 1<<12);
@@ -300,7 +300,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     
     if(msg) show_out_of_renderloop_progress(0, file);
 
-    SDL_Surface *s = IMG_Load(file);
+    SDL_Surface *s = IMG_Load(findfile(file, "rb"));
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
     if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; }
@@ -322,7 +322,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
 void loadalphamask(Texture *t)
 {
     if(t->alphamask || t->bpp!=32) return;
-    SDL_Surface *s = IMG_Load(t->name);
+    SDL_Surface *s = IMG_Load(findfile(t->name, "rb"));
     if(!s || !s->format->Amask) { if(s) SDL_FreeSurface(s); return; }
     uint alpha = s->format->Amask;
     t->alphamask = new uchar[s->h * ((s->w+7)/8)];
@@ -984,68 +984,4 @@ GLuint lookupenvmap(ushort emid)
     GLuint tex = envmaps[emid-EMID_RESERVED].tex;
     return tex ? tex : skyenvmap;
 }
-
-void writetgaheader(FILE *f, SDL_Surface *s, int bits)
-{
-    fwrite("\0\0\x02\0\0\0\0 \0\0\0\0", 1, 12, f);
-    ushort dim[] = { s->w, s->h };
-    endianswap(dim, sizeof(ushort), 2);
-    fwrite(dim, sizeof(short), 2, f);
-    fputc(bits, f);
-    fputc(0, f);
-}
-
-void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png) -> BGR (tga)
-{
-    SDL_Surface *ns = IMG_Load(normalfile);
-    if(!ns) return;
-    FILE *f = fopen(destfile, "wb");
-    if(f)
-    {
-        writetgaheader(f, ns, 24);
-        for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
-        {
-            uchar *nd = (uchar *)ns->pixels+(x+y*ns->w)*3;
-            fputc(nd[2], f);
-            fputc(255-nd[1], f);
-            fputc(nd[0], f);
-        }
-        fclose(f);
-    }
-    if(ns) SDL_FreeSurface(ns);
-}  
-
-void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
-{
-    SDL_Surface *hs = IMG_Load(heightfile);
-    SDL_Surface *ns = IMG_Load(normalfile);
-    if(hs && ns)
-    {
-        uchar def_n[] = { 255, 128, 128 };
-        FILE *f = fopen(normalfile, "wb");
-        if(f)
-        {
-            writetgaheader(f, ns, 24);
-            for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
-            {
-                int off = (x+y*ns->w)*3;
-                uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
-                uchar *nd = ns ? (uchar *)ns->pixels+off : def_n;
-                #define S(x) x/255.0f*2-1
-                vec n(S(nd[0]), S(nd[1]), S(nd[2]));
-                vec h(S(hd[0]), S(hd[1]), S(hd[2]));
-                n.mul(2).add(h).normalize().add(1).div(2).mul(255);
-                uchar o[3] = { (uchar)n.x, (uchar)n.y, (uchar)n.z };
-                fwrite(o, 3, 1, f);
-                #undef S
-            }
-            fclose(f);
-        }
-    }
-    if(hs) SDL_FreeSurface(hs);
-    if(ns) SDL_FreeSurface(ns);
-}
-
-COMMAND(flipnormalmapy, "ss");
-COMMAND(mergenormalmaps, "ss");
 

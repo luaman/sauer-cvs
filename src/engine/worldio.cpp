@@ -246,7 +246,7 @@ void save_world(char *mname, bool nolms)
     if(!*mname) mname = cl->getclientmap();
     setnames(*mname ? mname : "untitled");
     if(savebak) backup(cgzname, bakname);
-    gzFile f = gzopen(cgzname, "wb9");
+    gzFile f = opengzfile(cgzname, "wb9");
     if(!f) { conoutf("could not write map to %s", cgzname); return; }
     hdr.version = MAPVERSION;
     hdr.numents = 0;
@@ -320,7 +320,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
 {
     int loadingstart = SDL_GetTicks();
     setnames(mname, cname);
-    gzFile f = gzopen(cgzname, "rb9");
+    gzFile f = opengzfile(cgzname, "rb9");
     if(!f) { conoutf("could not read map %s", cgzname); return; }
     header newhdr;
     gzread(f, &newhdr, sizeof(header));
@@ -518,7 +518,7 @@ void writeobj(char *name)
     hasVBO = false;
     allchanged();
     s_sprintfd(fname)("%s.obj", name);
-    FILE *f = fopen(fname, "w"); 
+    FILE *f = openfile(fname, "w"); 
     if(!f) return;
     fprintf(f, "# obj file of sauerbraten level\n");
     extern vector<vtxarray *> valist;

@@ -133,23 +133,22 @@ void music(char *name, char *cmd)
     if(soundvol && musicvol && *name)
     {
         if(cmd[0]) musicdonecmd = newstring(cmd);
-        string sn;
-        s_strcpy(sn, "packages/");
-        s_strcat(sn, name);
+        s_sprintfd(sn)("packages/%s", name);
+        const char *file = findfile(path(sn), "rb");
         #ifdef USE_MIXER
-            if((mod = Mix_LoadMUS(path(sn))))
+            if((mod = Mix_LoadMUS(file)))
             {
                 Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
                 Mix_VolumeMusic((musicvol*MAXVOL)/255);
             }
         #else
-            if((mod = FMUSIC_LoadSong(path(sn))))
+            if((mod = FMUSIC_LoadSong(file)))
             {
                 FMUSIC_PlaySong(mod);
                 FMUSIC_SetMasterVolume(mod, musicvol);
                 FMUSIC_SetLooping(mod, cmd[0] ? FALSE : TRUE);
             }
-            else if((stream = FSOUND_Stream_Open(path(sn), cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0)))
+            else if((stream = FSOUND_Stream_Open(file, cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0)))
             {
                 musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
                 if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); }
@@ -345,13 +344,12 @@ void playsound(int n, const vec *loc, extentity *ent)
         loopi(2)
         {
             if(i) s_strcat(buf, ".wav");
-
+            const char *file = findfile(path(buf), "rb");
             #ifdef USE_MIXER
-                slot.s->sound = Mix_LoadWAV(path(buf));
+                slot.s->sound = Mix_LoadWAV(file);
             #else
-                slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, path(buf), FSOUND_LOOP_OFF, 0, 0);
+                slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, file, FSOUND_LOOP_OFF, 0, 0);
             #endif
-
             if(slot.s->sound) break;
         }
 

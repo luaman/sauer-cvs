@@ -523,7 +523,7 @@ void exec(char *cfgfile)
 
 void writecfg()
 {
-    FILE *f = fopen(cl->savedconfig(), "w");
+    FILE *f = openfile(cl->savedconfig(), "w");
     if(!f) return;
     fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// delete this file to have %s overwrite these settings\n// modify settings in game, or put settings in %s to override anything\n\n", cl->defaultconfig(), cl->autoexec());
     cc->writeclientinfo(f);

@@ -521,7 +521,7 @@ void buildfilenames(filesval *f)
             f->files.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - extsize));
         } while(FindNextFile(Find, &FindFileData));
     }
-    #elif defined(__GNUC__)
+    #else
     string pathname;
     s_strcpy(pathname, f->dir);
     DIR *d = opendir(path(pathname));
@@ -540,8 +540,6 @@ void buildfilenames(filesval *f)
         }
         closedir(d);
     }
-    #else
-    if(0)
     #endif
     else conoutf("unable to read base folder for map autocomplete");
 }

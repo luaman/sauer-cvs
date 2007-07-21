@@ -237,7 +237,7 @@ struct cubeloader
         string pakname, cgzname;
         s_sprintf(pakname)("cube/%s", mname);
         s_sprintf(cgzname)("packages/%s.cgz", pakname);
-        gzFile f = gzopen(path(cgzname), "rb9");
+        gzFile f = opengzfile(path(cgzname), "rb9");
         if(!f) { conoutf("could not read cube map %s", cgzname); return; }
         emptymap(12, true);
         freeocta(worldroot);

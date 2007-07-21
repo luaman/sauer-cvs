@@ -58,7 +58,7 @@ struct md3 : vertmodel
     {
         bool load(char *path)
         {
-            FILE *f = fopen(path, "rb");
+            FILE *f = openfile(path, "rb");
             if(!f) return false;
             md3header header;
             fread(&header, sizeof(md3header), 1, f);
@@ -200,13 +200,12 @@ struct md3 : vertmodel
         if(loaded) return true;
         s_sprintf(md3dir)("packages/models/%s", loadname);
 
-        char *pname = parentdir(loadname);
+        const char *pname = parentdir(loadname);
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
 
         loadingmd3 = this;
         if(execfile(cfgname) && parts.length()) // configured md3, will call the md3* commands below
         {
-            delete[] pname;
             loadingmd3 = NULL;
             loopv(parts) if(!parts[i]->meshes) return false;
         }
@@ -223,13 +222,12 @@ struct md3 : vertmodel
             {
                 s_sprintfd(name2)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
                 mdl.meshes = sharemeshes(path(name2));
-                if(!mdl.meshes) { delete[] pname; return false; }
+                if(!mdl.meshes) return false;
             }
             Texture *tex, *masks;
             loadskin(loadname, pname, tex, masks);
             mdl.initskins(tex, masks);
             if(tex==crosshair) conoutf("could not load model skin for %s", name1);
-            delete[] pname;
         }
         loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;

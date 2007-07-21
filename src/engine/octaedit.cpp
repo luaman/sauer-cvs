@@ -923,7 +923,7 @@ void copybrush()
 
 void savebrush(const char *name)
 {
-    FILE *f = fopen("mybrushes.cfg", "a");
+    FILE *f = openfile("mybrushes.cfg", "a");
     if(!f) return;
     fprintf(f, "newbrush \"%s\" %d %d [\n", name, brushx, brushy);
     int skipped = 0;

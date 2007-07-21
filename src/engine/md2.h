@@ -124,7 +124,7 @@ struct md2 : vertmodel
         
         bool load(char *filename)
         {
-            FILE *file = fopen(filename, "rb");
+            FILE *file = openfile(filename, "rb");
             if(!file) return false;
 
             md2_header header;
@@ -250,14 +250,14 @@ struct md2 : vertmodel
         parts.add(&mdl);
         mdl.model = this;
         mdl.index = 0;
-        char *pname = parentdir(loadname);
+        const char *pname = parentdir(loadname);
         s_sprintfd(name1)("packages/models/%s/tris.md2", loadname);
         mdl.meshes = sharemeshes(path(name1));
         if(!mdl.meshes)
         {
             s_sprintfd(name2)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
             mdl.meshes = loadmeshes(path(name2));
-            if(!mdl.meshes) { delete[] pname; return false; }
+            if(!mdl.meshes) return false;
         }
         Texture *tex, *masks;
         loadskin(loadname, pname, tex, masks);
@@ -270,7 +270,6 @@ struct md2 : vertmodel
             s_sprintf(name3)("packages/models/%s/md2.cfg", pname);
             execfile(name3);
         }
-        delete[] pname;
         loadingmd2 = 0;
         loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;

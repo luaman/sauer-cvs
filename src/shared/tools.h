@@ -104,8 +104,15 @@ template <class T> void _swap(T &a, T &b) { T t = a; a = b; b = t; }
 
 
 extern char *path(char *s);
-extern char *parentdir(char *directory);
-extern char *loadfile(char *fn, int *size);
+extern const char *parentdir(const char *directory);
+extern bool fileexists(const char *path, const char *mode);
+extern bool createdir(const char *path);
+extern void sethomedir(const char *dir);
+extern void addpackagedir(const char *dir);
+extern const char *findfile(const char *filename, const char *mode);
+extern FILE *openfile(const char *filename, const char *mode);
+extern gzFile opengzfile(const char *filename, const char *mode);
+extern char *loadfile(const char *fn, int *size);
 extern void endianswap(void *, int, int);
 extern void seedMT(uint seed);
 extern uint randomMT(void);
@@ -542,7 +549,7 @@ inline char *newstring(const char *s, size_t l) { return s_strncpy(newstring(l),
 inline char *newstring(const char *s)           { return newstring(s, strlen(s));          }
 inline char *newstringbuf(const char *s)        { return newstring(s, _MAXDEFSTR-1);       }
 
-#ifndef __GNUC__
+#if defined(WIN32) && !defined(__GNUC__)
 #ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
