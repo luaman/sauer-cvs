@@ -107,7 +107,7 @@ bool g3d_movecursor(int dx, int dy)
 #define SKIN_SCALE 4
 #define INSERT (3*SKIN_SCALE)
 
-VARP(guiautotab, FONTH*6, FONTH*16, FONTH*40);
+VARP(guiautotab, 6, 16, 40);
 
 struct gui : g3d_gui
 {
@@ -134,7 +134,7 @@ struct gui : g3d_gui
         if(tcurrent)
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
-            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab) tab(NULL, tcolor); 
+            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab*FONTH) tab(NULL, tcolor); 
         }
     }
 

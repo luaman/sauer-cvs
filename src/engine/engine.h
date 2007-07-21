@@ -62,10 +62,6 @@ extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
 #define GL_DEPTH24_STENCIL8_EXT 0x88F0
 #endif
 
-#define FONTH 64
-#define MINRESW 640
-#define MINRESH 480
-
 extern dynent *player;
 extern physent *camera1;                // special ent that acts as camera, same object as player1 in FPS mode
 
@@ -87,8 +83,28 @@ extern int zpass, glowpass;
 
 extern vector<int> entgroup;
 
-// texture
+// rendertext
+struct font
+{
+    struct charinfo
+    {
+        short x, y, w, h;
+    };
 
+    char *name;
+    Texture *tex;
+    vector<charinfo> chars;
+    short defaultw, defaulth;
+    short offsetx, offsety, offsetw, offseth;
+};
+
+#define FONTH (curfont->defaulth)
+#define MINRESW 640
+#define MINRESH 480
+
+extern font *curfont;
+
+// texture
 extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, bool msg = true);
 extern void loadalphamask(Texture *t);
 extern GLuint cubemapfromsky(int size);

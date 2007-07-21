@@ -44,7 +44,7 @@ void conline(const char *sf, bool highlight)        // add a line to the console
     }
 }
 
-const int CONSPAD = FONTH/3;
+#define CONSPAD (FONTH/3)
 
 void conoutf(const char *s, ...)
 {
@@ -55,6 +55,7 @@ void conoutf(const char *s, ...)
     string sp;
     filtertext(sp, sf);
     puts(sp);
+    if(!curfont) return;
     s = sf;
     int n = 0, visible;
     while((visible = text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3))) // cut strings to fit on screen

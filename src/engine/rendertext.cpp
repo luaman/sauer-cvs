@@ -1,22 +1,10 @@
 #include "pch.h"
 #include "engine.h"
 
-struct font
-{
-    struct charinfo
-    {
-        short x, y, w, h;
-    };
-
-    char *name;
-    Texture *tex;
-    vector<charinfo> chars;
-    short defaultw, defaulth;
-    short offsetx, offsety, offsetw, offseth;
-};
-
 static hashtable<char *, font> fonts;
-static font *fontdef = NULL, *curfont = NULL;
+static font *fontdef = NULL;
+
+font *curfont = NULL;
 
 void newfont(char *name, char *tex, int *defaultw, int *defaulth, int *offsetx, int *offsety, int *offsetw, int *offseth)
 {
