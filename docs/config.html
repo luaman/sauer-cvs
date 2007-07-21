@@ -59,6 +59,18 @@
 <a href="#_minus_fn"><tt>-fN</tt></a>
 </li>
 <li>
+<a href="#_minus_r"><tt>-r</tt></a>
+</li>
+<li>
+<a href="#_minus_rs"><tt>-rS</tt></a>
+</li>
+<li>
+<a href="#_minus_qs"><tt>-qS</tt></a>
+</li>
+<li>
+<a href="#_minus_ks"><tt>-kS</tt></a>
+</li>
+<li>
 <a href="#_minus_ls"><tt>-lS</tt></a>
 </li>
 <li>
@@ -474,12 +486,32 @@ Sets Sauerbaten to run windowed.
 <pre id="_minus_fn">-fN</pre>
 <p>
 When used alone, "-f" forces the renderpath to the old fixed function pipeline (no shaders), otherwise it sets the shader precision
-to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL driver offers, 2 is the default precision,
-and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different card/driver combos.
+to N (lower = faster). 0 disables shaders, 1 uses the fastest/lowest precision the OpenGL driver offers (default), 2 uses the OpenGL driver's defaults,
+and 3 is the nicest/slowest precision. The effects of 1-3 will vary with different card/driver combos. However, 2 and 3 should be avoided
+unless you are experiencing trouble with the defaults, as they will only slow rendering down.
 </p>
+
+<pre id="_minus_r">-r</pre>
+<pre id="_minus_rs">-rS</pre>
 <p>
-If your setup is considered weak, "-f2" will fall back to "-f1" automatically, unless you use "-f3". Weak renderers include (but not limited to): "GeForce FX",
-"Quadro FX", "6200", "9500", "9550", "9600", "9700", "9800", "X300", "X600", "FireGL", "Intel", "Chrome".
+Executes the script commands S before any hardware initialization has taken place.
+If S is not specified, "init.cfg" will be loaded by default. The engine writes "init.cfg" out on exit
+with various hardware settings you have changed in-game (like screen width/height, FSAA, etc.), and
+this option allows those settings to be restored on a restart.
+</p>
+
+<pre id="_minus_qs">-qS</pre>
+<p>
+Sets S to your home directory. If set, the engine will looks for files in your home directory as well as
+the normal installation directory. However, all files will be written to your home directory, instead of the
+normal installation directory.
+</p>
+
+<pre id="_minus_ks">-kS</pre>
+<p>
+Adds the mod directory S to the list of directories the engine will search in for files. Directories will
+be searched in the order listed on the command-line, and if not found, the engine looks in the installation
+directory.
 </p>
 
 <pre id="_minus_ls">-lS</pre>
