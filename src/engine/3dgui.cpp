@@ -146,8 +146,12 @@ struct gui : g3d_gui
         if(curdepth != 0) return;
         tcolor = color;
         tpos++; 
-        s_sprintfd(title)("%d", tpos);
-        if(!name) name = title;
+        if(!name) 
+        {
+            static string title;
+            s_sprintf(title)("%d", tpos);
+            name = title;
+        }
         int w = text_width(name) - 2*INSERT;
         if(layoutpass) 
         {  
@@ -616,15 +620,15 @@ struct gui : g3d_gui
         if(!gui2d) glDepthFunc(GL_ALWAYS);
     } 
 
-    vec origin;
+    vec origin, scale;
     float dist;
     g3d_callback *cb;
 
-    static float basescale, scale;
+    static float basescale;
     static bool passthrough;
     static vec light;
 
-    void adjustscale(vec &adjpos, vec &adjscale)
+    void adjustscale()
     {
         float aspect = float(screen->h)/float(screen->w), fit = 1.0f;
         int w = xsize + (skinx[2]-skinx[1])*SKIN_SCALE + (skinx[10]-skinx[9])*SKIN_SCALE, h = ysize + (skiny[8]-skiny[6])*SKIN_SCALE;
@@ -633,16 +637,16 @@ struct gui : g3d_gui
 
         if(w*aspect*basescale>1) fit = 1.0f/(w*aspect*basescale);
         if(h*basescale*fit>1) fit *= 1.0f/(h*basescale*fit);
-        adjpos = vec(0.5f-((w-xsize)/2 - (skinx[2]-skinx[1])*SKIN_SCALE)*aspect*scale*fit, 0.5f + (0.5f*h-(skiny[8]-skiny[6])*SKIN_SCALE)*scale*fit, 0);
-        adjscale = vec(aspect*scale*fit, scale*fit, 1);
+        origin = vec(0.5f-((w-xsize)/2 - (skinx[2]-skinx[1])*SKIN_SCALE)*aspect*scale.x*fit, 0.5f + (0.5f*h-(skiny[8]-skiny[6])*SKIN_SCALE)*scale.y*fit, 0);
+        scale = vec(aspect*scale.x*fit, scale.y*fit, 1);
     }
 
     void start(int starttime, float initscale, int *tab, bool allowinput)
     {	
         if(gui2d) initscale *= 0.025f; 
         basescale = initscale;
-        scale = basescale*min((totalmillis-starttime)/300.0f, 1.0f);
-        passthrough = scale<basescale || !allowinput;
+        if(layoutpass) scale.x = scale.y = scale.z = basescale*min((totalmillis-starttime)/300.0f, 1.0f);
+        passthrough = scale.x<basescale || !allowinput;
         if(allowinput) hascursor = true;
         curdepth = -1;
         curlist = -1;
@@ -662,10 +666,8 @@ struct gui : g3d_gui
             glPushMatrix();
             if(gui2d)
             {
-                vec adjpos, adjscale;
-                adjustscale(adjpos, adjscale);
-                glTranslatef(adjpos.x, adjpos.y, adjpos.z);
-                glScalef(adjscale.x, adjscale.y, adjscale.z);
+                glTranslatef(origin.x, origin.y, origin.z);
+                glScalef(scale.x, scale.y, scale.z);
                 light = vec(1, 1, 1);
             }
             else
@@ -674,7 +676,7 @@ struct gui : g3d_gui
                 glTranslatef(origin.x, origin.y, origin.z);
                 glRotatef(yaw/RAD-90, 0, 0, 1); 
                 glRotatef(-90, 1, 0, 0);
-                glScalef(-scale, scale, scale);
+                glScalef(-scale.x, scale.y, scale.z);
             
                 vec dir;
                 lightreaching(origin, light, dir, 0, 0.5f); 
@@ -695,23 +697,22 @@ struct gui : g3d_gui
             ysize = max(ty, ysize);
             ysize = max(ysize, (skiny[6]-skiny[5])*SKIN_SCALE);
             if(tcurrent) *tcurrent = max(1, min(*tcurrent, tpos));
+            if(gui2d) adjustscale();
             if(!windowhit && !passthrough)
             {
                 int intersects = INTERSECT_MIDDLE;
                 if(gui2d)
                 {
-                    vec adjpos, adjscale;
-                    adjustscale(adjpos, adjscale);
-                    hitx = (cursorx - adjpos.x)/adjscale.x;
-                    hity = (cursory - adjpos.y)/adjscale.y;
+                    hitx = (cursorx - origin.x)/scale.x;
+                    hity = (cursory - origin.y)/scale.y;
                 }
                 else
                 {
                     vec planenormal = vec(origin).sub(camera1->o).set(2, 0).normalize(), intersectionpoint;
                     intersects = intersect_plane_line(camera1->o, worldpos, origin, planenormal, intersectionpoint);
                     vec intersectionvec = vec(intersectionpoint).sub(origin), xaxis(-planenormal.y, planenormal.x, 0);
-                    hitx = xaxis.dot(intersectionvec)/scale;
-                    hity = -intersectionvec.z/scale;
+                    hitx = xaxis.dot(intersectionvec)/scale.x;
+                    hity = -intersectionvec.z/scale.y;
                 }
                 if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hitx<=xsize/2 && hity<=0)
                 {
@@ -774,7 +775,7 @@ const gui::patch gui::patches[] =
 };
 
 vector<gui::list> gui::lists;
-float gui::basescale, gui::scale, gui::hitx, gui::hity;
+float gui::basescale, gui::hitx, gui::hity;
 bool gui::passthrough;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
