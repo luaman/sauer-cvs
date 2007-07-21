@@ -126,8 +126,10 @@ void modifyoctaentity(bool add, int id, cube *c, const ivec &cor, int size, cons
 
 static void modifyoctaent(bool add, int id)
 {
+    vector<extentity *> &ents = et->getents();
+    if(!ents.inrange(id)) return;
     ivec o, r;
-    extentity &e = *et->getents()[id];
+    extentity &e = *ents[id];
     if((e.inoctanode!=0)==add || !getentboundingbox(e, o, r)) return;
     e.inoctanode = add;
     modifyoctaentity(add, id, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, o, r);
@@ -141,8 +143,11 @@ static inline void removeentity(int id) { modifyoctaent(false, id); }
 void freeoctaentities(cube &c)
 {
     if(!c.ext) return;
-    while(c.ext->ents && !c.ext->ents->mapmodels.empty()) removeentity(c.ext->ents->mapmodels.pop());
-    while(c.ext->ents && !c.ext->ents->other.empty())     removeentity(c.ext->ents->other.pop());
+    if(et->getents().length())
+    {
+        while(c.ext->ents && !c.ext->ents->mapmodels.empty()) removeentity(c.ext->ents->mapmodels.pop());
+        while(c.ext->ents && !c.ext->ents->other.empty())     removeentity(c.ext->ents->other.pop());
+    }
     if(c.ext->ents)
     {
         delete c.ext->ents;
