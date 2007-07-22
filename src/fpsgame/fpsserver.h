@@ -685,6 +685,13 @@ struct fpsserver : igameserver
         }
     }
 
+    int nonspectators(int exclude = -1)
+    {
+        int n = 0;
+        loopv(clients) if(i!=exclude && clients[i]->state.state!=CS_SPECTATOR) n++;
+        return n;
+    }
+
     void arenareset()
     {
         if(!m_arena) return;
@@ -695,7 +702,7 @@ struct fpsserver : igameserver
 
     void arenacheck()
     {
-        if(!m_arena || interm || gamemillis<arenaround || clients.empty()) return;
+        if(!m_arena || interm || gamemillis<arenaround || !nonspectators()) return;
 
         if(arenaround)
         {
@@ -1241,12 +1248,12 @@ struct fpsserver : igameserver
 
     int welcomepacket(ucharbuf &p, int n)
     {
-        int hasmap = (gamemode==1 && clients.length()>1) || (smapname[0] && (clients.length()>1 || minremain>0));
+        clientinfo *ci = (clientinfo *)getinfo(n);
+        int hasmap = (gamemode==1 && clients.length()>1) || (smapname[0] && (minremain>0 || (ci && ci->state.state==CS_SPECTATOR) || nonspectators(n)));
         putint(p, SV_INITS2C);
         putint(p, n);
         putint(p, PROTOCOL_VERSION);
         putint(p, hasmap);
-        clientinfo *ci = (clientinfo *)getinfo(n);
         if(hasmap)
         {
             putint(p, SV_MAPCHANGE);
@@ -1320,8 +1327,8 @@ struct fpsserver : igameserver
         {
             minremain = gamemillis>=gamelimit ? 0 : (gamelimit - gamemillis + 60*1000 - 1)/(60*1000);
             sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
-            if(!interm && minremain<=0) interm = gamemillis+10*1000;
         }
+        if(!interm && minremain<=0) interm = gamemillis+10*1000;
     }
 
     void startintermission() { gamelimit = min(gamelimit, gamemillis); checkintermission(); }
