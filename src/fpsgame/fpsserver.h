@@ -19,6 +19,8 @@ struct fpsserver : igameserver
         char spawned;
     };
 
+    static const int DEATHMILLIS = 250;
+
     enum { GE_NONE = 0, GE_SHOT, GE_EXPLODE, GE_HIT, GE_SUICIDE, GE_PICKUP };
 
     struct shotevent
@@ -74,7 +76,7 @@ struct fpsserver : igameserver
     {
         vec o;
         int state;
-        int lifesequence;
+        int lastdeath, lifesequence;
         int lastshot;
         int rockets, grenades;
         int frags;
@@ -101,6 +103,7 @@ struct fpsserver : igameserver
         {
             fpsstate::respawn();
             o = vec(-1e10f, -1e10f, -1e10f);
+            lastdeath = 0;
             lastshot = 0;
         }
     };
@@ -916,6 +919,7 @@ struct fpsserver : igameserver
 
             case SV_TRYSPAWN:
                 if(m_arena || ci->state.state!=CS_DEAD) break;
+                if(ci->state.lastdeath) ci->state.respawn();
                 sendspawn(ci);
                 break;
 
@@ -923,6 +927,7 @@ struct fpsserver : igameserver
             {
                 int ls = getint(p);
                 if(m_arena || ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence) break;
+                if(ci->state.lastdeath) ci->state.respawn();
                 ci->state.state = CS_ALIVE;
                 if(m_capture && !notgotbases) cps.enterbases(ci->team, ci->state.o);
                 QUEUE_MSG;
@@ -1372,7 +1377,9 @@ struct fpsserver : igameserver
             sendf(-1, 1, "ri4", SV_DIED, target->clientnum, actor->clientnum, actor->state.frags);
             if(m_capture && !notgotbases) cps.leavebases(target->team, target->state.o);
             ts.state = CS_DEAD;
-            ts.respawn();
+            ts.lastdeath = gamemillis;
+            // don't issue respawn yet until DEATHMILLIS has elapsed
+            // ts.respawn();
         }
     }
 
@@ -1427,7 +1434,7 @@ struct fpsserver : igameserver
     {
         gamestate &gs = ci->state;
         int wait = gamemillis - gs.lastshot;
-        if(gs.state!=CS_ALIVE ||
+        if((gs.state!=CS_ALIVE && gamemillis - gs.lastdeath > DEATHMILLIS) ||
            (gs.gunwait && wait<gs.gunwait) ||
            e.gun<GUN_FIST || e.gun>GUN_PISTOL ||
            gs.ammo[e.gun]<=0)
