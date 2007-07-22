@@ -307,7 +307,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &hwtexsize);
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&hwtexsize);
 
     inittmus();
 

@@ -717,7 +717,8 @@ GLuint cubemapfromsky(int size)
     extern Texture *sky[6];
     if(!sky[0]) return 0;
     GLuint tex;
-    int w, h, tw, th;
+    int w, h;
+    GLint tw, th;
     uchar *pixels = NULL;
     glGenTextures(1, &tex);
     loopi(6)
