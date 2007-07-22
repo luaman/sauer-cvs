@@ -663,7 +663,7 @@ void addreflection(materialsurface &m)
     if(nowater) return;
 
     static const GLenum colorfmts[] = { GL_RGB, GL_RGB8, GL_FALSE },
-                        depthfmts[] = { GL_DEPTH_STENCIL_EXT, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32, GL_FALSE };
+                        depthfmts[] = { GL_DEPTH_STENCIL_EXT, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT32, GL_FALSE };
     const int stencilfmts = 2;
     static GLenum colorfmt = GL_FALSE, depthfmt = GL_FALSE, stencilfmt = GL_FALSE;
     char *buf = NULL;
