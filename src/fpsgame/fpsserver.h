@@ -1,3 +1,11 @@
+#ifdef WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#define _dup    dup
+#define _fileno fileno
+#endif
+
 struct fpsserver : igameserver
 {
     #define CAPTURESERV 1
@@ -197,6 +205,7 @@ struct fpsserver : igameserver
     #define MAXDEMOS 5
     vector<demofile> demos;
 
+    FILE *demotmp;
     gzFile demorecord, demoplayback;
     int nextplayback;
 
@@ -204,7 +213,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
@@ -409,36 +418,43 @@ struct fpsserver : igameserver
         writedemo(1, buf, p.len);
 
         gzclose(demorecord);
-
-        FILE *f = fopen("demorecord", "rb");
-        if(f)
-        {
-            fseek(f, 0, SEEK_END);
-            int len = ftell(f);
-            rewind(f);
-            if(demos.length()>=MAXDEMOS)
-            {
-                delete[] demos[0].data;
-                demos.remove(0);
-            }
-            demofile &d = demos.add();
-            time_t t = time(NULL);
-            char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
-            while(trim>timestr && isspace(*--trim)) *trim = '\0';
-            s_sprintf(d.info)("%s: %s, %s", timestr, modestr(gamemode), smapname);
-            d.data = new uchar[len];
-            d.len = len;
-            fread(d.data, 1, len, f);
-            fclose(f);
-        }
         demorecord = NULL;
+
+        if(!demotmp) return;
+
+        fseek(demotmp, 0, SEEK_END);
+        int len = ftell(demotmp);
+        rewind(demotmp);
+        if(demos.length()>=MAXDEMOS)
+        {
+            delete[] demos[0].data;
+            demos.remove(0);
+        }
+        demofile &d = demos.add();
+        time_t t = time(NULL);
+        char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
+        while(trim>timestr && isspace(*--trim)) *trim = '\0';
+        s_sprintf(d.info)("%s: %s, %s", timestr, modestr(gamemode), smapname);
+        d.data = new uchar[len];
+        d.len = len;
+        fread(d.data, 1, len, demotmp);
+        fclose(demotmp);
+        demotmp = NULL;
     }
 
     void setupdemorecord()
     {
         if(haslocalclients() || !m_mp(gamemode) || gamemode==1) return;
-        demorecord = gzopen("demorecord", "wb9");
-        if(!demorecord) return;
+        demotmp = tmpfile();
+        if(!demotmp) return;
+        setvbuf(demotmp, NULL, _IONBF, 0);
+        demorecord = gzdopen(_dup(_fileno(demotmp)), "wb9");
+        if(!demorecord)
+        {
+            fclose(demotmp);
+            demotmp = NULL;
+            return;
+        }
 
         uchar buf[MAXTRANS];
         ucharbuf p(buf, sizeof(buf));
@@ -488,7 +504,7 @@ struct fpsserver : igameserver
 
     void setupdemoplayback()
     {
-        demoplayback = gzopen(smapname, "rb9");
+        demoplayback = opengzfile(smapname, "rb9");
         if(!demoplayback) return;
 
         if(gzread(demoplayback, &nextplayback, sizeof(nextplayback))!=sizeof(nextplayback))

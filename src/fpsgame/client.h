@@ -904,7 +904,7 @@ struct clientcom : iclientcom
             case SV_SENDDEMO:
             {
                 s_sprintfd(fname)("demo_%d", cl.lastmillis);
-                FILE *demo = fopen(fname, "wb");
+                FILE *demo = openfile(fname, "wb");
                 if(!demo) return;
                 conoutf("received demo %s", fname);
                 fwrite(data, 1, len, demo);
@@ -919,13 +919,14 @@ struct clientcom : iclientcom
                 s_strcpy(oldname, cl.getclientmap());
                 s_sprintfd(mname)("getmap_%d", cl.lastmillis);
                 s_sprintfd(fname)("packages/base/%s.ogz", mname);
-                FILE *map = fopen(fname, "wb");
+                const char *file = findfile(fname, "wb");
+                FILE *map = fopen(file, "wb");
                 if(!map) return;
                 conoutf("received map");
                 fwrite(data, 1, len, map);
                 fclose(map);
                 load_world(mname, oldname[0] ? oldname : NULL);
-                remove(fname);
+                remove(file);
                 break;
             }
         }
@@ -958,7 +959,8 @@ struct clientcom : iclientcom
         s_sprintfd(mname)("sendmap_%d", cl.lastmillis);
         save_world(mname, true);
         s_sprintfd(fname)("packages/base/%s.ogz", mname);
-        FILE *map = fopen(fname, "rb");
+        const char *file = findfile(fname, "rb");
+        FILE *map = fopen(file, "rb");
         if(map)
         {
             fseek(map, 0, SEEK_END);
@@ -967,7 +969,7 @@ struct clientcom : iclientcom
             fclose(map);
         }
         else conoutf("could not read map");
-        remove(fname);
+        remove(file);
     }
 
     void gotoplayer(const char *arg)
