@@ -276,6 +276,9 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glGenerateMipmap_          = (PFNGLGENERATEMIPMAPEXTPROC)         getprocaddress("glGenerateMipmapEXT");
         hasFBO = true;
         //conoutf("Using GL_EXT_framebuffer_object extension.");
+        
+        extern int hwmipmap;
+        if(strstr(vendor, "ATI")) hwmipmap = 0;
     }
     else conoutf("WARNING: No framebuffer object support. (reflective water may be slow)");
 

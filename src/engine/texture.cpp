@@ -101,9 +101,6 @@ VARP(hwmipmap, 0, 1, 1);
 
 bool canhwmipmap(GLenum format)
 {
-#ifdef __APPLE__
-    return false;
-#else
     if(hwmipmap && hasFBO) switch(format)
     {
         case GL_RGB5:
@@ -112,7 +109,6 @@ bool canhwmipmap(GLenum format)
         case GL_RGBA: return true;
     }
     return false;
-#endif
 }
 
 GLenum compressedformat(GLenum format, int w, int h)
