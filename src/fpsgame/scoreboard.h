@@ -6,7 +6,9 @@ struct scoreboard : g3d_callback
     vec menupos;
     int menustart;
     fpsclient &cl;
-    
+
+    IVARP(showclientnum, 0, 0, 1);
+
     scoreboard(fpsclient &_cl) : scoreson(false), cl(_cl)
     {
         CCOMMAND(scoreboard, showscores, "D", self->showscores(args!=NULL));
@@ -118,8 +120,6 @@ struct scoreboard : g3d_callback
         else if(m_teammode) g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
         else g.text("frags\tpj\tping\tname", 0xFFFF80, "server");
 
-        bool showclientnum = cl.cc.currentmaster>=0 && cl.cc.currentmaster==cl.player1->clientnum;
-        
         vector<fpsent *> sbplayers;
         sortplayers(sbplayers);
       
@@ -140,11 +140,11 @@ struct scoreboard : g3d_callback
         {
             fpsent *o = sbplayers[i];
             const char *status = "";
-            if(cl.cc.currentmaster>=0 && cl.cc.currentmaster==o->clientnum) status = "\f0";
+            if(o->privilege) status = o->privilege>=PRIV_ADMIN ? "\f6" : "\f0";
             else if(o->state==CS_DEAD) status = "\f4";
             string name, team;
             if(cl.duplicatename(o)) s_sprintf(name)("%s%s", status, cl.colorname(o));
-            else if(showclientnum) s_sprintf(name)("%s%s \f0(%d)", status, cl.colorname(o), o->clientnum);
+            else if(showclientnum() || cl.player1->privilege>=PRIV_MASTER) s_sprintf(name)("%s%s \f0(%d)", status, cl.colorname(o), o->clientnum);
             else s_sprintf(name)("%s%s", status, cl.colorname(o));
             if(m_teammode)
             {

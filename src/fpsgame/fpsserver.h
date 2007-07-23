@@ -138,7 +138,8 @@ struct fpsserver : igameserver
         int clientnum;
         string name, team, mapvote;
         int modevote;
-        bool master, spectator, local;
+        int privilege;
+        bool spectator, local;
         int gameoffset;
         gamestate state;
         vector<gameevent> events;
@@ -157,7 +158,8 @@ struct fpsserver : igameserver
         void reset()
         {
             name[0] = team[0] = 0;
-            master = spectator = local = false;
+            privilege = PRIV_NONE;
+            spectator = local = false;
             position.setsizenodelete(0);
             messages.setsizenodelete(0);
             mapchange();
@@ -208,6 +210,7 @@ struct fpsserver : igameserver
     #define MAXDEMOS 5
     vector<demofile> demos;
 
+    bool demonextmatch;
     FILE *demotmp;
     gzFile demorecord, demoplayback;
     int nextplayback;
@@ -216,7 +219,7 @@ struct fpsserver : igameserver
 
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
 
     void *newinfo() { return new clientinfo; }
     void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
@@ -233,7 +236,7 @@ struct fpsserver : igameserver
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
             "capture",
         };
-        return (n>=-3 && size_t(n+2)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+3] : "unknown";
+        return (n>=-3 && size_t(n+3)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+3] : "unknown";
     }
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); }
@@ -279,16 +282,16 @@ struct fpsserver : igameserver
     void vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(ci->state.state==CS_SPECTATOR && !ci->master) return;
+        if(ci->state.state==CS_SPECTATOR && !ci->privilege) return;
         s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
         if(!ci->mapvote[0]) return;
-        if(ci->local || mapreload || (ci->master && mastermode>=MM_VETO))
+        if(ci->local || mapreload || (ci->privilege && mastermode>=MM_VETO))
         {
             if(demorecord) enddemorecord();
             if(!ci->local && !mapreload) 
             {
-                s_sprintfd(msg)("master forced %s on map %s", modestr(reqmode), map);
+                s_sprintfd(msg)("%s forced %s on map %s", privname(ci->privilege), modestr(reqmode), map);
                 sendservmsg(msg);
             }
             sendf(-1, 1, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
@@ -409,16 +412,6 @@ struct fpsserver : igameserver
     void enddemorecord()
     {
         if(!demorecord) return;
-        uchar buf[MAXTRANS];
-        ucharbuf p(buf, sizeof(buf));
-
-        loopv(clients)
-        {
-            clientinfo *ci = clients[i];
-            putint(p, SV_CDIS);
-            putint(p, ci->clientnum);
-        }
-        writedemo(1, buf, p.len);
 
         gzclose(demorecord);
         demorecord = NULL;
@@ -437,7 +430,9 @@ struct fpsserver : igameserver
         time_t t = time(NULL);
         char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
         while(trim>timestr && isspace(*--trim)) *trim = '\0';
-        s_sprintf(d.info)("%s: %s, %s", timestr, modestr(gamemode), smapname);
+        s_sprintf(d.info)("%s: %s, %s, %.2f%s", timestr, modestr(gamemode), smapname, len > 1024*1024 ? len/(1024*1024.f) : len/1024.0f, len > 1024*1024 ? "MB" : "kB");
+        s_sprintfd(msg)("demo \"%s\" recorded", d.info);
+        sendservmsg(msg);
         d.data = new uchar[len];
         d.len = len;
         fread(d.data, 1, len, demotmp);
@@ -451,6 +446,9 @@ struct fpsserver : igameserver
         demotmp = tmpfile();
         if(!demotmp) return;
         setvbuf(demotmp, NULL, _IONBF, 0);
+
+        sendservmsg("recording demo");
+
         demorecord = gzdopen(_dup(_fileno(demotmp)), "wb9");
         if(!demorecord)
         {
@@ -458,6 +456,14 @@ struct fpsserver : igameserver
             demotmp = NULL;
             return;
         }
+
+        demoheader hdr;
+        memcpy(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic));
+        hdr.version = DEMO_VERSION;
+        hdr.protocol = PROTOCOL_VERSION;
+        endianswap(&hdr.version, sizeof(int), 1);
+        endianswap(&hdr.protocol, sizeof(int), 1);
+        gzwrite(demorecord, &hdr, sizeof(demoheader));
 
         uchar buf[MAXTRANS];
         ucharbuf p(buf, sizeof(buf));
@@ -497,9 +503,26 @@ struct fpsserver : igameserver
         if(!packet->referenceCount) enet_packet_destroy(packet);
     }
 
+    void cleardemos(int n)
+    {
+        if(!n)
+        {
+            loopv(demos) delete[] demos[i].data;
+            demos.setsize(0);
+            sendservmsg("cleared all demos");
+        }
+        else if(demos.inrange(n-1))
+        {
+            delete[] demos[n-1].data;
+            demos.remove(n-1);
+            s_sprintfd(msg)("cleared demo %d", n);
+            sendservmsg(msg);
+        }
+    }
+
     void senddemo(int cn, int num)
     {
-        if(!num) num = demos.length()-1;
+        if(!num) num = demos.length();
         if(!demos.inrange(num-1)) return;
         demofile &d = demos[num-1];
         sendf(cn, 2, "rim", SV_SENDDEMO, d.len, d.data); 
@@ -507,8 +530,31 @@ struct fpsserver : igameserver
 
     void setupdemoplayback()
     {
+        demoheader hdr;
+        string msg;
+        msg[0] = '\0';
         demoplayback = opengzfile(smapname, "rb9");
-        if(!demoplayback) return;
+        if(!demoplayback) s_sprintf(msg)("could not read demo \"%s\"", smapname);
+        else if(gzread(demoplayback, &hdr, sizeof(demoheader))!=sizeof(demoheader) || memcmp(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic)))
+            s_sprintf(msg)("\"%s\" is not a demo file", smapname);
+        else 
+        { 
+            endianswap(&hdr.version, sizeof(int), 1);
+            endianswap(&hdr.protocol, sizeof(int), 1);
+            if(hdr.version!=DEMO_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", smapname, hdr.version<DEMO_VERSION ? "older" : "newer");
+            else if(hdr.protocol!=PROTOCOL_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", smapname, hdr.protocol<PROTOCOL_VERSION ? "older" : "newer");
+        }
+        if(msg[0])
+        {
+            if(demoplayback) { gzclose(demoplayback); demoplayback = NULL; }
+            sendservmsg(msg);
+            return;
+        }
+
+        s_sprintf(msg)("playing demo \"%s\"", smapname);
+        sendservmsg(msg);
+
+        sendf(-1, 1, "rii", SV_DEMOPLAYBACK, 1);
 
         if(gzread(demoplayback, &nextplayback, sizeof(nextplayback))!=sizeof(nextplayback))
         {
@@ -524,7 +570,9 @@ struct fpsserver : igameserver
         gzclose(demoplayback);
         demoplayback = NULL;
 
-        sendf(-1, 1, "riii", SV_SPECTATOR, -1, 0);
+        sendf(-1, 1, "rii", SV_DEMOPLAYBACK, 0);
+
+        sendservmsg("demo playback finished");
 
         loopv(clients)
         {
@@ -602,7 +650,11 @@ struct fpsserver : igameserver
         }
 
         if(m_demo) setupdemoplayback();
-        else setupdemorecord();
+        else if(demonextmatch)
+        {
+            demonextmatch = false;
+            setupdemorecord();
+        }
     }
 
     savedscore &findscore(clientinfo *ci, bool insert)
@@ -654,7 +706,7 @@ struct fpsserver : igameserver
         loopv(clients)
         {
             clientinfo *oi = clients[i];
-            if(oi->state.state==CS_SPECTATOR && !oi->master) continue;
+            if(oi->state.state==CS_SPECTATOR && !oi->privilege) continue;
             maxvotes++;
             if(!oi->mapvote[0]) continue;
             votecount *vc = NULL;
@@ -732,7 +784,7 @@ struct fpsserver : igameserver
         if(ci && ci->local) return type;
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_CLIENTPING, SV_GETMAP, SV_SETMASTER };
-        if(ci && ci->state.state==CS_SPECTATOR && !ci->master)
+        if(ci && ci->state.state==CS_SPECTATOR && !ci->privilege)
         {
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
             return -1;
@@ -740,7 +792,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_SENDDEMOLIST, SV_SENDDEMO, SV_SENDMAP, SV_CLIENT };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_ANNOUNCE, SV_SENDDEMOLIST, SV_SENDDEMO, SV_DEMOPLAYBACK, SV_SENDMAP, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     }
@@ -1130,7 +1182,7 @@ struct fpsserver : igameserver
             case SV_MASTERMODE:
             {
                 int mm = getint(p);
-                if(ci->master && mm>=MM_OPEN && mm<=MM_PRIVATE && (mastermask&(1<<mm)))
+                if(ci->privilege && mm>=MM_OPEN && mm<=MM_PRIVATE && (ci->privilege>=PRIV_ADMIN || (mastermask&(1<<mm))))
                 {
                     mastermode = mm;
                     s_sprintfd(s)("mastermode is now %d", mastermode);
@@ -1142,7 +1194,7 @@ struct fpsserver : igameserver
             case SV_KICK:
             {
                 int victim = getint(p);
-                if(ci->master && victim>=0 && victim<getnumclients() && ci->clientnum!=victim && getinfo(victim))
+                if(ci->privilege && victim>=0 && victim<getnumclients() && ci->clientnum!=victim && getinfo(victim))
                 {
                     ban &b = bannedips.add();
                     b.time = totalmillis;
@@ -1155,7 +1207,7 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if(!ci->master && spectator!=sender) break;
+                if(!ci->privilege && spectator!=sender) break;
                 clientinfo *spinfo = (clientinfo *)getinfo(spectator);
                 if(!spinfo) break;
 
@@ -1180,7 +1232,7 @@ struct fpsserver : igameserver
                 int who = getint(p);
                 getstring(text, p);
                 filtertext(text, text, false, MAXTEAMLEN);
-                if(!ci->master || who<0 || who>=getnumclients()) break;
+                if(!ci->privilege || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
                 if(m_capture && !notgotbases && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->state.o);
@@ -1195,6 +1247,31 @@ struct fpsserver : igameserver
             case SV_FORCEINTERMISSION:
                 if(m_sp) startintermission();
                 break;
+
+            case SV_RECORDDEMO:
+            {
+                if(ci->privilege<PRIV_ADMIN) break;
+                demonextmatch = getint(p)!=0;
+                s_sprintfd(msg)("demo recording is %s for next match", demonextmatch ? "enabled" : "disabled"); 
+                sendservmsg(msg);
+                break;
+            }
+
+            case SV_STOPDEMO:
+            {
+                if(!ci->local && ci->privilege<PRIV_ADMIN) break;
+                if(m_demo) enddemoplayback();
+                else enddemorecord();
+                break;
+            }
+
+            case SV_CLEARDEMOS:
+            {
+                int demo = getint(p);
+                if(ci->privilege<PRIV_ADMIN) break;
+                cleardemos(demo);
+                break;
+            }
 
             case SV_LISTDEMOS:
                 listdemos(sender);
@@ -1272,7 +1349,7 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        if(ci && m_mp(gamemode) && ci->state.state!=CS_SPECTATOR)
+        if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
         {
             if(m_arena && clients.length()>2) 
             {
@@ -1295,12 +1372,12 @@ struct fpsserver : igameserver
                 loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
             }
         }
-        if(n<0 || (ci && ci->state.state==CS_SPECTATOR))
+        if(ci && ci->state.state==CS_SPECTATOR)
         {
             putint(p, SV_SPECTATOR);
             putint(p, n);
             putint(p, 1);
-            if(n>=0) sendf(-1, 1, "ri3x", SV_SPECTATOR, n, 1, n);   
+            sendf(-1, 1, "ri3x", SV_SPECTATOR, n, 1, n);   
         }
         if(clients.length()>1)
         {
@@ -1544,7 +1621,12 @@ struct fpsserver : igameserver
 
         while(bannedips.length() && bannedips[0].time-totalmillis>4*60*60*1000) bannedips.remove(0);
         
-        if(masterupdate) { sendf(-1, 1, "ri2", SV_CURRENTMASTER, currentmaster); masterupdate = false; } 
+        if(masterupdate) 
+        { 
+            clientinfo *m = currentmaster>=0 ? (clientinfo *)getinfo(currentmaster) : NULL;
+            sendf(-1, 1, "ri3", SV_CURRENTMASTER, currentmaster, m ? m->privilege : 0); 
+            masterupdate = false; 
+        } 
     
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis-curtime>0 && gamemillis/(60*1000)!=(gamemillis-curtime)/(60*1000)) checkintermission();
         if(interm && gamemillis>interm)
@@ -1563,23 +1645,44 @@ struct fpsserver : igameserver
         smapname[0] = 0;
         resetitems();
     }
-    
+   
+    const char *privname(int type)
+    {
+        switch(type)
+        {
+            case PRIV_ADMIN: return "admin";
+            case PRIV_MASTER: return "master";
+            default: return "unknown";
+        }
+    }
+
     void setmaster(clientinfo *ci, bool val, const char *pass = "")
     {
+        const char *name = "";
         if(val) 
         {
-            if(ci->master) return;
-            if(ci->state.state==CS_SPECTATOR && (!masterpass[0] || !pass[0])) return;
-            loopv(clients) if(clients[i]->master)
+            if(ci->privilege)
             {
-                if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->master = false;
+                if(!pass[0]==(ci->privilege!=PRIV_ADMIN)) return;
+            }
+            else if(ci->state.state==CS_SPECTATOR && (!masterpass[0] || !pass[0])) return;
+            loopv(clients) if(i!=ci->clientnum && clients[i]->privilege)
+            {
+                if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->privilege = PRIV_NONE;
                 else return;
             }
+            if(masterpass[0] && pass[0] && !strcmp(masterpass, pass)) ci->privilege = PRIV_ADMIN;
+            else ci->privilege = PRIV_MASTER;
+            name = privname(ci->privilege);
         }        
-        else if(!ci->master) return;
-        ci->master = val;
+        else 
+        {
+            if(!ci->privilege) return;
+            name = privname(ci->privilege);
+            ci->privilege = 0;
+        }
         mastermode = MM_OPEN;
-        s_sprintfd(msg)("%s %s master", colorname(ci), val ? "claimed" : "relinquished");
+        s_sprintfd(msg)("%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
         sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;
@@ -1616,7 +1719,7 @@ struct fpsserver : igameserver
     void clientdisconnect(int n) 
     { 
         clientinfo *ci = (clientinfo *)getinfo(n);
-        if(ci->master) setmaster(ci, false);
+        if(ci->privilege) setmaster(ci, false);
         if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.leavebases(ci->team, ci->state.o);
         ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed; 
         savescore(ci);
@@ -1671,7 +1774,7 @@ struct fpsserver : igameserver
     {
         if(gamemode != 1 || len > 1024*1024) return;
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(ci->state.state==CS_SPECTATOR && !ci->master) return;
+        if(ci->state.state==CS_SPECTATOR && !ci->privilege) return;
         if(mapdata) { fclose(mapdata); mapdata = NULL; }
         if(!len) return;
         mapdata = tmpfile();

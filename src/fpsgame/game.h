@@ -80,8 +80,10 @@ enum
     S_V_RESPAWNPOINT, 
 };
 
-
 // network messages codes, c2s, c2c, s2c
+
+enum { PRIV_NONE = 0, PRIV_MASTER, PRIV_ADMIN };
+
 enum
 {
     SV_INITS2C = 0, SV_INITC2S, SV_POS, SV_TEXT, SV_SOUND, SV_CDIS,
@@ -97,6 +99,7 @@ enum
     SV_MASTERMODE, SV_KICK, SV_CURRENTMASTER, SV_SPECTATOR, SV_SETMASTER, SV_SETTEAM,
     SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_FORCEINTERMISSION, SV_ANNOUNCE,
     SV_LISTDEMOS, SV_SENDDEMOLIST, SV_GETDEMO, SV_SENDDEMO,
+    SV_DEMOPLAYBACK, SV_RECORDDEMO, SV_STOPDEMO, SV_CLEARDEMOS,
     SV_CLIENT,
 };
 
@@ -114,9 +117,10 @@ static char msgsizelookup(int msg)
         SV_TIMEUP, 2, SV_MAPRELOAD, 1, SV_ITEMACC, 3,
         SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 0,
         SV_EDITMODE, 2, SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_NEWMAP, 2, SV_GETMAP, 1, SV_SENDMAP, 0,
-        SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 2, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
+        SV_MASTERMODE, 2, SV_KICK, 2, SV_CURRENTMASTER, 3, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0,
         SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
         SV_LISTDEMOS, 1, SV_SENDDEMOLIST, 0, SV_GETDEMO, 2, SV_SENDDEMO, 0,
+        SV_DEMOPLAYBACK, 2, SV_RECORDDEMO, 2, SV_STOPDEMO, 1, SV_CLEARDEMOS, 2,
         SV_CLIENT, 0,
         -1
     };
@@ -127,6 +131,14 @@ static char msgsizelookup(int msg)
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
 #define PROTOCOL_VERSION 254            // bump when protocol changes
+#define DEMO_VERSION 1                  // bump when demo format changes
+#define DEMO_MAGIC "SAUERBRATEN_DEMO"
+
+struct demoheader
+{
+    char magic[16]; 
+    int version, protocol;
+};
 
 #define MAXNAMELEN 15
 #define MAXTEAMLEN 4
@@ -303,7 +315,7 @@ struct fpsstate
 struct fpsent : dynent, fpsstate
 {   
     int weight;                         // affects the effectiveness of hitpush
-    int clientnum, lastupdate, plag, ping;
+    int clientnum, privilege, lastupdate, plag, ping;
     int lifesequence;                   // sequence id for each respawn, used in damage test
     int lastpain;
     int lastaction, lastattackgun;
@@ -316,7 +328,7 @@ struct fpsent : dynent, fpsstate
 
     string name, team, info;
 
-    fpsent() : weight(100), clientnum(-1), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
+    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
                { name[0] = team[0] = info[0] = 0; respawn(); }
     ~fpsent() { freeeditinfo(edit); }
 

@@ -328,6 +328,18 @@ struct fpsclient : igameclient
         return players.inrange(cn) ? players[cn] : NULL;
     }
 
+    void clientdisconnected(int cn)
+    {
+        if(!players.inrange(cn)) return;
+        fpsent *d = players[cn];
+        if(!d) return; 
+        if(d->name[0]) conoutf("player %s disconnected", colorname(d));
+        ws.removebouncers(d);
+        ws.removeprojectiles(d);
+        DELETEP(players[cn]);
+        cleardynentcache();
+    }
+
     void initclient()
     {
         clientmap[0] = 0;

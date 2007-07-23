@@ -147,6 +147,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
                 case '3': color = bvec(255,  64,  64); break;   // red: important errors
                 case '4': color = bvec(128, 128, 128); break;   // gray
                 case '5': color = bvec(192,  64, 192); break;   // magenta
+                case '6': color = bvec(255, 128,   0); break;   // orange
                 case 's': // save color
                     if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) colorstack[colorpos++] = color;
                     continue;

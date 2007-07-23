@@ -9,12 +9,11 @@ struct clientcom : iclientcom
 
     bool connected, remote;
 
-    int currentmaster;
     bool spectator;
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), currentmaster(-1), spectator(false), player1(_cl.player1)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
         CCOMMAND(clientcom, name, "s", self->switchname(args[0]));
@@ -30,6 +29,9 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, sendmap, "", self->sendmap());
         CCOMMAND(clientcom, listdemos, "", self->listdemos());
         CCOMMAND(clientcom, getdemo, "", self->getdemo(args[0]));
+        CCOMMAND(clientcom, recorddemo, "s", self->recorddemo(args[0]));
+        CCOMMAND(clientcom, stopdemo, "", self->stopdemo());
+        CCOMMAND(clientcom, cleardemos, "s", self->cleardemos(args[0]));
 
         extern void result(const char *s);
         CCOMMAND(clientcom, getname, "", result(self->player1->name));
@@ -58,7 +60,7 @@ struct clientcom : iclientcom
 
     int numchannels() { return 3; }
 
-    void mapstart() { if(!spectator || currentmaster==player1->clientnum) senditemstoserver = true; }
+    void mapstart() { if(!spectator || player1->privilege) senditemstoserver = true; }
 
     void initclientnet()
     {
@@ -82,7 +84,7 @@ struct clientcom : iclientcom
         player1->clientnum = -1;
         c2sinit = false;
         player1->lifesequence = 0;
-        currentmaster = -1;
+        player1->privilege = PRIV_NONE;
         spectator = false;
         loopv(cl.players) DELETEP(cl.players[i]);
         cleardynentcache();
@@ -159,7 +161,7 @@ struct clientcom : iclientcom
 
     void addmsg(int type, const char *fmt = NULL, ...)
     {
-        if(remote && spectator && (currentmaster!=player1->clientnum || type<SV_MASTERMODE))
+        if(remote && spectator && (!player1->privilege || type<SV_MASTERMODE))
         {
             static int spectypes[] = { SV_MAPVOTE, SV_GETMAP, SV_TEXT, SV_SETMASTER };
             bool allowed = false;
@@ -523,18 +525,8 @@ struct clientcom : iclientcom
             }
 
             case SV_CDIS:
-            {
-                int cn = getint(p);
-                fpsent *d = cl.getclient(cn);
-                if(!d) break;
-                if(d->name[0]) conoutf("player %s disconnected", cl.colorname(d));
-                cl.ws.removebouncers(d);
-                cl.ws.removeprojectiles(d);
-                DELETEP(cl.players[cn]);
-                cleardynentcache();
-                if(currentmaster==cn) currentmaster = -1;
+                cl.clientdisconnected(getint(p));
                 break;
-            }
 
             case SV_SPAWN:
             {
@@ -745,7 +737,8 @@ struct clientcom : iclientcom
             case SV_SENDDEMOLIST:
             {
                 int demos = getint(p);
-                loopi(demos)
+                if(!demos) conoutf("no demos available");
+                else loopi(demos)
                 {
                     getstring(text, p);
                     conoutf("%d. %s", i+1, text);
@@ -753,9 +746,26 @@ struct clientcom : iclientcom
                 break;
             }
 
-            case SV_CURRENTMASTER:
-                currentmaster = getint(p);
+            case SV_DEMOPLAYBACK:
+            {
+                int on = getint(p);
+                if(on) player1->state = CS_SPECTATOR;
+                else stopdemo();
                 break;
+            }
+
+            case SV_CURRENTMASTER:
+            {
+                int mn = getint(p), priv = getint(p);
+                player1->privilege = PRIV_NONE;
+                loopv(cl.players) if(cl.players[i]) cl.players[i]->privilege = PRIV_NONE;
+                if(mn>=0)
+                {
+                    fpsent *m = mn==player1->clientnum ? player1 : cl.newclient(mn);
+                    m->privilege = priv;
+                }
+                break;
+            }
 
             case SV_EDITMODE:
             {
@@ -890,7 +900,7 @@ struct clientcom : iclientcom
 
     void changemap(const char *name) // request map change, server may ignore
     {
-        if(!spectator || currentmaster==player1->clientnum) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
+        if(!spectator || player1->privilege) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
     }
         
     void receivefile(uchar *data, int len)
@@ -906,7 +916,7 @@ struct clientcom : iclientcom
                 s_sprintfd(fname)("demo_%d", cl.lastmillis);
                 FILE *demo = openfile(fname, "wb");
                 if(!demo) return;
-                conoutf("received demo %s", fname);
+                conoutf("received demo \"%s\"", fname);
                 fwrite(data, 1, len, demo);
                 fclose(demo);
                 break;
@@ -939,10 +949,39 @@ struct clientcom : iclientcom
         addmsg(SV_GETMAP, "r");
     }
 
+    void stopdemo()
+    {
+        if(remote)
+        {
+            if(player1->privilege<PRIV_ADMIN) return;
+            addmsg(SV_STOPDEMO, "r");
+        }
+        else
+        {
+            loopv(cl.players) if(cl.players[i]) cl.clientdisconnected(i);
+
+            extern igameserver *sv;
+            ((fpsserver *)sv)->enddemoplayback();
+        }
+    }
+
+    void recorddemo(char *arg)
+    {
+        if(player1->privilege<PRIV_ADMIN) return;
+        addmsg(SV_RECORDDEMO, "ri", atoi(arg));   
+    }
+
+    void cleardemos(char *arg)
+    {
+        if(player1->privilege<PRIV_ADMIN) return;
+        addmsg(SV_CLEARDEMOS, "ri", atoi(arg));
+    }
+
     void getdemo(char *arg)
     {
         int i = atoi(arg);
-        conoutf("getting demo %d...", i);
+        if(i<=0) conoutf("getting demo...");
+        else conoutf("getting demo %d...", i);
         addmsg(SV_GETDEMO, "ri", i);
     }
 
@@ -954,7 +993,7 @@ struct clientcom : iclientcom
 
     void sendmap()
     {
-        if(cl.gamemode!=1 || (spectator && currentmaster!=player1->clientnum)) { conoutf("\"sendmap\" only works in coopedit mode"); return; }
+        if(cl.gamemode!=1 || (spectator && !player1->privilege)) { conoutf("\"sendmap\" only works in coopedit mode"); return; }
         conoutf("sending map...");
         s_sprintfd(mname)("sendmap_%d", cl.lastmillis);
         save_world(mname, true);
