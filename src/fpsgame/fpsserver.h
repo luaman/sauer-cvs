@@ -722,9 +722,9 @@ struct fpsserver : igameserver
         loopv(votes) if(!best || votes[i].count > best->count || (votes[i].count == best->count && rnd(2))) best = &votes[i];
         if(force || (best && best->count > maxvotes/2))
         {
+            if(demorecord) enddemorecord();
             if(best && (best->count > (force ? 1 : maxvotes/2)))
             { 
-                if(demorecord) enddemorecord();
                 sendservmsg(force ? "vote passed by default" : "vote passed by majority");
                 sendf(-1, 1, "risi", SV_MAPCHANGE, best->map, best->mode);
                 changemap(best->map, best->mode); 
