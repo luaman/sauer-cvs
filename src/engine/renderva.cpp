@@ -235,7 +235,12 @@ void resetqueries()
 
 void clearqueries()
 {
-    loopi(2) loopj(queryframes[i].max) glDeleteQueries_(1, &queryframes[i].queries[j].id);
+    loopi(2)
+    {
+        queryframe &qf = queryframes[i];
+        loopj(qf.max) glDeleteQueries_(1, &qf.queries[j].id);
+        qf.cur = qf.max = 0;
+    }
 }
 
 VAR(oqfrags, 0, 8, 64);
