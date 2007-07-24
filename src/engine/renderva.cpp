@@ -233,6 +233,11 @@ void resetqueries()
     loopi(2) loopj(queryframes[i].max) queryframes[i].queries[j].owner = NULL;
 }
 
+void clearqueries()
+{
+    loopi(2) loopj(queryframes[i].max) glDeleteQueries_(1, &queryframes[i].queries[j].id);
+}
+
 VAR(oqfrags, 0, 8, 64);
 VAR(oqreflect, 0, 4, 64);
 
