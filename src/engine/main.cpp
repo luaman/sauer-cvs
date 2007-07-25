@@ -9,8 +9,6 @@ void cleanup()
     cleanupserver();
     SDL_ShowCursor(1);
     freeocta(worldroot);
-    // ATI cards barf unless OQs are cleaned up before exit
-    extern void clearqueries();  clearqueries();
     extern void clear_command(); clear_command();
     extern void clear_console(); clear_console();
     extern void clear_mdls();    clear_mdls();
