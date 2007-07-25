@@ -8,10 +8,6 @@
 
 struct fpsserver : igameserver
 {
-    #define CAPTURESERV 1
-    #include "capture.h"
-    #undef CAPTURESERV
-
     struct server_entity            // server side version of "entity" type
     {
         int type;
@@ -177,7 +173,9 @@ struct fpsserver : igameserver
         int time;
         uint ip;
     };
-    
+   
+    enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
+ 
     bool notgotitems, notgotbases;        // true when map has changed and waiting for clients to send item
     int gamemode;
     int gamemillis, gamelimit;
@@ -215,11 +213,83 @@ struct fpsserver : igameserver
     gzFile demorecord, demoplayback;
     int nextplayback;
 
-    captureserv cps;
+    struct servmode
+    {
+        fpsserver &sv;
 
-    enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
+        servmode(fpsserver &sv) : sv(sv) {}
+        virtual ~servmode() {}
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), cps(*this) {}
+        virtual void entergame(clientinfo *ci) {}
+        virtual void leavegame(clientinfo *ci) {}
+
+        virtual void moved(clientinfo *ci, const vec &oldpos, const vec &newpos) {}
+        virtual bool canspawn(clientinfo *ci, bool connecting = false) { return true; }
+        virtual void spawned(clientinfo *ci) {}
+        virtual void died(clientinfo *victim, clientinfo *actor) {}
+        virtual void changeteam(clientinfo *ci, const char *oldteam, const char *newteam) {}
+        virtual void initclient(clientinfo *ci, ucharbuf &p, bool connecting) {}
+        virtual void update() {}
+        virtual void reset(bool empty) {}
+        virtual void intermission() {}
+    };
+
+    struct arenaservmode : servmode
+    {
+        int arenaround;
+
+        arenaservmode(fpsserver &sv) : servmode(sv), arenaround(0) {}
+
+        bool canspawn(clientinfo *ci, bool connecting = false) 
+        { 
+            if(connecting && sv.nonspectators(ci->clientnum)<=1) return true;
+            return false; 
+        }
+
+        void reset(bool empty)
+        {
+            arenaround = 0;
+        }
+    
+        void update()
+        {
+            if(sv.interm || sv.gamemillis<arenaround || !sv.nonspectators()) return;
+    
+            if(arenaround)
+            {
+                arenaround = 0;
+                loopv(sv.clients) if(sv.clients[i]->state.state==CS_DEAD || sv.clients[i]->state.state==CS_ALIVE) sv.sendspawn(sv.clients[i]);
+                return;
+            }
+
+            int gamemode = sv.gamemode;
+            clientinfo *alive = NULL;
+            bool dead = false;
+            loopv(sv.clients)
+            {
+                clientinfo *ci = sv.clients[i];
+                if(ci->state.state==CS_DEAD) dead = true;
+                else if(ci->state.state==CS_ALIVE)
+                {
+                    if(!alive) alive = ci;
+                    else if(!m_teammode || strcmp(alive->team, ci->team)) return;
+                }
+            }
+            if(!dead) return;
+            sendf(-1, 1, "ri2", SV_ARENAWIN, !alive ? -1 : alive->clientnum);
+            arenaround = sv.gamemillis+5000;
+        }
+    };
+
+    #define CAPTURESERV 1
+    #include "capture.h"
+    #undef CAPTURESERV
+
+    arenaservmode arenamode;
+    captureservmode capturemode;
+    servmode *smode;
+
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) {}
 
     void *newinfo() { return new clientinfo; }
     void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
@@ -241,7 +311,11 @@ struct fpsserver : igameserver
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); }
 
-    void resetitems() { sents.setsize(0); cps.reset(); }
+    void resetitems() 
+    { 
+        sents.setsize(0);
+        //cps.reset(); 
+    }
 
     int spawntime(int type)
     {
@@ -630,9 +704,7 @@ struct fpsserver : igameserver
         interm = 0;
         s_strcpy(smapname, s);
         resetitems();
-        arenaround = 0;
         notgotitems = true;
-        notgotbases = m_capture;
         scores.setsize(0);
         loopv(clients)
         {
@@ -640,6 +712,12 @@ struct fpsserver : igameserver
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
         }
         if(m_teammode) autoteam();
+
+        if(m_arena) smode = &arenamode;
+        else if(m_capture) smode = &capturemode;
+        else smode = NULL;
+        if(smode) smode->reset(false);
+
         if(gamemode>1 || (gamemode==0 && hasnonlocalclients())) sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
         loopv(clients)
         {
@@ -742,41 +820,6 @@ struct fpsserver : igameserver
         int n = 0;
         loopv(clients) if(i!=exclude && clients[i]->state.state!=CS_SPECTATOR) n++;
         return n;
-    }
-
-    void arenareset()
-    {
-        if(!m_arena) return;
-    
-        arenaround = 0;
-        loopv(clients) if(clients[i]->state.state==CS_DEAD || clients[i]->state.state==CS_ALIVE) sendspawn(clients[i]);
-    }   
-
-    void arenacheck()
-    {
-        if(!m_arena || interm || gamemillis<arenaround || !nonspectators()) return;
-
-        if(arenaround)
-        {
-            arenareset();
-            return;
-        }
-
-        clientinfo *alive = NULL;
-        bool dead = false;
-        loopv(clients)
-        {
-            clientinfo *ci = clients[i];
-            if(ci->state.state==CS_DEAD) dead = true;
-            else if(ci->state.state==CS_ALIVE) 
-            {
-                if(!alive) alive = ci;
-                else if(!m_teammode || strcmp(alive->team, ci->team)) return;
-            }
-        }
-        if(!dead) return;
-        sendf(-1, 1, "ri2", SV_ARENAWIN, !alive ? -1 : alive->clientnum);
-        arenaround = gamemillis+5000;
     }
 
     int checktype(int type, clientinfo *ci)
@@ -953,7 +996,7 @@ struct fpsserver : igameserver
                     putuint(buf, f);
                     ci->position.addbuf(buf);
                 }
-                if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.movebases(ci->team, oldpos, ci->state.o);
+                if(smode && ci->state.state==CS_ALIVE) smode->moved(ci, oldpos, ci->state.o);
                 break;
             }
 
@@ -961,10 +1004,10 @@ struct fpsserver : igameserver
             {
                 int val = getint(p);
                 if(ci->state.state!=(val ? CS_ALIVE : CS_EDITING) || (!ci->local && gamemode!=1)) break;
-                if(m_capture && !notgotbases)
+                if(smode)
                 {
-                    if(val) cps.leavebases(ci->team, ci->state.o);
-                    else cps.enterbases(ci->team, ci->state.o);
+                    if(val) smode->leavegame(ci);
+                    else smode->entergame(ci);
                 }
                 ci->state.state = val ? CS_EDITING : CS_ALIVE;
                 if(val)
@@ -977,7 +1020,7 @@ struct fpsserver : igameserver
             }
 
             case SV_TRYSPAWN:
-                if(m_arena || ci->state.state!=CS_DEAD) break;
+                if(ci->state.state!=CS_DEAD || (smode && !smode->canspawn(ci))) break;
                 if(ci->state.lastdeath) ci->state.respawn();
                 sendspawn(ci);
                 break;
@@ -985,10 +1028,10 @@ struct fpsserver : igameserver
             case SV_SPAWN:
             {
                 int ls = getint(p);
-                if(m_arena || ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence) break;
+                if(ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence || (smode && !smode->canspawn(ci))) break;
                 if(ci->state.lastdeath) ci->state.respawn();
                 ci->state.state = CS_ALIVE;
-                if(m_capture && !notgotbases) cps.enterbases(ci->team, ci->state.o);
+                if(smode) smode->spawned(ci);
                 QUEUE_MSG;
                 break;
             }
@@ -1102,7 +1145,7 @@ struct fpsserver : igameserver
                     else QUEUE_STR(text);
                 }
                 else QUEUE_STR(text);
-                if(m_capture && !notgotbases && ci->state.state==CS_ALIVE && strcmp(ci->team, text)) cps.changeteam(ci->team, text, ci->state.o);
+                if(smode && ci->state.state==CS_ALIVE && strcmp(ci->team, text)) smode->changeteam(ci, ci->team, text);
                 s_strncpy(ci->team, text, MAXTEAMLEN+1);
                 QUEUE_MSG;
                 break;
@@ -1152,27 +1195,11 @@ struct fpsserver : igameserver
                 break;
 
             case SV_BASES:
-            {
-                int ammotype;
-                while((ammotype = getint(p))>=0)
-                {
-                    vec o;
-                    o.x = getint(p)/DMF;
-                    o.y = getint(p)/DMF;
-                    o.z = getint(p)/DMF;
-                    if(notgotbases) cps.addbase(ammotype, o);
-                }
-                if(notgotbases) 
-                {
-                    cps.sendbases();
-                    loopv(clients) if(clients[i]->state.state==CS_ALIVE) cps.enterbases(clients[i]->team, clients[i]->state.o);
-                }
-                notgotbases = false;
+                if(smode==&capturemode) capturemode.parsebases(p);
                 break;
-            }
 
             case SV_REPAMMO:
-                if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.replenishammo(sender, ci->team, ci->state.o);
+                if(smode==&capturemode) capturemode.replenishammo(ci);
                 break;
 
             case SV_PING:
@@ -1215,14 +1242,14 @@ struct fpsserver : igameserver
 
                 if(spinfo->state.state!=CS_SPECTATOR && val)
                 {
-                    if(m_capture && !notgotbases && spinfo->state.state==CS_ALIVE) cps.leavebases(spinfo->team, spinfo->state.o);
+                    if(smode && spinfo->state.state==CS_ALIVE) smode->leavegame(spinfo);
                     spinfo->state.state = CS_SPECTATOR;
                 }
                 else if(spinfo->state.state==CS_SPECTATOR && !val)
                 {
                     spinfo->state.state = CS_DEAD;
                     spinfo->state.respawn();
-                    if(!m_arena) sendspawn(spinfo);
+                    if(!smode || smode->canspawn(spinfo)) sendspawn(spinfo);
                 }
                 break;
             }
@@ -1235,7 +1262,7 @@ struct fpsserver : igameserver
                 if(!ci->privilege || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
-                if(m_capture && !notgotbases && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) cps.changeteam(wi->team, text, wi->state.o);
+                if(smode && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) smode->changeteam(wi, wi->team, text);
                 s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 1, "riis", SV_SETTEAM, who, text);
                 QUEUE_INT(SV_SETTEAM);
@@ -1297,7 +1324,8 @@ struct fpsserver : igameserver
                 {
                     smapname[0] = '\0';
                     resetitems();
-                    notgotitems = notgotbases = false;
+                    notgotitems = false;
+                    if(smode) smode->reset(true);
                 }
                 QUEUE_MSG;
                 break;
@@ -1351,7 +1379,7 @@ struct fpsserver : igameserver
         }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
         {
-            if(m_arena && clients.length()>2) 
+            if(smode && !smode->canspawn(ci, true))
             {
                 ci->state.state = CS_DEAD;
                 putint(p, SV_FORCEDEATH);
@@ -1394,7 +1422,7 @@ struct fpsserver : igameserver
             }
             putint(p, -1);
         }
-        if(m_capture && !notgotbases) cps.initclient(p, true);
+        if(smode) smode->initclient(ci, p, true);
         return 1;
     }
 
@@ -1404,6 +1432,7 @@ struct fpsserver : igameserver
         {
             minremain = gamemillis>=gamelimit ? 0 : (gamelimit - gamemillis + 60*1000 - 1)/(60*1000);
             sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
+            if(!minremain && smode) smode->intermission();
         }
         if(!interm && minremain<=0) interm = gamemillis+10*1000;
     }
@@ -1459,7 +1488,7 @@ struct fpsserver : igameserver
             }
             else actor->state.frags--;
             sendf(-1, 1, "ri4", SV_DIED, target->clientnum, actor->clientnum, actor->state.frags);
-            if(m_capture && !notgotbases) cps.leavebases(target->team, target->state.o);
+            if(smode) smode->died(target, actor);
             ts.state = CS_DEAD;
             ts.lastdeath = gamemillis;
             // don't issue respawn yet until DEATHMILLIS has elapsed
@@ -1473,7 +1502,7 @@ struct fpsserver : igameserver
         if(gs.state!=CS_ALIVE) return;
         gs.frags--;
         sendf(-1, 1, "ri4", SV_DIED, ci->clientnum, ci->clientnum, gs.frags);
-        if(m_capture && !notgotbases) cps.leavebases(ci->team, ci->state.o);
+        if(smode) smode->died(ci, NULL);
         gs.state = CS_DEAD;
         gs.respawn();
     }
@@ -1615,8 +1644,7 @@ struct fpsserver : igameserver
                     sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
                 }
             }
-            if(m_capture && !notgotbases) cps.updatescores();
-            if(m_arena) arenacheck();
+            if(smode) smode->update();
         }
 
         while(bannedips.length() && bannedips[0].time-totalmillis>4*60*60*1000) bannedips.remove(0);
@@ -1699,7 +1727,7 @@ struct fpsserver : igameserver
     void localdisconnect(int n)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
-        if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.leavebases(ci->team, ci->state.o);
+        if(smode && ci->state.state==CS_ALIVE) smode->leavegame(ci);
         clients.removeobj(ci);
     }
 
@@ -1720,7 +1748,7 @@ struct fpsserver : igameserver
     { 
         clientinfo *ci = (clientinfo *)getinfo(n);
         if(ci->privilege) setmaster(ci, false);
-        if(m_capture && !notgotbases && ci->state.state==CS_ALIVE) cps.leavebases(ci->team, ci->state.o);
+        if(smode && ci->state.state==CS_ALIVE) smode->leavegame(ci);
         ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed; 
         savescore(ci);
         sendf(-1, 1, "ri2", SV_CDIS, n); 

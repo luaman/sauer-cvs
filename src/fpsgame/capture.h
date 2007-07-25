@@ -431,17 +431,18 @@ struct captureclient : capturestate
 
 #else
 
-struct captureserv : capturestate
+struct captureservmode : capturestate, servmode
 {
-    fpsserver &sv;
     int scoresec;
-    
-    captureserv(fpsserver &sv) : sv(sv), scoresec(0) {}
+    bool notgotbases;
+ 
+    captureservmode(fpsserver &sv) : servmode(sv), scoresec(0), notgotbases(false) {}
 
-    void reset()
+    void reset(bool empty)
     {
         capturestate::reset();
         scoresec = 0;
+        notgotbases = !empty;
     }
 
     void stealbase(int n, const char *team)
@@ -456,18 +457,16 @@ struct captureserv : capturestate
         sendbaseinfo(n);
     }
 
-    void replenishammo(int client, const char *team, const vec &o)
+    void replenishammo(clientinfo *ci)
     {
-        if(!team[0]) return;
-        fpsserver::clientinfo *ci = sv.clients[client];
-        if(ci->state.state!=CS_ALIVE) return;
+        if(notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, o) && !ci->state.hasmaxammo(b.ammotype-1+I_SHELLS) && b.takeammo(team))
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, ci->state.o) && !ci->state.hasmaxammo(b.ammotype-1+I_SHELLS) && b.takeammo(ci->team))
             {
                 sendbaseinfo(i);
-                sendf(client, 1, "rii", SV_REPAMMO, b.ammotype);
+                sendf(ci->clientnum, 1, "rii", SV_REPAMMO, b.ammotype);
                 ci->state.addammo(b.ammotype);
                 break;
             }
@@ -498,12 +497,6 @@ struct captureserv : capturestate
         movebases(team, vec(-1e10f, -1e10f, -1e10f), o);
     }
     
-    void changeteam(const char *oldteam, const char *newteam, const vec &o)
-    {
-        leavebases(oldteam, o);
-        enterbases(newteam, o);
-    }
-
     void addscore(const char *team, int n)
     {
         if(!n) return;
@@ -512,7 +505,7 @@ struct captureserv : capturestate
         sendf(-1, 1, "risi", SV_TEAMSCORE, team, cs.total);
     }
 
-    void updatescores()
+    void update()
     {
         if(sv.minremain<0) return;
         endcheck();
@@ -547,13 +540,13 @@ struct captureserv : capturestate
     {
         ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         ucharbuf p(packet->data, packet->dataLength);
-        initclient(p, false);
+        initclient(NULL, p, false);
         enet_packet_resize(packet, p.length());
         sendpacket(-1, 1, packet);
         if(!packet->referenceCount) enet_packet_destroy(packet);
     }
 
-    void initclient(ucharbuf &p, bool connecting)
+    void initclient(clientinfo *ci, ucharbuf &p, bool connecting)
     {
         if(connecting) loopv(scores)
         {
@@ -602,6 +595,62 @@ struct captureserv : capturestate
         findscore(lastteam).total = 10000;
         sendf(-1, 1, "risi", SV_TEAMSCORE, lastteam, 10000);
         sv.startintermission(); 
+    }
+
+    void entergame(clientinfo *ci) 
+    {
+        if(notgotbases) return;
+        enterbases(ci->team, ci->state.o);
+    }        
+
+    void spawned(clientinfo *ci)
+    {
+        if(notgotbases) return;
+        enterbases(ci->team, ci->state.o);
+    }
+
+    void leavegame(clientinfo *ci)
+    {
+        if(notgotbases) return;
+        leavebases(ci->team, ci->state.o);
+    }
+
+    void died(clientinfo *ci, clientinfo *actor)
+    {
+        if(notgotbases) return;
+        leavebases(ci->team, ci->state.o);
+    }
+
+    void moved(clientinfo *ci, const vec &oldpos, const vec &newpos)
+    {
+        if(notgotbases) return;
+        movebases(ci->team, oldpos, newpos);
+    }
+
+    void changeteam(clientinfo *ci, const char *oldteam, const char *newteam)
+    {
+        if(notgotbases) return;
+        leavebases(oldteam, ci->state.o);
+        enterbases(newteam, ci->state.o);
+    }
+
+    void parsebases(ucharbuf &p)
+    {
+        int ammotype;
+        while((ammotype = getint(p))>=0)
+        {
+            vec o;
+            o.x = getint(p)/DMF;
+            o.y = getint(p)/DMF;
+            o.z = getint(p)/DMF;
+            if(notgotbases) addbase(ammotype, o);
+        }
+        if(notgotbases)
+        {
+            notgotbases = false;
+            sendbases();
+            loopv(sv.clients) if(sv.clients[i]->state.state==CS_ALIVE) entergame(sv.clients[i]);
+        }
     }
 };
 

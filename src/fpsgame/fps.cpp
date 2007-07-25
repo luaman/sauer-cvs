@@ -552,6 +552,7 @@ struct fpsclient : igameclient
 
     void crosshaircolor(float &r, float &g, float &b)
     {
+        if(player1->state!=CS_ALIVE) return;
         if(player1->gunwait) r = g = b = 0.5f;
         else if(!editmode && !m_noitemsrail)
         {
