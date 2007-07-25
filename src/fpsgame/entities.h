@@ -33,7 +33,7 @@ struct entities : icliententities
         return entmdlnames[type];
     }
 
-    void renderent(extentity &e, int type, float z, float yaw, int frame = 0, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
+    void renderent(extentity &e, int type, float z, float yaw, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
     {
         char *mdlname = entmdlname(type);
         if(!mdlname) return;
