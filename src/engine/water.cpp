@@ -809,7 +809,7 @@ VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
 
-VAR(maskreflect, 0, 1, 1);
+VAR(maskreflect, 0, 2, 16);
 
 void maskreflection(Reflection &ref, float offset, bool reflect)
 {
@@ -833,11 +833,15 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
         glTranslatef(0, 0, 2*(ref.height+offset));
         glScalef(1, 1, -1);
     }
+    int border = maskreflect;
     glBegin(GL_QUADS);
     loopv(ref.matsurfs)
     {
         materialsurface &m = *ref.matsurfs[i];
-        drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, -offset);
+        ivec o(m.o);
+        o[R[dimension(m.orient)]] -= border;
+        o[C[dimension(m.orient)]] -= border;
+        drawmaterial(m.orient, o.x, o.y, o.z, m.csize+2*border, m.rsize+2*border, -offset);
     }
     glEnd();
     if(reflect) glPopMatrix();
