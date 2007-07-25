@@ -830,7 +830,7 @@ void maskreflection(Reflection &ref, float offset, bool reflect)
     if(reflect)
     {
         glPushMatrix();
-        glTranslatef(0, 0, 2*ref.height);
+        glTranslatef(0, 0, 2*(ref.height+offset));
         glScalef(1, 1, -1);
     }
     int border = maskreflect;
