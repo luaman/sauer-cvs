@@ -389,7 +389,7 @@ struct vertmodel : model
                  *pvert1 = prev ? &verts[prev->fr1 * numverts] : NULL, *pvert2 = prev ? &verts[prev->fr2 * numverts] : NULL;
             #define ip(p1, p2, t)   (p1+t*(p2-p1))
             #define ip_v(p, c, t)   ip(p##1[i].c, p##2[i].c, t)
-            #define ip_v_ai(c)      ip( ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
+            #define ip_v_ai(c)      ip(ip_v(pvert, c, prev->t), ip_v(vert, c, cur.t), ai_t)
             #define ip_pos          vec(ip_v(vert, pos.x, cur.t), ip_v(vert, pos.y, cur.t), ip_v(vert, pos.z, cur.t))
             #define ip_pos_ai       vec(ip_v_ai(pos.x), ip_v_ai(pos.y), ip_v_ai(pos.z))
             #define ip_norm         vec(ip_v(vert, norm.x, cur.t), ip_v(vert, norm.y, cur.t), ip_v(vert, norm.z, cur.t))
