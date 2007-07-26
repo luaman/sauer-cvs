@@ -9,8 +9,6 @@
 struct cline { char *cref; int outtime; };
 vector<cline> conlines;
 
-const int ndraw = 5;
-const int WORDWRAP = 80;
 int conskip = 0;
 
 bool saycommandon = false;
@@ -55,10 +53,9 @@ void conoutf(const char *s, ...)
     string sp;
     filtertext(sp, sf);
     puts(sp);
-    if(!curfont) return;
     s = sf;
     int n = 0, visible;
-    while((visible = text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3))) // cut strings to fit on screen
+    while((visible = curfont ? text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3) : strlen(s))) // cut strings to fit on screen
     {
         const char *newline = (const char *)memchr(s, '\n', visible);
         if(newline) visible = newline+1-s;
@@ -113,6 +110,8 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     defaultshader->set();
 }
 
+VARP(consize, 0, 5, 100);
+
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
     if(fullconsole)
@@ -123,20 +122,20 @@ int renderconsole(int w, int h)                   // render buffer taking into a
         loopi(numl) draw_text(offset+i>=conlines.length() ? "" : conlines[offset+i].cref, CONSPAD+FONTH/3, CONSPAD+FONTH*(numl-i-1)+FONTH/3); 
         return 2*CONSPAD+numl*FONTH+2*FONTH/3;
     }
-    else     
+    else
     {
-        int nd = 0;
-        char *refs[ndraw];
-        loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-ndraw : totalmillis-conlines[i].outtime<20000)
+        static vector<char *> refs;
+        refs.setsizenodelete(0);
+        if(consize) loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : totalmillis-conlines[i].outtime<20000)
         {
-            refs[nd++] = conlines[i].cref;
-            if(nd==ndraw) break;
+            refs.add(conlines[i].cref);
+            if(refs.length()>=consize) break;
         }
-        loopj(nd)
+        loopvj(refs)
         {
-            draw_text(refs[j], CONSPAD+FONTH/3, CONSPAD+FONTH*(nd-j-1)+FONTH/3);
+            draw_text(refs[j], CONSPAD+FONTH/3, CONSPAD+FONTH*(refs.length()-j-1)+FONTH/3);
         }
-        return CONSPAD+nd*FONTH+2*FONTH/3;
+        return CONSPAD+refs.length()*FONTH+2*FONTH/3;
     }
 }
 
