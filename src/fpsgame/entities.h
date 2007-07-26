@@ -63,7 +63,12 @@ struct entities : icliententities
 
     void trigger(extentity &e)
     {
-        if(e.attr3==29) cl.ms.endsp(false);
+        switch(e.attr3)
+        {
+            case 29:
+                cl.ms.endsp(false);
+                break;
+        }
     }
 
     void addammo(int type, int &v, bool local = true)
