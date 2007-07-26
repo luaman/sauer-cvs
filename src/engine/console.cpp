@@ -153,31 +153,45 @@ vector<keym> keyms;
 
 void keymap(char *code, char *key)
 {
-    if(overrideidents) conoutf("cannot override keymap %s", code);
+    if(overrideidents) { conoutf("cannot override keymap %s", code); return; }
     keym &km = keyms.add();
     km.code = atoi(code);
     km.name = newstring(key);
     km.action = newstring("");
     km.editaction = newstring("");
 }
-
+    
 COMMAND(keymap, "ss");
 
 keym *keypressed = NULL;
 char *keyaction = NULL;
 
+keym *findbind(char *key)
+{
+    loopv(keyms) if(!strcasecmp(keyms[i].name, key)) return &keyms[i];
+    return NULL;
+}   
+    
+void getbind(char *key)
+{
+    keym *km = findbind(key);
+    result(km ? km->action : "");
+}   
+ 
+void geteditbind(char *key)
+{
+    keym *km = findbind(key);
+    result(km ? km->editaction : "");
+}  
+
 void bindkey(char *key, char *action, bool edit)
 {
-    if(overrideidents) conoutf("cannot override %s \"%s\"", edit ? "editbind" : "bind", key);
-    for(char *x = key; *x; x++) *x = toupper(*x);
-    loopv(keyms) if(strcmp(keyms[i].name, key)==0)
-    {
-        char *&binding = edit ? keyms[i].editaction : keyms[i].action;
-        if(!keypressed || keyaction!=binding) delete[] binding;
-        binding = newstring(action);
-        return;
-    }
-    conoutf("unknown key \"%s\"", key);   
+    if(overrideidents) { conoutf("cannot override %s \"%s\"", edit ? "editbind" : "bind", key); return; }
+    keym *km = findbind(key);
+    if(!km) { conoutf("unknown key \"%s\"", key); return; }
+    char *&binding = edit ? km->editaction : km->action;
+    if(!keypressed || keyaction!=binding) delete[] binding;
+    binding = newstring(action);
 }
 
 void bindnorm(char *key, char *action) { bindkey(key, action, false); }
@@ -185,6 +199,8 @@ void bindedit(char *key, char *action) { bindkey(key, action, true);  }
 
 COMMANDN(bind,     bindnorm, "ss");
 COMMANDN(editbind, bindedit, "ss");
+COMMAND(getbind, "s");
+COMMAND(geteditbind, "s");
 
 void saycommand(char *init)                         // turns input to the command line on or off
 {
