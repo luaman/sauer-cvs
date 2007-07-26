@@ -136,7 +136,7 @@ struct vtxarray
     vector<vtxarray *> *children;
     lodlevel l0, l1;
     vertex *vbuf;           // vertex buffer
-    int minvert, maxvert;   // DRE info
+    ushort minvert, maxvert; // DRE info
     vtxarray *next, *rnext; // linked list of visible VOBs
     int allocsize;          // size of allocated memory for this va
     int verts, explicitsky, curlod, distance;
@@ -216,7 +216,7 @@ struct editinfo
 };
 
 struct undoent   { int i; entity e; };
-struct undoblock { int *g, n; block3 *b; undoent *e; undoblock() : g(NULL), n(0), b(NULL), e(NULL) {} };
+struct undoblock { int ts; int *g, n; block3 *b; undoent *e; undoblock() : g(NULL), n(0), b(NULL), e(NULL) { extern int totalmillis; ts = totalmillis; } };
 
 extern cube *worldroot;             // the world data. only a ptr to 8 cubes (ie: like cube.children above)
 extern ivec lu;

@@ -623,29 +623,33 @@ void makeundo()                        // stores state of selected cubes before 
     lastsel=sel;
     if(multiplayer(false)) return;
     undoblock u;
-    initundocube(u, sel);
+	initundocube(u, sel);
     addundo(u);
 }
 
 void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 {
     if(noedit() || multiplayer()) return;
-    if(a.empty()) { conoutf("nothing more to %s", s); return; }
-    undoblock u = a.pop();
-    if(u.b)
-    {
-        sel.o = u.b->o;
-        sel.s = u.b->s;
-        sel.grid = u.b->grid;
-        sel.orient = u.b->orient;
-    }
-    undoblock r;
-    if(u.g) initundocube(r, sel);
-    if(u.n) copyundoents(r, u);
-    b.add(r);
-    pasteundo(u);
-    if(u.b) changed(sel);
-    freeundo(u);
+    if(a.empty()) { conoutf("nothing more to %s", s); return; }	
+	int ts = a.last().ts;
+	while(!a.empty() && ts==a.last().ts)
+	{
+		undoblock u = a.pop();
+		if(u.b)
+		{
+			sel.o = u.b->o;
+			sel.s = u.b->s;
+			sel.grid = u.b->grid;
+			sel.orient = u.b->orient;
+		}
+		undoblock r;
+		if(u.g) initundocube(r, sel);
+		if(u.n) copyundoents(r, u);
+		b.add(r);
+		pasteundo(u);
+		if(u.b) changed(sel);
+		freeundo(u);
+	}
     clearheightmap();
     reorient();
     forcenextundo();
@@ -698,20 +702,21 @@ void copy()
     mpcopy(localedit, sel, true);
 }
 
+void pastehilite()
+{
+	sel.s = localedit->copy->s;
+    havesel = true;
+}
+
 void paste(int *isdown)
 {
     if(noedit()) return;
-    if(*isdown!=0 && localedit && localedit->copy)
-    {
-        sel.s = localedit->copy->s;
-        havesel = true;
-    }
-    else if(havesel)
-        mppaste(localedit, sel, true);
+    mppaste(localedit, sel, true);
 }
 
 COMMAND(copy, "");
-COMMAND(paste, "D");
+COMMAND(pastehilite, "");
+COMMAND(paste, "");
 COMMANDN(undo, editundo, "");
 COMMANDN(redo, editredo, "");
 
