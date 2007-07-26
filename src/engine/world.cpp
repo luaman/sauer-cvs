@@ -1047,7 +1047,8 @@ int triggertypes[NUMTRIGGERTYPES] =
     TRIG_COLLIDE | TRIG_TOGGLE | TRIG_LOCKED | TRIG_RUMBLE,
     TRIG_DISAPPEAR,
     TRIG_DISAPPEAR | TRIG_RUMBLE,
-    0, 0 /* reserved */
+    TRIG_DISAPPEAR | TRIG_COLLIDE | TRIG_LOCKED,
+    0 /* reserved */
 };
 
 void resettriggers()
