@@ -155,13 +155,11 @@ void validatec(cube *c, int size)
 
 ivec lu;
 int lusize;
-bool luperfect;
 cube &lookupcube(int tx, int ty, int tz, int tsize)
 {
     int size = hdr.worldsize;
     int x = 0, y = 0, z = 0;
     cube *c = worldroot;
-    luperfect = true;
     for(;;)
     {
         size >>= 1;
@@ -175,17 +173,7 @@ cube &lookupcube(int tx, int ty, int tz, int tsize)
         {
             //if(!tsize) break;
             if(tsize<=0) break;
-            if(isempty(*c))
-            {
-                int mat = c->ext ? c->ext->material : MAT_AIR;
-                c->children = newcubes(F_EMPTY);
-                loopi(8)
-                {
-                    loopl(6) c->children[i].texture[l] = c->texture[l];
-                    if(mat!=MAT_AIR) ext(c->children[i]).material = mat;
-                }
-            }
-            else if(!subdividecube(*c)) luperfect = false;
+            subdividecube(*c);
         }
         c = c->children;
     }
@@ -305,6 +293,17 @@ int midedge(const ivec &a, const ivec &b, int xd, int yd, bool &perfect)
 bool subdividecube(cube &c, bool fullcheck, bool brighten)
 {   
     if(c.children) return true;
+	if(isempty(c) || isentirelysolid(c))
+    {
+        int mat = c.ext ? c.ext->material : MAT_AIR;
+		c.children = newcubes(isempty(c) ? F_EMPTY : F_SOLID);
+        loopi(8)
+        {
+            loopl(6) c.children[i].texture[l] = c.texture[l];
+            if(mat!=MAT_AIR) ext(c.children[i]).material = mat;
+        }
+        return true;
+    }
     cube *ch = c.children = newcubes(F_SOLID);
     bool perfect = true, p1, p2;
     int mat = c.ext ? c.ext->material : MAT_AIR; 
