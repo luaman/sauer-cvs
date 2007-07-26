@@ -1015,10 +1015,10 @@ static Uint32 calclight_timer(Uint32 interval, void *param)
     check_calclight_progress = true;
     return interval;
 }
-    
-void calclight(int *quality)
+
+bool setlightmapquality(int quality)
 {
-    switch(*quality)
+    switch(quality)
     {
         case  3: shadows = 1; aalights = 3; mmshadows = 2; break;
         case  2: shadows = 1; aalights = 3; mmshadows = 1; break;
@@ -1026,7 +1026,17 @@ void calclight(int *quality)
         case  0: shadows = 1; aalights = 2; mmshadows = 0; break;
         case -1: shadows = 1; aalights = 1; mmshadows = 0; break;
         case -2: shadows = 0; aalights = 0; mmshadows = 0; break;
-        default: conoutf("valid range for calclight quality is -2..3"); return;
+        default: return false;
+    }
+    return true;
+}
+
+void calclight(int *quality)
+{
+    if(!setlightmapquality(*quality))
+    {
+        conoutf("valid range for calclight quality is -2..3"); 
+        return;
     }
     computescreen("computing lightmaps... (esc to abort)");
     remipworld();
@@ -1070,9 +1080,14 @@ COMMAND(calclight, "i");
 
 VAR(patchnormals, 0, 0, 1);
 
-void patchlight()
+void patchlight(int *quality)
 {
     if(noedit(true)) return;
+    if(!setlightmapquality(*quality))
+    {
+        conoutf("valid range for patchlight quality is -2..3"); 
+        return;
+    }
     computescreen("patching lightmaps... (esc to abort)");
     progress = 0;
     int total = 0, lumels = 0;
@@ -1111,7 +1126,7 @@ void patchlight()
             (end - start) / 1000.0f); 
 }
 
-COMMAND(patchlight, "");
+COMMAND(patchlight, "i");
 
 VARF(fullbright, 0, 0, 1, initlights());
 
