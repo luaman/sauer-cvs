@@ -97,7 +97,7 @@ VAR(hwtexsize, 1, 0, 0);
 VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
 VARP(texcompress, 0, 1<<10, 1<<12);
-VARP(hwmipmap, 0, 1, 1);
+VARP(hwmipmap, 0, 0, 1);
 
 bool canhwmipmap(GLenum format)
 {
