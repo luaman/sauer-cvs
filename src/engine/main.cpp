@@ -251,7 +251,7 @@ void setfullscreen(bool enable)
     }
 }
 
-void screenres(int *w, int *h, int *bpp = 0)
+void screenres(int *w, int *h)
 {
 #if !defined(WIN32) && !defined(__APPLE__)
     if(initing)
@@ -259,25 +259,23 @@ void screenres(int *w, int *h, int *bpp = 0)
 #endif
         scr_w = *w;
         scr_h = *h;
-        if(bpp && *bpp) colorbits = *bpp;
 #if defined(WIN32) || defined(__APPLE__)
         initwarning();
 #else
         return;
     }
-    SDL_Surface *surf = SDL_SetVideoMode(*w, *h, bpp ? *bpp : 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
+    SDL_Surface *surf = SDL_SetVideoMode(*w, *h, 0, SDL_OPENGL|SDL_RESIZABLE|(screen->flags&SDL_FULLSCREEN));
     if(!surf) return;
     screen = surf;
     scr_w = screen->w;
     scr_h = screen->h;
-    if(bpp && *bpp) colorbits = *bpp;
     glViewport(0, 0, scr_w, scr_h);
 #endif
 }
 
 VARF(fullscreen, 0, 0, 1, setfullscreen(fullscreen!=0));
 
-COMMAND(screenres, "iii");
+COMMAND(screenres, "ii");
 
 VARFP(gamma, 30, 100, 300,
 {
