@@ -700,7 +700,7 @@ struct fpsserver : igameserver
         gamemode = mode;
         gamemillis = 0;
         minremain = m_teammode ? 15 : 10;
-        gamelimit = minremain*60*1000;
+        gamelimit = minremain*60000;
         interm = 0;
         s_strcpy(smapname, s);
         resetitems();
@@ -1096,13 +1096,9 @@ struct fpsserver : igameserver
             case SV_ITEMPICKUP:
             {
                 int n = getint(p);
-                if(ci->local) pickup(n, sender);
-                else
-                {
-                    gameevent &pickup = ci->events.add();
-                    pickup.type = GE_PICKUP;
-                    pickup.pickup.ent = n;
-                }
+                gameevent &pickup = ci->events.add();
+                pickup.type = GE_PICKUP;
+                pickup.pickup.ent = n;
                 break;
             }
 
@@ -1430,11 +1426,11 @@ struct fpsserver : igameserver
     {
         if(minremain>0)
         {
-            minremain = gamemillis>=gamelimit ? 0 : (gamelimit - gamemillis + 60*1000 - 1)/(60*1000);
+            minremain = gamemillis>=gamelimit ? 0 : (gamelimit - gamemillis + 60000 - 1)/60000;
             sendf(-1, 1, "ri2", SV_TIMEUP, minremain);
             if(!minremain && smode) smode->intermission();
         }
-        if(!interm && minremain<=0) interm = gamemillis+10*1000;
+        if(!interm && minremain<=0) interm = gamemillis+10000;
     }
 
     void startintermission() { gamelimit = min(gamelimit, gamemillis); checkintermission(); }
@@ -1639,7 +1635,7 @@ struct fpsserver : igameserver
                     sents[i].spawned = true;
                     sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
                 }
-                else if(sents[i].spawntime<=10*1000 && oldtime>10*1000 && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
+                else if(sents[i].spawntime<=10000 && oldtime>10000 && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
                 {
                     sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
                 }
@@ -1647,7 +1643,7 @@ struct fpsserver : igameserver
             if(smode) smode->update();
         }
 
-        while(bannedips.length() && bannedips[0].time-totalmillis>4*60*60*1000) bannedips.remove(0);
+        while(bannedips.length() && bannedips[0].time-totalmillis>4*60*60000) bannedips.remove(0);
         
         if(masterupdate) 
         { 
@@ -1656,7 +1652,7 @@ struct fpsserver : igameserver
             masterupdate = false; 
         } 
     
-        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis-curtime>0 && gamemillis/(60*1000)!=(gamemillis-curtime)/(60*1000)) checkintermission();
+        if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis-curtime>0 && gamemillis/60000!=(gamemillis-curtime)/60000) checkintermission();
         if(interm && gamemillis>interm)
         {
             if(demorecord) enddemorecord();
