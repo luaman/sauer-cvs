@@ -93,19 +93,17 @@ struct entities : icliententities
         addammo(ents[i]->type, v);
     }
 
-    void pickupeffects(int n, fpsent *d, bool local = true)
+    void pickupeffects(int n, fpsent *d)
     {
         int type = ents[n]->type;
         if(type<I_SHELLS || type>I_QUAD) return;
         itemstat &is = itemstats[type-I_SHELLS];
-        if(isthirdperson()) particle_text(d->abovehead(), is.name, 15);
+        if(d!=cl.player1 || isthirdperson()) particle_text(d->abovehead(), is.name, 15);
         ents[n]->spawned = false;
-        if(local) 
-        {
-            d->pickup(type);
-            cl.playsoundc(itemstats[type-I_SHELLS].sound, d);
-        }
-        if(d==cl.player1) switch(type)
+        playsound(itemstats[type-I_SHELLS].sound, d!=cl.player1 ? &d->o : NULL); 
+        if(d!=cl.player1) return;
+        d->pickup(type);
+        switch(type)
         {
             case I_BOOST:
                 conoutf("\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);

@@ -667,7 +667,7 @@ struct clientcom : iclientcom
             {
                 int i = getint(p), cn = getint(p);
                 fpsent *d = cn==player1->clientnum ? player1 : cl.getclient(cn);
-                cl.et.pickupeffects(i, d, d==player1);
+                cl.et.pickupeffects(i, d);
                 break;
             }
 
