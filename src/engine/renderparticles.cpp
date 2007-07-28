@@ -517,7 +517,7 @@ static bool emit_particles()
     return emit;
 }
 
-static Texture *parttexs[10];
+static Texture *parttexs[9];
 
 void particleinit()
 {    
@@ -530,7 +530,6 @@ void particleinit()
     parttexs[6] = textureload("data/martin/spark.png");
     parttexs[7] = textureload("data/explosion.jpg");   
     parttexs[8] = textureload("data/blood.png");
-    parttexs[9] = textureload("data/ripple.png");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
@@ -590,8 +589,8 @@ static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPE
     { PT_FLARE,        0,  5, 0.28f }, // 9 flare
     { PT_TEXT,         0, -1,  2.0f }, // 10 TEXT, SMALL, NON-MOVING
     { 0,              20,  4,  2.0f }, // 11 fireball3
-    { PT_METER,        0,  9,  2.0f }, // 12 METER, SMALL, NON-MOVING
-    { PT_METERVS,      0,  9,  2.0f }, // 13 METER vs., SMALL, NON-MOVING
+    { PT_METER,        0, -1,  2.0f }, // 12 METER, SMALL, NON-MOVING
+    { PT_METERVS,      0, -1,  2.0f }, // 13 METER vs., SMALL, NON-MOVING
     { 0,              20,  2,  0.6f }, // 14 small  slowly sinking smoke trail
     { PT_FIREBALL,     0,  7,  4.0f }, // 15 explosion fireball
     { PT_ENT,        -20,  2,  2.4f }, // 16 big  slowly rising smoke, entity
@@ -642,6 +641,8 @@ void render_particles(int time)
                 {
                     glDepthMask(GL_TRUE); //is opaque
                     glDisable(GL_BLEND);
+                    glDisable(GL_TEXTURE_2D);
+                    foggednotextureshader->set();
                 }
                 glFogfv(GL_FOG_COLOR, oldfogc);
            } 
@@ -784,22 +785,25 @@ void render_particles(int time)
                         float right = 8*FONTH, left = p->val*right;
                         glTranslatef(-right/2.0f, 0, 0);
                         
-                        float tx = (lastmillis%1000) * -0.001f;
-                        float txs = 8 * p->val;
-                        glBegin(GL_QUADS);
                         glColor3ubv(color);
-                        glTexCoord2f(tx, 0.0f);     glVertex2f(0, 0);
-                        glTexCoord2f(tx+txs, 0.0f); glVertex2f(left, 0);
-                        glTexCoord2f(tx+txs, 1.0f); glVertex2f(left, FONTH);
-                        glTexCoord2f(tx, 1.0f);     glVertex2f(0, FONTH);
-                        
+                        glBegin(GL_TRIANGLE_STRIP);
+                        loopk(16)
+                        {
+                            float c = 0.5f*cosf(M_PI/2 + k/15.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/15.0f*M_PI);
+                            glVertex2f(left - c*FONTH, s*FONTH);
+                            glVertex2f(c*FONTH, s*FONTH);
+                        }
+                        glEnd();
+
                         if(type==PT_METERVS) glColor3ub(color[2], color[1], color[0]); //swap r<->b                        
-                        else glColor3ub(0, 0, 0);
-                        glTexCoord2f(0.0f, 0.0f); 
-                        glVertex2f(left, 0);
-                        glVertex2f(right, 0);
-                        glVertex2f(right, FONTH);
-                        glVertex2f(left, FONTH);
+                        else glColor3f(0, 0, 0);
+                        glBegin(GL_TRIANGLE_STRIP);
+                        loopk(16)
+                        {
+                            float c = -0.5f*cosf(M_PI/2 + k/15.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/15.0f*M_PI);
+                            glVertex2f(left + c*FONTH, s*FONTH);
+                            glVertex2f(right + c*FONTH, s*FONTH);
+                        }
                         glEnd();
                     }
                     else
@@ -837,6 +841,8 @@ void render_particles(int time)
                 {
                     glDepthMask(GL_FALSE);
                     glEnable(GL_BLEND);
+                    glEnable(GL_TEXTURE_2D);
+                    foggedshader->set();
                 }
                 else glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                 glFogfv(GL_FOG_COLOR, zerofog);
