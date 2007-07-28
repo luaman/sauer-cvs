@@ -1213,7 +1213,15 @@ struct fpsserver : igameserver
                 }
                 break;
             }
-            
+           
+            case SV_CLEARBANS:
+            {
+                if(ci->privilege<PRIV_ADMIN) break;
+                bannedips.setsize(0);
+                sendservmsg("cleared all bans");
+                break;
+            }
+
             case SV_KICK:
             {
                 int victim = getint(p);
