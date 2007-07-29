@@ -1006,12 +1006,9 @@ void particle_flare(const vec &p, const vec &dest, int fade, int type)
     newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color);
 }
 
-VARP(damagespherefactor, 0, 100, 200);
-
 void particle_fireball(const vec &dest, float max, int type)
 {
-    if(damagespherefactor <= 10) return;
-    int maxsize = int(max*damagespherefactor/100) - 4;
+    int maxsize = int(max) - 4;
     newparticle(dest, vec(0, 0, 1), maxsize*25, partmaps[type].type, partmaps[type].color)->val = maxsize;
 }
 
