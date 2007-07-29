@@ -181,12 +181,32 @@ void computescreen(const char *text, Texture *t)
 
 static void bar(float bar, int w, int o, float r, float g, float b)
 {
-    int side = 50;
+    int side = 2*FONTH;
+    float x1 = side, x2 = bar*(w*3-2*side)+side;
+    float y1 = o*FONTH;
     glColor3f(r, g, b);
-    glVertex2f(side,                  o*FONTH);
-    glVertex2f(bar*(w*3-2*side)+side, o*FONTH);
-    glVertex2f(bar*(w*3-2*side)+side, (o+2)*FONTH);
-    glVertex2f(side,                  (o+2)*FONTH);
+    glBegin(GL_TRIANGLE_STRIP);
+    loopk(10)
+    {
+       float c = cosf(M_PI/2 + k/9.0f*M_PI), s = 1 + sinf(M_PI/2 + k/9.0f*M_PI);
+       glVertex2f(x2 - c*FONTH, y1 + s*FONTH);
+       glVertex2f(x1 + c*FONTH, y1 + s*FONTH);
+    }
+    glEnd();
+
+    glColor3f(0.3f, 0.3f, 0.3f);
+    glBegin(GL_LINE_LOOP);
+    loopk(10)
+    {
+        float c = cosf(M_PI/2 + k/9.0f*M_PI), s = 1 + sinf(M_PI/2 + k/9.0f*M_PI);
+        glVertex2f(x1 + c*FONTH, y1 + s*FONTH);
+    }
+    loopk(10)
+    {
+        float c = cosf(M_PI/2 + k/9.0f*M_PI), s = 1 - sinf(M_PI/2 + k/9.0f*M_PI);
+        glVertex2f(x2 - c*FONTH, y1 + s*FONTH);
+    }
+    glEnd();
 }
 
 void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2)   // also used during loading
@@ -205,28 +225,28 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     glOrtho(0, w*3, h*3, 0, -1, 1);
     notextureshader->set();
 
-    glBegin(GL_QUADS);
+    glLineWidth(3);
 
     if(text1)
     {
-        bar(1,    w, 4, 0, 0,    0.8f);
-        bar(bar1, w, 4, 0, 0.5f, 1);
+        bar(1, w, 4, 0, 0, 0.8f);
+        if(bar1>0) bar(bar1, w, 4, 0, 0.5f, 1);
     }
 
     if(bar2>0)
     {
-        bar(1,    w, 6, 0.5f,  0, 0);
+        bar(1, w, 6, 0.5f, 0, 0);
         bar(bar2, w, 6, 0.75f, 0, 0);
     }
 
-    glEnd();
+    glLineWidth(1);
 
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
     defaultshader->set();
 
-    if(text1) draw_text(text1, 70, 4*FONTH + FONTH/2);
-    if(bar2>0) draw_text(text2, 70, 6*FONTH + FONTH/2);
+    if(text1) draw_text(text1, 2*FONTH, 4*FONTH + FONTH/2);
+    if(bar2>0) draw_text(text2, 2*FONTH, 6*FONTH + FONTH/2);
 
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
