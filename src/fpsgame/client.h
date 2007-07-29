@@ -19,6 +19,7 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, name, "s", self->switchname(args[0]));
         CCOMMAND(clientcom, team, "s", self->switchteam(args[0]));
         CCOMMAND(clientcom, map, "s", self->changemap(args[0]));
+        CCOMMAND(clientcom, clearbans, "", self->clearbans());
         CCOMMAND(clientcom, kick, "s", self->kick(args[0]));
         CCOMMAND(clientcom, goto, "s", self->gotoplayer(args[0])); 
         CCOMMAND(clientcom, spectator, "ss", self->togglespectator(args[0], args[1]));
@@ -122,6 +123,12 @@ struct clientcom : iclientcom
             if(o && !strcasecmp(arg, o->name)) return o->clientnum;
         }
         return -1;
+    }
+
+    void clearbans()
+    {
+        if(player1->privilege<PRIV_ADMIN) return;
+        addmsg(SV_CLEARBANS, "r");
     }
 
     void kick(const char *arg)
@@ -913,7 +920,7 @@ struct clientcom : iclientcom
         {
             case SV_SENDDEMO:
             {
-                s_sprintfd(fname)("demo_%d", cl.lastmillis);
+                s_sprintfd(fname)("%d.dmo", cl.lastmillis);
                 FILE *demo = openfile(fname, "wb");
                 if(!demo) return;
                 conoutf("received demo \"%s\"", fname);

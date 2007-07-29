@@ -607,16 +607,17 @@ struct fpsserver : igameserver
         demoheader hdr;
         string msg;
         msg[0] = '\0';
-        demoplayback = opengzfile(smapname, "rb9");
-        if(!demoplayback) s_sprintf(msg)("could not read demo \"%s\"", smapname);
+        s_sprintfd(file)("%s.dmo", smapname);
+        demoplayback = opengzfile(file, "rb9");
+        if(!demoplayback) s_sprintf(msg)("could not read demo \"%s\"", file);
         else if(gzread(demoplayback, &hdr, sizeof(demoheader))!=sizeof(demoheader) || memcmp(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic)))
-            s_sprintf(msg)("\"%s\" is not a demo file", smapname);
+            s_sprintf(msg)("\"%s\" is not a demo file", file);
         else 
         { 
             endianswap(&hdr.version, sizeof(int), 1);
             endianswap(&hdr.protocol, sizeof(int), 1);
-            if(hdr.version!=DEMO_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", smapname, hdr.version<DEMO_VERSION ? "older" : "newer");
-            else if(hdr.protocol!=PROTOCOL_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", smapname, hdr.protocol<PROTOCOL_VERSION ? "older" : "newer");
+            if(hdr.version!=DEMO_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", file, hdr.version<DEMO_VERSION ? "older" : "newer");
+            else if(hdr.protocol!=PROTOCOL_VERSION) s_sprintf(msg)("demo \"%s\" requires an %s version of Sauerbraten", file, hdr.protocol<PROTOCOL_VERSION ? "older" : "newer");
         }
         if(msg[0])
         {
@@ -625,7 +626,7 @@ struct fpsserver : igameserver
             return;
         }
 
-        s_sprintf(msg)("playing demo \"%s\"", smapname);
+        s_sprintf(msg)("playing demo \"%s\"", file);
         sendservmsg(msg);
 
         sendf(-1, 1, "rii", SV_DEMOPLAYBACK, 1);
