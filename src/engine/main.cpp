@@ -209,7 +209,7 @@ static void bar(float bar, int w, int o, float r, float g, float b)
     glEnd();
 }
 
-void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2)   // also used during loading
+void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2, GLuint tex)   // also used during loading
 {
     if(!inbetweenframes) return;
 
@@ -219,6 +219,8 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     gettextres(w, h);
 
     glDisable(GL_DEPTH_TEST);
+    glPushMatrix();
+    glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -247,10 +249,28 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
 
     if(text1) draw_text(text1, 2*FONTH, 4*FONTH + FONTH/2);
     if(bar2>0) draw_text(text2, 2*FONTH, 6*FONTH + FONTH/2);
-
-    glDisable(GL_TEXTURE_2D);
+    
     glDisable(GL_BLEND);
 
+    if(tex)
+    {
+        glBindTexture(GL_TEXTURE_2D, tex);
+        int sz = 256, x = (w-sz)/2, y = min(384, h-256);
+        sz *= 3;
+        x *= 3;
+        y *= 3;
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2i(x,    y);
+        glTexCoord2f(1, 0); glVertex2i(x+sz, y);
+        glTexCoord2f(1, 1); glVertex2i(x+sz, y+sz);
+        glTexCoord2f(0, 1); glVertex2i(x,    y+sz);
+        glEnd();
+    }
+
+    glDisable(GL_TEXTURE_2D);
+
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
     SDL_GL_SwapBuffers();

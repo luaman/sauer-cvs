@@ -30,6 +30,8 @@ static vec lm_ray[LM_MAXW*LM_MAXH];
 static int lm_w, lm_h;
 static vector<const extentity *> lights1, lights2;
 static uint progress = 0;
+static GLuint progresstex = 0;
+static int progresstexticks = 0;
 
 bool calclight_canceled = false;
 volatile bool check_calclight_progress = false;
@@ -62,7 +64,20 @@ void show_calclight_progress()
     s_sprintfd(text1)("%d%%", int(bar1 * 100));
     s_sprintfd(text2)("%d textures %d%% utilized", lightmaps.length(), int(bar2 * 100));
 
-    show_out_of_renderloop_progress(bar1, text1, bar2, text2);
+    if(LM_PACKW <= hwtexsize && !progresstex) 
+    {
+        glGenTextures(1, &progresstex); 
+        createtexture(progresstex, LM_PACKW, LM_PACKH, NULL, 3, false, GL_RGB);
+    }
+    // only update once a sec (4 * 250 ms ticks) to not kill performance
+    if(progresstex && !calclight_canceled) loopvrev(lightmaps) if(lightmaps[i].type==LM_DIFFUSE || lightmaps[i].type==LM_BUMPMAP0)
+    {
+        if(progresstexticks++ % 4) break;
+        glBindTexture(GL_TEXTURE_2D, progresstex);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LM_PACKW, LM_PACKH, GL_RGB, GL_UNSIGNED_BYTE, lightmaps[i].data);
+        break;
+    }
+    show_out_of_renderloop_progress(bar1, text1, bar2, text2, progresstexticks ? progresstex : 0);
 }
 
 #define CHECK_PROGRESS(exit) CHECK_CALCLIGHT_PROGRESS(exit, show_calclight_progress)
@@ -1044,6 +1059,7 @@ void calclight(int *quality)
     clear_lmids(worldroot);
     curlumels = 0;
     progress = 0;
+    progresstexticks = 0;
     calclight_canceled = false;
     check_calclight_progress = false;
     SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
@@ -1090,6 +1106,7 @@ void patchlight(int *quality)
     }
     computescreen("patching lightmaps... (esc to abort)");
     progress = 0;
+    progresstexticks = 0;
     int total = 0, lumels = 0;
     loopv(lightmaps)
     {
@@ -1099,7 +1116,7 @@ void patchlight(int *quality)
     curlumels = lumels;
     calclight_canceled = false;
     check_calclight_progress = false;
-    SDL_TimerID timer = SDL_AddTimer(500, calclight_timer, NULL);
+    SDL_TimerID timer = SDL_AddTimer(250, calclight_timer, NULL);
     if(patchnormals) show_out_of_renderloop_progress(0, "computing normals...");
     Uint32 start = SDL_GetTicks();
     if(patchnormals) calcnormals();
