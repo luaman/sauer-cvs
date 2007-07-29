@@ -27,6 +27,8 @@ bool menukey(int code, bool isdown, int cooked)
         case SDLK_KP_ENTER:
 			fieldpos = -2; //signal field commit
 			return false;
+        case SDLK_HOME:
+        case SDLK_END:
 		case SDLK_DELETE:
         case SDLK_BACKSPACE:
         case SDLK_LEFT:
@@ -41,6 +43,12 @@ bool menukey(int code, bool isdown, int cooked)
     if(fieldpos>len) fieldpos = len;
 	switch(code) 
     {
+        case SDLK_HOME:
+            fieldpos = 0;
+            break;
+        case SDLK_END:
+            fieldpos = len;
+            break;
 		case SDLK_LEFT:
 			if(fieldpos > 0) fieldpos--;
 			break;
