@@ -185,7 +185,6 @@ struct fpsserver : igameserver
     int lastmillis, totalmillis, curtime;
     int interm, minremain;
     bool mapreload;
-    int arenaround;
     enet_uint32 lastsend;
     int mastermode, mastermask;
     int currentmaster;
@@ -289,7 +288,7 @@ struct fpsserver : igameserver
     captureservmode capturemode;
     servmode *smode;
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), arenaround(0), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) {}
 
     void *newinfo() { return new clientinfo; }
     void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
