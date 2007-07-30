@@ -599,6 +599,8 @@ static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPE
     { PT_ENT,         20,  1,  4.8f }  // 19 fireball1, entity
 };
 
+VARP(outlinemeters, 0, 0, 1);
+
 void render_particles(int time)
 {
     static float zerofog[4] = { 0, 0, 0, 1 };
@@ -804,28 +806,29 @@ void render_particles(int time)
                         }
                         glEnd();
 
-#if 0
-                        glColor3f(0, 0.8f, 0);
-                        glBegin(GL_LINE_LOOP);
-                        loopk(10)
+                        if(outlinemeters)
                         {
-                            float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                            glVertex2f(c*FONTH, s*FONTH);
+                            glColor3f(0, 0.8f, 0);
+                            glBegin(GL_LINE_LOOP);
+                            loopk(10)
+                            {
+                                float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                                glVertex2f(c*FONTH, s*FONTH);
+                            }
+                            loopk(10)
+                            {
+                                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                                glVertex2f(right + c*FONTH, s*FONTH);
+                            }
+                            glEnd();
+                            glBegin(GL_LINE_STRIP);
+                            loopk(10)
+                            {
+                                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                                glVertex2f(left + c*FONTH, s*FONTH);
+                            }
+                            glEnd();                        
                         }
-                        loopk(10)
-                        {
-                            float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                            glVertex2f(right + c*FONTH, s*FONTH);
-                        }
-                        glEnd();
-                        glBegin(GL_LINE_STRIP);
-                        loopk(10)
-                        {
-                            float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                            glVertex2f(left + c*FONTH, s*FONTH);
-                        }
-                        glEnd();                        
-#endif
                     }
                     else
                     {

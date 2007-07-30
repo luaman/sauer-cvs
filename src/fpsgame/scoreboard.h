@@ -131,8 +131,9 @@ struct scoreboard : g3d_callback
             loopv(teamscores)
             {
                 const char *team = teamscores[i].team;
-                loopvj(sbplayers) if(!strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
+                loopvj(sbplayers) if(sbplayers[j]->state!=CS_SPECTATOR && !strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
             }
+            loopv(sbplayers) if(sbplayers[i]->state==CS_SPECTATOR) teamplayers.add(sbplayers[i]);
             sbplayers = teamplayers;
         }
  

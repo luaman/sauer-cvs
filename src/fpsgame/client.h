@@ -537,9 +537,10 @@ struct clientcom : iclientcom
 
             case SV_SPAWN:
             {
-                int ls = getint(p);
+                int ls = getint(p), gunselect = getint(p);
                 if(!d) break;
                 d->lifesequence = ls;
+                d->gunselect = gunselect;
                 d->state = CS_ALIVE;
                 break;
             }
@@ -559,7 +560,7 @@ struct clientcom : iclientcom
                 findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1);
                 cl.sb.showscores(false);
                 if(m_arena) conoutf("new round starting... fight!");
-                addmsg(SV_SPAWN, "ri", player1->lifesequence);
+                addmsg(SV_SPAWN, "rii", player1->lifesequence, player1->gunselect);
                 break;
             }
 
@@ -647,10 +648,14 @@ struct clientcom : iclientcom
                 {
                     int cn = getint(p);
                     if(cn<0) break;
-                    int state = getint(p), lifesequence = getint(p), maxhealth = getint(p), frags = getint(p);
+                    int state = getint(p), lifesequence = getint(p), gunselect = getint(p), maxhealth = getint(p), frags = getint(p);
                     fpsent *d = (cn == player1->clientnum ? player1 : cl.newclient(cn));
                     if(!d) continue;
-                    if(d!=player1) d->state = state;
+                    if(d!=player1) 
+                    {
+                        d->state = state;
+                        d->gunselect = gunselect;
+                    }
                     d->lifesequence = lifesequence;
                     if(d->state==CS_ALIVE && d->health==d->maxhealth) d->health = maxhealth;
                     d->maxhealth = maxhealth;

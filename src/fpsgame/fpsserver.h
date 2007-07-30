@@ -307,7 +307,7 @@ struct fpsserver : igameserver
             "demo", "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
-            "capture",
+            "capture", "insta capture"
         };
         return (n>=-3 && size_t(n+3)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+3] : "unknown";
     }
@@ -1029,12 +1029,21 @@ struct fpsserver : igameserver
                 sendspawn(ci);
                 break;
 
+            case SV_GUNSELECT:
+            {
+                int gunselect = getint(p);
+                ci->state.gunselect = gunselect;
+                QUEUE_MSG;
+                break;
+            }
+
             case SV_SPAWN:
             {
-                int ls = getint(p);
+                int ls = getint(p), gunselect = getint(p);
                 if(ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence || (smode && !smode->canspawn(ci))) break;
                 if(ci->state.lastdeath) ci->state.respawn();
                 ci->state.state = CS_ALIVE;
+                ci->state.gunselect = gunselect;
                 if(smode) smode->spawned(ci);
                 QUEUE_MSG;
                 break;
@@ -1128,7 +1137,7 @@ struct fpsserver : igameserver
                     if(&sc) 
                     {
                         sc.restore(ci->state);
-                        sendf(-1, 1, "ri7", SV_RESUME, sender, ci->state.state, ci->state.lifesequence, sc.maxhealth, sc.frags, -1);
+                        sendf(-1, 1, "ri7", SV_RESUME, sender, ci->state.state, ci->state.lifesequence, ci->state.gunselect, sc.maxhealth, sc.frags, -1);
                     }
                 }
                 getstring(text, p);
@@ -1433,6 +1442,7 @@ struct fpsserver : igameserver
                 putint(p, oi->clientnum);
                 putint(p, oi->state.state);
                 putint(p, oi->state.lifesequence);
+                putint(p, oi->state.gunselect);
                 putint(p, oi->state.maxhealth);
                 putint(p, oi->state.frags);
             }
@@ -1569,7 +1579,6 @@ struct fpsserver : igameserver
            gs.ammo[e.gun]<=0)
             return;
         if(e.gun!=GUN_FIST) gs.ammo[e.gun]--;
-        gs.gunselect = e.gun;
         gs.lastshot = e.millis; 
         gs.gunwait = guns[e.gun].attackdelay; 
         sendf(-1, 1, "ri9x", SV_SHOTFX, ci->clientnum, e.gun,
