@@ -435,14 +435,14 @@ int main(int argc, char **argv)
     #ifndef _DEBUG
     #ifndef __GNUC__
     __try {
+        static
     #endif
     #endif
     #endif
-
+    vector<char *> gameargs;
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0;
     char *load = NULL, *initscript = NULL;
-    vector<char *> gameargs; 
 
     #define log(s) puts("init: " s)
 
