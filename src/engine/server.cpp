@@ -26,7 +26,7 @@ void registergame(char *name, igame *ig)
     (*gamereg)[name] = ig;
 }
 
-void initgame(char *game)
+void initgame(char *game, vector<char *> &gameargs)
 {
     igame **ig = gamereg->access(game);
     if(!ig) fatal("cannot start game module: ", game);
@@ -37,6 +37,18 @@ void initgame(char *game)
         cc = cl->getcom();
         et = cl->getents();
         cl->initclient();
+    }
+    loopv(gameargs)
+    {
+        if(!cl || !cl->clientoption(gameargs[i]))
+        {
+            if(!sv->serveroption(gameargs[i])) 
+#ifdef STANDALONE
+                printf("unknown command-line option: %s\n", gameargs[i]);
+#else
+                conoutf("unknown command-line option: %s", gameargs[i]);
+#endif
+        }
     }
 }
 
@@ -498,9 +510,8 @@ uchar *retrieveservers(uchar *buf, int buflen)
 #define DEFAULTCLIENTS 6
 
 int uprate = 0, maxclients = DEFAULTCLIENTS;
-char *sdesc = "", *ip = "", *master = NULL, *adminpass = NULL;
+char *ip = "", *master = NULL;
 char *game = "fps";
-bool pubserv = false;
 
 #ifdef STANDALONE
 int lastmillis = 0, totalmillis = 0;
@@ -614,9 +625,9 @@ void localconnect()
     send_welcome(c.num); 
 }
 
-void initserver(bool dedicated)
+void initserver(bool dedicated, vector<char *> &gameargs)
 {
-    initgame(game);
+    initgame(game, gameargs);
 
     if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
@@ -633,14 +644,14 @@ void initserver(bool dedicated)
             else msaddress.host = address.host;
         }
         serverhost = enet_host_create(&address, maxclients+1, 0, uprate);
-        if(!serverhost) fatal("could not create server host\n");
+        if(!serverhost) fatal("could not create server host");
         loopi(maxclients) serverhost->peers[i].data = NULL;
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
-        if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
+        if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket");
     }
 
-    sv->serverinit(sdesc, adminpass, pubserv);
+    sv->serverinit();
 
     if(dedicated)       // do not return, this becomes main loop
     {
@@ -667,12 +678,9 @@ bool serveroption(char *opt)
             else maxclients = DEFAULTCLIENTS;
             return true;
         }
-        case 'n': sdesc = opt+2; return true;
         case 'i': ip = opt+2; return true;
         case 'm': master = opt+2; return true;
         case 'g': game = opt+2; return true;
-        case 'p': adminpass = opt+2; return true;
-        case 'o': pubserv = atoi(opt+2)!=0; return true;
         default: return false;
     }
 }
@@ -680,9 +688,10 @@ bool serveroption(char *opt)
 #ifdef STANDALONE
 int main(int argc, char* argv[])
 {   
-    for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) printf("WARNING: unknown commandline option\n");
+    vector<char *> gameargs;
+    for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) gameargs.add(argv[i]);
     if(enet_initialize()<0) fatal("Unable to initialise network module");
-    initserver(true);
+    initserver(true, gameargs);
     return 0;
 }
 #endif

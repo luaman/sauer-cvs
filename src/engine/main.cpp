@@ -442,9 +442,9 @@ int main(int argc, char **argv)
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0;
     char *load = NULL, *initscript = NULL;
-    
+    vector<char *> gameargs; 
+
     #define log(s) puts("init: " s)
-    log("sdl");
 
     initing = true;
     for(int i = 1; i<argc; i++)
@@ -480,12 +480,14 @@ int main(int argc, char **argv)
                 break;
             }
             case 'x': initscript = &argv[i][2]; break;
-            default: if(!serveroption(argv[i])) conoutf("unknown commandline option"); break;
+            default: if(!serveroption(argv[i])) gameargs.add(argv[i]); break;
         }
-        else conoutf("unknown commandline argument");
+        else gameargs.add(argv[i]);
     }
     initing = false;
-    
+
+    log("sdl");
+
     #ifdef _DEBUG
     par = SDL_INIT_NOPARACHUTE;
     fs = 0;
@@ -503,7 +505,7 @@ int main(int argc, char **argv)
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
-    initserver(dedicated);  // never returns if dedicated
+    initserver(dedicated, gameargs);  // never returns if dedicated
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);

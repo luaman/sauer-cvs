@@ -288,7 +288,11 @@ struct fpsserver : igameserver
     captureservmode capturemode;
     servmode *smode;
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) {}
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) 
+    {
+        serverdesc[0] = '\0';
+        masterpass[0] = '\0';
+    }
 
     void *newinfo() { return new clientinfo; }
     void deleteinfo(void *ci) { delete (clientinfo *)ci; } 
@@ -1669,12 +1673,20 @@ struct fpsserver : igameserver
         }
     }
 
-    void serverinit(char *sdesc, char *adminpass, bool pubserv)
+    bool serveroption(char *arg)
     {
-        s_strcpy(serverdesc, sdesc);
-        s_strcpy(masterpass, adminpass ? adminpass : "");
-        if(pubserv) mastermask = (1<<MM_OPEN) | (1<<MM_VETO);
-        smapname[0] = 0;
+        if(arg[0]=='-') switch(arg[1])
+        {
+            case 'n': s_strcpy(serverdesc, &arg[2]); return true;
+            case 'p': s_strcpy(masterpass, &arg[2]); return true;
+            case 'o': if(atoi(&arg[2])) mastermask = (1<<MM_OPEN) | (1<<MM_VETO); return true;
+        }
+        return false;
+    }
+
+    void serverinit()
+    {
+        smapname[0] = '\0';
         resetitems();
     }
    

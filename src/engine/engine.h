@@ -249,7 +249,7 @@ extern void getwatercolour(uchar *wcol);
 extern void getlavacolour(uchar *lcol);
 
 // server
-extern void initserver(bool dedicated);
+extern void initserver(bool dedicated, vector<char *> &gameargs);
 extern void cleanupserver();
 extern void serverslice(uint timeout);
 

@@ -51,6 +51,7 @@ struct igameclient
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;
 
+    virtual bool clientoption(char *arg) { return false; }
     virtual void updateworld(vec &pos, int curtime, int lm) = 0;
     virtual void initclient() = 0;
     virtual void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel) = 0;
@@ -79,9 +80,10 @@ struct igameserver
 {
     virtual ~igameserver() {}
 
+    virtual bool serveroption(char *arg) { return false; }
     virtual void *newinfo() = 0;
     virtual void deleteinfo(void *ci) = 0;
-    virtual void serverinit(char *sdesc, char *adminpass, bool pubserv) = 0;
+    virtual void serverinit() = 0;
     virtual void clientdisconnect(int n) = 0;
     virtual int clientconnect(int n, uint ip) = 0;
     virtual void localdisconnect(int n) = 0;
