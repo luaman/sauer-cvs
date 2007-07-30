@@ -461,7 +461,7 @@ struct captureservmode : capturestate, servmode
 
     void replenishammo(clientinfo *ci)
     {
-        int gamemode = sv.gamemode;
+        int gamemode = cl.gamemode;
         if(m_noitemsrail || notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         loopv(bases)
         {
@@ -514,7 +514,6 @@ struct captureservmode : capturestate, servmode
         endcheck();
         int t = sv.gamemillis/1000 - (sv.gamemillis-sv.curtime)/1000;
         if(t<1) return;
-        int gamemode = sv.gamemode;
         loopv(bases)
         {
             baseinfo &b = bases[i];
