@@ -1137,7 +1137,7 @@ struct fpsserver : igameserver
                     if(&sc) 
                     {
                         sc.restore(ci->state);
-                        sendf(-1, 1, "ri7", SV_RESUME, sender, ci->state.state, ci->state.lifesequence, ci->state.gunselect, sc.maxhealth, sc.frags, -1);
+                        sendf(-1, 1, "ri8", SV_RESUME, sender, ci->state.state, ci->state.lifesequence, ci->state.gunselect, sc.maxhealth, sc.frags, -1);
                     }
                 }
                 getstring(text, p);
