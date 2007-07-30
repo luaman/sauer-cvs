@@ -20,13 +20,15 @@ icliententities *et = NULL;
 
 hashtable<char *, igame *> *gamereg = NULL;
 
+vector<char *> gameargs;
+
 void registergame(char *name, igame *ig)
 {
     if(!gamereg) gamereg = new hashtable<char *, igame *>;
     (*gamereg)[name] = ig;
 }
 
-void initgame(char *game, vector<char *> &gameargs)
+void initgame(char *game)
 {
     igame **ig = gamereg->access(game);
     if(!ig) fatal("cannot start game module: ", game);
@@ -625,9 +627,9 @@ void localconnect()
     send_welcome(c.num); 
 }
 
-void initserver(bool dedicated, vector<char *> &gameargs)
+void initserver(bool dedicated)
 {
-    initgame(game, gameargs);
+    initgame(game);
 
     if(!master) master = sv->getdefaultmaster();
     char *mid = strstr(master, "/");
@@ -644,11 +646,11 @@ void initserver(bool dedicated, vector<char *> &gameargs)
             else msaddress.host = address.host;
         }
         serverhost = enet_host_create(&address, maxclients+1, 0, uprate);
-        if(!serverhost) fatal("could not create server host\n");
+        if(!serverhost) fatal("could not create server host");
         loopi(maxclients) serverhost->peers[i].data = NULL;
         address.port = sv->serverinfoport();
         pongsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, &address);
-        if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket\n");
+        if(pongsock == ENET_SOCKET_NULL) fatal("could not create server info socket");
     }
 
     sv->serverinit();
@@ -688,10 +690,9 @@ bool serveroption(char *opt)
 #ifdef STANDALONE
 int main(int argc, char* argv[])
 {   
-    vector<char *> gameargs;
     for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) gameargs.add(argv[i]);
     if(enet_initialize()<0) fatal("Unable to initialise network module");
-    initserver(true, gameargs);
+    initserver(true);
     return 0;
 }
 #endif

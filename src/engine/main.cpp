@@ -428,8 +428,6 @@ static bool findarg(int argc, char **argv, char *str)
     return false;
 }
 
-static vector<char *> gameargs;
-
 int main(int argc, char **argv)
 {
     #ifdef WIN32
