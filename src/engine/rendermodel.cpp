@@ -560,7 +560,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         radius = m->boundsphere(0/*frame*/, center); // FIXME
         center.add(o);
-        if((cull&MDL_CULL_DIST) && (vec(center).sub(camera1->o)).squaredlen()/(8*radius)>maxmodelradiusdistance*maxmodelradiusdistance) return;
+        if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
         {
             if(reflecting)
