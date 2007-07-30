@@ -37,7 +37,7 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_
 enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
-#define m_noitems     (gamemode>=4 && gamemode<=13)
+#define m_noitems     ((gamemode>=4 && gamemode<=11) || gamemode==13)
 #define m_noitemsrail ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9) || gamemode==13)
 #define m_arena       (gamemode>=8 && gamemode<=11)
 #define m_tarena      (gamemode>=10 && gamemode<=11)
