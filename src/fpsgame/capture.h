@@ -187,6 +187,8 @@ struct captureclient : capturestate
     
     void replenishammo()
     {
+        int gamemode = cl.gamemode;
+        if(m_noitemsrail) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -459,7 +461,8 @@ struct captureservmode : capturestate, servmode
 
     void replenishammo(clientinfo *ci)
     {
-        if(notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        int gamemode = sv.gamemode;
+        if(m_noitemsrail || notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -511,6 +514,7 @@ struct captureservmode : capturestate, servmode
         endcheck();
         int t = sv.gamemillis/1000 - (sv.gamemillis-sv.curtime)/1000;
         if(t<1) return;
+        int gamemode = sv.gamemode;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -525,7 +529,7 @@ struct captureservmode : capturestate, servmode
                 int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS,
                     ammo = b.capturetime/AMMOSECS - (b.capturetime-t)/AMMOSECS;
                 if(score) addscore(b.owner, score);
-                if(b.addammo(ammo)) sendbaseinfo(i);
+                if(!m_noitemsrail && b.addammo(ammo)) sendbaseinfo(i);
             }
         }
     }
