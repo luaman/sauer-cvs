@@ -1209,12 +1209,20 @@ struct fpsserver : igameserver
             case SV_MASTERMODE:
             {
                 int mm = getint(p);
-                if(ci->privilege && mm>=MM_OPEN && mm<=MM_PRIVATE && (ci->privilege>=PRIV_ADMIN || (mastermask&(1<<mm))))
+                if(ci->privilege && mm>=MM_OPEN && mm<=MM_PRIVATE)
                 {
-                    mastermode = mm;
-                    s_sprintfd(s)("mastermode is now %d", mastermode);
-                    sendservmsg(s);
-                }
+                    if(ci->privilege>=PRIV_ADMIN || (mastermask&(1<<mm)))
+                    {
+                        mastermode = mm;
+                        s_sprintfd(s)("mastermode is now %d", mastermode);
+                        sendservmsg(s);
+                    }
+                    else
+                    {
+                        s_sprintfd(s)("mastermode %d is disabled on this server", mm);
+                        sendf(sender, 1, "ris", SV_SERVMSG, s); 
+                    }
+                }   
                 break;
             }
            
