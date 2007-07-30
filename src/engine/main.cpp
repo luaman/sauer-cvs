@@ -428,6 +428,8 @@ static bool findarg(int argc, char **argv, char *str)
     return false;
 }
 
+static vector<char *> gameargs;
+
 int main(int argc, char **argv)
 {
     #ifdef WIN32
@@ -435,11 +437,10 @@ int main(int argc, char **argv)
     #ifndef _DEBUG
     #ifndef __GNUC__
     __try {
-        static
     #endif
     #endif
     #endif
-    vector<char *> gameargs;
+
     bool dedicated = false;
     int fs = SDL_FULLSCREEN, par = 0;
     char *load = NULL, *initscript = NULL;
@@ -505,7 +506,7 @@ int main(int argc, char **argv)
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
 
-    initserver(dedicated, gameargs);  // never returns if dedicated
+    initserver(dedicated);  // never returns if dedicated
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
