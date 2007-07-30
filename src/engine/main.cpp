@@ -219,6 +219,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     gettextres(w, h);
 
     glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
