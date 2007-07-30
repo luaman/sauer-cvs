@@ -804,6 +804,7 @@ void render_particles(int time)
                         }
                         glEnd();
 
+#if 0
                         glColor3f(0, 0.8f, 0);
                         glBegin(GL_LINE_LOOP);
                         loopk(10)
@@ -824,6 +825,7 @@ void render_particles(int time)
                             glVertex2f(left + c*FONTH, s*FONTH);
                         }
                         glEnd();                        
+#endif
                     }
                     else
                     {
