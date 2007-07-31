@@ -433,15 +433,17 @@ struct fpsserver : igameserver
 
     struct teamscore
     {
-        const char *team;
+        const char *name;
         float rank;
         int clients;
+
+        teamscore(const char *name) : name(name), rank(0), clients(0) {}
     };
     
     const char *chooseworstteam(const char *suggest)
     {
-        static const char *teamnames[2] = {"good", "evil"};
-        vector<teamscore> teamscores;
+        teamscore teamscores[2] = { teamscore("good"), teamscore("evil") };
+        const int numteams = sizeof(teamscores)/sizeof(teamscores[0]);
         loopv(clients)
         {
             clientinfo *ci = clients[i];
@@ -449,27 +451,21 @@ struct fpsserver : igameserver
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             ci->state.lasttimeplayed = lastmillis;
 
-            bool valid = false;
-            loopj(sizeof(teamnames)/sizeof(teamnames[0])) if(!strcmp(ci->team, teamnames[j])) { valid = true; break; }
-            if(!valid) continue;
-
-            teamscore *ts = NULL;
-            loopvj(teamscores) if(!strcmp(teamscores[j].team, ci->team)) { ts = &teamscores[j]; break; }
-            if(!ts) { ts = &teamscores.add(); ts->team = ci->team; ts->rank = 0; ts->clients = 0; }
-            ts->rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
-            ts->clients++;
+            loopj(numteams) if(!strcmp(ci->team, teamscores[j].name)) 
+            { 
+                teamscore &ts = teamscores[j];
+                ts.rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
+                ts.clients++;
+                break;
+            }
         }
-        if((size_t)teamscores.length()<sizeof(teamnames)/sizeof(teamnames[0]))
-        {
-            return teamnames[teamscores.length()];
-        }
-        teamscore *worst = NULL;
-        loopv(teamscores)
+        teamscore *worst = &teamscores[numteams-1];
+        loopi(numteams-1)
         {
             teamscore &ts = teamscores[i];
-            if(!worst || ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
+            if(ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
         }
-        return worst ? worst->team : teamnames[0];
+        return worst->name;
     }
 
     void writedemo(int chan, void *data, int len)
