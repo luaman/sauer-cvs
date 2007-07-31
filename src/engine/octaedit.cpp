@@ -293,6 +293,7 @@ extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
 extern float rayent(const vec &o, vec &ray, vec &hitpos, float radius, int mode, int size, int &orient, int &ent);
 
 VAR(gridlookup, 0, 0, 1);
+VAR(passthroughcube, 0, 1, 1);
 
 void cursorupdate()
 {
@@ -339,7 +340,8 @@ void cursorupdate()
        
         wdist = rayent(player->o, ray, v, 0, (editmode && showmat ? RAY_EDITMAT : 0)   // select cubes first
                                            | (!dragging && entediting ? RAY_ENTS : 0)
-                                           | RAY_SKIPFIRST | RAY_PASS, gridsize, entorient, ent);
+                                           | RAY_SKIPFIRST 
+                                           | (passthroughcube==1 ? RAY_PASS : 0), gridsize, entorient, ent);
      
         if((havesel || dragging) && !passthroughsel)     // now try selecting the selection
             if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
