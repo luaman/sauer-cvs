@@ -534,7 +534,9 @@ void writeobj(char *name)
             if(floatvtx) { vec &f = *(vec *)verts; loopk(3) vv[k] = short(f[k]); }
             else vv = *(vvec *)verts;
             vec v = vv.tovec(va.x, va.y, va.z);
-            fprintf(f, "v %f %f %f\n", v.x, v.y, v.z);
+            if(vv.x&((1<<VVEC_FRAC)-1)) fprintf(f, "v %.3f ", v.x); else fprintf(f, "v %d ", int(v.x));
+            if(vv.y&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f ", v.y); else fprintf(f, "%d ", int(v.y));
+            if(vv.z&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f\n", v.z); else fprintf(f, "%d\n", int(v.z));
             verts += vtxsize;
         }
         ushort *ebuf = va.l0.ebuf;
