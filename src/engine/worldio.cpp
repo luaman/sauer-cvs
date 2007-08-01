@@ -524,19 +524,26 @@ void writeobj(char *name)
     extern vector<vtxarray *> valist;
     loopv(valist)
     {
-        vtxarray &v = *valist[i];
-        vertex *verts = v.vbuf;
-        if(verts)
+        vtxarray &va = *valist[i];
+        uchar *verts = (uchar *)va.vbuf;
+        if(!verts) continue;
+        int vtxsize = VTXSIZE;
+        loopj(va.verts) 
         {
-            loopj(v.verts) fprintf(f, "v %d %d %d\n", verts[j].x, verts[j].y, verts[j].z);
-            ushort *ebuf = v.l0.ebuf;
-            loopi(v.l0.texs) loopl(3) loopj(v.l0.eslist[i].length[l]/3)
-            {
-                fprintf(f, "f");
-                for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-v.verts);
-                ebuf += 3;
-                fprintf(f, "\n");
-            }
+            vvec vv;
+            if(floatvtx) { vec &f = *(vec *)verts; loopk(3) vv[k] = short(f[k]); }
+            else vv = *(vvec *)verts;
+            vec v = vv.tovec(va.x, va.y, va.z);
+            fprintf(f, "v %f %f %f\n", v.x, v.y, v.z);
+            verts += vtxsize;
+        }
+        ushort *ebuf = va.l0.ebuf;
+        loopi(va.l0.texs) loopl(3) loopj(va.l0.eslist[i].length[l]/3)
+        {
+            fprintf(f, "f");
+            for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-va.verts);
+            ebuf += 3;
+            fprintf(f, "\n");
         }
     }
     fclose(f);
