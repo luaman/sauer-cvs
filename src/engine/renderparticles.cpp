@@ -599,7 +599,7 @@ static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPE
     { PT_ENT,         20,  1,  4.8f }  // 19 fireball1, entity
 };
 
-VARP(outlinemeters, 0, 0, 1);
+VARP(outlinemeters, 0, 1, 1);
 
 void render_particles(int time)
 {
