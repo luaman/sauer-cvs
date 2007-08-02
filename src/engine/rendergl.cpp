@@ -775,14 +775,13 @@ void gl_drawframe(int w, int h)
     render_particles(curtime);
 
     glDisable(GL_FOG);
-    defaultshader->set();
-
-    g3d_render();
-
     glDisable(GL_CULL_FACE);
 
     renderfullscreenshader(w, h);
-    
+   
+    defaultshader->set();
+    g3d_render();
+
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 
@@ -806,7 +805,7 @@ VARP(crosshairfx, 0, 1, 1);
 void drawcrosshair(int w, int h)
 {
     bool windowhit = g3d_windowhit(true, false);
-    if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;;
+    if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;
 
     static Texture *cursor = NULL;
     if(!cursor) cursor = textureload("data/guicursor.png", 3, false);
