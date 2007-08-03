@@ -404,6 +404,15 @@ struct fpsserver : igameserver
         for(int round = 0, remaining = clients.length(); remaining>=0; round++)
         {
             int first = round&1, second = (round+1)&1, selected = 0;
+            if(m_capture)
+            {
+                float rank;
+                clientinfo *ci = choosebestclient(rank);
+                if(ci) team[first].add(ci);
+                ci = choosebestclient(rank);
+                if(ci) team[second].add(ci);
+                continue;
+            }
             while(teamrank[first] <= teamrank[second])
             {
                 float rank;
@@ -463,7 +472,11 @@ struct fpsserver : igameserver
         loopi(numteams-1)
         {
             teamscore &ts = teamscores[i];
-            if(ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
+            if(m_capture)
+            {
+                if(ts.clients < worst->clients || (ts.clients == worst->clients && ts.rank < worst->rank)) worst = &ts;
+            }
+            else if(ts.rank < worst->rank || (ts.rank == worst->rank && ts.clients < worst->clients)) worst = &ts;
         }
         return worst->name;
     }
