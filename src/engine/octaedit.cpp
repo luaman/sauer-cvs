@@ -725,11 +725,13 @@ COMMANDN(redo, editredo, "");
 ///////////// height maps ////////////////
 
 #ifdef NEW_HMAP
+
+#define clamp(a,b,c) (max(b, min(a, c)))
 void createheightmap() {}
 
 union cface { uchar edge[4]; uint face; };
 
-const int MAXBRUSH = 50;
+const int MAXBRUSH = 16;
 cface brush[MAXBRUSH][MAXBRUSH];
 VAR(brushx, 0, 25, MAXBRUSH);
 VAR(brushy, 0, 25, MAXBRUSH);
@@ -747,10 +749,10 @@ void clearbrush()
 void brushvert(int *x, int *y, int *v)
 {
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
-    brush[*x][*y].edge[3]     = clamp(0, *v, 7);
-    brush[*x][*y+1].edge[1]   = clamp(0, *v, 7);
-    brush[*x+1][*y].edge[2]   = clamp(0, *v, 7);
-    brush[*x+1][*y+1].edge[0] = clamp(0, *v, 7);
+    brush[*x][*y].edge[3]     = clamp(*v, 0, 8);
+    brush[*x][*y+1].edge[1]   = clamp(*v, 0, 8);
+    brush[*x+1][*y].edge[2]   = clamp(*v, 0, 8);
+    brush[*x+1][*y+1].edge[0] = clamp(*v, 0, 8);
     brushmaxx = max(brushmaxx, *x+1);
     brushmaxy = max(brushmaxy, *y+1);
 }
@@ -768,9 +770,9 @@ struct heightmapper {
     
     selinfo changes;
     int age;
-    int d, dc;
+    int d, dc, dr, md;
     int gx, gy, gz;
-    uint fs, fh;
+    uint fs, fn;
 
     heightmapper() : age(0) {}
 
@@ -779,11 +781,13 @@ struct heightmapper {
         age++;
         d  = dimension(sel.orient);
         dc = dimcoord(sel.orient);
+        dr = dir;
+        md = mode;
         gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - brushx;
         gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - brushy;
         gz = (cur[D[d]] >> gridpower);
         fs = (dc ? 4 : 0);
-        fh = 0x08080808 << fs;        
+        fn = 0x0f0f0f0f << (4-fs);       
         hedit(brushx, brushy, 0);        
         changes.grid = gridsize;
         changes.o.x = gx << gridpower;
@@ -803,7 +807,8 @@ struct heightmapper {
     inline bool isheightmap(cube *c) 
     {
         return !c->children &&
-               c->texture[sel.orient] == hmaptexture;
+             //  (c->faces[d] & fn) == 0 && 
+                c->texture[sel.orient] == hmaptexture;
     }
 
     void hedit(int x, int y, int z)
@@ -820,26 +825,31 @@ struct heightmapper {
         discardchildren(*c); // necessary? for ext?
         
         
-        cface b = brush[x][y];
-        b.face <<= fs;    
-        uint &face = c->faces[d];
-        face -= b.face;
+        cface b = brush[x][y];        
+        uint &face = c->faces[d];        
 
-/*
-        uint top = face & fh;
-        uint up  = face & ((top>>3) * 7);
-        uint pop = (top&(up<<1)) | (top&(up<<2)) | (top&(up<<3));
-        // bring up
+        face = (face>>fs) & 0x0f0f0f0f;            
+        face += (dr>0 ? 0x08080808 - b.face : b.face);
+        uint ovr = (face & 0x10101010) >> 1;
+        uint top = face & 0x08080808;
+        uint hi  = face & ((top>>3) * 7) | ovr;
+        uint pop = (top&(hi<<1)) | (top&(hi<<2)) | (top&(hi<<3)) | ovr;        
         uint gry = greytoggle(pop);        
         uint bup = greytoggle(gry | ((gry>>24)&0x000000FF) | // need rotate...
                                     ((gry<<24)&0xFF000000) |
                                     ((gry>> 8)&0x00FFFFFF) |
                                     ((gry<< 8)&0xFFFFFF00) );
-        face &= ~((bup>>3) * 7);
-        face |= bup;
-*/    
-        if(x>0) hedit(x-1, y, z);
-        if(y>0) hedit(x, y-1, z);
+        uint lo  = face & 0x0f0f0f0f;
+             lo &= ~((bup>>3) * 7);
+             lo |= bup | ovr;
+
+        // the dual-layer faces
+        lo <<= fs; 
+        hi <<= fs;
+        face = (dr>0 ? hi : lo);       
+                
+        if(x>0)         hedit(x-1, y, z);
+        if(y>0)         hedit(x, y-1, z);
         if(x<brushmaxx) hedit(x+1, y, z);
         if(y<brushmaxy) hedit(x, y+1, z);
     }  
