@@ -404,20 +404,13 @@ struct fpsserver : igameserver
         for(int round = 0, remaining = clients.length(); remaining>=0; round++)
         {
             int first = round&1, second = (round+1)&1, selected = 0;
-            if(m_capture)
-            {
-                float rank;
-                clientinfo *ci = choosebestclient(rank);
-                if(ci) { team[first].add(ci); selected++; }
-                ci = choosebestclient(rank);
-                if(ci) { team[second].add(ci); selected++; }
-            }
-            else while(teamrank[first] <= teamrank[second])
+            while(teamrank[first] <= teamrank[second])
             {
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
                 if(!ci) break;
-                if(selected && rank<=0) break;    
+                if(m_capture) rank = 1;
+                else if(selected && rank<=0) break;    
                 ci->state.timeplayed = -1;
                 team[first].add(ci);
                 teamrank[first] += rank;
