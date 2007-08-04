@@ -724,6 +724,135 @@ COMMANDN(redo, editredo, "");
 
 ///////////// height maps ////////////////
 
+#ifdef NEW_HMAP
+void createheightmap() {}
+
+union cface { uchar edge[4]; uint face; };
+
+const int MAXBRUSH = 50;
+cface brush[MAXBRUSH][MAXBRUSH];
+VAR(brushx, 0, 25, MAXBRUSH);
+VAR(brushy, 0, 25, MAXBRUSH);
+int brushmaxx = 0;
+int brushmaxy = 0;
+
+void clearbrush()
+{
+    loopi(MAXBRUSH) loopj(MAXBRUSH)
+        brush[i][j].face = 0;
+    brushmaxx = 0;
+    brushmaxy = 0;
+}
+
+void brushvert(int *x, int *y, int *v)
+{
+    if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
+    brush[*x][*y].edge[3]     = clamp(0, *v, 7);
+    brush[*x][*y+1].edge[1]   = clamp(0, *v, 7);
+    brush[*x+1][*y].edge[2]   = clamp(0, *v, 7);
+    brush[*x+1][*y+1].edge[0] = clamp(0, *v, 7);
+    brushmaxx = max(brushmaxx, *x+1);
+    brushmaxy = max(brushmaxy, *y+1);
+}
+
+int hmaptexture; // will probably want list
+
+COMMAND(clearbrush, "");
+COMMAND(brushvert, "iii");
+ICOMMAND(addhtex, "", hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[orient]);
+
+struct heightmapper {
+
+    struct cache { int age; };
+    cache map[MAXBRUSH][MAXBRUSH];
+    
+    selinfo changes;
+    int age;
+    int d, dc;
+    int gx, gy, gz;
+    uint fs, fh;
+
+    heightmapper() : age(0) {}
+
+    void edit(int dir, int mode) 
+    {        
+        age++;
+        d  = dimension(sel.orient);
+        dc = dimcoord(sel.orient);
+        gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - brushx;
+        gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - brushy;
+        gz = (cur[D[d]] >> gridpower);
+        fs = (dc ? 4 : 0);
+        fh = 0x08080808 << fs;        
+        hedit(brushx, brushy, 0);        
+        changes.grid = gridsize;
+        changes.o.x = gx << gridpower;
+        changes.o.y = gy << gridpower;
+        changes.o.z = gz << gridpower;
+        changes.s.x = brushmaxx;
+        changes.s.y = brushmaxy;
+        changes.s.z = 1;
+        changed(changes);
+    }
+
+    inline uint greytoggle(int a)
+    {
+        return (a&0xFFFF0000) + ((a&0xFF00)>>8) + ((a&0xFF)<<8);
+    }
+
+    inline bool isheightmap(cube *c) 
+    {
+        return !c->children &&
+               c->texture[sel.orient] == hmaptexture;
+    }
+
+    void hedit(int x, int y, int z)
+    {            
+        if(map[x][y].age == age) return;        
+        map[x][y].age = age;
+        int tx = (x+gx) << gridpower;
+        int ty = (y+gy) << gridpower;
+        int tz = (z+gz) << gridpower;
+        cube *c = &lookupcube(tx, ty, tz, -gridsize);
+        if(!isheightmap(c)) return;
+        if(lusize > gridsize)
+            c = &lookupcube(tx, ty, tz, gridsize);
+        discardchildren(*c); // necessary? for ext?
+        
+        
+        cface b = brush[x][y];
+        b.face <<= fs;    
+        uint &face = c->faces[d];
+        face -= b.face;
+
+/*
+        uint top = face & fh;
+        uint up  = face & ((top>>3) * 7);
+        uint pop = (top&(up<<1)) | (top&(up<<2)) | (top&(up<<3));
+        // bring up
+        uint gry = greytoggle(pop);        
+        uint bup = greytoggle(gry | ((gry>>24)&0x000000FF) | // need rotate...
+                                    ((gry<<24)&0xFF000000) |
+                                    ((gry>> 8)&0x00FFFFFF) |
+                                    ((gry<< 8)&0xFFFFFF00) );
+        face &= ~((bup>>3) * 7);
+        face |= bup;
+*/    
+        if(x>0) hedit(x-1, y, z);
+        if(y>0) hedit(x, y-1, z);
+        if(x<brushmaxx) hedit(x+1, y, z);
+        if(y<brushmaxy) hedit(x, y+1, z);
+    }  
+};
+
+heightmapper hmapper;
+void edithmap(int dir, int mode) {    
+    if(multiplayer()) return;
+    hmapper.edit(dir, mode);    
+}
+
+#else
+
 void pushside(cube &c, int d, int x, int y, int z)
 {
     ivec a;
@@ -1023,6 +1152,8 @@ void getheightmap()
 COMMAND(getheightmap, "");
 COMMAND(smoothmap, "");
 
+#endif
+
 ///////////// main cube edit ////////////////
 
 int bounded(int n) { return n<0 ? 0 : (n>8 ? 8 : n); }
@@ -1143,10 +1274,14 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit(moving!=0)) return;
+#ifdef NEW_HMAP
+    edithmap(*dir, *mode);
+#else
     if(hmap)
         edithmap(*dir, *mode);
     else
-        mpeditface(*dir, *mode, sel, true);
+       mpeditface(*dir, *mode, sel, true);
+#endif
 }
 
 VAR(selectionsurf, 0, 0, 1);
