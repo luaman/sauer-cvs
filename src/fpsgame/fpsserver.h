@@ -408,12 +408,11 @@ struct fpsserver : igameserver
             {
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
-                if(ci) team[first].add(ci);
+                if(ci) { team[first].add(ci); selected++; }
                 ci = choosebestclient(rank);
-                if(ci) team[second].add(ci);
-                continue;
+                if(ci) { team[second].add(ci); selected++; }
             }
-            while(teamrank[first] <= teamrank[second])
+            else while(teamrank[first] <= teamrank[second])
             {
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
