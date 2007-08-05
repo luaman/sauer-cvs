@@ -93,7 +93,7 @@ struct vertmodel : model
                 disableglow(); 
                 if(lightmodels) 
                 {
-                    static const GLfloat material[4] = { 1, 1, 1, 1 };
+                    GLfloat material[4] = { 1, 1, 1, as.anim&ANIM_TRANSLUCENT ? owner->model->translucency : 1 };
                     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
                 }
                 else glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? owner->model->translucency : 1);
@@ -101,10 +101,9 @@ struct vertmodel : model
             if(lightmodels)
             {
                 float ambient = min(owner->model->ambient*0.75f, 1), 
-                      diffuse = 1-ambient, 
-                      transluc = as.anim&ANIM_TRANSLUCENT && !masked ? owner->model->translucency : 1;
-                GLfloat ambientcol[4] = { lightcolor.x*ambient, lightcolor.y*ambient, lightcolor.z*ambient, transluc },
-                        diffusecol[4] = { lightcolor.x*diffuse, lightcolor.y*diffuse, lightcolor.z*diffuse, transluc < 1 ? 0 : 1 };
+                      diffuse = 1-ambient;
+                GLfloat ambientcol[4] = { lightcolor.x*ambient, lightcolor.y*ambient, lightcolor.z*ambient, 1 },
+                        diffusecol[4] = { lightcolor.x*diffuse, lightcolor.y*diffuse, lightcolor.z*diffuse, 1 };
                 float ambientmax = max(ambientcol[0], max(ambientcol[1], ambientcol[2])),
                       diffusemax = max(diffusecol[0], max(diffusecol[1], diffusecol[2]));
                 if(ambientmax>1e-3f) loopk(3) ambientcol[k] *= min(1.5f, 1.0f/ambientmax);
@@ -1231,7 +1230,7 @@ struct vertmodel : model
             {
                 if(!enableglow)
                 {
-                    static const GLfloat material[4] = { 1, 1, 1, 1 };
+                    GLfloat material[4] = { 1, 1, 1, anim&ANIM_TRANSLUCENT ? translucency : 1 };
                     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
                 }
             }
@@ -1350,6 +1349,7 @@ struct vertmodel : model
             glLightModelfv(GL_LIGHT_MODEL_AMBIENT, zero);
             glLightfv(GL_LIGHT0, GL_SPECULAR, zero);
             glMaterialfv(GL_FRONT, GL_SPECULAR, zero);
+            glMaterialfv(GL_FRONT, GL_EMISSION, zero);
             initlights = true;
         }
     }
