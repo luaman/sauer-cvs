@@ -98,6 +98,8 @@ VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
 VARP(texcompress, 0, 1<<10, 1<<12);
 VARP(hwmipmap, 0, 0, 1);
+VARP(trilinear, 0, 1, 1);
+VARP(bilinear, 0, 1, 1);
 
 bool canhwmipmap(GLenum format)
 {
@@ -162,8 +164,13 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
         glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mipit ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+            mipit ?
+                (trilinear ? 
+                    (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) : 
+                    (bilinear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST)) :
+                (bilinear ? GL_LINEAR : GL_NEAREST));
     }
     GLenum format = component, type = GL_UNSIGNED_BYTE;
     switch(component)
