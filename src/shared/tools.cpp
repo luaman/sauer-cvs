@@ -62,7 +62,7 @@ bool fileexists(const char *path, const char *mode)
 
 bool createdir(const char *path)
 {
-    int len = strlen(path);
+    size_t len = strlen(path);
     if(path[len-1]==PATHDIV)
     {
         static string strip;
