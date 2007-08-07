@@ -78,7 +78,7 @@ bool createdir(const char *path)
 static void fixdir(char *dir)
 {
     path(dir);
-    int len = strlen(dir);
+    size_t len = strlen(dir);
     if(dir[len-1]!=PATHDIV)
     {
         dir[len] = PATHDIV;
