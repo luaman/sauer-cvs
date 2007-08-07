@@ -80,6 +80,11 @@ struct fpsserver : igameserver
         float effectiveness;
 
         gamestate() : state(CS_DEAD) {}
+    
+        bool isalive(int gamemillis)
+        {
+            return state==CS_ALIVE || (state==CS_DEAD && gamemillis - lastdeath <= DEATHMILLIS);
+        }
 
         void reset()
         {
@@ -348,7 +353,7 @@ struct fpsserver : igameserver
     {
         if(minremain<=0 || !sents.inrange(i) || !sents[i].spawned) return false;
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(!ci || (!ci->local && (ci->state.state!=CS_ALIVE || !ci->state.canpickup(sents[i].type)))) return false;
+        if(!ci || (!ci->local && !ci->state.canpickup(sents[i].type))) return false;
         sents[i].spawned = false;
         sents[i].spawntime = spawntime(sents[i].type);
         sendf(-1, 1, "ri3", SV_ITEMACC, i, sender);
@@ -1574,7 +1579,7 @@ struct fpsserver : igameserver
     {
         gamestate &gs = ci->state;
         int wait = gamemillis - gs.lastshot;
-        if((gs.state!=CS_ALIVE && gamemillis - gs.lastdeath > DEATHMILLIS) ||
+        if(!gs.isalive(gamemillis) ||
            (gs.gunwait && wait<gs.gunwait) ||
            e.gun<GUN_FIST || e.gun>GUN_PISTOL ||
            gs.ammo[e.gun]<=0)
@@ -1617,7 +1622,7 @@ struct fpsserver : igameserver
     void processevent(clientinfo *ci, pickupevent &e)
     {
         gamestate &gs = ci->state;
-        if(gs.state!=CS_ALIVE) return;
+        if(!gs.isalive(gamemillis)) return;
         pickup(e.ent, ci->clientnum);
     }
 
