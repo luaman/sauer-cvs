@@ -267,29 +267,83 @@ void md3pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pit
     }
 }
 
-void md3skin(char *objname, char *tex, char *masks, float *envmapmax, float *envmapmin)
-{   
-    if(!objname || !tex) return;
-    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
-    md3::part &mdl = *loadingmd3->parts.last();
-    if(!mdl.meshes) return;
-    loopv(mdl.meshes->meshes)
-    {   
-        md3::mesh &m = *mdl.meshes->meshes[i];
-        if(!strcmp(objname, "*") || !strcmp(m.name, objname))
-        {
-            md3::skin &s = mdl.skins[i];
-            s_sprintfd(spath)("%s/%s", md3dir, tex);
-            s.tex = textureload(spath, false, true, false);
-            if(*masks)
-            {
-                s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<ffmask:25>" : "", md3dir, masks);
-                s.masks = textureload(mpath, false, true, false);
-                s.envmapmax = *envmapmax;
-                s.envmapmin = *envmapmin;
-            }
-        }
+#define loopmd3skins(meshname, s, body) \
+    if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; } \
+    md3::part &mdl = *loadingmd3->parts.last(); \
+    if(!mdl.meshes) return; \
+    loopv(mdl.meshes->meshes) \
+    { \
+        md3::mesh &m = *mdl.meshes->meshes[i]; \
+        if(!strcmp(meshname, "*") || !strcmp(m.name, meshname)) \
+        { \
+            md3::skin &s = mdl.skins[i]; \
+            body; \
+        } \
     }
+
+void md3skin(char *meshname, char *tex, char *masks, float *envmapmax, float *envmapmin)
+{    
+    loopmd3skins(meshname, s,
+        s_sprintfd(spath)("%s/%s", md3dir, tex);
+        s.tex = textureload(spath, false, true, false);
+        if(*masks)
+        {
+            s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<ffmask:25>" : "", md3dir, masks);
+            s.masks = textureload(mpath, false, true, false);
+            s.envmapmax = *envmapmax;
+            s.envmapmin = *envmapmin;
+        }
+    );
+}   
+
+void md3spec(char *meshname, int *percent)
+{
+    float spec = 1.0f;
+    if(*percent>0) spec = *percent/100.0f;
+    else if(*percent<0) spec = 0.0f;
+    loopmd3skins(meshname, s, s.spec = spec);
+}
+
+void md3ambient(char *meshname, int *percent)
+{
+    float ambient = 0.3f;
+    if(*percent>0) ambient = *percent/100.0f;
+    else if(*percent<0) ambient = 0.0f;
+    loopmd3skins(meshname, s, s.ambient = ambient);
+}
+
+void md3glow(char *meshname, int *percent)
+{
+    float glow = 3.0f;
+    if(*percent>0) glow = *percent/100.0f;
+    else if(*percent<0) glow = 0.0f;
+    loopmd3skins(meshname, s, s.glow = glow);
+}
+
+void md3alphatest(char *meshname, float *cutoff)
+{
+    loopmd3skins(meshname, s, s.alphatest = max(0, min(1, *cutoff)));
+}
+
+void md3alphablend(char *meshname, int *blend)
+{
+    loopmd3skins(meshname, s, s.alphablend = *blend!=0);
+}
+
+void md3envmap(char *meshname, char *envmap)
+{
+    Texture *tex = cubemapload(envmap);
+    loopmd3skins(meshname, s, s.envmap = tex);
+}
+
+void md3translucent(char *meshname, float *translucency)
+{
+    loopmd3skins(meshname, s, s.translucency = *translucency);
+}
+
+void md3shader(char *meshname, char *shader)
+{
+    loopmd3skins(meshname, s, s.shader = lookupshaderbyname(shader));
 }
 
 void md3anim(char *anim, int *frame, int *range, float *speed, int *priority)
@@ -314,6 +368,14 @@ void md3link(int *parent, int *child, char *tagname)
 COMMAND(md3load, "s");
 COMMAND(md3pitch, "ffff");
 COMMAND(md3skin, "sssff");
+COMMAND(md3spec, "si");
+COMMAND(md3ambient, "si");
+COMMAND(md3glow, "si");
+COMMAND(md3alphatest, "sf");
+COMMAND(md3alphablend, "si");
+COMMAND(md3envmap, "ss");
+COMMAND(md3translucent, "sf");
+COMMAND(md3shader, "ss");
 COMMAND(md3anim, "siifi");
 COMMAND(md3link, "iis");
             

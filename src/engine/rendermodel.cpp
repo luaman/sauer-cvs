@@ -35,7 +35,7 @@ void mdlspec(int *percent)
     float spec = 1.0f; 
     if(*percent>0) spec = *percent/100.0f;
     else if(*percent<0) spec = 0.0f;
-    loadingmodel->spec = spec;
+    loadingmodel->setspec(spec);
 }
 
 COMMAND(mdlspec, "i");
@@ -46,7 +46,7 @@ void mdlambient(int *percent)
     float ambient = 0.3f;
     if(*percent>0) ambient = *percent/100.0f;
     else if(*percent<0) ambient = 0.0f;
-    loadingmodel->ambient = ambient;
+    loadingmodel->setambient(ambient);
 }
 
 COMMAND(mdlambient, "i");
@@ -54,7 +54,7 @@ COMMAND(mdlambient, "i");
 void mdlalphatest(float *cutoff)
 {   
     checkmdl;
-    loadingmodel->alphatest = max(0, min(1, *cutoff));
+    loadingmodel->setalphatest(max(0, min(1, *cutoff)));
 }
 
 COMMAND(mdlalphatest, "f");
@@ -62,7 +62,7 @@ COMMAND(mdlalphatest, "f");
 void mdlalphablend(int *blend)
 {   
     checkmdl;
-    loadingmodel->alphablend = *blend!=0;
+    loadingmodel->setalphablend(*blend!=0);
 }
 
 COMMAND(mdlalphablend, "i");
@@ -73,10 +73,34 @@ void mdlglow(int *percent)
     float glow = 3.0f;
     if(*percent>0) glow = *percent/100.0f;
     else if(*percent<0) glow = 0.0f;
-    loadingmodel->glow = glow;
+    loadingmodel->setglow(glow);
 }
 
 COMMAND(mdlglow, "i");
+
+void mdlenvmap(int *envmapmax, int *envmapmin, char *envmap)
+{
+    checkmdl;
+    loadingmodel->setenvmap(*envmapmin, *envmapmax, envmap[0] ? cubemapload(envmap) : NULL);
+}
+
+COMMAND(mdlenvmap, "iis");
+
+void mdltranslucent(float *translucency)
+{
+    checkmdl;
+    loadingmodel->settranslucency(*translucency);
+}
+
+COMMAND(mdltranslucent, "f");
+
+void mdlshader(char *shader)
+{
+    checkmdl;
+    loadingmodel->setshader(lookupshaderbyname(shader));
+}
+
+COMMAND(mdlshader, "s");
 
 void mdlspin(float *rate)
 {
@@ -85,14 +109,6 @@ void mdlspin(float *rate)
 }
 
 COMMAND(mdlspin, "f");
-
-void mdlshader(char *shader)
-{
-    checkmdl;
-    loadingmodel->shader = lookupshaderbyname(shader);
-}
-
-COMMAND(mdlshader, "s");
 
 void mdlscale(int *percent)
 {
@@ -138,23 +154,6 @@ void mdlname()
 }
 
 COMMAND(mdlname, "");
-
-void mdlenvmap(int *envmapmax, int *envmapmin, char *envmap)
-{
-    checkmdl;
-    if(*envmapmax) loadingmodel->setenvmap(*envmapmin, *envmapmax);
-    if(envmap[0]) loadingmodel->envmap = cubemapload(envmap);
-}
-
-COMMAND(mdlenvmap, "iis");
-
-void mdltranslucent(float *translucency)
-{
-    checkmdl;
-    loadingmodel->translucency = *translucency;
-}
-
-COMMAND(mdltranslucent, "f");
 
 // mapmodels
 

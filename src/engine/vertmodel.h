@@ -47,11 +47,13 @@ struct vertmodel : model
     struct skin
     {
         part *owner;
-        Texture *tex, *masks;
+        Texture *tex, *masks, *envmap;
         int override;
-        float envmapmin, envmapmax;
-        
-        skin() : owner(0), tex(crosshair), masks(crosshair), override(0), envmapmin(0), envmapmax(0) {}
+        Shader *shader;
+        float spec, ambient, glow, envmapmin, envmapmax, translucency, alphatest;
+        bool alphablend;
+
+        skin() : owner(0), tex(crosshair), masks(crosshair), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), alphatest(0.9f), alphablend(true) {}
 
         bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
@@ -63,11 +65,10 @@ struct vertmodel : model
             if(masked!=enableglow) lasttex = lastmasks = NULL;
             if(masked)
             {
-                vertmodel *m = owner->model;
                 if(!enableglow) setuptmu(0, "K , C @ T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "Ca * Ta" : NULL);
-                int glowscale = m->glow>2 ? 4 : (m->glow > 1 ? 2 : 1);
-                float glow = m->glow/glowscale, envmap = as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1;
-                colortmu(0, glow, glow, glow);
+                int glowscale = glow>2 ? 4 : (glow > 1 ? 2 : 1);
+                float envmap = as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1;
+                colortmu(0, glow/glowscale, glow/glowscale, glow/glowscale);
                 if(lightmodels)
                 {
                     GLfloat material[4] = { 1.0f/glowscale, 1.0f/glowscale, 1.0f/glowscale, envmap };
@@ -80,30 +81,37 @@ struct vertmodel : model
                 if(!enableglow || as.anim&ANIM_TRANSLUCENT)
                 {
                     if(!enableglow) glEnable(GL_TEXTURE_2D);
-                    if(!(as.anim&ANIM_ENVMAP && envmapmax>0) && as.anim&ANIM_TRANSLUCENT) colortmu(1, 0, 0, 0, m->translucency);
+                    if(!(as.anim&ANIM_ENVMAP && envmapmax>0) && as.anim&ANIM_TRANSLUCENT) colortmu(1, 0, 0, 0, translucency);
                     setuptmu(1, "P * T", as.anim&ANIM_ENVMAP && envmapmax>0 ? "= Pa" : (as.anim&ANIM_TRANSLUCENT ? "Ta * Ka" : "= Ta"));
                 }
                 scaletmu(1, glowscale);
+
+                if(as.anim&ANIM_ENVMAP && envmapmax>0 && as.anim&ANIM_TRANSLUCENT)
+                {
+                    glActiveTexture_(GL_TEXTURE2_ARB);
+                    colortmu(2, 0, 0, 0, translucency);
+                }
+
                 glActiveTexture_(GL_TEXTURE0_ARB);
 
                 enableglow = true;
             }
-            else if(enableglow)
+            else
             {
-                disableglow(); 
+                if(enableglow) disableglow(); 
                 if(lightmodels) 
                 {
-                    GLfloat material[4] = { 1, 1, 1, as.anim&ANIM_TRANSLUCENT ? owner->model->translucency : 1 };
+                    GLfloat material[4] = { 1, 1, 1, as.anim&ANIM_TRANSLUCENT ? translucency : 1 };
                     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
                 }
-                else glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? owner->model->translucency : 1);
+                else glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
             }
             if(lightmodels)
             {
-                float ambient = min(owner->model->ambient*0.75f, 1), 
-                      diffuse = 1-ambient;
-                GLfloat ambientcol[4] = { lightcolor.x*ambient, lightcolor.y*ambient, lightcolor.z*ambient, 1 },
-                        diffusecol[4] = { lightcolor.x*diffuse, lightcolor.y*diffuse, lightcolor.z*diffuse, 1 };
+                float ambientk = min(ambient*0.75f, 1), 
+                      diffusek = 1-ambientk;
+                GLfloat ambientcol[4] = { lightcolor.x*ambientk, lightcolor.y*ambientk, lightcolor.z*ambientk, 1 },
+                        diffusecol[4] = { lightcolor.x*diffusek, lightcolor.y*diffusek, lightcolor.z*diffusek, 1 };
                 float ambientmax = max(ambientcol[0], max(ambientcol[1], ambientcol[2])),
                       diffusemax = max(diffusecol[0], max(diffusecol[1], diffusecol[2]));
                 if(ambientmax>1e-3f) loopk(3) ambientcol[k] *= min(1.5f, 1.0f/ambientmax);
@@ -115,9 +123,7 @@ struct vertmodel : model
 
         void setshader(animstate &as, bool masked)
         {
-            vertmodel *m = owner->model;
             if(renderpath==R_FIXEDFUNCTION) setuptmus(as, masked);
-            else if(m->shader) m->shader->set();
             else
             {
                 static Shader *modelshader = NULL, *modelshadernospec = NULL, *modelshadermasks = NULL, *modelshadermasksnospec = NULL, *modelshaderenvmap = NULL, *modelshaderenvmapnospec = NULL;
@@ -129,20 +135,23 @@ struct vertmodel : model
                 if(!modelshaderenvmap)       modelshaderenvmap       = lookupshaderbyname("envmapmodel");
                 if(!modelshaderenvmapnospec) modelshaderenvmapnospec = lookupshaderbyname("envmapnospecmodel");
 
-                setenvparamf("specscale", SHPARAM_PIXEL, 2, m->spec, m->spec, m->spec);
-                setenvparamf("ambient", SHPARAM_VERTEX, 3, m->ambient, m->ambient, m->ambient, 1);
-                setenvparamf("ambient", SHPARAM_PIXEL, 3, m->ambient, m->ambient, m->ambient, 1);
-                setenvparamf("glowscale", SHPARAM_PIXEL, 4, m->glow, m->glow, m->glow);
+                glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
 
-                if(as.anim&ANIM_ENVMAP && envmapmax>0)
+                setenvparamf("specscale", SHPARAM_PIXEL, 2, spec, spec, spec);
+                setenvparamf("ambient", SHPARAM_VERTEX, 3, ambient, ambient, ambient, 1);
+                setenvparamf("ambient", SHPARAM_PIXEL, 3, ambient, ambient, ambient, 1);
+                setenvparamf("glowscale", SHPARAM_PIXEL, 4, glow, glow, glow);
+
+                if(shader) shader->set();
+                else if(as.anim&ANIM_ENVMAP && envmapmax>0)
                 {
-                    if(lightmodels && (masked || m->spec>=0.01f)) modelshaderenvmap->set();
+                    if(lightmodels && (masked || spec>=0.01f)) modelshaderenvmap->set();
                     else modelshaderenvmapnospec->set();
                     setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
                 }
                 else if(masked && lightmodels) modelshadermasks->set();
                 else if(masked && glowmodels) modelshadermasksnospec->set();
-                else if(m->spec>=0.01f && lightmodels) modelshader->set();
+                else if(spec>=0.01f && lightmodels) modelshader->set();
                 else modelshadernospec->set();
             }
         }
@@ -176,7 +185,7 @@ struct vertmodel : model
             }
             if(s->bpp==32)
             {
-                if(owner->model->alphablend)
+                if(alphablend)
                 {
                     if(!enablealphablend && !reflecting && !refracting)
                     {
@@ -186,13 +195,13 @@ struct vertmodel : model
                     }
                 }
                 else if(enablealphablend) { glDisable(GL_BLEND); enablealphablend = false; }
-                if(owner->model->alphatest>0)
+                if(alphatest>0)
                 {
                     if(!enablealphatest) { glEnable(GL_ALPHA_TEST); enablealphatest = true; }
-                    if(lastalphatest!=owner->model->alphatest)
+                    if(lastalphatest!=alphatest)
                     {
-                        glAlphaFunc(GL_GREATER, owner->model->alphatest);
-                        lastalphatest = owner->model->alphatest;
+                        glAlphaFunc(GL_GREATER, alphatest);
+                        lastalphatest = alphatest;
                     }
                 }
                 else if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
@@ -211,7 +220,7 @@ struct vertmodel : model
             }
             if(as.anim&ANIM_ENVMAP && envmapmax>0)
             {
-                GLuint emtex = owner->model->envmap ? owner->model->envmap->gl : closestenvmaptex;
+                GLuint emtex = envmap ? envmap->gl : closestenvmaptex;
                 if(!enableenvmap || lastenvmaptex!=emtex)
                 {
                     glActiveTexture_(GL_TEXTURE2_ARB);
@@ -1200,14 +1209,53 @@ struct vertmodel : model
         return false;
     }
 
-    void setenvmap(float envmapmin, float envmapmax)
+    void setshader(Shader *shader)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].shader = shader;
+    }
+
+    void setenvmap(float envmapmin, float envmapmax, Texture *envmap)
     {
         loopv(parts) loopvj(parts[i]->skins)
         {
             skin &s = parts[i]->skins[j];
-            s.envmapmin = envmapmin;
-            s.envmapmax = envmapmax;
+            if(envmapmax)
+            {
+                s.envmapmin = envmapmin;
+                s.envmapmax = envmapmax;
+            }
+            if(envmap) s.envmap = envmap;
         }
+    }
+
+    virtual void setspec(float spec) 
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].spec = spec;
+    }
+
+    virtual void setambient(float ambient)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].ambient = ambient;
+    }
+
+    virtual void setglow(float glow)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].glow = glow;
+    }
+
+    virtual void setalphatest(float alphatest)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].alphatest = alphatest;
+    }
+
+    virtual void setalphablend(bool alphablend)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].alphablend = alphablend;
+    }
+
+    virtual void settranslucency(float translucency)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].translucency = translucency;
     }
 
     virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
@@ -1226,15 +1274,6 @@ struct vertmodel : model
             fogplane = plane(0, 0, 1, o.z-refracting);
 
             lightcolor = color;
-            if(renderpath==R_FIXEDFUNCTION && lightmodels) 
-            {
-                if(!enableglow)
-                {
-                    GLfloat material[4] = { 1, 1, 1, anim&ANIM_TRANSLUCENT ? translucency : 1 };
-                    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
-                }
-            }
-            else glColor4f(color.x, color.y, color.z, anim&ANIM_TRANSLUCENT ? translucency : 1);
             
             rdir = dir;
             rdir.rotate_around_z((-yaw-180.0f)*RAD);
@@ -1243,20 +1282,13 @@ struct vertmodel : model
             campos.sub(o);
             campos.rotate_around_z((-yaw-180.0f)*RAD);
 
-            if(envmapped())
-            {
-                anim |= ANIM_ENVMAP;
-                if(!envmap) closestenvmaptex = lookupenvmap(closestenvmap(o));
-            }
+            if(envmapped()) anim |= ANIM_ENVMAP;
             else if(a) for(int i = 0; a[i].name; i++) if(a[i].m && a[i].m->envmapped())
             {
                 anim |= ANIM_ENVMAP;
-                if(!a[i].m->envmap)
-                {
-                    closestenvmaptex = lookupenvmap(closestenvmap(o));
-                    break;
-                }
+                break;
             }
+            if(anim&ANIM_ENVMAP) closestenvmaptex = lookupenvmap(closestenvmap(o));
         }
 
         if(anim&ANIM_ENVMAP)
@@ -1265,7 +1297,6 @@ struct vertmodel : model
             glMatrixMode(GL_TEXTURE);
             if(renderpath==R_FIXEDFUNCTION)
             {
-                if(anim&ANIM_TRANSLUCENT) colortmu(2, 0, 0, 0, translucency);
                 setuptmu(2, "T , P @ Pa", anim&ANIM_TRANSLUCENT ? "= Ka" : NULL);
 
                 GLfloat mm[16], mmtrans[16];
