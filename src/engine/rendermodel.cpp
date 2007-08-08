@@ -298,7 +298,7 @@ VARP(dynshadow, 0, 60, 100);
 void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec center, float radius, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, modelattach *a)
 {
     vec floor;
-    float dist = rayfloor(center, floor);
+    float dist = rayfloor(center, floor, 0, center.z);
     if(dist<=0) return;
     center.z -= dist;
     if((cull&MDL_CULL_VFC) && refracting && center.z>=refracting) return;

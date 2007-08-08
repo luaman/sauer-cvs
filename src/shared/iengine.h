@@ -8,7 +8,7 @@ enum { RAY_BB = 1, RAY_POLY = 3, RAY_ALPHAPOLY = 7, RAY_ENTS = 9, RAY_CLIPMAT = 
 
 extern float raycube   (const vec &o, const vec &ray,     float radius = 0, int mode = RAY_CLIPMAT, int size = 0, extentity *t = 0);
 extern float raycubepos(const vec &o, vec &ray, vec &hit, float radius = 0, int mode = RAY_CLIPMAT, int size = 0);
-extern float rayfloor  (const vec &o, vec &floor, int mode = 0);
+extern float rayfloor  (const vec &o, vec &floor, int mode = 0, float radius = 0);
 extern bool  raycubelos(vec &o, vec &dest, vec &hitpos);
 
 extern bool isthirdperson();

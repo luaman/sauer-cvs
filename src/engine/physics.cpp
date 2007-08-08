@@ -353,12 +353,12 @@ bool raycubelos(vec &o, vec &dest, vec &hitpos)
     return distance >= mag;
 }
 
-float rayfloor(const vec &o, vec &floor, int mode)
+float rayfloor(const vec &o, vec &floor, int mode, float radius)
 {
     if(o.z<=0) return -1;
     hitslope = vec(0, 0, 1);
-    float dist = raycube(o, vec(0, 0, -1), o.z, mode);
-    if(dist>=o.z) return -1;
+    float dist = raycube(o, vec(0, 0, -1), radius, mode);
+    if(dist<0 || (radius>0 && dist>=radius)) return dist;
     floor = hitslope;
     return dist;
 }

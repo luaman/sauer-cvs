@@ -484,7 +484,7 @@ static void cleanupexplosion()
     }
 }
 
-#define MAXPARTYPES 20
+#define MAXPARTYPES 21
 
 struct particle
 {   
@@ -538,11 +538,9 @@ static particle *newparticle(const vec &o, const vec &d, int fade, int type, int
     if(!parempty)
     {
         particle *ps = new particle[256];
-        loopi(256)
-        {
-            ps[i].next = parempty;
-            parempty = &ps[i];
-        }
+        loopi(255) ps[i].next = &ps[i+1];
+        ps[255].next = parempty;
+        parempty = ps;
     }
     particle *p = parempty;
     parempty = p->next;
@@ -567,6 +565,7 @@ enum
     PT_METER,
     PT_METERVS,
     PT_FIREBALL,
+    PT_DECAL,
 
     PT_ENT  = 1<<8,
     PT_MOD  = 1<<9,
@@ -575,31 +574,37 @@ enum
 };
 
 // @TODO reorder so as to draw meters & lerps first to reduce visual errors
-static struct parttype { int type; int gr, tex; float sz; } parttypes[MAXPARTYPES] =
+static struct parttype { int type; int gr, tex; float sz; int collide; } parttypes[MAXPARTYPES] =
 {
-    { 0,               2,  6, 0.24f }, // 0 sparks 
-    { 0,             -20,  2,  0.6f }, // 1 small slowly rising smoke
-    { 0,              20,  0, 0.32f }, // 2 edit mode entities
-    { PT_MOD|PT_RND4,  2,  8, 2.96f }, // 3 blood spats (note: rgb is inverted)
-    { 0,              20,  1,  4.8f }, // 4 fireball1
-    { 0,             -20,  2,  2.4f }, // 5 big  slowly rising smoke   
-    { 0,              20,  3,  4.8f }, // 6 fireball2
-    { 0,              20,  4,  4.8f }, // 7 big fireball3
-    { PT_TEXTUP,      -8, -1,  4.0f }, // 8 TEXT
-    { PT_FLARE,        0,  5, 0.28f }, // 9 flare
-    { PT_TEXT,         0, -1,  2.0f }, // 10 TEXT, SMALL, NON-MOVING
-    { 0,              20,  4,  2.0f }, // 11 fireball3
-    { PT_METER,        0, -1,  2.0f }, // 12 METER, SMALL, NON-MOVING
-    { PT_METERVS,      0, -1,  2.0f }, // 13 METER vs., SMALL, NON-MOVING
-    { 0,              20,  2,  0.6f }, // 14 small  slowly sinking smoke trail
-    { PT_FIREBALL,     0,  7,  4.0f }, // 15 explosion fireball
-    { PT_ENT,        -20,  2,  2.4f }, // 16 big  slowly rising smoke, entity
-    { 0,             -15,  2,  2.4f }, // 17 big  fast rising smoke          
-    { PT_ENT|PT_TRAIL|PT_LERP, 2,  0, 0.60f }, // 18 water, entity 
-    { PT_ENT,         20,  1,  4.8f }  // 19 fireball1, entity
+    { 0,               2,  6, 0.24f,  0 }, // 0 sparks 
+    { 0,             -20,  2,  0.6f,  0 }, // 1 small slowly rising smoke
+    { 0,              20,  0, 0.32f,  0 }, // 2 edit mode entities
+    { PT_MOD|PT_RND4,  2,  8, 2.96f, 4 }, // 3 blood spats (note: rgb is inverted)
+    { PT_MOD|PT_RND4|PT_DECAL, 0, 8, 4.0f, 0 }, // 4 blood stain
+    { 0,              20,  1,  4.8f,  0 }, // 5 fireball1
+    { 0,             -20,  2,  2.4f,  0 }, // 6 big  slowly rising smoke   
+    { 0,              20,  3,  4.8f,  0 }, // 7 fireball2
+    { 0,              20,  4,  4.8f,  0 }, // 8 big fireball3
+    { PT_TEXTUP,      -8, -1,  4.0f,  0 }, // 9 TEXT
+    { PT_FLARE,        0,  5, 0.28f,  0 }, // 10 flare
+    { PT_TEXT,         0, -1,  2.0f,  0 }, // 11 TEXT, SMALL, NON-MOVING
+    { 0,              20,  4,  2.0f,  0 }, // 12 fireball3
+    { PT_METER,        0, -1,  2.0f,  0 }, // 13 METER, SMALL, NON-MOVING
+    { PT_METERVS,      0, -1,  2.0f,  0 }, // 14 METER vs., SMALL, NON-MOVING
+    { 0,              20,  2,  0.6f,  0 }, // 15 small  slowly sinking smoke trail
+    { PT_FIREBALL,     0,  7,  4.0f,  0 }, // 16 explosion fireball
+    { PT_ENT,        -20,  2,  2.4f,  0 }, // 17 big  slowly rising smoke, entity
+    { 0,             -15,  2,  2.4f,  0 }, // 18 big  fast rising smoke          
+    { PT_ENT|PT_TRAIL|PT_LERP, 2, 0, 0.60f, 0 }, // 19 water, entity 
+    { PT_ENT,         20,  1,  4.8f,  0 }  // 20 fireball1, entity
 };
 
 VARP(outlinemeters, 0, 1, 1);
+
+#define COLLIDERADIUS 16.0f
+#define COLLIDEERROR 1.0f
+
+VARP(decalfade, 1, 10000, 60000);
 
 void render_particles(int time)
 {
@@ -632,7 +637,7 @@ void render_particles(int time)
         }
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
     
-        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL);
+        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL || type == PT_DECAL);
         if(quads) glBegin(GL_QUADS);
         else
         {
@@ -652,7 +657,7 @@ void render_particles(int time)
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
             int ts = (lastmillis-p->millis);
-            bool remove;
+            bool remove = false;
             int blend;
             vec o = p->o;
             uchar color[3] = {p->color>>16, (p->color>>8)&0xFF, p->color&0xFF};
@@ -667,13 +672,13 @@ void render_particles(int time)
                     o.z -= t*t/(2.0f * 5000.0f * pt.gr);
                 }
                 blend = max(255 - (ts<<8)/p->fade, 0);
-                remove = !refracting && !reflecting && (ts >= p->fade);
+                if(!refracting && !reflecting && ts >= p->fade) remove = true;
             }   
             else
             {
                 blend = 255;
                 ts = p->fade;
-                remove = !refracting && !reflecting;
+                if(!refracting && !reflecting) remove = true;
             }
                         
             if(quads)
@@ -711,6 +716,18 @@ void render_particles(int time)
                     glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x-c.x, o.y-c.y, o.z-c.z);
                     glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+c.x, o.y+c.y, o.z+c.z);
                     glTexCoord2f(tx,     ty);     glVertex3f(e.x+c.x, e.y+c.y, e.z+c.z);
+                }
+                else if(type==PT_DECAL)
+                {
+                    vec udir, vdir;        
+                    udir.orthogonal(p->d);
+                    udir.normalize();
+                    udir.mul(sz);
+                    vdir.cross(p->d, udir);
+                    glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+udir.x, o.y+udir.y, o.z+udir.z);
+                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+vdir.x, o.y+vdir.y, o.z+vdir.z);
+                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x-udir.x, o.y-udir.y, o.z-udir.z);
+                    glTexCoord2f(tx,     ty);     glVertex3f(o.x-vdir.x, o.y-vdir.y, o.z-vdir.z);
                 }
                 else
                 {   
@@ -843,7 +860,25 @@ void render_particles(int time)
                 }
                 glPopMatrix();
             }
-            
+           
+            if(pt.collide && o.z < p->val && !refracting && !reflecting)
+            {
+                vec surface;
+                float collidez = p->val - rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
+                if(o.z >= collidez+COLLIDEERROR) p->val = collidez+COLLIDEERROR;
+                else
+                {
+                    *pp = p->next;
+                    p->o = vec(o.x, o.y, collidez+0.25f);
+                    p->d = surface;
+                    p->millis = lastmillis;
+                    p->fade = decalfade;
+                    p->next = parlist[pt.collide];
+                    parlist[pt.collide] = p;
+                    continue;
+                }
+            }
+
             if(remove)
             {
                 *pp = p->next;
@@ -908,6 +943,7 @@ VARP(maxparticledistance, 256, 512, 4096);
 static void splash(int type, int color, int radius, int num, int fade, const vec &p)
 {
     if(camera1->o.dist(p) > maxparticledistance) return;
+    float collidez = parttypes[type].collide ? p.z - raycube(p, vec(0, 0, -1), COLLIDERADIUS, RAY_CLIPMAT) + COLLIDEERROR : -1; 
     loopi(num)
     {
         int x, y, z;
@@ -919,7 +955,7 @@ static void splash(int type, int color, int radius, int num, int fade, const vec
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp = vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3)+1, type, color);
+        newparticle(p, tmp, rnd(fade*3)+1, type, color)->val = collidez;
     }
 }
 
@@ -939,30 +975,30 @@ static struct partmap { int type; int color; } partmaps[] =
     {  1, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
     {  2, 0x3232FF}, // 2 blue:   edit mode entities
     {  3, 0x19FFFF}, // 3 red:    blood spats (note: rgb is inverted)
-    {  4, 0xFFC8C8}, // 4 yellow: fireball1
-    {  5, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
-    {  6, 0xFFFFFF}, // 6 blue:   fireball2
-    {  7, 0xFFFFFF}, // 7 green:  big fireball3
-    {  8, 0xFF4B19}, // 8 TEXT RED
-    {  8, 0x32FF64}, // 9 TEXT GREEN
-    {  9, 0xFFC864}, // 10 yellow flare
-    { 10, 0x1EC850}, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
-    { 11, 0xFFFFFF}, // 12 green small fireball3
-    { 10, 0xFF4B19}, // 13 TEXT RED, SMALL, NON-MOVING
-    { 10, 0xB4B4B4}, // 14 TEXT GREY, SMALL, NON-MOVING
-    {  8, 0xFFC864}, // 15 TEXT YELLOW
-    { 10, 0x6496FF}, // 16 TEXT BLUE, SMALL, NON-MOVING
-    { 12, 0xFF1932}, // 17 METER RED, SMALL, NON-MOVING
-    { 12, 0x3219FF}, // 18 METER BLUE, SMALL, NON-MOVING
-    { 13, 0xFF1932}, // 19 METER RED vs. BLUE, SMALL, NON-MOVING (note swaps r<->b)
-    { 13, 0x3219FF}, // 20 METER BLUE vs. RED, SMALL, NON-MOVING (note swaps r<->b)
-    { 14, 0x897661}, // 21 greyish-brown:   small  slowly sinking smoke trail
-    { 15, 0xFF8080}, // 22 red explosion fireball
-    { 15, 0xA0C080}, // 23 orange explosion fireball
-    { 16, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
-    { 17, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
-    { 18, 0x3232FF}, // 26 water  
-    { 19, 0xFFC8C8}  // 27 yellow: fireball1
+    {  5, 0xFFC8C8}, // 4 yellow: fireball1
+    {  6, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
+    {  7, 0xFFFFFF}, // 6 blue:   fireball2
+    {  8, 0xFFFFFF}, // 7 green:  big fireball3
+    {  9, 0xFF4B19}, // 8 TEXT RED
+    {  9, 0x32FF64}, // 9 TEXT GREEN
+    { 10, 0xFFC864}, // 10 yellow flare
+    { 11, 0x1EC850}, // 11 TEXT DARKGREEN, SMALL, NON-MOVING
+    { 12, 0xFFFFFF}, // 12 green small fireball3
+    { 11, 0xFF4B19}, // 13 TEXT RED, SMALL, NON-MOVING
+    { 11, 0xB4B4B4}, // 14 TEXT GREY, SMALL, NON-MOVING
+    {  9, 0xFFC864}, // 15 TEXT YELLOW
+    { 11, 0x6496FF}, // 16 TEXT BLUE, SMALL, NON-MOVING
+    { 13, 0xFF1932}, // 17 METER RED, SMALL, NON-MOVING
+    { 13, 0x3219FF}, // 18 METER BLUE, SMALL, NON-MOVING
+    { 14, 0xFF1932}, // 19 METER RED vs. BLUE, SMALL, NON-MOVING (note swaps r<->b)
+    { 14, 0x3219FF}, // 20 METER BLUE vs. RED, SMALL, NON-MOVING (note swaps r<->b)
+    { 15, 0x897661}, // 21 greyish-brown:   small  slowly sinking smoke trail
+    { 16, 0xFF8080}, // 22 red explosion fireball
+    { 16, 0xA0C080}, // 23 orange explosion fireball
+    { 17, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
+    { 18, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
+    { 19, 0x3232FF}, // 26 water  
+    { 20, 0xFFC8C8}  // 27 yellow: fireball1
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
