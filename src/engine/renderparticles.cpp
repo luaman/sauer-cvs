@@ -974,7 +974,7 @@ static struct partmap { int type; int color; } partmaps[] =
     {  0, 0xB49B4B}, // 0 yellow: sparks 
     {  1, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
     {  2, 0x3232FF}, // 2 blue:   edit mode entities
-    {  3, 0x19FFFF}, // 3 red:    blood spats (note: rgb is inverted)
+    {  3, 0x60FFFF}, // 3 red:    blood spats (note: rgb is inverted)
     {  5, 0xFFC8C8}, // 4 yellow: fireball1
     {  6, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
     {  7, 0xFFFFFF}, // 6 blue:   fireball2
