@@ -717,24 +717,33 @@ void render_particles(int time)
                     glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+c.x, o.y+c.y, o.z+c.z);
                     glTexCoord2f(tx,     ty);     glVertex3f(e.x+c.x, e.y+c.y, e.z+c.z);
                 }
-                else if(type==PT_DECAL)
-                {
-                    vec udir, vdir;        
-                    udir.orthogonal(p->d);
-                    udir.normalize();
-                    udir.mul(sz);
-                    vdir.cross(p->d, udir);
-                    glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+udir.x, o.y+udir.y, o.z+udir.z);
-                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+vdir.x, o.y+vdir.y, o.z+vdir.z);
-                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x-udir.x, o.y-udir.y, o.z-udir.z);
-                    glTexCoord2f(tx,     ty);     glVertex3f(o.x-vdir.x, o.y-vdir.y, o.z-vdir.z);
-                }
                 else
-                {   
-                    glTexCoord2f(tx,     ty+tsz); glVertex3f(o.x+(-camright.x+camup.x)*sz, o.y+(-camright.y+camup.y)*sz, o.z+(-camright.z+camup.z)*sz);
-                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3f(o.x+( camright.x+camup.x)*sz, o.y+( camright.y+camup.y)*sz, o.z+( camright.z+camup.z)*sz);
-                    glTexCoord2f(tx+tsz, ty);     glVertex3f(o.x+( camright.x-camup.x)*sz, o.y+( camright.y-camup.y)*sz, o.z+( camright.z-camup.z)*sz);
-                    glTexCoord2f(tx,     ty);     glVertex3f(o.x+(-camright.x-camup.x)*sz, o.y+(-camright.y-camup.y)*sz, o.z+(-camright.z-camup.z)*sz);
+                {
+                    vec v[4] = { o, o, o, o };
+                    if(type==PT_DECAL)
+                    {
+                        vec udir, vdir;        
+                        udir.orthogonal(p->d);
+                        udir.normalize();
+                        udir.mul(sz);
+                        vdir.cross(p->d, udir);
+                        v[0].add(udir);
+                        v[1].add(vdir);
+                        v[2].sub(udir);
+                        v[3].sub(vdir);
+                    }
+                    else
+                    {
+                        v[0].add(vec(camup).sub(camright).mul(sz));
+                        v[1].add(vec(camup).add(camright).mul(sz));
+                        v[2].add(vec(camright).sub(camup).mul(sz));
+                        v[3].sub(vec(camup).add(camright).mul(sz));
+                    }
+                    int orient = detrnd((size_t)p, 11); 
+                    glTexCoord2f(tx,     ty+tsz); glVertex3fv(v[orient%4].v);
+                    glTexCoord2f(tx+tsz, ty+tsz); glVertex3fv(v[(orient+1)%4].v);
+                    glTexCoord2f(tx+tsz, ty);     glVertex3fv(v[(orient+2)%4].v);
+                    glTexCoord2f(tx,     ty);     glVertex3fv(v[(orient+3)%4].v);
                 }
             }
             else
