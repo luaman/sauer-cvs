@@ -1159,19 +1159,19 @@ static void makeparticles(entity &e)
             uchar col[3];
             getwatercolour(col);
             int color = (col[0]<<16) | (col[1]<<8) | col[2];
-            regularsplash(18, color, 150, 5, 200, offsetvec(e.o, e.attr2, rnd(10)));
+            regularsplash(19, color, 150, 4, 200, offsetvec(e.o, e.attr2, rnd(10)));
             break;
         }
         case 3: //fire ball - <size> <rgb>
-            newparticle(e.o, vec(0, 0, 1), 1, 15, colorfromattr(e.attr3))->val = 1+e.attr2;
+            newparticle(e.o, vec(0, 0, 1), 1, 16, colorfromattr(e.attr3))->val = 1+e.attr2;
             break;
         case 4: //tape - <dir> <length> <rgb>
-            if(e.attr2 >= 256) regularshape(9, 1+e.attr3, colorfromattr(e.attr4), e.attr2-256, 5, 200, e.o);
-            else newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 9, colorfromattr(e.attr4));
+            if(e.attr2 >= 256) regularshape(10, 1+e.attr3, colorfromattr(e.attr4), e.attr2-256, 5, 200, e.o);
+            else newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 10, colorfromattr(e.attr4));
             break;
         case 5: //meter, metervs - <percent> <rgb>
         case 6:
-            newparticle(e.o, vec(0, 0, 1), 1, (e.attr1==5)?12:13, colorfromattr(e.attr3))->val = min(1.0, float(e.attr2)/100);
+            newparticle(e.o, vec(0, 0, 1), 1, (e.attr1==5)?13:14, colorfromattr(e.attr3))->val = min(1.0, float(e.attr2)/100);
             break;
                
         case 32: //lens flares - plain/sparkle/sun/sparklesun <red> <green> <blue>
