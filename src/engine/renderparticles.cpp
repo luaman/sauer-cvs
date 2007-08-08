@@ -576,11 +576,11 @@ enum
 // @TODO reorder so as to draw meters & lerps first to reduce visual errors
 static struct parttype { int type; int gr, tex; float sz; int collide; } parttypes[MAXPARTYPES] =
 {
-    { 0,               2,  6, 0.24f,  0 }, // 0 sparks 
-    { 0,             -20,  2,  0.6f,  0 }, // 1 small slowly rising smoke
-    { 0,              20,  0, 0.32f,  0 }, // 2 edit mode entities
-    { PT_MOD|PT_RND4,  2,  8, 2.96f, 4 }, // 3 blood spats (note: rgb is inverted)
-    { PT_MOD|PT_RND4|PT_DECAL, 0, 8, 4.0f, 0 }, // 4 blood stain
+    { PT_MOD|PT_RND4,  2,  8, 2.96f, 4 }, // 0 blood spats (note: rgb is inverted)
+    { PT_MOD|PT_RND4|PT_DECAL, 0, 8, 4.0f, 0 }, // 1 blood stain
+    { 0,               2,  6, 0.24f,  0 }, // 2 sparks 
+    { 0,             -20,  2,  0.6f,  0 }, // 3 small slowly rising smoke
+    { 0,              20,  0, 0.32f,  0 }, // 4 edit mode entities
     { 0,              20,  1,  4.8f,  0 }, // 5 fireball1
     { 0,             -20,  2,  2.4f,  0 }, // 6 big  slowly rising smoke   
     { 0,              20,  3,  4.8f,  0 }, // 7 fireball2
@@ -971,10 +971,10 @@ static void regularsplash(int type, int color, int radius, int num, int fade, co
 // @NOTE potentially this and the following public funcs can be tidied up, but lets please defer that for a little bit...
 static struct partmap { int type; int color; } partmaps[] = 
 {
-    {  0, 0xB49B4B}, // 0 yellow: sparks 
-    {  1, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
-    {  2, 0x3232FF}, // 2 blue:   edit mode entities
-    {  3, 0x60FFFF}, // 3 red:    blood spats (note: rgb is inverted)
+    {  2, 0xB49B4B}, // 0 yellow: sparks 
+    {  3, 0x897661}, // 1 greyish-brown:   small slowly rising smoke
+    {  4, 0x3232FF}, // 2 blue:   edit mode entities
+    {  0, 0x60FFFF}, // 3 red:    blood spats (note: rgb is inverted)
     {  5, 0xFFC8C8}, // 4 yellow: fireball1
     {  6, 0x897661}, // 5 greyish-brown:   big  slowly rising smoke   
     {  7, 0xFFFFFF}, // 6 blue:   fireball2
