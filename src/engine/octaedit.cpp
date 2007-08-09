@@ -660,7 +660,7 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 void editundo() { swapundo(undos, redos, "undo"); }
 void editredo() { swapundo(redos, undos, "redo"); }
 
-editinfo *localedit=NULL;
+editinfo *localedit = NULL;
 
 void freeeditinfo(editinfo *&e)
 {
@@ -706,6 +706,7 @@ void copy()
 
 void pastehilite()
 {
+    if(!localedit) return;
 	sel.s = localedit->copy->s;
     havesel = true;
 }
