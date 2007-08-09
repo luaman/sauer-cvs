@@ -437,6 +437,7 @@ struct fpsclient : igameclient
     {
         if(d==player1)
         {
+            if(d->state!=CS_ALIVE) return;
             if(!m_mp(gamemode)) killed(player1, player1);
             else if(suicided!=player1->lifesequence)
             {
