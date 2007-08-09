@@ -711,7 +711,7 @@ void pastehilite()
     havesel = true;
 }
 
-void paste(int *isdown)
+void paste()
 {
     if(noedit()) return;
     mppaste(localedit, sel, true);
@@ -771,27 +771,30 @@ struct heightmapper {
     
     selinfo changes;
     int age;
-    int d, dc, dr, md;
+    int d, dc, dr, biasdown, br;
     int gx, gy, gz, mx, my, mz;
-    uint fs, fn;
+    uint fs, fn, fo;
 
     heightmapper() : age(0) {}
-
+    
     void edit(int dir, int mode) 
     {        
         age++;
         d  = dimension(sel.orient);
         dc = dimcoord(sel.orient);
         dr = dir;
-        md = mode;
+        br = dir>0 ? 0x08080808 : 0;
+        biasdown = mode == dir>0;
         gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - brushx;
         gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - brushy;
         gz = (cur[D[d]] >> gridpower);
         fs = (dc ? 4 : 0);
-        fn = 0x0f0f0f0f << (4-fs);
+        fo = (dc ? 0 : F_SOLID);
+        fn = 0x0f0f0f0f << (4-fs);        
         mx = brushmaxx;
         my = brushmaxy;
-        mz = 10;
+        mz = 10;    
+
         changes.grid = gridsize;        
         changes.o.x = gx << gridpower;
         changes.o.y = gy << gridpower;
@@ -812,25 +815,40 @@ struct heightmapper {
     {
         return !c->children &&
              //  (c->faces[d] & fn) == 0 && 
+                (c->faces[R[d]] & 0x77777777) == 0 &&
+                (c->faces[C[d]] & 0x77777777) == 0 &&
                 c->texture[sel.orient] == hmaptexture;
     }
 
-    inline cube *getcube(int tx, int ty, int tz)
-    {
-        cube *c = &lookupcube(tx, ty, tz, -gridsize);
+    inline cube *getcube(const ivec &t, int f) 
+    {   // TODO: This will most likely be bottle neck
+        // after profiling, look at loopoctabox + precache for help
+        int tz = t.z+(f*gridsize);
+        cube *c = &lookupcube(t.x, t.y, tz, -gridsize);
         if(!isheightmap(c)) return NULL;
         if(lusize > gridsize)
-            c = &lookupcube(tx, ty, tz, gridsize);
-        discardchildren(*c); // necessary? for ext?
+            c = &lookupcube(t.x, t.y, tz, gridsize);
+        discardchildren(*c); // necessary? for ext?     
         return c;
     }
 
-    inline void sethface(cube *c, uint &face, uint v)
+    inline void sethface(cube *c, uint v)
     {
-        if(v!=F_EMPTY)
-            face = v;
+        if(v != F_EMPTY) 
+        {
+            c->faces[R[d]] = F_SOLID;
+            c->faces[C[d]] = F_SOLID;        
+            c->faces[D[d]] = v | fo;
+        }
         else
-            emptyfaces(*c);                    
+            emptyfaces(*c);        
+    }
+
+    inline void pushside(uint &face, uint v)
+    {   // push side for triangle top
+        uint pm = (v&0xffff)>0 ? 0x00ff00ff : 0xff00ff00;
+        uint pv = (v&0xff00ff)>0 ? 0 : 0x88888888 & (~pm);
+        face = face & pm | pv;        
     }
     
     void hedit(int x, int y, int z)
@@ -839,65 +857,80 @@ struct heightmapper {
         map[x][y].age = age;
         ivec t(d, x+gx, y+gy, z+gz);
         t <<= gridpower;
-        cube *c = getcube(t.x, t.y, t.z);
-        if(c==NULL) return;        
-        
-        cface b = brush[x][y];        
-        uint &face = c->faces[d];        
-
-        face = (face>>fs) & 0x0f0f0f0f;            
-        face += (dr>0 ? 0x08080808 - b.face : b.face);
+        cube *a = NULL, *b = NULL, *c, *e = NULL;
+        if(NULL == (c = getcube(t, 0))) return;
+        bool isdual, wasdual = c->faces[R[d]] != F_SOLID;                          
+        // generate heights
+        uint face = (c->faces[d]>>fs) & 0x0f0f0f0f;        
+        face += -dr * brush[x][y].face + br;
+        if(wasdual) 
+        {
+            b = getcube(t, -1);
+            if(b!=NULL && lusize==gridsize && isheightmap(b))
+                face += (b->faces[d]>>fs) & 0x0f0f0f0f;
+        }
+        else 
+            face += 0x08080808;      
+       
+        // seperate heights into 4 layers
         uint ovr = (face & 0x10101010) >> 1;
-        uint top = face & 0x08080808;
-        uint hi  = face & ((top>>3) * 7) | ovr;        
-        uint gry = greytoggle((top&(hi<<1)) | (top&(hi<<2)) | (top&(hi<<3)) | ovr);        
-        uint bup = greytoggle(gry | ((gry>>24)&0x000000FF) | // need rotate...
-                                    ((gry<<24)&0xFF000000) |
-                                    ((gry>> 8)&0x00FFFFFF) |
-                                    ((gry<< 8)&0xFFFFFF00) );
-        uint lo  = face & 0x0f0f0f0f;
-             lo &= ~((bup>>3) * 7);
-             lo |= bup | ovr;
-
-        // the dual-layer faces
-        lo <<= fs; 
-        hi <<= fs;
-        if(dr>0) {
-            // push side for triangle top
-            if(bup!=0 && bup!=0x08080808) {
-                uint ps = (hi&0xffff)>0 ? 0x00ff00ff : 0xff00ff00;
-                uint pv = (hi&0xff00ff)>0 ? 0 : 0x88888888 & (~ps);
-                c->faces[R[d]] &= ps;
-                c->faces[R[d]] |= pv;
-            }
-            sethface(c, face, hi);
-            if(z>-mz) hdown(t.x, t.y, t.z-gridsize, lo);
-        } else {
-            sethface(c, face, lo);
-            if(z<mz)  hup(t.x, t.y, t.z+gridsize, hi);
+        uint top = face & 0x08080808;                
+        uint oh  = face & ((ovr>>3) * 0xf);
+        uint hi  = face & ((top>>3) * 0x7) | ovr;
+        uint lo  = face - hi - oh;        
+        uint ul  = 0x08080808;
+        if(dr>0) 
+        {
+            ul = lo; lo = hi; hi = oh; oh = 0;
+        }
+                
+        // cubify to 2 layers, apply bias
+        isdual = 0;
+        if( biasdown ) 
+        {
+         /*   //uint gry = greytoggle((top&(hi<<1)) | (top&(hi<<2)) | (top&(hi<<3)) | ovr);        
+            uint gry = greytoggle((ovr&(oh<<1)) | (ovr&(oh<<2)) | (ovr&(oh<<3)));
+            uint bup = greytoggle(gry | ((gry>>24)&0x000000FF) | // need rotate...
+                                        ((gry<<24)&0xFF000000) |
+                                        ((gry>> 8)&0x00FFFFFF) |
+                                        ((gry<< 8)&0xFFFFFF00) );
+            lo &= ~((bup>>3) * 7);
+            lo |= bup | ovr;
+            isdual = bup!=0 && bup!=0x08080808;*/
+        } 
+        else 
+        {
+            
         }
 
+        // apply to cubes
+        if(oh!=F_EMPTY)         e = getcube(t, 1);
+        if(lo!=0x8080808 && !b) b = getcube(t, -1);
+        if(ul!=0x8080808)       a = getcube(t, -2);        
+        oh <<= fs;
+        hi <<= fs;
+        lo <<= fs;
+        ul <<= fs;
+        if(e) sethface(e, oh);
+        if(c) sethface(c, hi);
+        if(b) sethface(b, lo);
+        if(a) sethface(a, ul);        
+        if(isdual) 
+        {
+            if(e) 
+                pushside(e->faces[R[d]], oh);
+            else if(a)
+                pushside(b->faces[R[d]], lo);
+            else
+                pushside(c->faces[R[d]], hi);
+        }
+        
+        // continue to adjacent cubes
         if(x>0)  hedit(x-1, y, z);
         if(y>0)  hedit(x, y-1, z);
         if(x<mx) hedit(x+1, y, z);
         if(y<my) hedit(x, y+1, z);
-    }  
-
-    inline void hup(int tx, int ty, int tz, uint v)
-    {
-        cube *c = getcube(tx, ty, tz);
-        if(c==NULL) return;
-        if(isempty(*c)) solidfaces(*c);
-        sethface(c, c->faces[d], v);
     }
-
-    inline void hdown(int tx, int ty, int tz, uint v)
-    {
-        cube *c = getcube(tx, ty, tz);
-        if(c==NULL) return;     
-        sethface(c, c->faces[d], v);
-    }
-
 };
 
 heightmapper hmapper;
