@@ -1578,7 +1578,7 @@ struct fpsserver : igameserver
     void processevent(clientinfo *ci, shotevent &e)
     {
         gamestate &gs = ci->state;
-        int wait = gamemillis - gs.lastshot;
+        int wait = e.millis - gs.lastshot;
         if(!gs.isalive(gamemillis) ||
            (gs.gunwait && wait<gs.gunwait) ||
            e.gun<GUN_FIST || e.gun>GUN_PISTOL ||
@@ -1603,10 +1603,6 @@ struct fpsserver : igameserver
                     hitevent &h = ci->events[i].hit;
                     clientinfo *target = (clientinfo *)getinfo(h.target);
                     if(target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1) continue;
-
-                    int j = 1;
-                    for(j = 1; j<i; j++) if(ci->events[j].hit.target==h.target) break;
-                    if(j<i) continue;
 
                     totalrays += h.rays;
                     if(totalrays>maxrays) continue;
