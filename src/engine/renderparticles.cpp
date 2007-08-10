@@ -601,7 +601,7 @@ static struct parttype { int type; int gr, tex; float sz; int collide; } parttyp
 
 VARP(outlinemeters, 0, 1, 1);
 
-#define COLLIDERADIUS 16.0f
+#define COLLIDERADIUS 8.0f
 #define COLLIDEERROR 1.0f
 
 VARP(decalfade, 1, 10000, 60000);
