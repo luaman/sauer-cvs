@@ -741,7 +741,7 @@ struct fpsserver : igameserver
             clientinfo *ci = clients[i];
             ci->mapchange();
             ci->state.lasttimeplayed = lastmillis;
-            if(ci->state.state!=CS_SPECTATOR) sendspawn(ci);
+            if(m_mp(gamemode) && ci->state.state!=CS_SPECTATOR) sendspawn(ci);
         }
 
         if(m_demo) setupdemoplayback();
