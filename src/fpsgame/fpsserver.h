@@ -148,6 +148,13 @@ struct fpsserver : igameserver
 
         clientinfo() { reset(); }
 
+        gameevent &addevent()
+        {
+            static gameevent dummy;
+            if(events.length()>100) return dummy;
+            return events.add();
+        }
+
         void mapchange()
         {
             mapvote[0] = 0;
@@ -1057,14 +1064,14 @@ struct fpsserver : igameserver
 
             case SV_SUICIDE:
             {
-                gameevent &suicide = ci->events.add();
+                gameevent &suicide = ci->addevent();
                 suicide.type = GE_SUICIDE;
                 break;
             }
 
             case SV_SHOOT:
             {
-                gameevent &shot = ci->events.add();
+                gameevent &shot = ci->addevent();
                 shot.type = GE_SHOT;
                 if(ci->gameoffset<0) 
                 {
@@ -1078,7 +1085,7 @@ struct fpsserver : igameserver
                 int hits = getint(p);
                 loopk(hits)
                 {
-                    gameevent &hit = ci->events.add();
+                    gameevent &hit = ci->addevent();
                     hit.type = GE_HIT;
                     hit.hit.target = getint(p);
                     hit.hit.lifesequence = getint(p);
@@ -1090,7 +1097,7 @@ struct fpsserver : igameserver
 
             case SV_EXPLODE:
             {
-                gameevent &exp = ci->events.add();
+                gameevent &exp = ci->addevent();
                 exp.type = GE_EXPLODE;
                 if(ci->gameoffset<0) 
                 {
@@ -1102,7 +1109,7 @@ struct fpsserver : igameserver
                 int hits = getint(p);
                 loopk(hits)
                 {
-                    gameevent &hit = ci->events.add();
+                    gameevent &hit = ci->addevent();
                     hit.type = GE_HIT;
                     hit.hit.target = getint(p);
                     hit.hit.lifesequence = getint(p);
@@ -1115,7 +1122,7 @@ struct fpsserver : igameserver
             case SV_ITEMPICKUP:
             {
                 int n = getint(p);
-                gameevent &pickup = ci->events.add();
+                gameevent &pickup = ci->addevent();
                 pickup.type = GE_PICKUP;
                 pickup.pickup.ent = n;
                 break;
