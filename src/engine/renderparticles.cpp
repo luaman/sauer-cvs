@@ -881,7 +881,7 @@ void render_particles(int time)
                     p->o = vec(o.x, o.y, collidez+0.25f);
                     p->d = surface;
                     p->millis = lastmillis;
-                    p->fade = decalfade + (rnd(64)*decalfade)/(64*4);
+                    p->fade = decalfade;
                     p->next = parlist[pt.collide];
                     parlist[pt.collide] = p;
                     continue;
