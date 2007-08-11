@@ -598,26 +598,28 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 //we register 'ogz' as a doc type
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename 
 {
-    NSString *cwd = [[self cwd] stringByAppendingPathComponent:@"packages"];
-    if(![filename hasPrefix:cwd]) 
-    {
-        NSBeginCriticalAlertSheet(
-            @"Invalid map location", @"Ok", @"Cancel", nil,
-            window, self, @selector(openPackageFolder:returnCode:contextInfo:), nil, nil,
-            @"Can only load maps that are within the sauerbraten/packages/ folder. Do you want to show this folder?");
-        //@TODO give user option to copy it into the packages folder?
-        return NO;
+    NSString *dirs[] = {[self cwd], [self userdir]};
+    int i;
+    for(i = 0; i < 2; i++) {
+        NSString *pkg = [dirs[i] stringByAppendingPathComponent:@"packages"];
+        if([filename hasPrefix:pkg]) {
+            filename = [filename substringFromIndex:[pkg length]+1]; //+1 to skip the leading '/'
+            if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4]; //chop .ogz
+            return [self playFile:filename];
+        }
     }
-    filename = [filename substringFromIndex:[cwd length]+1]; //+1 to skip the leading '/'
-    if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4]; //chop .ogz
-    return [self playFile:filename];
+    NSBeginCriticalAlertSheet(
+        @"Invalid map location", @"Ok", @"Cancel", nil,
+        window, self, @selector(openPackageFolder:returnCode:contextInfo:), nil, nil,
+        @"Can only load maps that are within the sauerbraten/packages/ folder. Do you want to show this folder?");
+    //@TODO give user option to copy it into the packages folder?
+    return NO;
 }
 
 - (void)openPackageFolder:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo 
 {
     if(returnCode == 0) return;
-    NSString *cwd = [[self userdir] stringByAppendingPathComponent:@"packages"];
-    [[NSWorkspace sharedWorkspace] selectFile:cwd inFileViewerRootedAtPath:@""];
+    [self openUserdir:nil]; //close enough... otherwise need to ensure that sauerbraten/packages folder exists
 }
 
 //we register 'sauerbraten' as a url scheme
@@ -664,7 +666,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSString *dir = [self userdir];
     NSFileManager *fm = [NSFileManager defaultManager];
-    if(![fm fileExistsAtPath:dir]) [fm createDirectoryAtPath:dir attributes:nil]; //ensure there is a directory to open
+    if(![fm fileExistsAtPath:dir]) [fm createDirectoryAtPath:dir attributes:nil]; //ensure there is a folder to open
     [[NSWorkspace sharedWorkspace] openFile:dir];
 }
 
