@@ -1,11 +1,17 @@
 {
     IBClasses = (
         {CLASS = ConsoleView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {"" = id; }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }, 
         {
             ACTIONS = {
                 helpAction = id; 
                 multiplayerAction = id; 
+                openUserdir = id; 
                 playAction = id; 
                 playMap = id; 
                 playRpg = id; 

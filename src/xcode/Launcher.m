@@ -1,8 +1,24 @@
 #import "Launcher.h"
 #import "ConsoleView.h"
 #include <stdlib.h>
-#include <unistd.h> /* unlink */
-#include <util.h> /* forkpty */
+#include <unistd.h> /* _exit() */
+#include <util.h> /* forkpty() */
+
+// User default keys
+#define dkVERSION @"version"
+#define dkUSERDIR @"userdir"
+#define dkNAME @"name"
+#define dkTEAM @"team"
+#define dkFULLSCREEN @"fullscreen"
+#define dkFSAA @"fsaa"
+#define dkSHADER @"shader"
+#define dkRESOLUTION @"resolution"
+#define dkADVANCEDOPTS @"advancedOptions"
+#define dkSERVEROPTS @"server_options"
+#define dkDESCRIPTION @"server_description"
+#define dkPASSWORD @"server_password"
+#define dkMAXCLIENTS @"server_maxclients"
+
 
 #define kMaxDisplays	16
 
@@ -17,8 +33,6 @@
     return (result?result:@"");
 }
 @end
-
-
 
 @interface Map : NSObject {
     NSString *path;
@@ -176,7 +190,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", NSToolbarFlexibleSpaceItemIdentifier, @"7", nil];
 }
 
-- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
+- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar 
+{
     return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", nil];
 }
 
@@ -209,7 +224,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         for (i = 0; i < numDisplays; i++)
             [self addResolutionsForDisplay:display[i]];
     }
-    [resolutions selectItemAtIndex: [[NSUserDefaults standardUserDefaults] integerForKey:@"resolution"]];	
+    [resolutions selectItemAtIndex: [[NSUserDefaults standardUserDefaults] integerForKey:dkRESOLUTION]];	
 }
 
 
@@ -219,6 +234,21 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 -(NSString *)cwd 
 {
     return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
+}
+
+/* directory where user files are kept */
+- (NSString*)userdir {
+    if(![[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR]) return [self cwd];
+    // /Users/<name>/Application Support/sauerbraten
+    FSRef folder;
+    NSString *path = nil;
+    if(FSFindFolder(kUserDomain, kApplicationSupportFolderType, NO, &folder) == noErr) {
+        CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
+        path = [(NSURL *)url path];
+        CFRelease(url);
+        path = [path stringByAppendingPathComponent:@"sauerbraten"];
+    }
+    return path;
 }
 
 /* build key array from config data */
@@ -261,7 +291,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     int i;
     for(i = 0; i < sizeof(files)/sizeof(NSString*); i++) 
     {
-        NSString *file = [[self cwd] stringByAppendingPathComponent:files[i]];
+        NSString *file = [[self userdir] stringByAppendingPathComponent:files[i]];
+        
         NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
         
         if(i==0 && !lines)  // ugh - special case when first run...
@@ -307,48 +338,6 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     return dict;
 }
 
--(void)updateAutoexecFile:(NSDictionary *)updates 
-{
-    NSString *file = [[self cwd] stringByAppendingPathComponent:@"autoexec.cfg"];
-    //build the data 
-    NSString *result = nil;
-    NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
-    if(lines) 
-    {
-        NSString *line; 
-        NSEnumerator *e = [lines objectEnumerator];
-        while(line = [e nextObject]) 
-        {
-            NSScanner *scanner = [NSScanner scannerWithString:line];
-            NSString *type;
-            if([scanner scanCharactersFromSet:[NSCharacterSet letterCharacterSet] intoString:&type])
-                if([updates objectForKey:type]) continue; //skip things declared in updates
-            result = (result) ? [NSString stringWithFormat:@"%@\n%@", result, line] : line;
-        }
-    }
-    NSEnumerator *e = [updates keyEnumerator];
-    NSString *type;
-    while(type = [e nextObject]) 
-    {
-        id value = [updates objectForKey:type];
-        if([type isEqual:@"name"] || [type isEqual:@"team"]) value = [NSString stringWithFormat:@"\"%@\"", value];
-        NSString *line = [NSString stringWithFormat:@"%@ %@", type, value];
-        result = (result) ? [NSString stringWithFormat:@"%@\n%@", result, line] : line;
-    }
-    //backup
-    NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *backupfile = nil;
-    if([fm fileExistsAtPath:file]) 
-    {
-        backupfile = [file stringByAppendingString:@".bak"];
-        if(![fm movePath:file toPath:backupfile handler:nil]) return; //can't create backup
-    }	
-    //write the new file
-    if(![fm createFileAtPath:file contents:[result dataUsingEncoding:NSASCIIStringEncoding] attributes:nil]) return; //can't create new file		
-                                                                                                                     //remove the backup
-    if(backupfile) [fm removeFileAtPath:backupfile handler:nil];
-}
-
 - (void)serverTerminated
 {
     if(server==-1) return;
@@ -373,11 +362,11 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         NSString *cwd = [self cwd];
         NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
                        
-        NSArray *opts = [[defs nonNullStringForKey:@"server_options"] componentsSeparatedByString:@" "];
+        NSArray *opts = [[defs nonNullStringForKey:dkSERVEROPTS] componentsSeparatedByString:@" "];
 		
         const char *childCwd  = [cwd fileSystemRepresentation];
         const char *childPath = [[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"] fileSystemRepresentation];
-        const char **args = (const char**)malloc(sizeof(char*)*([opts count] + 3 + 3)); //3 = {path, -d, NULL}, and +3 again for optional settings...
+        const char **args = (const char**)malloc(sizeof(char*)*([opts count] + 3 + 4)); //3 = {path, -d, NULL}, and +4 again for optional settings...
         int i, fdm, argc = 0;
 		
         args[argc++] = childPath;
@@ -390,14 +379,16 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
             args[argc++] = [opt UTF8String];
         }
         
-        NSString *desc = [[NSUserDefaults standardUserDefaults] nonNullStringForKey:@"server_description"];
+        NSString *desc = [defs nonNullStringForKey:dkDESCRIPTION];
         if (![desc isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-n%@", desc] UTF8String];
         
-        NSString *pass = [[NSUserDefaults standardUserDefaults] nonNullStringForKey:@"server_password"];
+        NSString *pass = [defs nonNullStringForKey:dkPASSWORD];
         if (![pass isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-p%@", pass] UTF8String];
 		
-        int clients = [[NSUserDefaults standardUserDefaults] integerForKey:@"server_maxclients"];
+        int clients = [defs integerForKey:dkMAXCLIENTS];
         if (clients > 0) args[argc++] = [[NSString stringWithFormat:@"-c%d", clients] UTF8String];
+        
+        if([defs boolForKey:dkUSERDIR]) args[argc++] = [[NSString stringWithFormat:@"-q%@", [self userdir]] UTF8String];
         
         args[argc++] = NULL;
                 
@@ -460,31 +451,42 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSMutableArray *args = [[NSMutableArray alloc] init];
     NSString *cwd = [self cwd];
 	
-    //suppose could use this to update gamma and keys too, but can't be bothered...
-    [self updateAutoexecFile:[NSDictionary dictionaryWithObjectsAndKeys:
-        [defs nonNullStringForKey:@"name"], @"name",
-        [defs nonNullStringForKey:@"team"], @"team",
-        nil]];
-    
     [args addObject:[NSString stringWithFormat:@"-w%@", [res objectAtIndex:0]]];
     [args addObject:[NSString stringWithFormat:@"-h%@", [res objectAtIndex:1]]];
-    [args addObject:@"-z32"]; 
+    [args addObject:@"-z32"]; //otherwise seems to have a fondness to use -z16 which looks crap
 	
-    if([defs integerForKey:@"fullscreen"] == 0) [args addObject:@"-t"];
-    [args addObject:[NSString stringWithFormat:@"-a%d", [defs integerForKey:@"fsaa"]]];
-    [args addObject:[NSString stringWithFormat:@"-f%d", [defs integerForKey:@"shader"]]];
+    if([defs integerForKey:dkFULLSCREEN] == 0) [args addObject:@"-t"];
+    [args addObject:[NSString stringWithFormat:@"-a%d", [defs integerForKey:dkFSAA]]];
+    [args addObject:[NSString stringWithFormat:@"-f%d", [defs integerForKey:dkSHADER]]];
+    
+    if([defs boolForKey:dkUSERDIR]) [args addObject:[NSString stringWithFormat:@"-q%@", [self userdir]]];
+
+    NSMutableArray *cmds = [[NSMutableArray alloc] init];
+    NSString *name = [defs nonNullStringForKey:dkNAME];
+    if(name) [cmds addObject:[NSString stringWithFormat:@"name \"%@\"", name]];
+    //NOTEAM name = [defs nonNullStringForKey:dkTEAM];
+    //NOTEAM if(name) [cmds addObject:[NSString stringWithFormat:@"team \"%@\"", name]];
     
     if(filename) 
     {
         if([filename respondsToSelector:@selector(host)])
-            [args addObject:[NSString stringWithFormat:@"-xconnect %@", [filename host]]];
-        else if([filename isEqual:@"-rpg"])
+            [cmds addObject:[NSString stringWithFormat:@"connect %@", [filename host]]];
+        else if([filename isEqual:@"-rpg"]) {
+            [cmds removeAllObjects]; // rpg current doesn't require name/team
             [args addObject:@"-grpg"]; //demo the rpg game
-        else
+        } else
             [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
 	}
     
-    NSString *adv = [defs nonNullStringForKey:@"advancedOptions"];
+    if([cmds count] > 0) 
+    {
+        NSString *script = [cmds objectAtIndex:0];
+        int i;
+        for(i = 1; i < [cmds count]; i++) script = [NSString stringWithFormat:@"%@;%@", script, [cmds objectAtIndex:i]];
+        [args addObject:[NSString stringWithFormat:@"-x%@", script]];
+    }
+    
+    NSString *adv = [defs nonNullStringForKey:dkADVANCEDOPTS];
     if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
     
     NSTask *task = [[NSTask alloc] init];
@@ -496,6 +498,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         @"1", @"SDL_ENABLEAPPEVENTS", nil
         ]]; // makes Command-H, Command-M and Command-Q work at least when not in fullscreen
     [args release];
+    [cmds release];
 	
     BOOL okay = YES;
 	
@@ -515,20 +518,23 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 }
 
 
-- (void)initMaps:(id)obj //@note threaded!
+- (void)initMaps:(NSString*)dir //@note threaded!
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSString *dir = [[self cwd] stringByAppendingPathComponent:@"packages"];
     NSString *file;
+    dir = [dir stringByAppendingPathComponent:@"packages"];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
-    while(file = [enumerator nextObject]) {
+    while(file = [enumerator nextObject]) 
+    {
         if([[file pathExtension] isEqualToString: @"ogz"]) 
             [self performSelectorOnMainThread:@selector(addMap:) withObject:[dir stringByAppendingPathComponent:file] waitUntilDone:NO];
     }
     [pool release];
     //@todo - update a progress indicator - not unless silly numbers of files, or incredibly slow mac..
 }
--(void)addMap:(NSString*)path {
+
+-(void)addMap:(NSString*)path 
+{
     [maps addObject:[[Map alloc] initWithPath:path]]; 
 }
 
@@ -537,38 +543,57 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 - (void)awakeFromNib 
 {
     [self initViews];
+    [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
 	
+    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSString *appVersion = [[[NSBundle bundleForClass:[self class]] infoDictionary] objectForKey:@"CFBundleVersion"];
+	NSString *version = [defs stringForKey:dkVERSION];
+	if(!version || ![version isEqual:appVersion]) 
+    {
+		NSLog(@"Upgraded Version...");
+        //need to flush lurking config files - they're automatically generated, so no big deal...
+        [fm removeFileAtPath:[[self userdir] stringByAppendingPathComponent:@"init.cfg"] handler:nil];
+        [fm removeFileAtPath:[[self userdir] stringByAppendingPathComponent:@"config.cfg"] handler:nil];
+    }
+	[defs setObject:appVersion forKey:dkVERSION];
+    
     NSDictionary *dict = [self readConfigFiles];
     [keys addObjects:[self getKeys:dict]];
-    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-    if([[defs nonNullStringForKey:@"name"] isEqual:@""]) 
+    
+    if([[defs nonNullStringForKey:dkNAME] isEqual:@""]) 
     {
         NSString *name = [dict objectForKey:@"name"];
         if([name isEqual:@""] || [name isEqual:@"unnamed"]) name = NSUserName();
-        [defs setValue:name forKey:@"name"];
+        [defs setValue:name forKey:dkNAME];
     }
-    if([[defs nonNullStringForKey:@"team"] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:@"team"];
+    //NOTEAM if([[defs nonNullStringForKey:dkTEAM] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:dkTEAM];
+    
+    NSString *dir = [self cwd];
+    if(![fm fileExistsAtPath:dir]) NSLog(@"Missing sauebraten?!"); // @TODO error indicator?
+    else if(![fm isWritableFileAtPath:dir]) [defs setBool:YES forKey:dkUSERDIR];  // auto-enable userdir
 	
-    [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject: nil];
+    [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject:[self cwd]];
+    if([defs boolForKey:dkUSERDIR]) [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject:[self userdir]];
     
     [self initResolutions];
     server = -1;
-    [window setDelegate:self]; // so can catch the window close	
-    [NSApp setDelegate:self]; //so can catch the double-click & dropped files
+    [NSApp setDelegate:self]; //so can catch the double-click, dropped files, termination
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
-
-    [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
 }
 
--(void)windowWillClose:(NSNotification *)notification 
-{
+#pragma mark -
+#pragma mark application delegate
+
+-(BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {
+    return YES;
+}
+
+- (void)applicationWillTerminate: (NSNotification *)note {
     [self setServerActive:NO];
-    [NSApp terminate:self];
 }
 
-/*
- * NSApp delegate methods
- */
 
 //we register 'ogz' as a doc type
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename 
@@ -591,7 +616,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 - (void)openPackageFolder:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo 
 {
     if(returnCode == 0) return;
-    NSString *cwd = [[self cwd] stringByAppendingPathComponent:@"packages"];
+    NSString *cwd = [[self userdir] stringByAppendingPathComponent:@"packages"];
     [[NSWorkspace sharedWorkspace] selectFile:cwd inFileViewerRootedAtPath:@""];
 }
 
@@ -603,10 +628,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [self playFile:url]; 
 }
 
+#pragma mark -
+#pragma mark interface actions
 
-/*
- * Interface actions
- */
 - (IBAction)multiplayerAction:(id)sender 
 { 
     [window makeFirstResponder:window]; //ensure fields are exited and committed
@@ -634,6 +658,14 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSString *file = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"README.html"];
     [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:file]];
+}
+
+- (IBAction)openUserdir:(id)sender 
+{
+    NSString *dir = [self userdir];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if(![fm fileExistsAtPath:dir]) [fm createDirectoryAtPath:dir attributes:nil]; //ensure there is a directory to open
+    [[NSWorkspace sharedWorkspace] openFile:dir];
 }
 
 @end

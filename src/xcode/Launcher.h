@@ -30,4 +30,5 @@
 
 - (IBAction)playMap:(id)sender;
 
+- (IBAction)openUserdir:(id)sender;
 @end
