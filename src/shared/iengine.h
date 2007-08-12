@@ -154,7 +154,7 @@ extern void initsound();
 
 // rendermodel
 enum { MDL_CULL_VFC = 1<<0, MDL_CULL_DIST = 1<<1, MDL_CULL_OCCLUDED = 1<<2, MDL_SHADOW = 1<<3, MDL_DYNSHADOW = 1<<4, MDL_TRANSLUCENT = 1<<5 };
-enum { MDL_ATTACH_VWEP = 0, MDL_ATTACH_SHIELD, MDL_ATTACH_POWERUP, MDL_ATTACH_HUDGUN };
+enum { MDL_ATTACH_VWEP = 0, MDL_ATTACH_SHIELD, MDL_ATTACH_POWERUP };
 
 struct model;
 struct modelattach

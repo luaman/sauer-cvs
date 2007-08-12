@@ -167,7 +167,6 @@ struct md3 : vertmodel
             part *p = m->parts[0];
             switch(a[i].type)
             {
-                case MDL_ATTACH_HUDGUN:
                 case MDL_ATTACH_VWEP: if(link(p, "tag_weapon", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
                 case MDL_ATTACH_SHIELD: if(link(p, "tag_shield", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
                 case MDL_ATTACH_POWERUP: if(link(p, "tag_powerup", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
@@ -180,7 +179,6 @@ struct md3 : vertmodel
         {
             switch(a[i].type)
             {
-                case MDL_ATTACH_HUDGUN:
                 case MDL_ATTACH_VWEP: link(NULL, "tag_weapon"); break;
                 case MDL_ATTACH_SHIELD: link(NULL, "tag_shield"); break;
                 case MDL_ATTACH_POWERUP: link(NULL, "tag_powerup"); break;
