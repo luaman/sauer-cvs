@@ -1,3 +1,7 @@
+- Installer/release: Remember to install link to docs in Windows Start menu.
+
+- check if ATI fixed fglrx/OQ bug in next version
+
 - make people that do teamkills/damage wait longer?
 
 - fog entities (R, G, B, radius, fog dist),
@@ -12,10 +16,6 @@
 - audio effect for chat messages | audio for gui events
 
 - social cheating solution
-- server-side demo recording (WiP)
-    - needs proper header to distinguish demo files
-    - needs command-line flag to disable
-    - needs master/local player control of when to start or stop recording (startdemo/stopdemo commands?)
 
 - before a release: update static wiki
 

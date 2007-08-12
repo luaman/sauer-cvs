@@ -9,7 +9,7 @@ struct weaponstate
     static const int OFFSETMILLIS = 500;
     vec sg[SGRAYS];
 
-    IVARP(maxdebris, 10, 50, 1000);
+    IVARP(maxdebris, 10, 25, 1000);
 
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
