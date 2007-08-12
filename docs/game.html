@@ -132,6 +132,29 @@
 </li>
 </ul>
 </li>
+<li>
+<a href="#demo_recording"><b>Demo Recording</b></a>
+<ul class="contents2">
+<li>
+<a href="recorddemo"><tt>recorddemo</tt></a>
+</li>
+<li>
+<a href="stopdemo"><tt>stopdemo</tt></a>
+</li>
+<li>
+<a href="cleardemos"><tt>cleardemos</tt></a>
+</li>
+<li>
+<a href="listdemos"><tt>listdemos</tt></a>
+</li>
+<li>
+<a href="getdemo"><tt>getdemo</tt></a>
+</li>
+<li>
+<a href="demo"><tt>demo</tt></a>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 
@@ -815,7 +838,7 @@ The way it works is very simple: the first person to enter a server and use the 
 
 <pre id="setmaster">setmaster B</pre>
 <p>
-Attempts to set master status to B. 0 gives up master status, 1 claims master status, or the admin password may be specified to steal master status from the current master.
+Attempts to set master status to B. 0 gives up master status, 1 claims master status, or the admin password may be specified to steal master status from the current master. If you specify a password, you are granted "admin" status, which allows you to enable server features that an ordinary master can't. 
 </p>
 
 <pre id="mastermode">mastermode N</pre>
@@ -858,6 +881,56 @@ In the event that a cheater is the master, or someone is being abusive with his 
 <p>
 If the current master leaves the server, other players may attempt to claim master status. Mastermode will be reset to 0 when this happens (also when the server clears). At any time, all
 players will see who is the master in a game because his name is marked in a different colour on the scoreboard.
+</p>
+
+<h2 id="demo_recording">Demo Recording</h2>
+
+<p>
+You may record server-side demos during multiplayer games, but not for local games. You must have gained "admin" privileges by using the "setmaster"
+command to enable demo recording for a match. Once enabled, the next map that is played will start recording a demo. Once this map finishes, the server
+will provide the demo, so that any interested clients can download it. Demo recording is disabled automatically again for the next map, unless
+it is explicitly enabled again. The server will only stored a fixed number of demos, and the oldest demo will be removed to make room for new ones if
+it already has the maximum number of demos (currently 5).
+</p>
+
+<p>
+Demos may be played back via the special local "demo" mode (mode -3), where the map name is the name of the demo to be played.
+</p>
+
+<pre id="recorddemo">recorddemo B</pre>
+<p>
+Sets whether demo recording will be enabled for the next match (B=1 to enable, 0 to disable). Requires admin privileges.
+</p>
+
+<pre id="stopdemo">stopdemo</pre>
+<p>
+If in multiplayer, this command will finish recording a demo prematurely instead of waiting till the end of a match. Requires admin privileges.
+</p>
+<p>
+If used during local demo playback, this will stop demo playback.
+</p>
+
+<pre id="cleardemos">cleardemos</pre>
+<p>
+Clears all demos from the server. Requires admin privileges.
+</p>
+
+<pre id="listdemos">listdemos</pre>
+<p>
+This lists all demos available on the server. Any client may use this command.
+</p>
+
+<pre id="getdemo">getdemo [N]</pre>
+<p>
+This command retrieves a demo from the server, where N corresponds to the demo number provided by the "listdemos" command.
+If no number is specified, this command will get the most recent demo. The demo will be saved locally in the main directory as
+a file with the extension ".dmo". Any client may use this command.
+</p>
+
+<pre id="demo">demo F</pre>
+<p>
+This alias sets the mode to -3 (the special demo playback game mode) and map to F, where F is the name of a demo file, but without 
+the ".dmo" file extension. The "stopdemo" command may be used to terminate playback early when in this game mode.
 </p>
 
 </body>
