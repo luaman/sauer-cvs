@@ -141,6 +141,7 @@ struct vertmodel : model
                 setenvparamf("ambient", SHPARAM_VERTEX, 3, ambient, ambient, ambient, 1);
                 setenvparamf("ambient", SHPARAM_PIXEL, 3, ambient, ambient, ambient, 1);
                 setenvparamf("glowscale", SHPARAM_PIXEL, 4, glow, glow, glow);
+                setenvparamf("millis", SHPARAM_VERTEX, 5, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
 
                 if(shader) shader->set();
                 else if(as.anim&ANIM_ENVMAP && envmapmax>0)
