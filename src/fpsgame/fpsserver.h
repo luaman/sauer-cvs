@@ -1625,7 +1625,7 @@ struct fpsserver : igameserver
     void processevent(clientinfo *ci, pickupevent &e)
     {
         gamestate &gs = ci->state;
-        if(!gs.isalive(gamemillis)) return;
+        if(m_mp(gamemode) && !gs.isalive(gamemillis)) return;
         pickup(e.ent, ci->clientnum);
     }
 
