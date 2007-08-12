@@ -2,9 +2,6 @@
 
 #include "pch.h"
 #include "engine.h"
-#ifndef WIN32
-#include <dirent.h>
-#endif
 
 struct cline { char *cref; int outtime; };
 vector<cline> conlines;
@@ -531,42 +528,6 @@ void addcomplete(char *command, char *dir, char *ext)
 
 COMMANDN(complete, addcomplete, "sss");
 
-void buildfilenames(filesval *f)
-{
-    int extsize = f->ext ? (int)strlen(f->ext)+1 : 0;
-    #if defined(WIN32)
-    s_sprintfd(pathname)("%s\\*.%s", f->dir, f->ext ? f->ext : "*");
-    WIN32_FIND_DATA FindFileData;
-    HANDLE Find = FindFirstFile(path(pathname), &FindFileData);
-    if(Find != INVALID_HANDLE_VALUE)
-    {
-        do {
-            f->files.add(newstring(FindFileData.cFileName, (int)strlen(FindFileData.cFileName) - extsize));
-        } while(FindNextFile(Find, &FindFileData));
-    }
-    #else
-    string pathname;
-    s_strcpy(pathname, f->dir);
-    DIR *d = opendir(path(pathname));
-    if(d)
-    {
-        struct dirent *dir;
-        while((dir = readdir(d)) != NULL)
-        {
-            if(!f->ext) f->files.add(newstring(dir->d_name));
-            else
-            {
-                int namelength = strlen(dir->d_name) - extsize;
-                if(namelength > 0 && dir->d_name[namelength] == '.' && strncmp(dir->d_name+namelength+1, f->ext, extsize-1)==0)
-                    f->files.add(newstring(dir->d_name, namelength));
-            }
-        }
-        closedir(d);
-    }
-    #endif
-    else conoutf("unable to read base folder for map autocomplete");
-}
-
 void complete(char *s)
 {
     if(*s!='/')
@@ -599,7 +560,7 @@ void complete(char *s)
     {
         int commandsize = strchr(s, ' ')+1-s;
         s_strncpy(prefix, s, min(size_t(commandsize+1), sizeof(prefix)));
-        if(f->files.empty()) buildfilenames(f);
+        if(f->files.empty()) listfiles(f->dir, f->ext, f->files);
         loopi(f->files.length())
         {
             if(strncmp(f->files[i], s+commandsize, completesize+1-commandsize)==0 &&

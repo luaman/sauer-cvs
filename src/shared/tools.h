@@ -98,24 +98,7 @@ struct s_sprintf_f
 #define s_sprintfdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
 #define s_sprintfdv(d,fmt) s_sprintfdlv(d,fmt,fmt)
 
-
 template <class T> void _swap(T &a, T &b) { T t = a; a = b; b = t; }
-
-
-
-extern char *path(char *s);
-extern const char *parentdir(const char *directory);
-extern bool fileexists(const char *path, const char *mode);
-extern bool createdir(const char *path);
-extern void sethomedir(const char *dir);
-extern void addpackagedir(const char *dir);
-extern const char *findfile(const char *filename, const char *mode);
-extern FILE *openfile(const char *filename, const char *mode);
-extern gzFile opengzfile(const char *filename, const char *mode);
-extern char *loadfile(const char *fn, int *size);
-extern void endianswap(void *, int, int);
-extern void seedMT(uint seed);
-extern uint randomMT(void);
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
@@ -559,6 +542,21 @@ inline void __cdecl operator delete(void *p, const char *fn, int l) { ::operator
 #endif 
 #endif
 
+extern char *path(char *s);
+extern const char *parentdir(const char *directory);
+extern bool fileexists(const char *path, const char *mode);
+extern bool createdir(const char *path);
+extern void sethomedir(const char *dir);
+extern void addpackagedir(const char *dir);
+extern const char *findfile(const char *filename, const char *mode);
+extern FILE *openfile(const char *filename, const char *mode);
+extern gzFile opengzfile(const char *filename, const char *mode);
+extern char *loadfile(const char *fn, int *size);
+extern bool listdir(const char *dir, const char *ext, vector<char *> &files);
+extern int listfiles(const char *dir, const char *ext, vector<char *> &files);
+extern void endianswap(void *, int, int);
+extern void seedMT(uint seed);
+extern uint randomMT(void);
 
 #endif
 
