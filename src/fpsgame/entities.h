@@ -252,6 +252,11 @@ struct entities : icliententities
                 }
                 break;
 
+            case JUMPPAD:
+                radius = 4;
+                dir = vec(e.attr3, e.attr2, e.attr1).normalize();
+                break;
+
             case MONSTER:
             case TELEDEST:
             case MAPMODEL:
