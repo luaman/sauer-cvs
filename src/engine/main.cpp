@@ -194,6 +194,7 @@ static void bar(float bar, int w, int o, float r, float g, float b)
     }
     glEnd();
 
+#if 0
     glColor3f(0.3f, 0.3f, 0.3f);
     glBegin(GL_LINE_LOOP);
     loopk(10)
@@ -207,6 +208,7 @@ static void bar(float bar, int w, int o, float r, float g, float b)
         glVertex2f(x2 - c*FONTH, y1 + s*FONTH);
     }
     glEnd();
+#endif
 }
 
 void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, const char *text2, GLuint tex)   // also used during loading
