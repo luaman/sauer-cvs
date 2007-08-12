@@ -469,12 +469,12 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     
     if(filename) 
     {
-        if([filename respondsToSelector:@selector(host)])
-            [cmds addObject:[NSString stringWithFormat:@"connect %@", [filename host]]];
-        else if([filename isEqual:@"-rpg"]) {
+        if([filename isEqual:@"-rpg"]) {
             [cmds removeAllObjects]; // rpg current doesn't require name/team
             [args addObject:@"-grpg"]; //demo the rpg game
-        } else
+        } else if([filename hasPrefix:@"-x"])
+            [cmds addObject:[filename substringFromIndex:2]];
+        else
             [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
 	}
     
@@ -595,23 +595,26 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 }
 
 
-//we register 'ogz' as a doc type
+//we register 'ogz' and 'dmo' as doc types
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename 
 {
     NSString *dirs[] = {[self cwd], [self userdir]};
+    BOOL demo = [filename hasSuffix:@".dmo"];
+    if(!demo && ![filename hasSuffix:@".ogz"]) return NO;
+    filename = [filename substringToIndex:[filename length]-4]; //chop off extension
     int i;
     for(i = 0; i < 2; i++) {
-        NSString *pkg = [dirs[i] stringByAppendingPathComponent:@"packages"];
+        NSString *pkg = dirs[i];
+        if(!demo) pkg = [pkg stringByAppendingPathComponent:@"packages"];
         if([filename hasPrefix:pkg]) {
             filename = [filename substringFromIndex:[pkg length]+1]; //+1 to skip the leading '/'
-            if([filename hasSuffix:@".ogz"]) filename = [filename substringToIndex:[filename length]-4]; //chop .ogz
-            return [self playFile:filename];
+            return [self playFile:demo?[NSString stringWithFormat:@"-xdemo %@", filename]:filename];
         }
     }
     NSBeginCriticalAlertSheet(
-        @"Invalid map location", @"Ok", @"Cancel", nil,
+        @"Invalid file location", @"Ok", @"Cancel", nil,
         window, self, @selector(openPackageFolder:returnCode:contextInfo:), nil, nil,
-        @"Can only load maps that are within the sauerbraten/packages/ folder. Do you want to show this folder?");
+        @"Can only load files that are within the sauerbraten/packages/ folder. Do you want to show this folder?");
     //@TODO give user option to copy it into the packages folder?
     return NO;
 }
@@ -627,7 +630,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSURL *url = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];
     if(!url) return;
-    [self playFile:url]; 
+    [self playFile:[NSString stringWithFormat:@"-xconnect %@", [url host]]]; 
 }
 
 #pragma mark -
