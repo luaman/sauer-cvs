@@ -917,13 +917,13 @@ void resetmap()
     clearmapsounds();
     cleanreflections();
     resetlightmaps();
+    clearparticles();
     clearsleep();
     cancelsel();
     pruneundos();
 
     setvar("gamespeed", 100);
     setvar("paused", 0);
-    setvar("wireframe", 0);
 
     et->getents().deletecontentsp();
 }

@@ -342,6 +342,7 @@ extern void endmodelquery();
 
 // renderparticles
 extern void particleinit();
+extern void clearparticles();
 extern void entity_particles();
 
 // rendersky

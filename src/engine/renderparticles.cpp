@@ -79,7 +79,7 @@ static void makeflare(vec &o, uchar r, uchar g, uchar b, bool sun, bool sparkle)
     newflare(o, center, r, g, b, mod, size, sun, sparkle);
 }
 
-static void renderflares()
+static void renderflares(int time)
 {
     glDisable(GL_FOG);
     defaultshader->set();
@@ -103,8 +103,7 @@ static void renderflares()
             int tex = ft.type;
             if(ft.type < 0) //sparkles - always done last
             {
-                extern int paused;
-                shinetime = (paused ? j : (shinetime + 1)) % 10;
+                shinetime = (!time ? j : (shinetime + 1)) % 10;
                 tex = 6+shinetime;
                 color[0] = 0;
                 color[1] = 0;
@@ -125,6 +124,44 @@ static void renderflares()
     glEnd();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_FOG);
+}
+
+static void makelightflares()
+{
+    flarecnt = 0; //regenerate flarelist each frame
+    shinetime += detrnd(lastmillis, 10);
+
+    if(editmode || !flarelights) return;
+
+    const vector<extentity *> &ents = et->getents();
+    vec viewdir;
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
+    extern const vector<int> &checklightcache(int x, int y);
+    const vector<int> &lights = checklightcache(int(camera1->o.x), int(camera1->o.y));
+    loopv(lights)
+    {
+        entity &e = *ents[lights[i]];
+        if(e.type != ET_LIGHT) continue;
+        bool sun = (e.attr1==0);
+        float radius = float(e.attr1);
+        vec flaredir = vec(e.o).sub(camera1->o);
+        float len = flaredir.magnitude();
+        if(!sun && (len > radius)) continue;
+        if(isvisiblesphere(0.0f, e.o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) continue;
+        vec center = vec(viewdir).mul(flaredir.dot(viewdir)).add(camera1->o);
+        float mod, size;
+        if(sun) //fixed size
+        {
+            mod = 1.0;
+            size = len * flaresize / 100.0f;
+        }
+        else
+        {
+            mod = (radius-len)/radius;
+            size = flaresize / 5.0f;
+        }
+        newflare(e.o, center, e.attr2, e.attr3, e.attr4, mod, size, sun, sun);
+    }
 }
 
 //cache our unit hemisphere
@@ -533,28 +570,6 @@ void particleinit()
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
-static particle *newparticle(const vec &o, const vec &d, int fade, int type, int color)
-{
-    if(!parempty)
-    {
-        particle *ps = new particle[256];
-        loopi(255) ps[i].next = &ps[i+1];
-        ps[255].next = parempty;
-        parempty = ps;
-    }
-    particle *p = parempty;
-    parempty = p->next;
-    p->o = o;
-    p->d = d;
-    p->fade = fade;
-    p->millis = lastmillis;
-    p->color = color;
-    p->next = parlist[type];
-    p->text = NULL;
-    parlist[type] = p;
-    return p;
-}
-
 enum
 {
     PT_PART = 0,
@@ -598,6 +613,50 @@ static struct parttype { int type; int gr, tex; float sz; int collide; } parttyp
     { PT_ENT|PT_TRAIL|PT_LERP, 2, 0, 0.60f, 0 }, // 19 water, entity 
     { PT_ENT,         20,  1,  4.8f,  0 }  // 20 fireball1, entity
 };
+
+static particle *newparticle(const vec &o, const vec &d, int fade, int type, int color)
+{
+    if(!parempty)
+    {
+        particle *ps = new particle[256];
+        loopi(255) ps[i].next = &ps[i+1];
+        ps[255].next = parempty;
+        parempty = ps;
+    }
+    particle *p = parempty;
+    parempty = p->next;
+    p->o = o;
+    p->d = d;
+    p->fade = fade;
+    p->millis = lastmillis;
+    p->color = color;
+    p->next = parlist[type];
+    p->text = NULL;
+    parlist[type] = p;
+    return p;
+}   
+    
+void clearparticles()
+{   
+    loopi(MAXPARTYPES) if(parlist[i]) 
+    { 
+        particle *head = parlist[i], *tail = head;
+        while(tail->next)  
+        {
+            switch(parttypes[i].type)
+            {
+                case PT_TEXT:
+                case PT_TEXTUP:
+                    if(tail->text && tail->text[0]=='@') delete[] tail->text;
+                    break;
+            }
+            tail = tail->next;
+        }
+        tail->next = parempty;
+        parempty = head;
+        parlist[i] = NULL;
+    }
+}   
 
 VARP(outlinemeters, 0, 1, 1);
 
@@ -932,7 +991,7 @@ void render_particles(int time)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         }
 
-        renderflares();
+        renderflares(time);
 
         if(!rendered) glDisable(GL_BLEND);
     }
@@ -1204,44 +1263,12 @@ void entity_particles()
         lastemitframe = lastmillis-(lastmillis%emitmillis);
         emit = false;
     }
-    
-    flarecnt = 0; //regenerate flarelist each frame
-    shinetime += detrnd(lastmillis, 10);
-    
+   
+    makelightflares();
+ 
     const vector<extentity *> &ents = et->getents();
     if(!editmode) 
     {
-        if(flarelights) //not quite correct, but much more efficient
-        {
-            vec viewdir;
-            vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, viewdir);
-            extern const vector<int> &checklightcache(int x, int y);
-            const vector<int> &lights = checklightcache(int(camera1->o.x), int(camera1->o.y));
-            loopv(lights)
-            {
-                entity &e = *ents[lights[i]];
-                if(e.type != ET_LIGHT) continue;
-                bool sun = (e.attr1==0);
-                float radius = float(e.attr1);
-                vec flaredir = vec(e.o).sub(camera1->o);
-                float len = flaredir.magnitude();
-                if(!sun && (len > radius)) continue;
-                if(isvisiblesphere(0.0f, e.o) > (sun?VFC_FOGGED:VFC_FULL_VISIBLE)) continue;
-                vec center = vec(viewdir).mul(flaredir.dot(viewdir)).add(camera1->o); 
-                float mod, size;
-                if(sun) //fixed size
-                {
-                    mod = 1.0;
-                    size = len * flaresize / 100.0f; 
-                } 
-                else 
-                {
-                    mod = (radius-len)/radius;
-                    size = flaresize / 5.0f;
-                }
-                newflare(e.o, center, e.attr2, e.attr3, e.attr4, mod, size, sun, sun);
-            }
-        }
         loopv(ents)
         {
             entity &e = *ents[i];
