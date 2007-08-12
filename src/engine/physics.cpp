@@ -1058,7 +1058,7 @@ void vectoyawpitch(const vec &v, float &yaw, float &pitch)
 }
 
 VARP(maxroll, 0, 3, 20);
-VAR(spectatorspeed, 10, 100, 1000);
+VAR(floatspeed, 10, 100, 1000);
 
 void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curtime)
 {
@@ -1136,8 +1136,8 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
 
     vec d(m);
     d.mul(pl->maxspeed);
-    if(!water && !floating) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
-    else if(pl->state==CS_SPECTATOR) d.mul(spectatorspeed/100.0f);
+    if(floating) d.mul(floatspeed/100.0f);
+    else if(!water) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
     float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
 
