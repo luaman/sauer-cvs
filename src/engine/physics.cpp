@@ -1136,7 +1136,10 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
 
     vec d(m);
     d.mul(pl->maxspeed);
-    if(floating) d.mul(floatspeed/100.0f);
+    if(floating) 
+    {
+        if(pl==player) d.mul(floatspeed/100.0f);
+    }
     else if(!water) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
     float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
