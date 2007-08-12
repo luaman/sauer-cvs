@@ -771,7 +771,7 @@ struct heightmapper {
     
     selinfo changes;
     int age;
-    int d, dc, dr, biasdown, br;
+    int d, dc, dr, biasup, br;
     int gx, gy, gz, mx, my, mz;
     uint fs, fn, fo;
 
@@ -784,7 +784,7 @@ struct heightmapper {
         dc = dimcoord(sel.orient);
         dr = dir;
         br = dir>0 ? 0x08080808 : 0;
-        biasdown = mode == dir>0;
+        biasup = mode == dir<0;
         gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - brushx;
         gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - brushy;
         gz = (cur[D[d]] >> gridpower);
@@ -801,8 +801,8 @@ struct heightmapper {
         changes.o.z = gz << gridpower;
         changes.s.x = brushmaxx;
         changes.s.y = brushmaxy;
-        changes.s.z = 1;
-        hedit(brushx, brushy, 0);        
+        changes.s.z = 1;        
+        hedit(brushx, brushy, 1);        
         changed(changes);
     }
 
@@ -822,10 +822,10 @@ struct heightmapper {
 
     inline cube *getcube(const ivec &t, int f) 
     {   // TODO: This will most likely be bottle neck
-        // after profiling, look at loopoctabox + precache for help
+        //       look at loopoctabox + precache for help
         int tz = t.z+(f*gridsize);
         cube *c = &lookupcube(t.x, t.y, tz, -gridsize);
-        if(!isheightmap(c)) return NULL;
+        if(!isheightmap(c)) return NULL;        
         if(lusize > gridsize)
             c = &lookupcube(t.x, t.y, tz, gridsize);
         discardchildren(*c); // necessary? for ext?     
@@ -854,54 +854,77 @@ struct heightmapper {
     void hedit(int x, int y, int z)
     {            
         if(map[x][y].age == age) return;        
-        map[x][y].age = age;
-        ivec t(d, x+gx, y+gy, z+gz);
-        t <<= gridpower;
-        cube *a = NULL, *b = NULL, *c, *e = NULL;
+        cube *a = NULL, *b = NULL, *c, *e = NULL;                
+        ivec t(d, x+gx, y+gy, z+gz);        
+        t <<= gridpower;        
+        map[x][y].age = age;  
         if(NULL == (c = getcube(t, 0))) return;
-        bool isdual, wasdual = c->faces[R[d]] != F_SOLID;                          
-        // generate heights
-        uint face = (c->faces[d]>>fs) & 0x0f0f0f0f;        
-        face += -dr * brush[x][y].face + br;
-        if(wasdual) 
-        {
-            b = getcube(t, -1);
-            if(b!=NULL && lusize==gridsize && isheightmap(b))
-                face += (b->faces[d]>>fs) & 0x0f0f0f0f;
+        if(isempty(*c)) { 
+            z--; // drop down
+            t.z -= gridsize;
+            if(NULL == (c = getcube(t, 0))) return;
         }
-        else 
+        bool ispair = 0;
+        uint face  = (c->faces[d]>>fs) & 0x0f0f0f0f;        
+             face += -dr * brush[x][y].face + br;
+        if(c->faces[R[d]] == F_SOLID) 
             face += 0x08080808;      
+        else if(NULL != (b = getcube(t, -1))) // waspair
+            face += (b->faces[d]>>fs) & 0x0f0f0f0f;            
        
         // seperate heights into 4 layers
-        uint ovr = (face & 0x10101010) >> 1;
-        uint top = face & 0x08080808;                
+        uint ovr =(face & 0x10101010) >> 1;
+        uint mid = face & 0x08080808;                
         uint oh  = face & ((ovr>>3) * 0xf);
-        uint hi  = face & ((top>>3) * 0x7) | ovr;
+        uint hi  = face & ((mid>>3) * 0x7) | ovr;
         uint lo  = face - hi - oh;        
         uint ul  = 0x08080808;
-        if(dr>0) 
-        {
+        if(dr>0) {
             ul = lo; lo = hi; hi = oh; oh = 0;
         }
                 
         // cubify to 2 layers, apply bias
-        isdual = 0;
-        if( biasdown ) 
+        uint *top, *base;  
+        if(hi==0x08080808)      { top = &oh; z++; }
+        else if(lo==0)          { top = &ul; z-=2; }
+        else if(oh!=0 && (biasup || lo==0x08080808))
+        {            
+            top  = &oh;
+            base = &hi;
+            lo   = 0x08080808; // changes will usually affect neighbours...
+            ispair = 1;
+            z++;
+        }        
+        else if(lo==0x08080808) { top = &hi; }
+        else if(biasup || ul==0x08080808)
         {
-         /*   //uint gry = greytoggle((top&(hi<<1)) | (top&(hi<<2)) | (top&(hi<<3)) | ovr);        
-            uint gry = greytoggle((ovr&(oh<<1)) | (ovr&(oh<<2)) | (ovr&(oh<<3)));
-            uint bup = greytoggle(gry | ((gry>>24)&0x000000FF) | // need rotate...
-                                        ((gry<<24)&0xFF000000) |
-                                        ((gry>> 8)&0x00FFFFFF) |
-                                        ((gry<< 8)&0xFFFFFF00) );
-            lo &= ~((bup>>3) * 7);
-            lo |= bup | ovr;
-            isdual = bup!=0 && bup!=0x08080808;*/
-        } 
-        else 
-        {
-            
+            oh   = 0;
+            top  = &hi;
+            base = &lo;
+            ul   = 0x08080808;
+            ispair = 1;           
         }
+        else if(ul==0x08080808) { top = &lo; z--; }
+        else
+        {
+            oh   = 0;
+            top  = &lo;
+            base = &ul;
+            ispair = 1;
+            z--;
+        }        
+
+        if(ispair)
+        {            
+            uint gry = greytoggle((0x01010101&(*top))    | (0x01010101&(*top>>1)) | 
+                                  (0x01010101&(*top>>2)) | (0x01010101&(*top>>3)));
+            uint bup = greytoggle(((gry>>24)&0x000000FF) | ((gry<< 8)&0xFFFFFF00) |
+                                  ((gry<<24)&0xFF000000) | ((gry>> 8)&0x00FFFFFF) |
+                                    gry);           
+            *base &= ~(bup * 7);
+            *base |=   bup << 3;                        
+            ispair = *top != 0 && *base!=0x08080808;
+        }        
 
         // apply to cubes
         if(oh!=F_EMPTY)         e = getcube(t, 1);
@@ -915,14 +938,11 @@ struct heightmapper {
         if(c) sethface(c, hi);
         if(b) sethface(b, lo);
         if(a) sethface(a, ul);        
-        if(isdual) 
+        if(ispair) 
         {
-            if(e) 
-                pushside(e->faces[R[d]], oh);
-            else if(a)
-                pushside(b->faces[R[d]], lo);
-            else
-                pushside(c->faces[R[d]], hi);
+            if(e)       pushside(e->faces[R[d]], oh);
+            else if(a)  pushside(b->faces[R[d]], lo);
+            else        pushside(c->faces[R[d]], hi);
         }
         
         // continue to adjacent cubes
