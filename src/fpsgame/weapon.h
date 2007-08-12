@@ -177,11 +177,13 @@ struct weaponstate
         loopv(projs) if(projs[i].owner==owner) projs.remove(i--);
     }
 
+    IVARP(blood, 0, 1, 1);
+
     void damageeffect(int damage, fpsent *d)
     {
         vec p = d->o;
         p.z += 0.6f*(d->eyeheight + d->aboveeye) - d->eyeheight;
-        particle_splash(3, damage/10, 1000, p);
+        if(blood()) particle_splash(3, damage/10, 1000, p);
         s_sprintfd(ds)("@%d", damage);
         particle_text(d->abovehead(), ds, 8);
     }
