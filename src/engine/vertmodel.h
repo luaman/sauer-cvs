@@ -78,7 +78,7 @@ struct vertmodel : model
                     glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, envmap);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
-                if(!enableglow || as.anim&ANIM_TRANSLUCENT)
+                if(!enableglow || (!enableenvmap && as.anim&ANIM_ENVMAP && envmapmax>0) || as.anim&ANIM_TRANSLUCENT)
                 {
                     if(!enableglow) glEnable(GL_TEXTURE_2D);
                     if(!(as.anim&ANIM_ENVMAP && envmapmax>0) && as.anim&ANIM_TRANSLUCENT) colortmu(1, 0, 0, 0, translucency);
