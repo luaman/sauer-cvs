@@ -202,8 +202,8 @@ struct md2 : vertmodel
             //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   T   FO  SA  GS  GI
             static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 95, 72, 84, 7,  6 };
             static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  17, 12, 11, 18, 1 };
-            //                      DE DY I  F  B  L  R  PU SH PA J   SI SW ED  LA  T   WI  LO  GS1 GS2 GS3 GS4 GS5 GS6 GS7 GI1 GI2 GI3 GI4 GI5 GI6 GI7
-            static int animfr[] = { 5, 2, 8, 9, 9, 9, 9, 6, 6, 7, 12, 8, 9, 10, 11, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 17, 17, 17 };
+            //                      DE DY I  F  B  L  R  PU SH PA J   SI SW ED  LA  T   WI  LO  GS  GI
+            static int animfr[] = { 5, 2, 8, 9, 9, 9, 9, 6, 6, 7, 12, 8, 9, 10, 11, 13, 14, 15, 16, 17 };
             
             anim &= ANIM_INDEX;
             if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
