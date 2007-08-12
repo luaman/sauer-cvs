@@ -577,7 +577,7 @@ enum
 static struct parttype { int type; int gr, tex; float sz; int collide; } parttypes[MAXPARTYPES] =
 {
     { PT_MOD|PT_RND4,  2,  8, 2.96f, 1 }, // 0 blood spats (note: rgb is inverted)
-    { PT_MOD|PT_RND4|PT_DECAL, 0, 8, 4.0f, 0 }, // 1 blood stain
+    { PT_MOD|PT_RND4|PT_DECAL, 0, 8, 5.92f, 0 }, // 1 blood stain
     { 0,               2,  6, 0.24f,  0 }, // 2 sparks 
     { 0,             -20,  2,  0.6f,  0 }, // 3 small slowly rising smoke
     { 0,              20,  0, 0.32f,  0 }, // 4 edit mode entities
