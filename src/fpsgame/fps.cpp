@@ -450,7 +450,6 @@ struct fpsclient : igameclient
 
     IVARP(hudgun, 0, 1, 1);
     IVARP(hudgunsway, 0, 1, 1);
-    IVAR(hudhands, 0, 0, 1);
 
     void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
@@ -478,29 +477,21 @@ struct fpsclient : igameclient
         }
 #endif
         const char *gunname = hudgunnames[player1->gunselect];
-        modelattach a[2] = { { NULL }, { NULL } };
-        if(hudhands())
-        {
-            a[0].name = gunname;
-            a[0].type = MDL_ATTACH_HUDGUN;
-            a[0].anim = -1;
-            gunname = "hudguns/hands";
-        }
-        rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0, a);
+        rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
     void drawhudgun()
     {
         if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
 
-        int rtime = ws.reloadtime(player1->gunselect), gunanim = max(GUN_FIST, min(GUN_PISTOL, player1->gunselect));
+        int rtime = ws.reloadtime(player1->gunselect);
         if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
         {
-            drawhudmodel(ANIM_GUNSHOOT1+gunanim, rtime/17.0f, player1->lastaction);
+            drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1->lastaction);
         }
         else
         {
-            drawhudmodel((ANIM_GUNIDLE1+gunanim)|ANIM_LOOP);
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP);
         }
     }
 

@@ -683,8 +683,7 @@ void findanims(const char *pattern, vector<int> &anims)
         "punch", "shoot", "pain", 
         "jump", "sink", "swim", 
         "edit", "lag", "taunt", "win", "lose", 
-        "gun shoot 1", "gun shoot 2", "gun shoot 3", "gun shoot 4", "gun shoot 5", "gun shoot 6", "gun shoot 7", 
-        "gun idle 1", "gun idle 2", "gun idle 3", "gun idle 4", "gun idle 5", "gun idle 6", "gun idle 7", 
+        "gun shoot", "gun idle",
         "vwep", "shield", "powerup", 
         "mapmodel", "trigger" 
     };

@@ -115,11 +115,11 @@ struct rpgclient : igameclient, g3d_callback
         int rtime = 250;
         if(lastmillis-player1.lastaction<rtime)
         {
-            drawhudmodel(ANIM_GUNSHOOT1, rtime/17.0f, player1.lastaction);
+            drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1.lastaction);
         }
         else
         {
-            drawhudmodel(ANIM_GUNIDLE1|ANIM_LOOP);
+            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP);
         }
     }
 
