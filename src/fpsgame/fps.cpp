@@ -450,6 +450,7 @@ struct fpsclient : igameclient
 
     IVARP(hudgun, 0, 1, 1);
     IVARP(hudgunsway, 0, 1, 1);
+    IVAR(hudhands, 0, 0, 1);
 
     void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
@@ -477,7 +478,15 @@ struct fpsclient : igameclient
         }
 #endif
         const char *gunname = hudgunnames[player1->gunselect];
-        rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
+        modelattach a[2] = { { NULL }, { NULL } };
+        if(hudhands())
+        {
+            a[0].name = gunname;
+            a[0].type = MDL_ATTACH_HUDGUN;
+            a[0].anim = -1;
+            gunname = "hudguns/hands";
+        }
+        rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0, a);
     }
 
     void drawhudgun()
