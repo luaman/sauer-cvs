@@ -30,12 +30,13 @@
 @implementation NSUserDefaults(Extras)
 - (NSString*)nonNullStringForKey:(NSString*)key {
     NSString *result = [self stringForKey:key];
-    return (result?result:@"");
+    return (result ? result : @"");
 }
 @end
 
 @interface Map : NSObject {
     NSString *path;
+    BOOL demo;
 }
 @end
 
@@ -43,6 +44,7 @@
 - (id)initWithPath:(NSString*)aPath 
 {
     if((self = [super init])) 
+        demo = [aPath hasSuffix:@".dmo"];
         path = [[aPath stringByDeletingPathExtension] retain];
     return self;
 }
@@ -51,11 +53,12 @@
     [path release];
     [super dealloc];
 }
-- (NSString*)path { return path; }
+- (NSString*)path { return (demo ? [NSString stringWithFormat:@"-xdemo \"%@\"", path] : path); } // hack
 - (NSString*)name { return [path lastPathComponent]; }
 - (NSImage*)image 
 { 
     NSImage *image = [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; 
+    if(!image && demo) image = [NSImage imageNamed:@"Main"];
     if(!image) image = [NSImage imageNamed:@"Nomap"];
     return image;
 }
@@ -67,6 +70,7 @@
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
     else
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
+    if(!text && demo) text = @"DEMO";
     if(!text) return @"";
     return text;
 }
@@ -74,7 +78,7 @@
 - (NSString*)tickIfExists:(NSString*)ext 
 {
     unichar tickCh = 0x2713; 
-    return [[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingString:ext]] ? [NSString stringWithCharacters:&tickCh length:1] : @"";
+    return ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingString:ext]] ? [NSString stringWithCharacters:&tickCh length:1] : @"");
 }
 - (NSString*)hasImage { return [self tickIfExists:@".jpg"]; }
 - (NSString*)hasText { return [self tickIfExists:@".txt"]; }
@@ -268,7 +272,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
             continue;
         [arr addObject:[NSDictionary dictionaryWithObjectsAndKeys: //keys used in nib
             trig, @"key",
-            [key hasPrefix:@"editbind"]?@"edit":@"", @"mode",
+            ([key hasPrefix:@"editbind"] ? @"edit" : @""), @"mode",
             [dict objectForKey:key], @"action",
             nil]];
     }
@@ -380,10 +384,10 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         }
         
         NSString *desc = [defs nonNullStringForKey:dkDESCRIPTION];
-        if (![desc isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-n%@", desc] UTF8String];
+        if (![desc isEqual:@""]) args[argc++] = [[NSString stringWithFormat:@"-n%@", desc] UTF8String];
         
         NSString *pass = [defs nonNullStringForKey:dkPASSWORD];
-        if (![pass isEqualToString:@""]) args[argc++] = [[NSString stringWithFormat:@"-p%@", pass] UTF8String];
+        if (![pass isEqual:@""]) args[argc++] = [[NSString stringWithFormat:@"-p%@", pass] UTF8String];
 		
         int clients = [defs integerForKey:dkMAXCLIENTS];
         if (clients > 0) args[argc++] = [[NSString stringWithFormat:@"-c%d", clients] UTF8String];
@@ -474,8 +478,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
             [args addObject:@"-grpg"]; //demo the rpg game
         } else if([filename hasPrefix:@"-x"])
             [cmds addObject:[filename substringFromIndex:2]];
-        else
-            [args addObject:[NSString stringWithFormat:@"-l%@",filename]];
+        else 
+            [args addObject:[NSString stringWithFormat:@"-l%@", filename]];
 	}
     
     if([cmds count] > 0) 
@@ -488,6 +492,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     
     NSString *adv = [defs nonNullStringForKey:dkADVANCEDOPTS];
     if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
+
+    // NSLog(@"%@", args);
     
     NSTask *task = [[NSTask alloc] init];
     [task setCurrentDirectoryPath:cwd];
@@ -522,11 +528,10 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     NSString *file;
-    dir = [dir stringByAppendingPathComponent:@"packages"];
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
     while(file = [enumerator nextObject]) 
     {
-        if([[file pathExtension] isEqualToString: @"ogz"]) 
+        if([file hasSuffix:@".ogz"] || [file hasSuffix:@".dmo"]) 
             [self performSelectorOnMainThread:@selector(addMap:) withObject:[dir stringByAppendingPathComponent:file] waitUntilDone:NO];
     }
     [pool release];
@@ -606,10 +611,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     for(i = 0; i < 2; i++) {
         NSString *pkg = dirs[i];
         if(!demo) pkg = [pkg stringByAppendingPathComponent:@"packages"];
-        if([filename hasPrefix:pkg]) {
-            filename = [filename substringFromIndex:[pkg length]+1]; //+1 to skip the leading '/'
-            return [self playFile:demo?[NSString stringWithFormat:@"-xdemo %@", filename]:filename];
-        }
+        if([filename hasPrefix:pkg])
+            return [self playFile:(demo ? [NSString stringWithFormat:@"-xdemo \"%@\"", filename] : filename)];
     }
     NSBeginCriticalAlertSheet(
         @"Invalid file location", @"Ok", @"Cancel", nil,
