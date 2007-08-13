@@ -447,6 +447,9 @@
 <li>
 <a href="#_respawnpoint_"><tt>"respawnpoint"</tt></a>
 </li>
+<li>
+<a href="#_particles_"><tt>"particles"</tt></a>
+</li>
 </ul>
 </li>
 <li>
@@ -1614,6 +1617,10 @@ mappers may find it interesting too.
 </p>
 
 <h2 id="entity_types">Entity Types</h2>
+<p>
+Entities are shown in editmode by blue sparklies, and the closest one is
+indicated on the HUD.
+</p>
 
 <pre id="_light_">"light" radius r g b</pre>
 <p>
@@ -1849,10 +1856,113 @@ into view. yaw is taken from the current camera yaw.
 
 A respawnpoint for classic SP mode (see "SP Respawning"). Place these spaced evenly in quieter areas between fights. Will actually work in
 any game mode, just probably isn't helpful in DM.
-
-Entities are shown in editmode by blue sparklies, and the closest one is
-indicated on the HUD.
 </p>
+
+<pre id="_particles_">"particles" type value1 value2 value3 value4</pre>
+<p>
+A particle emitter. Particles includes many of the effects as seen for weapons, explosions, and lens flares.
+</p>
+
+<table border="1" cellpadding="2" cellspacing="0" style="font-size: 8pt">
+<tr>
+<td>Type</td>
+<td>Values</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>0</td>
+<td>&nbsp;</td>
+<td>fire with smoke</td>
+</tr>
+<tr>
+<td>1</td>
+<td>direction (0..5)</td>
+<td>smoke vent</td>
+</tr>
+<tr>
+<td>2</td>
+<td>direction (0..5)</td>
+<td>water fountain</td>
+</tr>
+<tr>
+<td>3</td>
+<td>size (0..40), rgb (0x000..0xFFF)</td>
+<td>explosion, i.e. fire ball [*expensive compared to other particles]</td>
+</tr>
+<tr>
+<td>4</td>
+<td>direction (0..5), length(0..100), rgb (0x000..0xFFF)</td>
+<td>tape/flare</td>
+</tr>
+<tr>
+<td>4</td>
+<td>direction (256+effect), length(0..100), rgb (0x000..0xFFF)</td>
+<td>
+multiple tape/flare effect [*consider experimental]
+<table>
+<tr>
+<td>Effect</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>0..2</td>
+<td>circlular</td>
+</tr>
+<tr>
+<td>3..5</td>
+<td>cylinderical shell</td>
+</tr>
+<tr>
+<td>6..11</td>
+<td>conic shell</td>
+</tr>
+<tr>
+<td>12..14</td>
+<td>cubic volume</td>
+</tr>
+<tr>
+<td>15..30</td>
+<td>planar surface</td>
+</tr>
+<tr>
+<td>21</td>
+<td>sphere</td>
+</tr>
+</table>
+note: +32 to reverse direction of tapes
+</td>
+</tr>
+<tr>
+<td>5</td>
+<td>percentage (0..100), rgb (0x000..0xFFF)</td>
+<td>capture meter, i.e. rgb vs black</td>
+</tr>
+<tr>
+<td>6</td>
+<td>percentage (0..100), rgb (0x000..0xFFF)</td>
+<td>vs capture meter, i.e. rgb vs bgr</td>
+</tr>
+<tr>
+<td>32</td>
+<td>red (0..255), green (0..255), blue (0..255)</td>
+<td>plain lens flare</td>
+</tr>
+<tr>
+<td>33</td>
+<td>red (0..255), green (0..255), blue (0..255)</td>
+<td>lens flare with sparkle center</td>
+</tr>
+<tr>
+<td>34</td>
+<td>red (0..255), green (0..255), blue (0..255)</td>
+<td>sun lens flare, i.e. fixed size regardless of distance</td>
+</tr>
+<tr>
+<td>35</td>
+<td>red (0..255), green (0..255), blue (0..255)</td>
+<td>sun lens flare with sparkle center</td>
+</tr>
+</table
 
 <h2 id="the_hud">The HUD</h2>
 <p>
