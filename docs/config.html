@@ -211,7 +211,22 @@
 <a href="#envmapsize"><tt>envmapsize</tt></a>
 </li>
 <li>
-<a href="#maxparticles"><tt>maxparticles</tt></a>
+<a href="#maxparticledistance"><tt>maxparticledistance</tt></a>
+</li>
+<li>
+<a href="#particlesize"><tt>particlesize</tt></a>
+</li>
+<li>
+<a href="#emitfps"><tt>emitfps</tt></a>
+</li>
+<li>
+<a href="#flarelights"><tt>flarelights</tt></a>
+</li>
+<li>
+<a href="#flarecutoff"><tt>flarecutoff</tt></a>
+</li>
+<li>
+<a href="#flaresize"><tt>flaresize</tt></a>
 </li>
 <li>
 <a href="#setfullscreenshader"><tt>setfullscreenshader</tt></a>
@@ -746,11 +761,35 @@ Toggles whether map models are rendered in reflections (default: 1).
 Sets the resolution of generated environment maps to 2^Nx2^N (default: 7).
 </p>
 
-<pre id="maxparticles">maxparticles N</pre>
+<pre id="maxparticledistance">maxparticledistance N</pre>
 <p>
-Sets the maximum number of particles rendered at any one time. If more 
-particles are generated than this number, the oldest ones are culled, so you 
-can safely set this number relatively low without loss of information (default: 1000).
+The maximimum visibility distance for particle effects from 256..4096 (default: 512).
+</p>
+
+<pre id="particlesize">particlesize N</pre>
+<p>
+The size of default particle effects from 20..500 (default: 100).
+</p>
+
+<pre id="emitfps">emitfps N</pre>
+<p>
+The rate at which paricles can be emitted from 1..200 fps (default: 60).
+</p>
+
+<pre id="flarelights">flarelights B</pre>
+<p>
+Enables or disables automatic lens flares for all lights (default: 0). Requires very careful placement of lights to be effective, and most maps are not currently designed with this in mind.
+Therefore it is recomended that lens flares instead be placed manually by using <a href="editref.html#_particles_">particles</a> entities.
+</p>
+
+<pre id="flarecutoff">flarecutoff N</pre>
+<p>
+The maximum visiblity distance of a lens flare source from 0..10000 (default: 1000).  Note that visibility also depends on the viewers angle to the flare source.
+</p>
+
+<pre id="flaresize">flaresize N</pre>
+<p>
+The size of the lens flare effect from 20..500 (default: 100).
 </p>
 
 <pre id="setfullscreenshader">setfullscreenshader [N [P]]</pre>
