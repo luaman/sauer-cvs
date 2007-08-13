@@ -72,7 +72,7 @@ struct fpsserver : igameserver
     {
         vec o;
         int state;
-        int lastdeath, lifesequence;
+        int lastdeath, lastspawn, lifesequence;
         int lastshot;
         int rockets, grenades;
         int frags;
@@ -105,6 +105,7 @@ struct fpsserver : igameserver
             fpsstate::respawn();
             o = vec(-1e10f, -1e10f, -1e10f);
             lastdeath = 0;
+            lastspawn = -1;
             lastshot = 0;
         }
     };
@@ -269,7 +270,10 @@ struct fpsserver : igameserver
             if(arenaround)
             {
                 arenaround = 0;
-                loopv(sv.clients) if(sv.clients[i]->state.state==CS_DEAD || sv.clients[i]->state.state==CS_ALIVE) sv.sendspawn(sv.clients[i]);
+                loopv(sv.clients) if(sv.clients[i]->state.state==CS_DEAD || sv.clients[i]->state.state==CS_ALIVE) 
+                {
+                    sv.sendspawn(sv.clients[i]);
+                }
                 return;
             }
 
@@ -279,12 +283,12 @@ struct fpsserver : igameserver
             loopv(sv.clients)
             {
                 clientinfo *ci = sv.clients[i];
-                if(ci->state.state==CS_DEAD) dead = true;
-                else if(ci->state.state==CS_ALIVE)
+                if(ci->state.state==CS_ALIVE || (ci->state.state==CS_DEAD && ci->state.lastspawn>=0))
                 {
                     if(!alive) alive = ci;
                     else if(!m_teammode || strcmp(alive->team, ci->team)) return;
                 }
+                else if(ci->state.state==CS_DEAD) dead = true;
             }
             if(!dead) return;
             sendf(-1, 1, "ri2", SV_ARENAWIN, !alive ? -1 : alive->clientnum);
@@ -1053,7 +1057,8 @@ struct fpsserver : igameserver
             case SV_SPAWN:
             {
                 int ls = getint(p), gunselect = getint(p);
-                if(ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence || (smode && !smode->canspawn(ci))) break;
+                if(ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence || ci->state.lastspawn<0) break;
+                ci->state.lastspawn = -1;
                 if(ci->state.lastdeath) ci->state.respawn();
                 ci->state.state = CS_ALIVE;
                 ci->state.gunselect = gunselect;
@@ -1436,6 +1441,7 @@ struct fpsserver : igameserver
                 putint(p, gs.armourtype);
                 putint(p, gs.gunselect);
                 loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
+                gs.lastspawn = gamemillis; 
             }
         }
         if(ci && ci->state.state==CS_SPECTATOR)
@@ -1500,6 +1506,7 @@ struct fpsserver : igameserver
             gs.health, gs.maxhealth,
             gs.armour, gs.armourtype,
             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG]);
+        gs.lastspawn = gamemillis;
     }
 
     void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
