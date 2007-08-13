@@ -1058,7 +1058,7 @@ struct fpsserver : igameserver
             case SV_SPAWN:
             {
                 int ls = getint(p), gunselect = getint(p);
-                if((ci->state.state!=CS_ALIVE && ci->state.state!=CS_DEAD) || ls!=ci->state.lifesequence || ci->state.lastspawn<0) return; 
+                if((ci->state.state!=CS_ALIVE && ci->state.state!=CS_DEAD) || ls!=ci->state.lifesequence || ci->state.lastspawn<0) break; 
                 ci->state.lastspawn = -1;
                 ci->state.state = CS_ALIVE;
                 ci->state.gunselect = gunselect;
