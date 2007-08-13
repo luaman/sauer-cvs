@@ -272,6 +272,7 @@ struct fpsserver : igameserver
                 arenaround = 0;
                 loopv(sv.clients) if(sv.clients[i]->state.state==CS_DEAD || sv.clients[i]->state.state==CS_ALIVE) 
                 {
+                    sv.clients[i]->state.respawn();
                     sv.sendspawn(sv.clients[i]);
                 }
                 return;
@@ -1057,9 +1058,8 @@ struct fpsserver : igameserver
             case SV_SPAWN:
             {
                 int ls = getint(p), gunselect = getint(p);
-                if(ci->state.state!=CS_DEAD || ls!=ci->state.lifesequence || ci->state.lastspawn<0) break;
+                if((ci->state.state!=CS_ALIVE && ci->state.state!=CS_DEAD) || ls!=ci->state.lifesequence || ci->state.lastspawn<0) return; 
                 ci->state.lastspawn = -1;
-                if(ci->state.lastdeath) ci->state.respawn();
                 ci->state.state = CS_ALIVE;
                 ci->state.gunselect = gunselect;
                 if(smode) smode->spawned(ci);
