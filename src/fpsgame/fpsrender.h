@@ -10,6 +10,7 @@ struct fpsrender
 
     void renderplayer(fpsent *d, const char *mdlname)
     {
+#if 0
         static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
 //        static const char *vweps[] = {"vwep/fist", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
         const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
@@ -37,6 +38,11 @@ struct fpsrender
             if(d->armourtype==A_YELLOW && d->armour) shieldname = "shield/yellow";
         }
         renderclient(d, mdlname, vwepname, shieldname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+#else
+        const char *vwepname = "monster/ogro/vwep";
+        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
+        renderclient(d, mdlname, vwepname, NULL, NULL, attack, delay, lastaction, d->lastpain);
+#endif
 #if 0
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
@@ -61,13 +67,21 @@ struct fpsrender
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
+#if 0
             const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
+#else
+            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ogro/blue" : "ogro/red") : "ogro";
+#endif
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
         }
+#if 0        
         if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ironsnout/blue" : "ironsnout");
+#else
+        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ogro/blue" : "ogro");
+#endif
 
         cl.ms.monsterrender();
         cl.et.renderentities();
