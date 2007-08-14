@@ -70,7 +70,7 @@ struct fpsrender
 #if 0
             const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
 #else
-            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ogro/blue" : "ogro/red") : "ogro";
+            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "monster/ogro/blue" : "monster/ogro/red") : "monster/ogro";
 #endif
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
@@ -80,7 +80,7 @@ struct fpsrender
 #if 0        
         if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ironsnout/blue" : "ironsnout");
 #else
-        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ogro/blue" : "ogro");
+        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "monster/ogro/blue" : "monster/ogro");
 #endif
 
         cl.ms.monsterrender();
