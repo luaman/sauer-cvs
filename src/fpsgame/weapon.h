@@ -184,8 +184,11 @@ struct weaponstate
         vec p = d->o;
         p.z += 0.6f*(d->eyeheight + d->aboveeye) - d->eyeheight;
         if(blood()) particle_splash(3, damage/10, 1000, p);
-        s_sprintfd(ds)("@%d", damage);
-        particle_text(d->abovehead(), ds, 8);
+        if(d!=cl.player1)
+        {
+            s_sprintfd(ds)("@%d", damage);
+            particle_text(d->abovehead(), ds, 8);
+        }
     }
     
     void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
