@@ -664,6 +664,7 @@ void initserver(bool dedicated)
         atexit(enet_deinitialize);
         atexit(cleanupserver);
         enet_time_set(0);
+        if(*masterpath) updatemasterserver();
         for(;;) serverslice(5);
     }
 }
