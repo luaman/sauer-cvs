@@ -40,7 +40,7 @@ struct fpsrender
         renderclient(d, mdlname, vwepname, shieldname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
 #else
         const char *vwepname = "monster/ogro/vwep";
-        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
+        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = 200;
         renderclient(d, mdlname, vwepname, NULL, NULL, attack, delay, lastaction, d->lastpain);
 #endif
 #if 0
