@@ -440,7 +440,7 @@ uchar *stripheader(uchar *b)
 ENetSocket mssock = ENET_SOCKET_NULL;
 ENetAddress msaddress = { ENET_HOST_ANY, ENET_PORT_ANY };
 ENetAddress masterserver = { ENET_HOST_ANY, 80 };
-int updmaster = 0;
+int lastupdatemaster = 0;
 string masterbase;
 string masterpath;
 uchar masterrep[MAXTRANS];
@@ -543,10 +543,10 @@ void serverslice(uint timeout)   // main server update, called from main loop in
     
     if(*masterpath) checkmasterreply();
 
-    if(totalmillis-updmaster>60*60*1000 && *masterpath)       // send alive signal to masterserver every hour of uptime
+    if(totalmillis-lastupdatemaster>60*60*1000 && *masterpath)       // send alive signal to masterserver every hour of uptime
     {
         updatemasterserver();
-        updmaster = totalmillis;
+        lastupdatemaster = totalmillis;
     }
     
     if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
