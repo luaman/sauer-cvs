@@ -8,7 +8,6 @@
 #define dkVERSION @"version"
 #define dkUSERDIR @"userdir"
 #define dkNAME @"name"
-#define dkTEAM @"team"
 #define dkFULLSCREEN @"fullscreen"
 #define dkFSAA @"fsaa"
 #define dkSHADER @"shader"
@@ -36,16 +35,19 @@
 
 @interface Map : NSObject {
     NSString *path;
-    BOOL demo;
+    BOOL demo, user;
 }
 @end
 
 @implementation Map
-- (id)initWithPath:(NSString*)aPath 
+- (id)initWithPath:(NSString*)aPath user:(BOOL)aUser 
 {
     if((self = [super init])) 
+    {
         demo = [aPath hasSuffix:@".dmo"];
         path = [[aPath stringByDeletingPathExtension] retain];
+        user = aUser;
+    }
     return self;
 }
 - (void)dealloc 
@@ -53,7 +55,7 @@
     [path release];
     [super dealloc];
 }
-- (NSString*)path { return (demo ? [NSString stringWithFormat:@"-xdemo \"%@\"", path] : path); } // hack
+- (NSString*)path { return (demo ? [NSString stringWithFormat:@"-xdemo \"%@\"", path] : path); } // minor hack
 - (NSString*)name { return [path lastPathComponent]; }
 - (NSImage*)image 
 { 
@@ -70,7 +72,10 @@
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
     else
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
-    if(!text && demo) text = @"DEMO";
+    if(!text && (demo || user)) {
+        text = user ? @"user " : @"";
+        if(demo) text = [text stringByAppendingString:@"demo"];
+    }
     if(!text) return @"";
     return text;
 }
@@ -468,8 +473,6 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSMutableArray *cmds = [[NSMutableArray alloc] init];
     NSString *name = [defs nonNullStringForKey:dkNAME];
     if(name) [cmds addObject:[NSString stringWithFormat:@"name \"%@\"", name]];
-    //NOTEAM name = [defs nonNullStringForKey:dkTEAM];
-    //NOTEAM if(name) [cmds addObject:[NSString stringWithFormat:@"team \"%@\"", name]];
     
     if(filename) 
     {
@@ -493,7 +496,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSString *adv = [defs nonNullStringForKey:dkADVANCEDOPTS];
     if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
 
-    // NSLog(@"%@", args);
+    //NSLog(@"%@", args);
     
     NSTask *task = [[NSTask alloc] init];
     [task setCurrentDirectoryPath:cwd];
@@ -524,25 +527,35 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 }
 
 
-- (void)initMaps:(NSString*)dir //@note threaded!
+- (void)scanMaps:(id)obj //@note threaded!
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSString *file;
-    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
-    while(file = [enumerator nextObject]) 
+    int len = [[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR] ? 2 : 1;
+    int i;
+    for(i = 0; i < len; i++) 
     {
-        if([file hasSuffix:@".ogz"] || [file hasSuffix:@".dmo"]) 
-            [self performSelectorOnMainThread:@selector(addMap:) withObject:[dir stringByAppendingPathComponent:file] waitUntilDone:NO];
+        NSString *dir = (i==0) ? [self cwd] : [self userdir];
+        NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
+        NSString *file;
+        while(file = [enumerator nextObject]) 
+        {
+            if([file hasSuffix:@".ogz"] || [file hasSuffix:@".dmo"]) 
+            {   
+                Map *map = [[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file] user:(i==1)];
+                [maps performSelectorOnMainThread:@selector(addObject:) withObject:map waitUntilDone:NO];
+            }
+        }
     }
+    [prog performSelectorOnMainThread:@selector(stopAnimation:) withObject:nil waitUntilDone:NO];
     [pool release];
-    //@todo - update a progress indicator - not unless silly numbers of files, or incredibly slow mac..
 }
 
--(void)addMap:(NSString*)path 
+- (void)initMaps 
 {
-    [maps addObject:[[Map alloc] initWithPath:path]]; 
+    [prog startAnimation:nil];
+    [maps removeObjects:[maps arrangedObjects]];
+    [NSThread detachNewThreadSelector: @selector(scanMaps:) toTarget:self withObject:nil];
 }
-
 
 
 - (void)awakeFromNib 
@@ -573,19 +586,25 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         if([name isEqual:@""] || [name isEqual:@"unnamed"]) name = NSUserName();
         [defs setValue:name forKey:dkNAME];
     }
-    //NOTEAM if([[defs nonNullStringForKey:dkTEAM] isEqual:@""]) [defs setValue:[dict objectForKey:@"team"] forKey:dkTEAM];
     
     NSString *dir = [self cwd];
     if(![fm fileExistsAtPath:dir]) NSLog(@"Missing sauebraten?!"); // @TODO error indicator?
     else if(![fm isWritableFileAtPath:dir]) [defs setBool:YES forKey:dkUSERDIR];  // auto-enable userdir
 	
-    [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject:[self cwd]];
-    if([defs boolForKey:dkUSERDIR]) [NSThread detachNewThreadSelector: @selector(initMaps:) toTarget:self withObject:[self userdir]];
-    
+    [self initMaps];
     [self initResolutions];
     server = -1;
     [NSApp setDelegate:self]; //so can catch the double-click, dropped files, termination
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+    
+    //Listen for changes in the preferences that require the gui to refresh	
+	[defs addObserver:self forKeyPath:dkUSERDIR options:NSKeyValueObservingOptionNew context:nil];
+
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if(![keyPath isEqual:dkUSERDIR]) return;
+    [self initMaps];
 }
 
 #pragma mark -

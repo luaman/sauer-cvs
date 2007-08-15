@@ -10,6 +10,7 @@
 	IBOutlet NSView *view4;
 	IBOutlet NSView *view5;
 	
+    IBOutlet NSProgressIndicator *prog; //while scanning maps - it's there if you want to wire it up
 	IBOutlet NSArrayController *maps;
 	IBOutlet NSArrayController *keys;
     IBOutlet NSPopUpButton *resolutions;
