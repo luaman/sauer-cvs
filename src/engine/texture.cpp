@@ -989,3 +989,67 @@ GLuint lookupenvmap(ushort emid)
     return tex ? tex : skyenvmap;
 }
 
+void writetgaheader(FILE *f, SDL_Surface *s, int bits)
+{
+    fwrite("\0\0\x02\0\0\0\0\0\0\0\0\0", 1, 12, f);
+    ushort dim[] = { s->w, s->h };
+    endianswap(dim, sizeof(ushort), 2);
+    fwrite(dim, sizeof(short), 2, f);
+    fputc(bits, f);
+    fputc(0, f);
+}
+
+void flipnormalmapy(char *destfile, char *normalfile)           // RGB (jpg/png) -> BGR (tga)
+{
+    SDL_Surface *ns = IMG_Load(findfile(normalfile, "rb"));
+    if(!ns) return;
+    FILE *f = openfile(destfile, "wb");
+    if(f)
+    {
+        writetgaheader(f, ns, 24);
+        for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
+        {
+            uchar *nd = (uchar *)ns->pixels+(x+y*ns->w)*3;
+            fputc(nd[2], f);
+            fputc(255-nd[1], f);
+            fputc(nd[0], f);
+        }
+        fclose(f);
+    }
+    if(ns) SDL_FreeSurface(ns);
+}
+
+void mergenormalmaps(char *heightfile, char *normalfile)    // BGR (tga) -> BGR (tga) (SDL loads TGA as BGR!)
+{
+    SDL_Surface *hs = IMG_Load(findfile(heightfile, "rb"));
+    SDL_Surface *ns = IMG_Load(findfile(normalfile, "rb"));
+    if(hs && ns)
+    {
+        uchar def_n[] = { 255, 128, 128 };
+        FILE *f = openfile(normalfile, "wb");
+        if(f)
+        {
+            writetgaheader(f, ns, 24); 
+            for(int y = ns->h-1; y>=0; y--) loop(x, ns->w)
+            {
+                int off = (x+y*ns->w)*3;
+                uchar *hd = hs ? (uchar *)hs->pixels+off : def_n;
+                uchar *nd = ns ? (uchar *)ns->pixels+off : def_n;
+                #define S(x) x/255.0f*2-1 
+                vec n(S(nd[0]), S(nd[1]), S(nd[2]));
+                vec h(S(hd[0]), S(hd[1]), S(hd[2]));
+                n.mul(2).add(h).normalize().add(1).div(2).mul(255);
+                uchar o[3] = { (uchar)n.x, (uchar)n.y, (uchar)n.z };
+                fwrite(o, 3, 1, f);
+                #undef S
+            }
+            fclose(f);
+        }
+    }
+    if(hs) SDL_FreeSurface(hs);
+    if(ns) SDL_FreeSurface(ns);
+}
+
+COMMAND(flipnormalmapy, "ss");
+COMMAND(mergenormalmaps, "sss");
+
