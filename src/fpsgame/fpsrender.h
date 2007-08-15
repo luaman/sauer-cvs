@@ -8,9 +8,18 @@ struct fpsrender
     vector<fpsent *> bestplayers;
     vector<char *> bestteams;
 
+    IVARP(ogro, 0, 0, 1);
+
     void renderplayer(fpsent *d, const char *mdlname)
     {
-#if 0
+        if(ogro())
+        {
+            const char *vwepname = d->gunselect!=GUN_FIST ? "monster/ogro/vwep" : NULL;
+            int attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT;
+            renderclient(d, mdlname, vwepname, NULL, NULL, attack, 300, d->lastaction, d->lastpain);
+            return;
+        }
+
         static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
 //        static const char *vweps[] = {"vwep/fist", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
         const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
@@ -38,11 +47,6 @@ struct fpsrender
             if(d->armourtype==A_YELLOW && d->armour) shieldname = "shield/yellow";
         }
         renderclient(d, mdlname, vwepname, shieldname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
-#else
-        const char *vwepname = "monster/ogro/vwep";
-        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = 300;
-        renderclient(d, mdlname, vwepname, NULL, NULL, attack, delay, lastaction, d->lastpain);
-#endif
 #if 0
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
@@ -64,24 +68,20 @@ struct fpsrender
 
         startmodelbatches();
 
+        const char *ffamdl = ogro() ? "monster/ogro" : "ironsnout",
+                   *bluemdl = ogro() ? "monster/ogro/blue" : "ironsnout/blue",
+                   *redmdl = ogro() ? "monster/ogro/red" : "ironsnout/red";
+
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR)
         {
-#if 0
-            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "ironsnout/blue" : "ironsnout/red") : "ironsnout";
-#else
-            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? "monster/ogro/blue" : "monster/ogro/red") : "monster/ogro";
-#endif
+            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? bluemdl : redmdl) : ffamdl;
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
         }
-#if 0        
-        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "ironsnout/blue" : "ironsnout");
-#else
-        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? "monster/ogro/blue" : "monster/ogro");
-#endif
+        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? bluemdl : ffamdl);
 
         cl.ms.monsterrender();
         cl.et.renderentities();
@@ -90,5 +90,4 @@ struct fpsrender
 
         endmodelbatches();
     }
-
 };
