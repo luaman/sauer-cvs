@@ -872,6 +872,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\bih.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\bih.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\grass.cpp"
 					>
 					<FileConfiguration
@@ -1063,22 +1071,6 @@
 							PrecompiledHeaderThrough="pch.h"
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\engine\spheretree.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							PrecompiledHeaderThrough="pch.h"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\engine\spheretree.h"
-					>
 				</File>
 				<File
 					RelativePath="..\engine\texture.cpp"

@@ -68,51 +68,51 @@ bool BIH::traverse(const vec &o, const vec &ray, float maxdist, float &dist, int
     for(;;)
     {
         int axis = curnode->axis();
-        int near = order[axis], far = near^1;
-        float nearsplit = (curnode->split[near] - o[axis])*invray[axis],
-              farsplit = (curnode->split[far] - o[axis])*invray[axis];
+        int nearidx = order[axis], faridx = nearidx^1;
+        float nearsplit = (curnode->split[nearidx] - o[axis])*invray[axis],
+              farsplit = (curnode->split[faridx] - o[axis])*invray[axis];
 
         if(nearsplit <= tmin)
         {
             if(farsplit < tmax)
             {
-                if(!curnode->isleaf(far))
+                if(!curnode->isleaf(faridx))
                 {
-                    curnode = &nodes[curnode->childindex(far)];
+                    curnode = &nodes[curnode->childindex(faridx)];
                     tmin = max(tmin, farsplit);
                     continue;
                 }
-                else if(triintersect(tris[curnode->childindex(far)], o, ray, maxdist, dist, mode)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
         }
-        else if(curnode->isleaf(near))
+        else if(curnode->isleaf(nearidx))
         {
-            if(triintersect(tris[curnode->childindex(near)], o, ray, maxdist, dist, mode)) return true;
+            if(triintersect(tris[curnode->childindex(nearidx)], o, ray, maxdist, dist, mode)) return true;
             if(farsplit < tmax)
             {
-                if(!curnode->isleaf(far))
+                if(!curnode->isleaf(faridx))
                 {
-                    curnode = &nodes[curnode->childindex(far)];
+                    curnode = &nodes[curnode->childindex(faridx)];
                     tmin = max(tmin, farsplit);
                     continue;
                 }
-                else if(triintersect(tris[curnode->childindex(far)], o, ray, maxdist, dist, mode)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
         }
         else
         {
             if(farsplit < tmax)
             {
-                if(!curnode->isleaf(far))
+                if(!curnode->isleaf(faridx))
                 {
                     BIHStack &save = stack.add();
-                    save.node = &nodes[curnode->childindex(far)];
+                    save.node = &nodes[curnode->childindex(faridx)];
                     save.tmin = max(tmin, farsplit);
                     save.tmax = tmax;
                 }
-                else if(triintersect(tris[curnode->childindex(far)], o, ray, maxdist, dist, mode)) return true;
+                else if(triintersect(tris[curnode->childindex(faridx)], o, ray, maxdist, dist, mode)) return true;
             }
-            curnode = &nodes[curnode->childindex(near)];
+            curnode = &nodes[curnode->childindex(nearidx)];
             tmax = min(tmax, nearsplit);
             continue;
         }
