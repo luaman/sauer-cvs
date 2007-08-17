@@ -3,22 +3,19 @@
 
 bool BIH::triintersect(tri &tri, const vec &o, const vec &ray, float maxdist, float &dist, int mode)
 {
-    vec edge1(tri.b), edge2(tri.c);
-    edge1.sub(tri.a);
-    edge2.sub(tri.a);
     vec p;
-    p.cross(ray, edge2);
-    float det = edge1.dot(p);
+    p.cross(ray, tri.c);
+    float det = tri.b.dot(p);
     if(det == 0) return false;
     vec r(o); 
     r.sub(tri.a);
     float u = r.dot(p) / det; 
     if(u < 0 || u > 1) return false;
     vec q; 
-    q.cross(r, edge1);
+    q.cross(r, tri.b);
     float v = ray.dot(q) / det;
     if(v < 0 || u + v > 1) return false;
-    float f = edge2.dot(q) / det;
+    float f = tri.c.dot(q) / det;
     if(f < 0 || f > maxdist) return false;
     if(tri.tex && (mode&RAY_ALPHAPOLY)==RAY_ALPHAPOLY)
     {
@@ -257,6 +254,14 @@ BIH::BIH(int _numtris, tri *_tris)
     numnodes = buildnodes.length();
     nodes = new BIHNode[numnodes];
     memcpy(nodes, buildnodes.getbuf(), numnodes*sizeof(BIHNode));
+
+    // convert tri.b/tri.c to edges
+    loopi(numtris)
+    {
+        tri &tri = tris[i];
+        tri.b.sub(tri.a);
+        tri.c.sub(tri.a);
+    }
 }
 
 static inline void yawray(vec &o, vec &ray, float angle)

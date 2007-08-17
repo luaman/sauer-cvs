@@ -1,4 +1,4 @@
-// monster.cpp: implements AI for single player monsters, currently client only
+// monster.h: implements AI for single player monsters, currently client only
 
 struct monsterset
 {
@@ -24,7 +24,7 @@ struct monsterset
         
         int monsterstate;                   // one of M_*, M_NONE means human
     
-        int mtype;                          // see monster.cpp
+        int mtype;                          // see monstertypes table
         fpsent *enemy;                      // monster wants to kill this entity
         float targetyaw;                    // monster wants to look in this direction
         int trigger;                        // millis at which transition to another monsterstate takes place
