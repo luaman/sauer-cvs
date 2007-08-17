@@ -180,17 +180,17 @@ bool insideworld(const vec &o)
     octaentities *oclast = NULL; \
     float dist = 0, dent = mode&RAY_BB ? 1e16f : 1e14f; \
     cube *last = NULL; \
-    vec v(o), invray(ray.x ? 1/ray.x : 0, ray.y ? 1/ray.y : 0, ray.z ? 1/ray.z : 0); \
+    vec v(o), invray(ray.x ? 1/ray.x : 1e16f, ray.y ? 1/ray.y : 1e16f, ray.z ? 1/ray.z : 1e16f); \
     static cube *levels[32]; \
     levels[0] = worldroot; \
     int l = 0, lsize = hdr.worldsize; \
-    ivec lo(0, 0, 0);
+    ivec lo(0, 0, 0), lsizemask(ray.x>0 ? 0x7FFFFFFF : 0, ray.y>0 ? 0x7FFFFFFF : 0, ray.z>0 ? 0x7FFFFFFF : 0); \
 
 #define CHECKINSIDEWORLD \
     if(!insideworld(v)) \
     { \
         float disttoworld = 1e16f, exitworld = 1e16f; \
-        loopi(3) if(invray[i]!=0) \
+        loopi(3) \
         { \
             float c = v[i]; \
             if(c>=0 && c<hdr.worldsize) \
@@ -230,13 +230,13 @@ bool insideworld(const vec &o)
         }
 
 #define FINDCLOSEST \
-        float disttonext = 1e16f; \
-        loopi(3) if(invray[i]!=0) \
-        { \
-            float d = (lo[i]+(invray[i]>0?lsize:0)-v[i])*invray[i]; \
-            if(d >= 0) disttonext = min(disttonext, d); \
-        } \
-		disttonext += 0.1f; \
+        float dx = (lo.x+(lsize&lsizemask.x)-v.x)*invray.x, \
+              dy = (lo.y+(lsize&lsizemask.y)-v.y)*invray.y, \
+              dz = (lo.z+(lsize&lsizemask.z)-v.z)*invray.z; \
+        float disttonext = dx; \
+        disttonext = min(disttonext, dy); \
+        disttonext = min(disttonext, dz); \
+        disttonext += 0.1f; \
         pushvec(v, ray, disttonext); \
         dist += disttonext; \
         last = &c;
@@ -274,11 +274,14 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
             ((mode&RAY_EDITMAT) && c.ext && c.ext->material != MAT_AIR) ||
             (!(mode&RAY_PASS) && lsize==size && !isempty(c)) ||
             isentirelysolid(c) ||
-            dent < dist ||
-            last==&c))
+            dent < dist))
         {
-            if(last==&c && radius>0) dist = radius;
             return min(dent, dist);
+        }
+        else if(last==&c)
+        {
+            if(radius>0) return min(dent, radius);
+            return dent < 1e13f ? dent : -1;
         }
         else if(!isempty(c))
         {
