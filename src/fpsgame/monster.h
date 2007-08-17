@@ -48,7 +48,7 @@ struct monsterset
             eyeheight *= t->bscale/10.0f;
             aboveeye *= t->bscale/10.0f;
             weight = t->weight;
-            if(state!=M_SLEEP) cl.spawnplayer(this);
+            if(_state!=M_SLEEP) cl.spawnplayer(this);
             trigger = cl.lastmillis+_trigger;
             targetyaw = yaw = (float)_yaw;
             move = _move;
