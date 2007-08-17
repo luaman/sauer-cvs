@@ -319,12 +319,12 @@ struct vertmodel : model
             }
         }
 
-        void gentris(int frame, Texture *tex, vector<SphereTree::tri> &out, float m[12])
+        void gentris(int frame, Texture *tex, vector<BIH::tri> &out, float m[12])
         {
             vert *fverts = &verts[frame*numverts];
             loopj(numtris)
             {
-                SphereTree::tri &t = out.add();
+                BIH::tri &t = out.add();
                 t.tex = tex->bpp==32 ? tex : NULL;
                 tcvert &av = tcverts[tris[j].vert[0]],
                        &bv = tcverts[tris[j].vert[1]],
@@ -593,7 +593,7 @@ struct vertmodel : model
             loopv(meshes) meshes[i]->calcbb(frame, bbmin, bbmax, m);
         }
 
-        void gentris(int frame, vector<skin> &skins, vector<SphereTree::tri> &tris, float m[12])
+        void gentris(int frame, vector<skin> &skins, vector<BIH::tri> &tris, float m[12])
         {
             loopv(meshes) meshes[i]->gentris(frame, skins[i].tex, tris, m);
         }
@@ -828,13 +828,13 @@ struct vertmodel : model
             }
         }
 
-        void gentris(int frame, vector<SphereTree::tri> &tris)
+        void gentris(int frame, vector<BIH::tri> &tris)
         {
             float m[12] = { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
             gentris(frame, tris, m);
         }
 
-        void gentris(int frame, vector<SphereTree::tri> &tris, float m[12])
+        void gentris(int frame, vector<BIH::tri> &tris, float m[12])
         {
             meshes->gentris(frame, skins, tris, m);
             loopv(links) if(links[i].p)
@@ -1165,19 +1165,19 @@ struct vertmodel : model
         return meshgroups[name];
     }
 
-    void gentris(int frame, vector<SphereTree::tri> &tris)
+    void gentris(int frame, vector<BIH::tri> &tris)
     {
         if(parts.empty()) return;
         parts[0]->gentris(frame, tris);
     }
 
-    SphereTree *setspheretree()
+    BIH *setBIH()
     {
-        if(spheretree) return spheretree;
-        vector<SphereTree::tri> tris;
+        if(bih) return bih;
+        vector<BIH::tri> tris;
         gentris(0, tris);
-        spheretree = buildspheretree(tris.length(), tris.getbuf());
-        return spheretree;
+        bih = new BIH(tris.length(), tris.getbuf());
+        return bih;
     }
 
     void calcbb(int frame, vec &center, vec &radius)

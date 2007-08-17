@@ -10,7 +10,7 @@ extern icliententities *et;
 #include "world.h"
 #include "octa.h"
 #include "lightmap.h"
-#include "spheretree.h"
+#include "bih.h"
 #include "texture.h"
 #include "model.h"
 

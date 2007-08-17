@@ -7,6 +7,7 @@ CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
 	engine/3dgui.o \
+	engine/bih.o \
 	engine/client.o \
 	engine/command.o \
 	engine/console.o \
@@ -31,7 +32,6 @@ CLIENT_OBJS= \
 	engine/server.o \
 	engine/serverbrowser.o \
 	engine/shader.o \
-	engine/spheretree.o \
 	engine/sound.o \
 	engine/texture.o \
 	engine/water.o \
