@@ -184,7 +184,7 @@ bool insideworld(const vec &o)
     static cube *levels[32]; \
     levels[0] = worldroot; \
     int l = 0, lsize = hdr.worldsize; \
-    ivec lo(0, 0, 0), lsizemask(ray.x>0 ? 0x7FFFFFFF : 0, ray.y>0 ? 0x7FFFFFFF : 0, ray.z>0 ? 0x7FFFFFFF : 0); \
+    ivec lo(0, 0, 0), lsizemask(invray.x>0 ? 0x7FFFFFFF : 0, invray.y>0 ? 0x7FFFFFFF : 0, invray.z>0 ? 0x7FFFFFFF : 0); \
 
 #define CHECKINSIDEWORLD \
     if(!insideworld(v)) \
