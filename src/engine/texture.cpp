@@ -93,6 +93,17 @@ SDL_Surface *texffmask(SDL_Surface *s, int minval)
     return m;
 }
 
+void texdup(SDL_Surface *s, int srcchan, int dstchan)
+{
+    if(srcchan==dstchan || max(srcchan, dstchan) >= s->format->BytesPerPixel) return;
+    uchar *src = (uchar *)s->pixels;
+    loopi(s->h*s->w)
+    {
+        src[dstchan] = src[srcchan];
+        src += s->format->BytesPerPixel;
+    }
+}
+
 VAR(hwtexsize, 1, 0, 0);
 VARP(maxtexsize, 0, 0, 1<<12);
 VARP(texreduce, 0, 0, 12);
@@ -318,6 +329,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         if(!arg1) arg1 = strchr(cmd, '>');
         if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
         else if(!strncmp(cmd, "ffmask", arg1-cmd)) s = texffmask(s, atoi(arg1+1));
+        else if(!strncmp(cmd, "dup", arg1-cmd)) texdup(s, atoi(arg1+1), atoi(arg2+1));
     }
     return s;
 }
