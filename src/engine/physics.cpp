@@ -247,11 +247,10 @@ bool insideworld(const vec &o)
         z = int(v.z); \
         for(;;) \
         { \
-            lo.x &= ~lsize; \
-            lo.y &= ~lsize; \
-            lo.z &= ~lsize; \
+            lo.mask(~lsize); \
             lsize <<= 1; \
-            if(x<lo.x+lsize && y<lo.y+lsize && z<lo.z+lsize && x>=lo.x && y>=lo.y && z>=lo.z) break; \
+            uint lx = uint(x - lo.x), ly = uint(y - lo.y), lz = uint(z - lo.z); \
+            if(lx<uint(lsize) && ly<uint(lsize) && lz<uint(lsize)) break; \
             if(!l) break; \
             --l; \
         }
