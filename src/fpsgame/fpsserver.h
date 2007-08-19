@@ -1255,9 +1255,11 @@ struct fpsserver : igameserver
            
             case SV_CLEARBANS:
             {
-                if(ci->privilege<PRIV_ADMIN) break;
-                bannedips.setsize(0);
-                sendservmsg("cleared all bans");
+                if(ci->privilege)
+                {
+                    bannedips.setsize(0);
+                    sendservmsg("cleared all bans");
+                }
                 break;
             }
 

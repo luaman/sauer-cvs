@@ -127,7 +127,7 @@ struct clientcom : iclientcom
 
     void clearbans()
     {
-        if(player1->privilege<PRIV_ADMIN) return;
+        if(!remote) return;
         addmsg(SV_CLEARBANS, "r");
     }
 
