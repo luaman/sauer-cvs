@@ -239,7 +239,7 @@ struct clientcom : iclientcom
             putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(q, (int)(d->vel.y*DVELF));
             putint(q, (int)(d->vel.z*DVELF));
-            putuint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0) | ((d->lifesequence&1)<<6));
+            putuint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0) | ((((fpsent *)d)->lifesequence&1)<<6));
             if(d->gravity.x || d->gravity.y)
             {
                 putint(q, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
