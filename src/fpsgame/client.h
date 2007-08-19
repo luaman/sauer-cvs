@@ -720,7 +720,7 @@ struct clientcom : iclientcom
             case SV_REMIP:
             {
                 if(!d) return;
-                conoutf("%s remipped", cl.colorname(d));
+                conoutf("%s remipped", colorname(d));
                 mpremip(false);
                 break;
             }
