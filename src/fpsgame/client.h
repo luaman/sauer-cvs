@@ -223,7 +223,7 @@ struct clientcom : iclientcom
 
     int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d)
     {
-        if(!spectator || !c2sinit || messages.length())
+        if(d->state==CS_ALIVE || d->state==CS_EDITING)
         {
             // send position updates separately so as to not stall out aiming
             ENetPacket *packet = enet_packet_create(NULL, 100, 0);

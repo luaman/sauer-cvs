@@ -1000,13 +1000,13 @@ struct fpsserver : igameserver
                 int physstate = getuint(p);
                 if(physstate&0x20) loopi(2) getint(p);
                 if(physstate&0x10) getint(p);
-                if(!ci->local)
+                if(!ci->local && (ci->state.state==CS_ALIVE || ci->state.state==CS_EDITING))
                 {
                     ci->position.setsizenodelete(0);
                     while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
                 }
                 uint f = getuint(p);
-                if(!ci->local)
+                if(!ci->local && (ci->state.state==CS_ALIVE || ci->state.state==CS_EDITING))
                 {
                     f &= 0xF;
                     if(ci->state.armourtype==A_GREEN && ci->state.armour>0) f |= 1<<4;
@@ -1042,7 +1042,7 @@ struct fpsserver : igameserver
             }
 
             case SV_TRYSPAWN:
-                if(ci->state.state!=CS_DEAD || (smode && !smode->canspawn(ci))) break;
+                if(ci->state.state!=CS_DEAD || ci->state.lastspawn>=0 || (smode && !smode->canspawn(ci))) break;
                 if(ci->state.lastdeath) ci->state.respawn();
                 sendspawn(ci);
                 break;
@@ -1536,6 +1536,7 @@ struct fpsserver : igameserver
             }
             else actor->state.frags--;
             sendf(-1, 1, "ri4", SV_DIED, target->clientnum, actor->clientnum, actor->state.frags);
+            target->position.setsizenodelete(0);
             if(smode) smode->died(target, actor);
             ts.state = CS_DEAD;
             ts.lastdeath = gamemillis;
@@ -1550,6 +1551,7 @@ struct fpsserver : igameserver
         if(gs.state!=CS_ALIVE) return;
         gs.frags--;
         sendf(-1, 1, "ri4", SV_DIED, ci->clientnum, ci->clientnum, gs.frags);
+        ci->position.setsizenodelete(0);
         if(smode) smode->died(ci, NULL);
         gs.state = CS_DEAD;
         gs.respawn();
