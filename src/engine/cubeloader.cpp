@@ -220,7 +220,7 @@ struct cubeloader
             }
             if(importcuberemip && (allocnodes - lastremip) * 8 > importcuberemip * 1024)
             {
-                mpremip(false);
+                mpremip(true);
                 lastremip = allocnodes;
             }
             if((progress++&0x7F)==0)
@@ -331,7 +331,7 @@ struct cubeloader
         exec("packages/cube/package.cfg");
         exec(path(cfgname));
         create_cubes();
-        mpremip(false);
+        mpremip(true);
         clearlights();
         allchanged();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
@@ -341,5 +341,10 @@ struct cubeloader
     }
 };
 
-void importcube(char *name) { cubeloader().load_cube_world(name); }
+void importcube(char *name) 
+{ 
+    if(multiplayer()) return;
+    cubeloader().load_cube_world(name); 
+}
+
 COMMAND(importcube, "s");
