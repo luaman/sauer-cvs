@@ -130,7 +130,7 @@ struct rpgclient : igameclient, g3d_callback
 
     void rendergame()
     {
-        if(isthirdperson()) renderclient(&player1, "monster/ogro", NULL, NULL, NULL, ANIM_PUNCH, 300, player1.lastaction, player1.lastpain);
+        if(isthirdperson()) renderclient(&player1, "monster/ogro", NULL, ANIM_PUNCH, 300, player1.lastaction, player1.lastpain);
         os.render();
     }
     

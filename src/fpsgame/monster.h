@@ -346,7 +346,10 @@ struct monsterset
         {
             monster &m = *monsters[i];
             if(m.state!=CS_DEAD || m.superdamage<50) 
-                renderclient(&m, monstertypes[m.mtype].mdlname, monstertypes[m.mtype].vwepname, NULL, NULL, m.monsterstate==M_ATTACKING ? -ANIM_SHOOT : 0, 300, m.lastaction, m.lastpain);
+            {
+                modelattach vwep[] = { { monstertypes[m.mtype].vwepname, MDL_ATTACH_VWEP, ANIM_VWEP|ANIM_LOOP, 0 }, { NULL } };
+                renderclient(&m, monstertypes[m.mtype].mdlname, vwep, m.monsterstate==M_ATTACKING ? -ANIM_SHOOT : 0, 300, m.lastaction, m.lastpain);
+            }
         }
     }
 };

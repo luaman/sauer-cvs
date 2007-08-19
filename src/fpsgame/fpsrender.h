@@ -14,15 +14,12 @@ struct fpsrender
     {
         if(ogro())
         {
-            const char *vwepname = d->gunselect!=GUN_FIST ? "monster/ogro/vwep" : NULL;
             int attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT;
-            renderclient(d, mdlname, vwepname, NULL, NULL, attack, 300, d->lastaction, d->lastpain);
+            modelattach vwep[] = { { d->gunselect!=GUN_FIST ? "monster/ogro/vwep" : NULL, MDL_ATTACH_VWEP, ANIM_VWEP|ANIM_LOOP, 0 }, { NULL } };
+            renderclient(d, mdlname, vwep, attack, 300, d->lastaction, d->lastpain);
             return;
         }
 
-        static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
-//        static const char *vweps[] = {"vwep/fist", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing", "vwep/chaing"};
-        const char *vwepname = d->gunselect<=GUN_PISTOL ? vweps[d->gunselect] : NULL;
         int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
         if(cl.intermission && d->state!=CS_DEAD)
         {
@@ -39,14 +36,37 @@ struct fpsrender
             attack = ANIM_TAUNT;
             delay = 1000;
         }
-        const char *shieldname = NULL, *pupname = NULL;
+        modelattach a[4] = { { NULL }, { NULL }, { NULL }, { NULL } };
+        static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
+        int ai = 0;
+        if(d->gunselect<=GUN_PISTOL)
+        {
+            a[ai].name = vweps[d->gunselect];
+            a[ai].type = MDL_ATTACH_VWEP;
+            a[ai].anim = ANIM_VWEP|ANIM_LOOP;
+            a[ai].basetime = 0;
+            ai++;
+        }
         if(d->state==CS_ALIVE)
         {
-            if(d->quadmillis) pupname = "quadspheres";
-            if(d->armourtype==A_GREEN && d->armour) shieldname = "shield/green";
-            if(d->armourtype==A_YELLOW && d->armour) shieldname = "shield/yellow";
+            if(d->quadmillis)
+            {
+                a[ai].name = "quadspheres";
+                a[ai].type = MDL_ATTACH_POWERUP;
+                a[ai].anim = ANIM_POWERUP|ANIM_LOOP;
+                a[ai].basetime = 0;
+                ai++;
+            }
+            if(d->armour)
+            {
+                a[ai].name = d->armourtype==A_GREEN ? "shield/green" : (d->armourtype==A_YELLOW ? "shield/yellow" : NULL);
+                a[ai].type = MDL_ATTACH_SHIELD;
+                a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
+                a[ai].basetime = 0;
+                ai++;
+            }
         }
-        renderclient(d, mdlname, vwepname, shieldname, pupname, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
+        renderclient(d, mdlname, a[0].name ? a : NULL, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
 #if 0
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
