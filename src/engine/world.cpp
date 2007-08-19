@@ -1004,6 +1004,13 @@ void mapenlarge() { if(enlargemap(false)) cl->newmap(-1); }
 COMMAND(newmap, "i");
 COMMAND(mapenlarge, "");
 
+void mapname()
+{
+    result(cl->getclientmap());
+}
+
+COMMAND(mapname, "");
+
 void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local)
 {
     if(et->getents().length()<=i)

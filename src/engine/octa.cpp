@@ -461,6 +461,7 @@ void mpremip(bool local)
         remip(worldroot[i], o.x, o.y, o.z, hdr.worldsize>>2);
     }
     calcmerges();
+    if(!local) allchanged();
 }
 
 void remip_()
