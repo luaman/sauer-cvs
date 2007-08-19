@@ -230,6 +230,7 @@ struct weaponstate
             h.target = d->clientnum;
             h.lifesequence = d->lifesequence;
             h.info = info;
+            damageeffect(damage, d);
             if(d==player1)
             {
                 h.dir = ivec(0, 0, 0);
@@ -240,7 +241,6 @@ struct weaponstate
             else 
             {
                 h.dir = ivec(int(vel.x*DNF), int(vel.y*DNF), int(vel.z*DNF));
-                damageeffect(damage, d);
                 playsound(S_PAIN1+rnd(5), &d->o); 
             }
         }
