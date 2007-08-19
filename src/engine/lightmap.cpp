@@ -1054,7 +1054,7 @@ void calclight(int *quality)
         return;
     }
     computescreen("computing lightmaps... (esc to abort)");
-    remipworld();
+    mpremip(true);
     resetlightmaps();
     clear_lmids(worldroot);
     curlumels = 0;

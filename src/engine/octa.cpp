@@ -451,8 +451,10 @@ bool remip(cube &c, int x, int y, int z, int size)
     return true;
 }
 
-void remipworld()
+void mpremip(bool local)
 {
+    extern selinfo sel;
+    if(local) cl->edittrigger(sel, EDIT_REMIP);
     loopi(8)
     {
         ivec o(i, 0, 0, 0, hdr.worldsize>>1);
@@ -463,7 +465,7 @@ void remipworld()
 
 void remip_()
 {
-    remipworld();
+    mpremip(true);
     allchanged();
 }
 

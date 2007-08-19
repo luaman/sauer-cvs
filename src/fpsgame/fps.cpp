@@ -604,6 +604,11 @@ struct fpsclient : igameclient
                    arg1, arg2);
                 break;
             }
+            case EDIT_REMIP:
+            {
+                cc.addmsg(SV_EDITF + op, "r");
+                break;
+            }
         }
     }
    

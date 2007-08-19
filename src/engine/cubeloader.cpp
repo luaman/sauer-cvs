@@ -220,7 +220,7 @@ struct cubeloader
             }
             if(importcuberemip && (allocnodes - lastremip) * 8 > importcuberemip * 1024)
             {
-                remipworld();
+                mpremip(false);
                 lastremip = allocnodes;
             }
             if((progress++&0x7F)==0)
@@ -331,7 +331,7 @@ struct cubeloader
         exec("packages/cube/package.cfg");
         exec(path(cfgname));
         create_cubes();
-        remipworld();
+        mpremip(false);
         clearlights();
         allchanged();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);

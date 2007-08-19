@@ -717,6 +717,13 @@ struct clientcom : iclientcom
                 }
                 break;
             }
+            case SV_REMIP:
+            {
+                if(!d) return;
+                conoutf("%s remipped", cl.colorname(d));
+                mpremip(false);
+                break;
+            }
             case SV_EDITENT:            // coop edit of ent
             {
                 if(!d) return;
