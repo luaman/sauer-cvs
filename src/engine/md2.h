@@ -198,12 +198,12 @@ struct md2 : vertmodel
     {
         void getdefaultanim(animstate &as, int anim, int varseed, dynent *d)
         {
-            //                      0              3              6   7   8   9   10        12  13  14   15  16  17  18
-            //                      D    D    D    D    D    D    A   P   I   R,  E    L    J   T   W    FO  SA  GS  GI
-            static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 162, 67, 95, 112, 72, 84, 7,  6 };
-            static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,   1,  17, 11,  12, 11, 18, 1 };
-            //                      DE DY I  F  B  L   R  PU SH PA J   SI SW ED  LA  T   WI  LO  GS  GI
-            static int animfr[] = { 5, 2, 8, 9, 9, 16, 9, 6, 6, 7, 12, 8, 9, 10, 11, 13, 14, 15, 17, 18 };
+            //                      0              3              6   7   8   9   10   11  12  13   14  15  16  17
+            //                      D    D    D    D    D    D    A   P   I   R,  E    J   T   W    FO  SA  GS  GI
+            static int _frame[] = { 178, 184, 190, 183, 189, 197, 46, 54, 0,  40, 162, 67, 95, 112, 72, 84, 7,  6 };
+            static int _range[] = { 6,   6,   8,   1,   1,   1,   8,  4,  40, 6,  1,   1,  17, 11,  12, 11, 18, 1 };
+            //                      DE DY I  F  B  L  R  PU SH PA J   SI SW ED  LA  T   WI  LO  GS  GI
+            static int animfr[] = { 5, 2, 8, 9, 9, 9, 9, 6, 6, 7, 11, 8, 9, 10, 14, 12, 13, 15, 16, 17 };
             
             anim &= ANIM_INDEX;
             if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
