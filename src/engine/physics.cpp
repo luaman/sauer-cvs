@@ -279,8 +279,8 @@ float raycube(const vec &o, const vec &ray, float radius, int mode, int size, ex
         }
         else if(last==&c)
         {
-            if(radius>0) return min(dent, radius);
-            return dent < 1e13f ? dent : -1;
+            if(radius>0) dist = radius;
+            return min(dent, dist);
         }
         else if(!isempty(c))
         {
