@@ -165,6 +165,8 @@
 </div>
 
 <ul>
+<li>local server now respects "gamespeed" and "paused" vars</li>
+<li>added toggles for trilinear and bilinear filtering (via "trilinear" and "bilinear" vars)</li>
 <li>added "consize" var for controlling the size of the default/overlayed console</li>
 <li>server browser now sorts servers by number of players (empty servers still sorted by ping)</li>
 <li>directions and radiuses of entities now display in edit mode (toggled via "showentradius" var)</li>
@@ -188,6 +190,7 @@
 <li>added "-q" command-line option to set per-user home directories</li>
 <li>added "-r" command-line option to load "init.cfg" on startup</li>
 <li>added "init.cfg" so init settings can be changed from in-game and take effect on restart without needing command-line</li>
+<li>added "guilistslider" command for selecting from a list of specific integer values</li>
 <li>added support for hardware-accelerated mipmap generation (via "hwmipmap" var)</li>
 <li>added "gui2d" var for making all menus/scoreboard 2D</li>
 <li>added "texreduce" var for scaling texture quality down</li>
@@ -208,6 +211,7 @@
 <li>fixed bug that caused some unnecessary sparklies in indoor maps</li>
 <li>glowmapped models/geometry now work in fixed-function mode</li>
 <li>models now support environment mapping (via custom envmaps or envmap entities)</li>
+<li>added (ugly) fallback for old cards with no multitexture support (rather than spitting out error and quitting)</li>
 <li>revised texture combiner support to more easily add fixed-function effects</li>
 <li>fixed particles and materials not fogging properly</li>
 <li>duplicate player names are now distinguished by client number</li>
@@ -216,7 +220,9 @@
 <li>animation now supports multi-part md3 characters</li>
 <li>added "spotlight" entities</li>
 <li>added texture slot "e" for loading custom envmaps with envmapped shaders</li>
+<li>added support for post-pass blurring of lightmaps (via "blurlms" and "blurskylight" vars)</li>
 <li>added ambient occlusion for lightmaps (via "skylight" command)</li>
+<li>added softened explosions via shaders (spheres) or fixed-function mode (hemispheres) </li>
 <li>added workaround for explosions crashing on some Intel integrated graphics</li>
 <li>added vertex animation to water</li>
 </ul>

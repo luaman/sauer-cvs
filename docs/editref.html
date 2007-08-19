@@ -374,6 +374,12 @@
 <a href="#lightlod"><tt>lightlod</tt></a>
 </li>
 <li>
+<a href="#blurlms"><tt>blurlms</tt></a>
+</li>
+<li>
+<a href="#blurskylight"><tt>blurskylight</tt></a>
+</li>
+<li>
 <a href="#dumplms"><tt>dumplms</tt></a>
 </li>
 </ul>
@@ -1608,6 +1614,24 @@ using a high resolution over everything.
 NOTE: if you feel like using this, test it thoroughly. On medium or small sized
 detailed maps, this command wastes space, use lightlod 0. Lightlod &gt; 0 is
 only useful for huge maps
+</p>
+
+<pre id="blurlms">blurlms N</pre>
+<p>
+This variable controls whether to apply a blur filter to the lightmap after
+they are generated, as a post-pass. For N=0, no blur is applied. For N=1, a
+3x3 blur filter is used. For N=2, a 5x5 blur filter is used. 
+
+NOTE: this can cause lightmaps to mismatch at surface boundaries in complex scenes.
+</p>
+
+<pre id="blurskylight">blurskylight N</pre>
+<p>
+This variable controls whether to apply a blur filter to the ambient skylight
+(enabled via the "skylight" command) before it is combined with the other 
+lighting to create the final lightmap. This variable is useful for softening
+the skylight and making it appear more scattered. For N=0, no blur is applied. 
+For N=1, a 3x3 blur filter is used. For N=2, a 5x5 blur filter is used.
 </p>
 
 <pre id="dumplms">dumplms</pre>
