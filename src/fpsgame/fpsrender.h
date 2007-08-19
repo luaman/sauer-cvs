@@ -12,15 +12,7 @@ struct fpsrender
 
     void renderplayer(fpsent *d, const char *mdlname)
     {
-        if(ogro())
-        {
-            int attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT;
-            modelattach vwep[] = { { d->gunselect!=GUN_FIST ? "monster/ogro/vwep" : NULL, MDL_ATTACH_VWEP, ANIM_VWEP|ANIM_LOOP, 0 }, { NULL } };
-            renderclient(d, mdlname, vwep, attack, 300, d->lastaction, d->lastpain);
-            return;
-        }
-
-        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = cl.ws.reloadtime(d->gunselect)+50;
+        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = ogro() ? 300 : cl.ws.reloadtime(d->gunselect)+50;
         if(cl.intermission && d->state!=CS_DEAD)
         {
             lastaction = cl.lastmillis;
@@ -39,15 +31,15 @@ struct fpsrender
         modelattach a[4] = { { NULL }, { NULL }, { NULL }, { NULL } };
         static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         int ai = 0;
-        if(d->gunselect<=GUN_PISTOL)
+        if((!ogro() || d->gunselect!=GUN_FIST) && d->gunselect<=GUN_PISTOL)
         {
-            a[ai].name = vweps[d->gunselect];
+            a[ai].name = ogro() ? "monster/ogro/vwep" : vweps[d->gunselect];
             a[ai].type = MDL_ATTACH_VWEP;
             a[ai].anim = ANIM_VWEP|ANIM_LOOP;
             a[ai].basetime = 0;
             ai++;
         }
-        if(d->state==CS_ALIVE)
+        if(!ogro() && d->state==CS_ALIVE)
         {
             if(d->quadmillis)
             {
