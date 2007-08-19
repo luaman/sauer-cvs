@@ -309,7 +309,7 @@ struct clientcom : iclientcom
         int lagtime = cl.lastmillis-d->lastupdate;
         if(lagtime)
         {
-            if(d->lastupdate) d->plag = (d->plag*5+lagtime)/6;
+            if(d->state!=CS_SPAWNING) d->plag = (d->plag*5+lagtime)/6;
             d->lastupdate = cl.lastmillis;
         }
     }
@@ -365,7 +365,7 @@ struct clientcom : iclientcom
                 d->maxhealth = 100 + f*itemstats[I_BOOST-I_SHELLS].add;
                 updatephysstate(d);
                 updatepos(d);
-                if(d->state==CS_LAGGED) d->state = CS_ALIVE;
+                if(d->state==CS_LAGGED || d->state==CS_SPAWNING) d->state = CS_ALIVE;
                 break;
             }
 
@@ -542,8 +542,7 @@ struct clientcom : iclientcom
                 if(!d) break;
                 d->lifesequence = ls;
                 d->gunselect = gunselect;
-                d->state = CS_ALIVE;
-                d->lastupdate = 0;
+                d->state = CS_SPAWNING;
                 break;
             }
 

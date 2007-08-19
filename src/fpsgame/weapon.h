@@ -256,7 +256,7 @@ struct weaponstate
 
     void radialeffect(fpsent *o, vec &v, int qdam, fpsent *at, int gun)
     {
-        if(o->state!=CS_ALIVE || (o!=player1 && o->type==ENT_PLAYER && !o->lastupdate)) return;
+        if(o->state!=CS_ALIVE) return;
         vec dir;
         float dist = rocketdist(o, dir, v);
         if(dist<RL_DAMRAD) 
@@ -312,7 +312,7 @@ struct weaponstate
 
     bool projdamage(fpsent *o, projectile &p, vec &v, int qdam)
     {
-        if(o->state!=CS_ALIVE || (o!=player1 && o->type==ENT_PLAYER && !o->lastupdate)) return false;
+        if(o->state!=CS_ALIVE) return false;
         if(!intersect(o, p.o, v)) return false;
         splash(p, v, o, qdam);
         vec dir;
@@ -452,7 +452,7 @@ struct weaponstate
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(!o || o==at || o->state!=CS_ALIVE || (o!=player1 && o->type==ENT_PLAYER && !o->lastupdate)) continue;
+            if(!o || o==at || o->state!=CS_ALIVE) continue;
             if(!intersect(o, from, to)) continue;
             float dist = at->o.dist(o->o);
             if(dist<bestdist)

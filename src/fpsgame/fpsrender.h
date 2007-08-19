@@ -85,7 +85,7 @@ struct fpsrender
                    *redmdl = ogro() ? "monster/ogro/red" : "ironsnout/red";
 
         fpsent *d;
-        loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && (d->state!=CS_ALIVE || d->lastupdate))
+        loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && d->state!=CS_SPAWNING)
         {
             const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? bluemdl : redmdl) : ffamdl;
             if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);

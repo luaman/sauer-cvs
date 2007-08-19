@@ -120,7 +120,7 @@ struct fpsclient : igameclient
     {
         loopv(players) if(players[i])
         {
-            const int lagtime = players[i]->lastupdate ? lastmillis-players[i]->lastupdate : 0;
+            const int lagtime = lastmillis-players[i]->lastupdate;
             if(lagtime>1000 && players[i]->state==CS_ALIVE)
             {
                 players[i]->state = CS_LAGGED;
