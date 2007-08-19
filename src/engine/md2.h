@@ -213,7 +213,7 @@ struct md2 : vertmodel
                 return;
             }
             int n = animfr[anim];
-            if(anim==ANIM_DEAD || anim==ANIM_DEAD) n -= varseed%3;
+            if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
             as.frame = _frame[n];
             as.range = _range[n];
         }
