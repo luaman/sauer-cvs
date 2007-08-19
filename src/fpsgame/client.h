@@ -239,7 +239,7 @@ struct clientcom : iclientcom
             putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(q, (int)(d->vel.y*DVELF));
             putint(q, (int)(d->vel.z*DVELF));
-            putuint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0));
+            putuint(q, d->physstate | (d->gravity.x || d->gravity.y ? 0x20 : 0) | (d->gravity.z ? 0x10 : 0) | ((d->lifesequence&1)<<6));
             if(d->gravity.x || d->gravity.y)
             {
                 putint(q, (int)(d->gravity.x*DVELF));      // quantize to itself, almost always 1 byte
@@ -342,9 +342,10 @@ struct clientcom : iclientcom
                     gravity.y = getint(p)/DVELF;
                 }
                 if(physstate&0x10) gravity.z = getint(p)/DVELF;
+                int seqcolor = (physstate>>6)&1;
                 f = getuint(p);
                 fpsent *d = cl.getclient(cn);
-                if(!d) continue;
+                if(!d || seqcolor!=(d->lifesequence&1)) continue;
                 d->o = o;
                 d->yaw = yaw;
                 d->pitch = pitch;
@@ -720,7 +721,7 @@ struct clientcom : iclientcom
             case SV_REMIP:
             {
                 if(!d) return;
-                conoutf("%s remipped", colorname(d));
+                conoutf("%s remipped", cl.colorname(d));
                 mpremip(false);
                 break;
             }
