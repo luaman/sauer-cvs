@@ -573,7 +573,7 @@ struct fpsclient : igameclient
 
     void edittrigger(const selinfo &sel, int op, int arg1, int arg2, int arg3)
     {
-        switch(op)
+        if(gamemode==1) switch(op)
         {
             case EDIT_FLIP:
             case EDIT_COPY:
