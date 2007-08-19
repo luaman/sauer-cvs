@@ -165,12 +165,22 @@
 </div>
 
 <ul>
-<li>models now use a bounding interval hierarchy for ray tracing instead of sphere trees</li>
+<li>added "consize" var for controlling the size of the default/overlayed console</li>
+<li>server browser now sorts servers by number of players (empty servers still sorted by ping)</li>
+<li>directions and radiuses of entities now display in edit mode (toggled via "showentradius" var)</li>
+<li>added support for FBO depth+stencil format so dynamic shadows can render properly in water refractions</li>
+<li>"remip" now synchronized with all clients in coop-edit</li>
+<li>added "clearbans" command so masters can clear all bans</li>
+<li>added "floatspeed" var for controlling spectator/editmode movement speed</li>
+<li>added "outlinemeters" var for outlining capture meters</li>
+<li>added "teamskins" var for toggling usage of red/blue skins in FFA modes</li>
+<li>added "ogro" var for toggling use of Ogro</li>
+<li>models now use a bounding interval hierarchy for ray tracing/lightmapping instead of sphere trees (better memory/cache usage)</li>
 <li>added workaround for crashes with Linux ATI/fglrx drivers</li>
 <li>fixed collision bug that let players walk inside sloped geometry</li>
 <li>added blood decals (toggled via the "blood" var)</li>
 <li>added "insta capture" game mode</li>
-<li>tweaked capture gameplay</li>
+<li>tweaked capture gameplay timings</li>
 <li>added calclight visualization of lightmaps</li>
 <li>added work-around for Linux+ATI crash-on-exit problem (ATI driver bug)</li>
 <li>added "-v" command-line option for controlling vsync</li>
@@ -183,8 +193,8 @@
 <li>added "texreduce" var for scaling texture quality down</li>
 <li>added dynamic lighting system</li>
 <li>new "gridlookup" var controls whether cursor grid size is looked up from cube under cursor</li>
-<li>refactored gameplay and moved some of it server-side</li>
-<li>autoteam now only selects good/evil</li>
+<li>refactored gameplay and moved some of it (damage, ammo, health) server-side</li>
+<li>autoteam now only selects good/evil regardless of number of teams in play</li>
 <li>experimental server-side demo recording</li>
 <li>added "admin" privileges via "setmaster password"</li>
 <li>added support for translucent models</li>
