@@ -1,5 +1,3 @@
-- Installer/release: Remember to install link to docs in Windows Start menu.
-
 - check if ATI fixed fglrx/OQ bug in next version
 
 - make people that do teamkills/damage wait longer?
@@ -44,7 +42,6 @@
 - death needs to be more obvious (better sound/centerprint) 
 - sparklies very bad on ATI, particularly deathtek / diff skybox
 - crashes when people join?
-- ensure modelshader can be set from model cfg
 - 2 levels of lightlod for huge maps
 - shallow water splashing sound?
 
