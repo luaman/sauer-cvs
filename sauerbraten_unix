@@ -6,7 +6,7 @@ SAUER_DIR=.
 
 # SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
 #SAUER_OPTIONS= -f
-SAUER_OPTIONS=
+SAUER_OPTIONS= -q${HOME}/.sauerbraten -r
 
 # SYSTEM_NAME should be set to the name of your operating system.
 #SYSTEM_NAME=Linux
