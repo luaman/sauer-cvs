@@ -168,7 +168,7 @@ struct scoreboard : g3d_callback
                 else s_sprintf(score)("%d", o->frags);
                 s_sprintf(line)("%s\t%s\t%d\t%s%s", score, o->state==CS_LAGGED ? "LAG" : lag, o->ping, team, name);
             }
-            g.text(line, 0xFFFFDD, o->state!=CS_SPECTATOR && m_teammode ? (isteam(cl.player1->team, o->team) ? "player_blue" : "player_red") : "player");
+            g.text(line, 0xFFFFDD, cl.fr.ogro() ? "ogro" : (o->state!=CS_SPECTATOR && m_teammode ? (isteam(cl.player1->team, o->team) ? "player_blue" : "player_red") : "player"));
         }
 
         if(m_teammode)
