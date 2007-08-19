@@ -5,8 +5,8 @@
 SAUER_DIR=.
 
 # SAUER_OPTIONS contains any command line options you would like to start Sauerbraten with.
-#SAUER_OPTIONS= -f
-SAUER_OPTIONS= -q${HOME}/.sauerbraten -r
+#SAUER_OPTIONS="-f"
+SAUER_OPTIONS="-q${HOME}/.sauerbraten -r"
 
 # SYSTEM_NAME should be set to the name of your operating system.
 #SYSTEM_NAME=Linux
@@ -47,7 +47,7 @@ fi
 if [ -x ${SAUER_DIR}/bin_unix/${MACHINE_NAME}${SYSTEM_NAME}client ]
 then
   cd ${SAUER_DIR}
-  exec ${SAUER_DIR}/bin_unix/${MACHINE_NAME}${SYSTEM_NAME}client ${SAUER_OPTIONS} $*
+  exec ${SAUER_DIR}/bin_unix/${MACHINE_NAME}${SYSTEM_NAME}client ${SAUER_OPTIONS} $@
 else
   echo "Your platform does not have a pre-compiled Sauerbraten client."
   echo "Please follow the following steps to build a native client:"
