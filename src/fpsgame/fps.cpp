@@ -126,7 +126,7 @@ struct fpsclient : igameclient
                 players[i]->state = CS_LAGGED;
                 continue;
             }
-            if(lagtime && players[i]->state==CS_ALIVE && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+            if(lagtime && (players[i]->state==CS_ALIVE || (players[i]->state==CS_DEAD && lastmillis-players[i]->lastpain<2000)) && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
         }
     }
 
@@ -264,6 +264,7 @@ struct fpsclient : igameclient
         }
         else
         {
+            d->move = d->strafe = 0;
             playsound(S_DIE1+rnd(2), &d->o);
             ws.superdamageeffect(d->vel, d);
         }
