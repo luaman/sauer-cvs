@@ -592,11 +592,8 @@ struct clientcom : iclientcom
                 fpsent *target = tcn==player1->clientnum ? player1 : cl.getclient(tcn),
                        *actor = acn==player1->clientnum ? player1 : cl.getclient(acn);
                 if(!target || !actor) break;
-                if(target==player1)
-                {
-                    target->armour = armour;
-                    target->health = health;
-                }
+                target->armour = armour;
+                target->health = health;
                 cl.damaged(damage, target, actor, false);
                 break;
             }

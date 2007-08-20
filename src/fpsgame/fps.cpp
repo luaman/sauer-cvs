@@ -251,7 +251,7 @@ struct fpsclient : igameclient
 
         d->state = CS_DEAD;
         d->lastpain = lastmillis;
-        d->superdamage = min(-d->health, 0);
+        d->superdamage = max(-d->health, 0);
         if(d==player1)
         {
             sb.showscores(true);
