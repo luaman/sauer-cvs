@@ -658,7 +658,7 @@ void clearparticles()
     }
 }   
 
-VARP(outlinemeters, 0, 1, 1);
+VARP(outlinemeters, 0, 0, 1);
 
 #define COLLIDERADIUS 8.0f
 #define COLLIDEERROR 1.0f
