@@ -97,9 +97,10 @@ struct entities : icliententities
     {
         int type = ents[n]->type;
         if(type<I_SHELLS || type>I_QUAD) return;
+        ents[n]->spawned = false;
+        if(!d) return;
         itemstat &is = itemstats[type-I_SHELLS];
         if(d!=cl.player1 || isthirdperson()) particle_text(d->abovehead(), is.name, 15);
-        ents[n]->spawned = false;
         playsound(itemstats[type-I_SHELLS].sound, d!=cl.player1 ? &d->o : NULL); 
         if(d!=cl.player1) return;
         d->pickup(type);
