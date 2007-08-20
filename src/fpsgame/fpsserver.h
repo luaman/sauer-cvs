@@ -1747,7 +1747,7 @@ struct fpsserver : igameserver
                 if(!masterpass[0] || !pass[0]==(ci->privilege!=PRIV_ADMIN)) return;
             }
             else if(ci->state.state==CS_SPECTATOR && (!masterpass[0] || !pass[0])) return;
-            loopv(clients) if(i!=ci->clientnum && clients[i]->privilege)
+            loopv(clients) if(ci!=clients[i] && clients[i]->privilege)
             {
                 if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->privilege = PRIV_NONE;
                 else return;
