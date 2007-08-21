@@ -309,7 +309,7 @@ struct clientcom : iclientcom
         int lagtime = cl.lastmillis-d->lastupdate;
         if(lagtime)
         {
-            if(d->state!=CS_SPAWNING) d->plag = (d->plag*5+lagtime)/6;
+            if(d->state!=CS_SPAWNING && d->lastupdate) d->plag = (d->plag*5+lagtime)/6;
             d->lastupdate = cl.lastmillis;
         }
     }
