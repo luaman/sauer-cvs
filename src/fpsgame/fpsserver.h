@@ -376,7 +376,7 @@ struct fpsserver : igameserver
     void vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(ci->state.state==CS_SPECTATOR && !ci->privilege) return;
+        if(!ci || ci->state.state==CS_SPECTATOR && !ci->privilege) return;
         s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
         if(!ci->mapvote[0]) return;
@@ -1579,7 +1579,7 @@ struct fpsserver : igameserver
         {
             hitevent &h = ci->events[i].hit;
             clientinfo *target = (clientinfo *)getinfo(h.target);
-            if(target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>=RL_DAMRAD) continue;
+            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>=RL_DAMRAD) continue;
 
             int j = 1;
             for(j = 1; j<i; j++) if(ci->events[j].hit.target==h.target) break;
@@ -1620,7 +1620,7 @@ struct fpsserver : igameserver
                 {
                     hitevent &h = ci->events[i].hit;
                     clientinfo *target = (clientinfo *)getinfo(h.target);
-                    if(target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1) continue;
+                    if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1) continue;
 
                     totalrays += h.rays;
                     if(totalrays>maxrays) continue;
