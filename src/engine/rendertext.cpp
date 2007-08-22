@@ -131,8 +131,9 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     bvec color(r, g, b);
     int colorpos = 0, x = left, y = top;
     
-    glColor4ub(color.x, color.y, color.z, a);
     glBegin(GL_QUADS);
+    // ATI bug -- initial color must be set after glBegin
+    glColor4ub(color.x, color.y, color.z, a);
     for(int i = 0; str[i]; i++)
     {
         int c = str[i];
