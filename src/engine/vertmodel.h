@@ -910,7 +910,7 @@ struct vertmodel : model
                 }
                 if(primary->length())
                 {
-                    animinfo &ai = (*primary)[varseed%primary->length()];
+                    animinfo &ai = (*primary)[uint(varseed)%primary->length()];
                     as.frame = ai.frame;
                     as.range = ai.range;
                     if(ai.speed>0) as.speed = 1000.0f/ai.speed;
