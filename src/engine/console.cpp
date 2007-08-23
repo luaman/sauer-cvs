@@ -461,26 +461,30 @@ void writebinds(FILE *f)
 
 // tab-completion of all idents and base maps
 
+enum { FILES_DIR = 0, FILES_LIST };
+
 struct fileskey
 {
+    int type;
     const char *dir, *ext;
 
     fileskey() {}
-    fileskey(const char *dir, const char *ext) : dir(dir), ext(ext) {}
+    fileskey(int type, const char *dir, const char *ext) : type(type), dir(dir), ext(ext) {}
 };
 
 struct filesval
 {
+    int type;
     char *dir, *ext;
     vector<char *> files;
-
-    filesval(const char *dir, const char *ext) : dir(newstring(dir)), ext(ext[0] ? newstring(ext) : NULL) {}
+    
+    filesval(int type, const char *dir, const char *ext) : type(type), dir(newstring(dir)), ext(ext && ext[0] ? newstring(ext) : NULL) {}
     ~filesval() { DELETEA(dir); DELETEA(ext); loopv(files) DELETEA(files[i]); files.setsize(0); }
 };
 
 static inline bool htcmp(const fileskey &x, const fileskey &y)
 {
-    return !strcmp(x.dir, y.dir) && (x.ext == y.ext || (x.ext && y.ext && !strcmp(x.ext, y.ext)));
+    return x.type==y.type && !strcmp(x.dir, y.dir) && (x.ext == y.ext || (x.ext && y.ext && !strcmp(x.ext, y.ext)));
 }
 
 static inline uint hthash(const fileskey &k)
@@ -496,7 +500,7 @@ string lastcomplete;
 
 void resetcomplete() { completesize = 0; }
 
-void addcomplete(char *command, char *dir, char *ext)
+void addcomplete(char *command, int type, char *dir, char *ext)
 {
     if(overrideidents)
     {
@@ -509,16 +513,24 @@ void addcomplete(char *command, char *dir, char *ext)
         if(hasfiles) *hasfiles = NULL;
         return;
     }
-    int dirlen = (int)strlen(dir);
-    while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
-        dir[--dirlen] = '\0';
-    if(strchr(ext, '*')) ext[0] = '\0';
-    fileskey key(dir, ext[0] ? ext : NULL);
+    if(type==FILES_DIR)
+    {
+        int dirlen = (int)strlen(dir);
+        while(dirlen > 0 && (dir[dirlen-1] == '/' || dir[dirlen-1] == '\\'))
+            dir[--dirlen] = '\0';
+        if(ext)
+        {
+            if(strchr(ext, '*')) ext[0] = '\0';
+            if(!ext[0]) ext = NULL;
+        }
+    }
+    fileskey key(type, dir, ext);
     filesval **val = completefiles.access(key);
     if(!val)
     {
-        filesval *f = new filesval(dir, ext);
-        val = &completefiles[fileskey(f->dir, f->ext)];
+        filesval *f = new filesval(type, dir, ext);
+        if(type==FILES_LIST) explodelist(dir, f->files); 
+        val = &completefiles[fileskey(type, f->dir, f->ext)];
         *val = f;
     }
     filesval **hasfiles = completions.access(command);
@@ -526,7 +538,18 @@ void addcomplete(char *command, char *dir, char *ext)
     else completions[newstring(command)] = *val;
 }
 
-COMMANDN(complete, addcomplete, "sss");
+void addfilecomplete(char *command, char *dir, char *ext)
+{
+    addcomplete(command, FILES_DIR, dir, ext);
+}
+
+void addlistcomplete(char *command, char *list)
+{
+    addcomplete(command, FILES_LIST, list, NULL);
+}
+
+COMMANDN(complete, addfilecomplete, "sss");
+COMMANDN(listcomplete, addlistcomplete, "ss");
 
 void complete(char *s)
 {
@@ -560,7 +583,7 @@ void complete(char *s)
     {
         int commandsize = strchr(s, ' ')+1-s;
         s_strncpy(prefix, s, min(size_t(commandsize+1), sizeof(prefix)));
-        if(f->files.empty()) listfiles(f->dir, f->ext, f->files);
+        if(f->type==FILES_DIR && f->files.empty()) listfiles(f->dir, f->ext, f->files);
         loopi(f->files.length())
         {
             if(strncmp(f->files[i], s+commandsize, completesize+1-commandsize)==0 &&
@@ -589,7 +612,7 @@ void complete(char *s)
 void writecompletions(FILE *f)
 {
     enumeratekt(completions, char *, k, filesval *, v,
-        if(v) fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
+        if(v) fprintf(f, "%scomplete \"%s\" \"%s\" \"%s\"\n", v->type==FILES_LIST ? "list" : "", k, v->dir, v->type==FILES_LIST ? "" : (v->ext ? v->ext : "*"));
     );
 }
 

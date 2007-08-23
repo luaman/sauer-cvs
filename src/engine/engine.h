@@ -276,6 +276,8 @@ extern void clientkeepalive();
 // command
 extern bool overrideidents, persistidents;
 
+extern void explodelist(char *s, vector<char *> &elems);
+
 extern void clearoverrides();
 extern void writecfg();
 

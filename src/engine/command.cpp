@@ -596,6 +596,18 @@ void format(char **args, int *numargs)
 #define whitespaceskip s += strspn(s, "\n\t ")
 #define elementskip *s=='"' ? (++s, s += strcspn(s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
 
+void explodelist(char *s, vector<char *> &elems)
+{
+    whitespaceskip;
+    while(*s)
+    {
+        char *elem = s;
+        elementskip;
+        elems.add(*elem=='"' ? newstring(elem+1, s-elem-(s[-1]=='"' ? 2 : 1)) : newstring(elem, s-elem));
+        whitespaceskip;
+    }
+}
+
 void listlen(char *s)
 {
     int n = 0;
@@ -613,7 +625,7 @@ void at(char *s, int *pos)
     if(*e=='"') 
     {
         e++;
-        if(s[-1] == '"') --s;
+        if(s[-1]=='"') --s;
     }
     *s = '\0';
     result(e);
