@@ -517,6 +517,12 @@ struct fpsclient : igameclient
         if(player1->state==CS_SPECTATOR)
         {
             draw_text("SPECTATOR", 10, 827);
+            if(m_capture)
+            {
+                glLoadIdentity();
+                glOrtho(0, w*1800/h, 1800, 0, -1, 1);
+                cpc.capturehud(w, h);
+            }
             return;
         }
         draw_textf("%d",  90, 822, player1->state==CS_DEAD ? 0 : player1->health);
