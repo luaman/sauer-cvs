@@ -282,7 +282,7 @@ extern void clearoverrides();
 extern void writecfg();
 
 extern void checksleep(int millis);
-extern void clearsleep();
+extern void clearsleep(bool clearoverrides = true);
 
 // console
 extern void writebinds(FILE *f);
