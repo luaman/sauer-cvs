@@ -932,7 +932,8 @@ void render_particles(int time)
             if(pt.collide && o.z < p->val && !refracting && !reflecting)
             {
                 vec surface;
-                float collidez = p->val - rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
+                float floorz = rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS), 
+                      collidez = floorz<0 ? o.z-COLLIDERADIUS : p->val - rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
                 if(o.z >= collidez+COLLIDEERROR) p->val = collidez+COLLIDEERROR;
                 else
                 {
@@ -1254,6 +1255,13 @@ static void makeparticles(entity &e)
             particle_text(e.o, ds, 16, 1);
     }
 }
+
+void q(int *i)
+{
+    particle_splash(3, *i<=0 ? 100 : *i, 1000, camera1->o);
+}
+
+COMMAND(q, "i");
 
 void entity_particles()
 {
