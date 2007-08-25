@@ -934,7 +934,6 @@ GLuint genenvmap(const vec &o, int envmapsize)
     else glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     if(rendertex) glDeleteTextures(1, &rendertex);
     glViewport(0, 0, screen->w, screen->h);
-    clientkeepalive();
     return tex;
 }
 
@@ -964,6 +963,7 @@ void genenvmaps()
     {
         envmap &em = envmaps[i];
         em.tex = genenvmap(em.o, em.size ? em.size : envmapsize);
+        clientkeepalive();
     }
 }
 
