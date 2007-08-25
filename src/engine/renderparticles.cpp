@@ -1256,13 +1256,6 @@ static void makeparticles(entity &e)
     }
 }
 
-void q(int *i)
-{
-    particle_splash(3, *i<=0 ? 100 : *i, 1000, camera1->o);
-}
-
-COMMAND(q, "i");
-
 void entity_particles()
 {
     if(emit) 
