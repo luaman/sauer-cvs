@@ -190,10 +190,10 @@ struct scoreboard : g3d_callback
             {
                 g.pushlist();
                 g.background(bgcolor, numgroups>1 ? 3 : 5);
-                g.strut(2);
+                g.strut(1);
                 g.poplist();
             }
-            else g.text("", 0, "server");
+            g.text("", 0, "server");
             loopscoregroup(o,
             {
                 if(o==cl.player1 && highlightscore() && multiplayer(false))
