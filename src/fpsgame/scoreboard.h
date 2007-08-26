@@ -176,7 +176,7 @@ struct scoreboard : g3d_callback
             if(sg.team && m_teammode)
             {
                 int color = isteam(cl.player1->team, sg.team) ? 0x60A0FF : 0xFF4040;
-                if(m_capture && sg.score>=10000) g.textf("%s: WIN", color, icon, sg.team);
+                if(m_capture && sg.score>=10000) g.textf("%s: WIN", color, "server", sg.team);
                 else g.textf("%s: %d", color, "server", sg.team, sg.score);
             }
 
