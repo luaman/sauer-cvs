@@ -99,6 +99,7 @@ struct font
 };
 
 #define FONTH (curfont->defaulth)
+#define FONTW (curfont->defaultw)
 #define MINRESW 640
 #define MINRESH 480
 

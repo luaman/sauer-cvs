@@ -8,6 +8,9 @@ struct scoreboard : g3d_callback
     fpsclient &cl;
 
     IVARP(showclientnum, 0, 0, 1);
+    IVARP(showpj, 0, 1, 1);
+    IVARP(showping, 0, 1, 1);
+    IVARP(showspectators, 0, 1, 1);
 
     scoreboard(fpsclient &_cl) : scoreson(false), cl(_cl)
     {
@@ -54,15 +57,20 @@ struct scoreboard : g3d_callback
         return strcmp((*a)->name, (*b)->name);
     }
 
-    void sortplayers(vector<fpsent *> &sbplayers)
+    void sortplayers(vector<fpsent *> &sbplayers, vector<fpsent *> *spectators = NULL)
     {
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->type!=ENT_AI) sbplayers.add(o);
+            if(o && o->type!=ENT_AI)
+            {
+                if(spectators && o->state==CS_SPECTATOR) spectators->add(o);
+                else sbplayers.add(o);
+            }
         }
 
         sbplayers.sort(playersort);
+        if(spectators) spectators->sort(playersort);
     }
 
     void bestplayers(vector<fpsent *> &best)
@@ -116,12 +124,9 @@ struct scoreboard : g3d_callback
             }
         }
         g.text(modemapstr, 0xFFFF80, "server");
-        if(m_capture) g.text("score\tpj\tping\tteam\tname", 0xFFFF80, "server"); 
-        else if(m_teammode) g.text("frags\tpj\tping\tteam\tname", 0xFFFF80, "server");
-        else g.text("frags\tpj\tping\tname", 0xFFFF80, "server");
 
-        vector<fpsent *> sbplayers;
-        sortplayers(sbplayers);
+        vector<fpsent *> sbplayers, spectators;
+        sortplayers(sbplayers, &spectators);
       
         vector<teamscore> teamscores; 
         if(m_teammode)
@@ -131,45 +136,89 @@ struct scoreboard : g3d_callback
             loopv(teamscores)
             {
                 const char *team = teamscores[i].team;
-                loopvj(sbplayers) if(sbplayers[j]->state!=CS_SPECTATOR && !strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
+                loopvj(sbplayers) if(!strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
             }
-            loopv(sbplayers) if(sbplayers[i]->state==CS_SPECTATOR) teamplayers.add(sbplayers[i]);
             sbplayers = teamplayers;
         }
- 
+
+        g.pushlist();
+    
+        g.pushlist();
+        g.strut(7);
+        g.text(m_capture ? "score" : "frags", 0xFFFF80, "server");
         loopv(sbplayers) 
+        { 
+            fpsent *o = sbplayers[i];
+            string score;
+            if(o->state==CS_SPECTATOR) score[0] = '\0';
+            else if(m_capture)
+            {
+                int total = cl.cpc.findscore(o->team).total;
+                if(total>=10000) s_strcpy(score, "WIN");
+                else s_sprintf(score)("%d", total);
+            }
+            else s_sprintf(score)("%d", o->frags);
+            g.text(score, 0xFFFFDD, cl.fr.ogro() ? "ogro" : (m_teammode ? (isteam(cl.player1->team, o->team) ? "player_blue" : "player_red") : "player"));
+        }
+        g.poplist();
+
+        if(multiplayer(false))
+        {
+            if(showpj())
+            {
+                g.pushlist();
+                g.strut(4);
+                g.text("pj", 0xFFFF80);
+                loopv(sbplayers)
+                {
+                    fpsent *o = sbplayers[i];
+                    if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+                    else g.textf("%d", 0xFFFFDD, NULL, o->plag);
+                }
+                g.poplist();
+            }
+    
+            if(showping())
+            {
+                g.pushlist();
+                g.text("ping", 0xFFFF80);
+                g.strut(5);
+                loopv(sbplayers) g.textf("%d", 0xFFFFDD, NULL, sbplayers[i]->ping);
+                g.poplist();
+            }
+        }
+
+        if(m_teammode)
+        {
+            g.pushlist();
+            g.text("team", 0xFFFF80);
+            g.strut(5);
+            loopv(sbplayers) g.text(sbplayers[i]->team, isteam(cl.player1->team, sbplayers[i]->team) ? 0x60A0FF : 0xFF4040);
+            g.poplist();
+        }
+
+        g.pushlist();
+        g.text("name", 0xFFFF80);
+        loopv(sbplayers)
         {
             fpsent *o = sbplayers[i];
-            const char *status = "";
-            if(o->privilege) status = o->privilege>=PRIV_ADMIN ? "\f6" : "\f0";
-            else if(o->state==CS_DEAD) status = "\f4";
-            string name, team;
-            if(cl.duplicatename(o)) s_sprintf(name)("%s%s", status, cl.colorname(o));
-            else if(showclientnum() || cl.player1->privilege>=PRIV_MASTER) s_sprintf(name)("%s%s \f0(%d)", status, cl.colorname(o), o->clientnum);
-            else s_sprintf(name)("%s%s", status, cl.colorname(o));
-            if(m_teammode)
-            {
-                if(o->state==CS_SPECTATOR) s_strcpy(team, "\t");
-                else s_sprintf(team)("%s%s\f9\t", isteam(cl.player1->team, o->team) ? "\f1" : "\f3", o->team);
-            }
-            else team[0] = '\0';
-            string line;
-            if(o->state==CS_SPECTATOR) s_sprintf(line)("SPECTATOR\t\t%s%s", team, name);
-            else
-            {
-                s_sprintfd(lag)("%d", o->plag);
-                string score;
-                if(m_capture) 
-                { 
-                    int total = cl.cpc.findscore(o->team).total; 
-                    if(total>=10000) s_strcpy(score, "WIN");
-                    else s_sprintf(score)("%d", total);
-                }
-                else s_sprintf(score)("%d", o->frags);
-                s_sprintf(line)("%s\t%s\t%d\t%s%s", score, o->state==CS_LAGGED ? "LAG" : lag, o->ping, team, name);
-            }
-            g.text(line, 0xFFFFDD, cl.fr.ogro() ? "ogro" : (o->state!=CS_SPECTATOR && m_teammode ? (isteam(cl.player1->team, o->team) ? "player_blue" : "player_red") : "player"));
+            int status = 0xFFFFDD;
+            if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
+            else if(o->state==CS_DEAD) status = 0x808080;
+            g.text(cl.colorname(o), status);
         }
+        g.poplist();
+
+        if(showclientnum() || cl.player1->privilege>=PRIV_MASTER)
+        {
+            g.space(1);
+            g.pushlist();
+            g.text("cn", 0xFFFF80);
+            loopv(sbplayers) g.textf("%d", 0xFFFFDD, NULL, sbplayers[i]->clientnum);
+            g.poplist();
+        }
+            
+        g.poplist();
 
         if(m_teammode)
         {
@@ -191,6 +240,41 @@ struct scoreboard : g3d_callback
             }
         }
         
+        if(showspectators() && spectators.length())
+        {
+            if(showclientnum() || cl.player1->privilege>=PRIV_MASTER)
+            {
+                g.pushlist();
+                
+                g.pushlist();
+                g.text("spectator", 0xFFFF80, "server");
+                loopv(spectators) g.text(cl.colorname(spectators[i]), 0xFFFFDD, cl.fr.ogro() ? "ogro" : "player");
+                g.poplist();
+
+                g.space(1);
+                g.pushlist();
+                g.text("cn", 0xFFFF80);
+                loopv(spectators) g.textf("%d", 0xFFFFDD, NULL, spectators[i]->clientnum);
+                g.poplist();
+
+                g.poplist();
+            }
+            else
+            {
+                g.textf("%d spectator%s", 0xFFFF80, "server", spectators.length(), spectators.length()!=1 ? "s" : "");
+                loopv(spectators)
+                {
+                    if((i%3)==0) g.pushlist();
+                    fpsent *o = spectators[i];
+                    int status = 0xFFFFDD;
+                    if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
+                    g.text(cl.colorname(o), status, i%3 ? NULL : (cl.fr.ogro() ? "ogro" : "player"));
+                    if(i+1<spectators.length() && (i+1)%3) g.space(1);
+                    else g.poplist();
+                }
+            }
+        }
+             
         g.end();
     }
     

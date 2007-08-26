@@ -178,7 +178,8 @@ struct fpsclient : igameclient
             player1->attacking = false;
             if(m_capture && lastmillis-player1->lastpain<cpc.RESPAWNSECS*1000)
             {
-                conoutf("\f2you must wait %d seconds before respawn!", cpc.RESPAWNSECS-(lastmillis-player1->lastpain)/1000);
+                int wait = cpc.RESPAWNSECS-(lastmillis-player1->lastpain)/1000;
+                conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
                 return;
             }
             if(m_arena) { conoutf("\f2waiting for new round to start..."); return; }
