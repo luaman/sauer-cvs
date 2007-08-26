@@ -224,7 +224,7 @@ struct scoreboard : g3d_callback
             loopv(sg.players)
             {
                 fpsent *o = sg.players[i];
-                int status = 0xFFFFDD;
+                int status = o==cl.player1 ? 0xFFFF80 : 0xFFFFDD;
                 if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
                 else if(o->state==CS_DEAD) status = 0x808080;
                 g.text(cl.colorname(o), status, icon);
