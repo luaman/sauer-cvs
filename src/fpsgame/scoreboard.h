@@ -244,7 +244,7 @@ struct scoreboard : g3d_callback
             g.poplist(); // horizontal
             g.poplist(); // vertical
 
-            if(k+1<numgroups && (k+1)%2) g.space(1);
+            if(k+1<numgroups && (k+1)%2) g.space(2);
             else g.poplist(); // horizontal
         }
         
