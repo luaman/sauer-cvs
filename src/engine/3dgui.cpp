@@ -442,7 +442,7 @@ struct gui : g3d_gui
         if(inheritw>0)
         {
             int parentw = curlist;
-            while(inheritw>0 && lists[parentw].parent>0) 
+            while(inheritw>0 && lists[parentw].parent>=0) 
             {
                 parentw = lists[parentw].parent;
                 inheritw--;
@@ -452,7 +452,7 @@ struct gui : g3d_gui
         if(inherith>0)
         {
             int parenth = curlist;
-            while(inherith>0 && lists[parenth].parent>0) 
+            while(inherith>0 && lists[parenth].parent>=0) 
             {
                 parenth = lists[parenth].parent;
                 inherith--;
