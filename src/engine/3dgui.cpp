@@ -432,17 +432,32 @@ struct gui : g3d_gui
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
     }
 
-    void background(int color)
+    void background(int color, int inheritw, int inherith)
     {
         if(layoutpass) return;
         glDisable(GL_TEXTURE_2D);
         notextureshader->set();
         glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
-        int parent = lists[curlist].parent, w = xsize, h = ysize;
-        if(parent>=0)
+        int w = xsize, h = ysize;
+        if(inheritw>0)
         {
-            if(ishorizontal()) w = lists[parent].w;
-            else h = lists[parent].h;
+            int parentw = curlist;
+            while(inheritw>0 && lists[parentw].parent>0) 
+            {
+                parentw = lists[parentw].parent;
+                inheritw--;
+            }
+            w = lists[parentw].w;
+        }
+        if(inherith>0)
+        {
+            int parenth = curlist;
+            while(inherith>0 && lists[parenth].parent>0) 
+            {
+                parenth = lists[parenth].parent;
+                inherith--;
+            }
+            h = lists[parenth].h;
         }
         glBegin(GL_QUADS);
         rect_(curx, cury, w, h);

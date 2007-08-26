@@ -226,7 +226,7 @@ struct g3d_gui
         return text(str, color, icon);
     }
     virtual int button(const char *text, int color, const char *icon = NULL) = 0;
-    virtual void background(int color) = 0;
+    virtual void background(int color, int parentw = 0, int parenth = 0) = 0;
 
     virtual void pushlist() {}
     virtual void poplist() {}
