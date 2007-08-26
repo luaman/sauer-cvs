@@ -218,15 +218,15 @@ struct g3d_gui
 
     virtual void start(int starttime, float basescale, int *tab = NULL, bool allowinput = true) = 0;
     virtual void end() = 0;
+
     virtual int text(const char *text, int color, const char *icon = NULL) = 0;
-    
     int textf(const char *fmt, int color, const char *icon = NULL, ...)
     {
         s_sprintfdlv(str, icon, fmt);
         return text(str, color, icon);
     }
-
     virtual int button(const char *text, int color, const char *icon = NULL) = 0;
+    virtual void background(int color) = 0;
 
     virtual void pushlist() {}
     virtual void poplist() {}

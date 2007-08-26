@@ -414,7 +414,7 @@ struct gui : g3d_gui
 
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
-        GLint tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+        static const GLint tc[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
         if(usetc>=0) glTexCoord2iv(tc[usetc]); 
         glVertex2f(x, y);
         if(usetc>=0) glTexCoord2iv(tc[(usetc+1)%4]);
@@ -430,6 +430,25 @@ struct gui : g3d_gui
     {
         if(shadow) draw_text(text, x+SHADOW, y+SHADOW, 0x00, 0x00, 0x00, 0xC0);
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
+    }
+
+    void background(int color)
+    {
+        if(layoutpass) return;
+        glDisable(GL_TEXTURE_2D);
+        notextureshader->set();
+        glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
+        int parent = lists[curlist].parent, w = xsize, h = ysize;
+        if(parent>=0)
+        {
+            if(ishorizontal()) w = lists[parent].w;
+            else h = lists[parent].h;
+        }
+        glBegin(GL_QUADS);
+        rect_(curx, cury, w, h);
+        glEnd();
+        glEnable(GL_TEXTURE_2D);
+        defaultshader->set();
     }
 
     void icon_(Texture *t, bool overlaid, bool tiled, int x, int y, int size, bool hit) 
