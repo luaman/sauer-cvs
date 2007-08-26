@@ -240,7 +240,7 @@ struct scoreboard : g3d_callback
             {
                 int status = 0xFFFFDD;
                 if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
-                else if(o->state==CS_DEAD) status = 0x505050;
+                else if(o->state==CS_DEAD) status = 0x606060;
                 g.text(cl.colorname(o), status, icon);
             });
             g.poplist();
