@@ -432,7 +432,7 @@ struct gui : g3d_gui
         draw_text(text, x, y, color>>16, (color>>8)&0xFF, color&0xFF);
     }
 
-    void background(int color, float round, int inheritw, int inherith)
+    void background(int color, int inheritw, int inherith)
     {
         if(layoutpass) return;
         glDisable(GL_TEXTURE_2D);
@@ -462,24 +462,6 @@ struct gui : g3d_gui
         glBegin(GL_QUADS);
         rect_(curx, cury, w, h);
         glEnd();
-        if(round>0)
-        {
-            glBegin(GL_POLYGON);
-            loopk(10)
-            {
-                float angle = -M_PI/2 - k/9.0f*M_PI;
-                glVertex2f(curx + round*FONTW*cosf(angle), cury + (k>=5 ? 0.75f : 0.25f)*h + 0.25f*h*sinf(angle));
-            }
-            glEnd();
-            glBegin(GL_POLYGON);
-            loopk(10)
-            {
-                float angle = -M_PI/2 + k/9.0f*M_PI;
-                glVertex2f(curx+w + round*FONTW*cosf(angle), cury + (k>=5 ? 0.75f : 0.25f)*h + 0.25f*h*sinf(angle));
-            }
-            glEnd();
-            xtraverts += 2*10;
-        }
         glEnable(GL_TEXTURE_2D);
         defaultshader->set();
     }

@@ -172,40 +172,57 @@ struct scoreboard : g3d_callback
             
             scoregroup &sg = *groups[k];
             const char *icon = cl.fr.ogro() ? "ogro" : (sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? "player_blue" : "player_red") : "player");
-            int color = sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? 0x60A0FF : 0xFF4040) : 0xFFFF80;
-            bool firstcolumn = true;
+            int bgcolor = sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? 0x3030C0 : 0xC03030) : 0,
+                fgcolor = 0xFFFF80;
 
             g.pushlist(); // vertical
-
-            if(sg.team && m_teammode)
-            {
-                if(m_capture && sg.score>=10000) g.textf("%s: WIN", color, "server", sg.team);
-                else g.textf("%s: %d", color, "server", sg.team, sg.score);
-            }
-
             g.pushlist(); // horizontal
 
             #define loopscoregroup(o, b) \
                 loopv(sg.players) \
                 { \
                     fpsent *o = sg.players[i]; \
-                    if(firstcolumn && o==cl.player1 && highlightscore() && multiplayer(false)) \
-                    { \
-                        g.pushlist(); \
-                        g.background(0x808080, 0, numgroups>1 ? 2 : 5); \
-                    } \
                     b; \
-                    if(firstcolumn && o==cl.player1 && highlightscore() && multiplayer(false)) g.poplist(); \
                 }    
+
+            g.pushlist();
+            if(sg.team && m_teammode)
+            {
+                g.pushlist();
+                g.background(bgcolor, numgroups>1 ? 3 : 5);
+                g.strut(2);
+                g.poplist();
+            }
+            else g.text("", 0, "server");
+            loopscoregroup(o,
+            {
+                if(o==cl.player1 && highlightscore() && multiplayer(false))
+                {
+                    g.pushlist();
+                    g.background(0x808080, numgroups>1 ? 3 : 5);
+                }
+                g.text("", 0, icon);
+                if(o==cl.player1 && highlightscore() && multiplayer(false)) g.poplist();
+            });
+            g.poplist();
+
+            if(sg.team && m_teammode)
+            {
+                g.pushlist(); // vertical
+
+                if(m_capture && sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
+                else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
+
+                g.pushlist(); // horizontal
+            }
+
             if(!m_capture)
             { 
                 g.pushlist();
                 g.strut(7);
-                g.text("frags", color, icon ? "server" : NULL);
-                loopscoregroup(o, g.textf("%d", 0xFFFFDD, icon, o->frags));
+                g.text("frags", fgcolor);
+                loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->frags));
                 g.poplist();
-                firstcolumn = false;
-                icon = NULL;
             }
 
             if(multiplayer(false))
@@ -214,51 +231,51 @@ struct scoreboard : g3d_callback
                 {
                     g.pushlist();
                     g.strut(6);
-                    g.text("pj", color, icon ? "server" : NULL);
+                    g.text("pj", fgcolor);
                     loopscoregroup(o,
                     {
-                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD, icon);
-                        else g.textf("%d", 0xFFFFDD, icon, o->plag);
+                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+                        else g.textf("%d", 0xFFFFDD, NULL, o->plag);
                     });
                     g.poplist();
-                    firstcolumn = false;
-                    icon = NULL;
                 }
         
                 if(showping())
                 {
                     g.pushlist();
-                    g.text("ping", color, icon ? "server" : NULL);
+                    g.text("ping", fgcolor);
                     g.strut(6);
-                    loopscoregroup(o, g.textf("%d", 0xFFFFDD, icon, o->ping));
+                    loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->ping));
                     g.poplist();
-                    firstcolumn = false;
-                    icon = NULL;
                 }
             }
 
             g.pushlist();
-            g.text("name", color, icon ? "server" : NULL);
+            g.text("name", fgcolor);
             loopscoregroup(o, 
             {
                 int status = 0xFFFFDD;
                 if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
                 else if(o->state==CS_DEAD) status = 0x606060;
-                g.text(cl.colorname(o), status, icon);
+                g.text(cl.colorname(o), status);
             });
             g.poplist();
-            firstcolumn = false;
-            icon = NULL;
 
             if(showclientnum() || cl.player1->privilege>=PRIV_MASTER)
             {
                 g.space(1);
                 g.pushlist();
-                g.text("cn", color);
+                g.text("cn", fgcolor);
                 loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->clientnum));
                 g.poplist();
             }
-                
+            
+            if(sg.team && m_teammode)
+            {
+                g.poplist(); // horizontal
+                g.poplist(); // vertical
+            }
+
             g.poplist(); // horizontal
             g.poplist(); // vertical
 
@@ -280,7 +297,7 @@ struct scoreboard : g3d_callback
                     if(o==cl.player1 && highlightscore())
                     {
                         g.pushlist();
-                        g.background(0x808080, 0, 3);
+                        g.background(0x808080, 3);
                     }
                     g.text(cl.colorname(o), 0xFFFFDD, cl.fr.ogro() ? "ogro" : "player");
                     if(o==cl.player1 && highlightscore()) g.poplist();
