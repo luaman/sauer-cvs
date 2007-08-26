@@ -31,7 +31,7 @@ struct scoreboard : g3d_callback
 
     struct teamscore
     {
-        char *team;
+        const char *team;
         int score;
         teamscore() {}
         teamscore(char *s, int n) : team(s), score(n) {}
@@ -57,25 +57,14 @@ struct scoreboard : g3d_callback
         return strcmp((*a)->name, (*b)->name);
     }
 
-    void sortplayers(vector<fpsent *> &sbplayers, vector<fpsent *> *spectators = NULL)
+    void bestplayers(vector<fpsent *> &best)
     {
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(o && o->type!=ENT_AI)
-            {
-                if(spectators && o->state==CS_SPECTATOR) spectators->add(o);
-                else sbplayers.add(o);
-            }
+            if(o && o->type!=ENT_AI && o->state!=CS_SPECTATOR) best.add(o);
         }
-
-        sbplayers.sort(playersort);
-        if(spectators) spectators->sort(playersort);
-    }
-
-    void bestplayers(vector<fpsent *> &best)
-    {
-        sortplayers(best);
+        best.sort(playersort);   
         while(best.length()>1 && best.last()->frags < best[0]->frags) best.drop();
     }
 
@@ -100,7 +89,7 @@ struct scoreboard : g3d_callback
         teamscores.sort(teamscorecmp);
     }
 
-    void bestteams(vector<char *> &best)
+    void bestteams(vector<const char *> &best)
     {
         vector<teamscore> teamscores;
         sortteams(teamscores);
@@ -108,9 +97,49 @@ struct scoreboard : g3d_callback
         loopv(teamscores) best.add(teamscores[i].team);
     }
 
+    struct scoregroup : teamscore
+    {
+        vector<fpsent *> players;
+    };
+    vector<scoregroup *> groups;
+    vector<fpsent *> spectators;
+
+    int groupplayers()
+    {
+        int gamemode = cl.gamemode, numgroups = 0;
+        spectators.setsize(0);
+        loopi(cl.numdynents())
+        {
+            fpsent *o = (fpsent *)cl.iterdynents(i);
+            if(!o || o->type==ENT_AI) continue;
+            if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
+            const char *team = m_teammode ? o->team : NULL;
+            bool found = false;
+            loopj(numgroups)
+            {
+                scoregroup &g = *groups[j];
+                if(team!=g.team && strcmp(team, g.team)) continue;
+                if(m_teammode && !m_capture) g.score += o->frags;
+                g.players.add(o);
+                found = true;
+            }
+            if(found) continue;
+            if(numgroups>=groups.length()) groups.add(new scoregroup);
+            scoregroup &g = *groups[numgroups++];
+            g.team = o->team;
+            g.score = m_capture ? cl.cpc.findscore(o->team).total : (m_teammode ? o->frags : 0);
+            g.players.setsize(0);
+            g.players.add(o);
+        }
+        loopi(numgroups) groups[i]->players.sort(playersort);
+        spectators.sort(playersort);
+        groups.sort(teamscorecmp, 0, numgroups);
+        return numgroups;
+    }
+
     void gui(g3d_gui &g, bool firstpass)
     {
-        g.start(menustart, 0.04f, NULL, false);
+        g.start(menustart, 0.03f, NULL, false);
    
         int gamemode = cl.gamemode;
         s_sprintfd(modemapstr)("%s: %s", fpsserver::modestr(gamemode), cl.getclientmap()[0] ? cl.getclientmap() : "[new map]");
@@ -125,119 +154,90 @@ struct scoreboard : g3d_callback
         }
         g.text(modemapstr, 0xFFFF80, "server");
 
-        vector<fpsent *> sbplayers, spectators;
-        sortplayers(sbplayers, &spectators);
-      
-        vector<teamscore> teamscores; 
-        if(m_teammode)
+        int numgroups = groupplayers();
+        loopk(numgroups)
         {
-            sortteams(teamscores);
-            vector<fpsent *> teamplayers;
-            loopv(teamscores)
-            {
-                const char *team = teamscores[i].team;
-                loopvj(sbplayers) if(!strcmp(sbplayers[j]->team, team)) teamplayers.add(sbplayers[j]);
-            }
-            sbplayers = teamplayers;
-        }
-
-        g.pushlist();
-    
-        g.pushlist();
-        g.strut(7);
-        g.text(m_capture ? "score" : "frags", 0xFFFF80, "server");
-        loopv(sbplayers) 
-        { 
-            fpsent *o = sbplayers[i];
-            string score;
-            if(o->state==CS_SPECTATOR) score[0] = '\0';
-            else if(m_capture)
-            {
-                int total = cl.cpc.findscore(o->team).total;
-                if(total>=10000) s_strcpy(score, "WIN");
-                else s_sprintf(score)("%d", total);
-            }
-            else s_sprintf(score)("%d", o->frags);
-            g.text(score, 0xFFFFDD, cl.fr.ogro() ? "ogro" : (m_teammode ? (isteam(cl.player1->team, o->team) ? "player_blue" : "player_red") : "player"));
-        }
-        g.poplist();
-
-        if(multiplayer(false))
-        {
-            if(showpj())
-            {
-                g.pushlist();
-                g.strut(4);
-                g.text("pj", 0xFFFF80);
-                loopv(sbplayers)
-                {
-                    fpsent *o = sbplayers[i];
-                    if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
-                    else g.textf("%d", 0xFFFFDD, NULL, o->plag);
-                }
-                g.poplist();
-            }
-    
-            if(showping())
-            {
-                g.pushlist();
-                g.text("ping", 0xFFFF80);
-                g.strut(5);
-                loopv(sbplayers) g.textf("%d", 0xFFFFDD, NULL, sbplayers[i]->ping);
-                g.poplist();
-            }
-        }
-
-        if(m_teammode)
-        {
-            g.pushlist();
-            g.text("team", 0xFFFF80);
-            g.strut(5);
-            loopv(sbplayers) g.text(sbplayers[i]->team, isteam(cl.player1->team, sbplayers[i]->team) ? 0x60A0FF : 0xFF4040);
-            g.poplist();
-        }
-
-        g.pushlist();
-        g.text("name", 0xFFFF80);
-        loopv(sbplayers)
-        {
-            fpsent *o = sbplayers[i];
-            int status = 0xFFFFDD;
-            if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
-            else if(o->state==CS_DEAD) status = 0x808080;
-            g.text(cl.colorname(o), status);
-        }
-        g.poplist();
-
-        if(showclientnum() || cl.player1->privilege>=PRIV_MASTER)
-        {
-            g.space(1);
-            g.pushlist();
-            g.text("cn", 0xFFFF80);
-            loopv(sbplayers) g.textf("%d", 0xFFFFDD, NULL, sbplayers[i]->clientnum);
-            g.poplist();
-        }
+            if((k%2)==0) g.pushlist(); // horizontal
             
-        g.poplist();
+            scoregroup &sg = *groups[k];
+            const char *icon = cl.fr.ogro() ? "ogro" : (sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? "player_blue" : "player_red") : "player");
 
-        if(m_teammode)
-        {
-            while(teamscores.length() && teamscores.last().score <= 0) teamscores.drop();
-            if(teamscores.length())
+            g.pushlist(); // vertical
+
+            if(sg.team && m_teammode)
             {
-                string teamline;
-                teamline[0] = 0;
-                loopvj(teamscores)
-                {
-                    if(j >= 4) break;
-                    string score;
-                    if(m_capture && teamscores[j].score>=10000) s_strcpy(score, "WIN");
-                    else s_sprintf(score)("%d", teamscores[j].score);
-                    s_sprintfd(s)("[ %s: %s ]", teamscores[j].team, score);
-                    s_strcat(teamline, s);
-                }
-                g.text(teamline, 0xFFFF40);
+                int color = isteam(cl.player1->team, sg.team) ? 0x60A0FF : 0xFF4040;
+                if(m_capture && sg.score>=10000) g.textf("%s: WIN", color, icon, sg.team);
+                else g.textf("%s: %d", color, icon, sg.team, sg.score);
             }
+
+            g.pushlist(); // horizontal
+
+            if(!m_capture)
+            { 
+                g.pushlist();
+                g.strut(7);
+                g.text("frags", 0xFFFF80, icon ? "server" : NULL);
+                loopv(sg.players) g.textf("%d", 0xFFFFDD, icon, sg.players[i]->frags);
+                g.poplist();
+                icon = NULL;
+            }
+
+            if(multiplayer(false))
+            {
+                if(showpj())
+                {
+                    g.pushlist();
+                    g.strut(6);
+                    g.text("pj", 0xFFFF80, icon ? "server" : NULL);
+                    loopv(sg.players)
+                    {
+                        fpsent *o = sg.players[i];
+                        if(o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD, icon);
+                        else g.textf("%d", 0xFFFFDD, icon, o->plag);
+                    }
+                    g.poplist();
+                    icon = NULL;
+                }
+        
+                if(showping())
+                {
+                    g.pushlist();
+                    g.text("ping", 0xFFFF80, icon ? "server" : NULL);
+                    g.strut(5);
+                    loopv(sg.players) g.textf("%d", 0xFFFFDD, icon, sg.players[i]->ping);
+                    g.poplist();
+                    icon = NULL;
+                }
+            }
+
+            g.pushlist();
+            g.text("name", 0xFFFF80, icon ? "server" : NULL);
+            loopv(sg.players)
+            {
+                fpsent *o = sg.players[i];
+                int status = 0xFFFFDD;
+                if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
+                else if(o->state==CS_DEAD) status = 0x808080;
+                g.text(cl.colorname(o), status, icon);
+            }
+            g.poplist();
+            icon = NULL;
+
+            if(showclientnum() || cl.player1->privilege>=PRIV_MASTER)
+            {
+                g.space(1);
+                g.pushlist();
+                g.text("cn", 0xFFFF80);
+                loopv(sg.players) g.textf("%d", 0xFFFFDD, NULL, sg.players[i]->clientnum);
+                g.poplist();
+            }
+                
+            g.poplist(); // horizontal
+            g.poplist(); // vertical
+
+            if(k+1<numgroups && (k+1)%2) g.space(1);
+            else g.poplist(); // horizontal
         }
         
         if(showspectators() && spectators.length())
