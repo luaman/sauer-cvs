@@ -437,7 +437,7 @@ struct gui : g3d_gui
         if(layoutpass) return;
         glDisable(GL_TEXTURE_2D);
         notextureshader->set();
-        glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0x60);
+        glColor4ub(color>>16, (color>>8)&0xFF, color&0xFF, 0x80);
         int w = xsize, h = ysize;
         if(inheritw>0) 
         {
