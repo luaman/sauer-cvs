@@ -169,14 +169,15 @@ struct scoreboard : g3d_callback
             
             scoregroup &sg = *groups[k];
             const char *icon = cl.fr.ogro() ? "ogro" : (sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? "player_blue" : "player_red") : "player");
-
+            int color = sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? 0x60A0FF : 0xFF4040) : 0xFFFF80;
+            
             g.pushlist(); // vertical
 
             if(sg.team && m_teammode)
             {
                 int color = isteam(cl.player1->team, sg.team) ? 0x60A0FF : 0xFF4040;
                 if(m_capture && sg.score>=10000) g.textf("%s: WIN", color, icon, sg.team);
-                else g.textf("%s: %d", color, icon, sg.team, sg.score);
+                else g.textf("%s: %d", color, "server", sg.team, sg.score);
             }
 
             g.pushlist(); // horizontal
@@ -185,7 +186,7 @@ struct scoreboard : g3d_callback
             { 
                 g.pushlist();
                 g.strut(7);
-                g.text("frags", 0xFFFF80, icon ? "server" : NULL);
+                g.text("frags", color, icon ? "server" : NULL);
                 loopv(sg.players) g.textf("%d", 0xFFFFDD, icon, sg.players[i]->frags);
                 g.poplist();
                 icon = NULL;
@@ -197,7 +198,7 @@ struct scoreboard : g3d_callback
                 {
                     g.pushlist();
                     g.strut(6);
-                    g.text("pj", 0xFFFF80, icon ? "server" : NULL);
+                    g.text("pj", color, icon ? "server" : NULL);
                     loopv(sg.players)
                     {
                         fpsent *o = sg.players[i];
@@ -211,7 +212,7 @@ struct scoreboard : g3d_callback
                 if(showping())
                 {
                     g.pushlist();
-                    g.text("ping", 0xFFFF80, icon ? "server" : NULL);
+                    g.text("ping", color, icon ? "server" : NULL);
                     g.strut(6);
                     loopv(sg.players) g.textf("%d", 0xFFFFDD, icon, sg.players[i]->ping);
                     g.poplist();
@@ -220,7 +221,7 @@ struct scoreboard : g3d_callback
             }
 
             g.pushlist();
-            g.text("name", 0xFFFF80, icon ? "server" : NULL);
+            g.text("name", color, icon ? "server" : NULL);
             loopv(sg.players)
             {
                 fpsent *o = sg.players[i];
@@ -236,7 +237,7 @@ struct scoreboard : g3d_callback
             {
                 g.space(1);
                 g.pushlist();
-                g.text("cn", 0xFFFF80);
+                g.text("cn", color);
                 loopv(sg.players) g.textf("%d", 0xFFFFDD, NULL, sg.players[i]->clientnum);
                 g.poplist();
             }
