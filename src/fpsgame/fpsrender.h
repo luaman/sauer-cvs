@@ -6,7 +6,7 @@ struct fpsrender
     fpsrender(fpsclient &_cl) : cl(_cl) {}
 
     vector<fpsent *> bestplayers;
-    vector<char *> bestteams;
+    vector<const char *> bestteams;
 
     IVARP(ogro, 0, 0, 1);
 

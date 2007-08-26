@@ -204,7 +204,7 @@ struct scoreboard : g3d_callback
                 {
                     g.pushlist();
                     g.text("ping", 0xFFFF80, icon ? "server" : NULL);
-                    g.strut(5);
+                    g.strut(6);
                     loopv(sg.players) g.textf("%d", 0xFFFFDD, icon, sg.players[i]->ping);
                     g.poplist();
                     icon = NULL;
