@@ -109,6 +109,8 @@ struct scoreboard : g3d_callback
     {
         if((*x)->score > (*y)->score) return -1;
         if((*x)->score < (*y)->score) return 1;
+        if((*x)->players.length() > (*y)->players.length()) return -1;
+        if((*x)->players.length() < (*y)->players.length()) return 1;
         if(!(*x)->team) return (*y)->team ? 1 : 0;
         return (*y)->team ? strcmp((*x)->team, (*y)->team) : -1;
     }
