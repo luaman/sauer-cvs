@@ -41,8 +41,7 @@ struct scoreboard : g3d_callback
     {
         if(x->score > y->score) return -1;
         if(x->score < y->score) return 1;
-        if(!x->team) return y->team ? 1 : 0;
-        return y->team ? strcmp(x->team, y->team) : -1;
+        return strcmp(x->team, y->team);
     }
     
     static int playersort(const fpsent **a, const fpsent **b)
@@ -105,6 +104,14 @@ struct scoreboard : g3d_callback
     vector<scoregroup *> groups;
     vector<fpsent *> spectators;
 
+    static int scoregroupcmp(const scoregroup **x, const scoregroup **y)
+    {
+        if((*x)->score > (*y)->score) return -1;
+        if((*x)->score < (*y)->score) return 1;
+        if(!(*x)->team) return (*y)->team ? 1 : 0;
+        return (*y)->team ? strcmp((*x)->team, (*y)->team) : -1;
+    }
+
     int groupplayers()
     {
         int gamemode = cl.gamemode, numgroups = 0;
@@ -119,7 +126,7 @@ struct scoreboard : g3d_callback
             loopj(numgroups)
             {
                 scoregroup &g = *groups[j];
-                if(team!=g.team && strcmp(team, g.team)) continue;
+                if(team!=g.team && (!team || !g.team || strcmp(team, g.team))) continue;
                 if(m_teammode && !m_capture) g.score += o->frags;
                 g.players.add(o);
                 found = true;
@@ -127,14 +134,14 @@ struct scoreboard : g3d_callback
             if(found) continue;
             if(numgroups>=groups.length()) groups.add(new scoregroup);
             scoregroup &g = *groups[numgroups++];
-            g.team = o->team;
+            g.team = team;
             g.score = m_capture ? cl.cpc.findscore(o->team).total : (m_teammode ? o->frags : 0);
             g.players.setsize(0);
             g.players.add(o);
         }
         loopi(numgroups) groups[i]->players.sort(playersort);
         spectators.sort(playersort);
-        groups.sort(teamscorecmp, 0, numgroups);
+        groups.sort(scoregroupcmp, 0, numgroups);
         return numgroups;
     }
 
