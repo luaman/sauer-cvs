@@ -344,7 +344,7 @@ struct gui : g3d_gui
     char *field(char *name, int color, int length, char *initval)
 	{	
         length = min(length, (int)sizeof(string)-1);
-        int w = char_width('%')*length;
+        int w = char_width('%')*length + FONTW;
         char *result = NULL;
         if(!layoutpass)
 		{
@@ -372,7 +372,7 @@ struct gui : g3d_gui
             }
             if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
             {
-                int x = curx;
+                int x = curx+FONTW/2;
                 fieldpos = 0;
                 while(fieldtext[fieldpos] && fieldpos < length)
                 {
@@ -393,11 +393,11 @@ struct gui : g3d_gui
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();
             
-            draw_text(editing ? fieldtext : (result ? result : initval), curx, cury, color>>16, (color>>8)&0xFF, color&0xFF);
+            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF);
             
             if(editing && hit && fieldpos>=0 && (totalmillis/250)&1) 
             {
-                int fx = curx + text_width(fieldtext, fieldpos);
+                int fx = curx+FONTW/2 + text_width(fieldtext, fieldpos);
                 glColor3f(1, 0, 0);
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
