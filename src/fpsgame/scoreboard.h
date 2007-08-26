@@ -41,7 +41,8 @@ struct scoreboard : g3d_callback
     {
         if(x->score > y->score) return -1;
         if(x->score < y->score) return 1;
-        return strcmp(x->team, y->team);
+        if(!x->team) return y->team ? 1 : 0;
+        return y->team ? strcmp(x->team, y->team) : -1;
     }
     
     static int playersort(const fpsent **a, const fpsent **b)
