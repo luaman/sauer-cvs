@@ -124,13 +124,13 @@ struct scoreboard : g3d_callback
             fpsent *o = (fpsent *)cl.iterdynents(i);
             if(!o || o->type==ENT_AI) continue;
             if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
-            const char *team = m_teammode ? o->team : NULL;
+            const char *team = m_teammode && o->team[0] ? o->team : NULL;
             bool found = false;
             loopj(numgroups)
             {
                 scoregroup &g = *groups[j];
                 if(team!=g.team && (!team || !g.team || strcmp(team, g.team))) continue;
-                if(m_teammode && !m_capture) g.score += o->frags;
+                if(team && !m_capture) g.score += o->frags;
                 g.players.add(o);
                 found = true;
             }
@@ -138,7 +138,7 @@ struct scoreboard : g3d_callback
             if(numgroups>=groups.length()) groups.add(new scoregroup);
             scoregroup &g = *groups[numgroups++];
             g.team = team;
-            g.score = m_capture ? cl.cpc.findscore(o->team).total : (m_teammode ? o->frags : 0);
+            g.score = team ? (m_capture ? cl.cpc.findscore(o->team).total : o->frags) : 0;
             g.players.setsize(0);
             g.players.add(o);
         }
