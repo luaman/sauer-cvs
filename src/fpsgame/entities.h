@@ -95,6 +95,7 @@ struct entities : icliententities
 
     void pickupeffects(int n, fpsent *d)
     {
+        if(!ents.inrange(n)) return;
         int type = ents[n]->type;
         if(type<I_SHELLS || type>I_QUAD) return;
         ents[n]->spawned = false;
