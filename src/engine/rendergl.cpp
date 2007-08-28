@@ -26,6 +26,8 @@ PFNGLGENPROGRAMSARBPROC            glGenPrograms_            = NULL;
 PFNGLDELETEPROGRAMSARBPROC         glDeletePrograms_         = NULL;
 PFNGLBINDPROGRAMARBPROC            glBindProgram_            = NULL;
 PFNGLPROGRAMSTRINGARBPROC          glProgramString_          = NULL;
+PFNGLGETPROGRAMIVARBPROC           glGetProgramiv_           = NULL;
+
 PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_  = NULL;
 PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_ = NULL;
 
@@ -160,6 +162,9 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         floatvtx = 1;
         conoutf("WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
+
+        extern int reservedynlighttc;
+        reservedynlighttc = 2;
     }
     else if(strstr(vendor, "Tungsten"))
     {
@@ -187,6 +192,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         glDeletePrograms_ =         (PFNGLDELETEPROGRAMSARBPROC)        getprocaddress("glDeleteProgramsARB");
         glBindProgram_ =            (PFNGLBINDPROGRAMARBPROC)           getprocaddress("glBindProgramARB");
         glProgramString_ =          (PFNGLPROGRAMSTRINGARBPROC)         getprocaddress("glProgramStringARB");
+        glGetProgramiv_ =           (PFNGLGETPROGRAMIVARBPROC)          getprocaddress("glGetProgramivARB");
         glProgramEnvParameter4f_ =  (PFNGLPROGRAMENVPARAMETER4FARBPROC) getprocaddress("glProgramEnvParameter4fARB");
         glProgramEnvParameter4fv_ = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)getprocaddress("glProgramEnvParameter4fvARB");
         renderpath = R_ASMSHADER;

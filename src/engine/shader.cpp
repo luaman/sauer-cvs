@@ -25,8 +25,9 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
     glBindProgram_(type, idx);
     def += strspn(def, " \t\r\n");
     glProgramString_(type, GL_PROGRAM_FORMAT_ASCII_ARB, (GLsizei)strlen(def), def);
-    GLint err;
+    GLint err, native;
     glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+    glGetProgramiv_(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native);
     if(msg && err!=-1)
     {
         conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
@@ -34,7 +35,8 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
         puts(" <<HERE>> ");
         while(*def) putchar(*def++);
     }
-    if(err!=-1)
+    else if(msg && !native) conoutf("%s:%s EXCEEDED NATIVE LIMITS", tname, name);
+    if(err!=-1 || !native)
     {
         glDeletePrograms_(1, &idx);
         idx = 0;
@@ -460,6 +462,8 @@ static uint findusedtexcoords(char *str)
     return used;
 }
 
+VAR(reservedynlighttc, 1, 0, 0);
+
 static void gendynlightvariant(Shader &s, char *vs, char *ps)
 {
     int numlights = 0, lights[MAXDYNLIGHTS];
@@ -469,9 +473,8 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps)
         uint usedtc = findusedtexcoords(vs);
         GLint maxtc = 0;
         glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
-        if(maxtc<=0) return;
-        // -1 for fog coord on ATI cards
-        loopi(maxtc-1) if(!(usedtc&(1<<i))) 
+        if(maxtc-reservedynlighttc<=0) return;
+        loopi(maxtc-reservedynlighttc) if(!(usedtc&(1<<i))) 
         {
             lights[numlights++] = i;    
             if(numlights>=MAXDYNLIGHTS) break;

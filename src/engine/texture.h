@@ -3,6 +3,7 @@ extern PFNGLGENPROGRAMSARBPROC            glGenPrograms_;
 extern PFNGLDELETEPROGRAMSARBPROC         glDeletePrograms_;
 extern PFNGLBINDPROGRAMARBPROC            glBindProgram_;
 extern PFNGLPROGRAMSTRINGARBPROC          glProgramString_;
+extern PFNGLGETPROGRAMIVARBPROC           glGetProgramiv_;
 extern PFNGLPROGRAMENVPARAMETER4FARBPROC  glProgramEnvParameter4f_;
 extern PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fv_;
 
