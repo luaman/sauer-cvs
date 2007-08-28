@@ -171,6 +171,7 @@ extern void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int var
 extern void abovemodel(vec &o, const char *mdl);
 extern void rendershadow(dynent *d);
 extern void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int attack, int attackdelay, int lastaction, int lastpain, float sink = 0);
+extern void interpolateorientation(dynent *d, float &interpyaw, float &interppitch);
 extern void setbbfrommodel(dynent *d, char *mdl);
 
 // server
