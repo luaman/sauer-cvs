@@ -82,7 +82,7 @@ struct fpsclient : igameclient
 
 	void follow(char *arg)
     {
-        if(player1->state!=CS_SPECTATOR && arg[0]) return;
+        if(player1->state!=CS_SPECTATOR) return;
         following = arg[0] ? cc.parseplayer(arg) : -1;
         conoutf("follow %s", following>=0 ? "on" : "off");
 	}
