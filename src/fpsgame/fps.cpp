@@ -32,6 +32,10 @@ struct fpsclient : igameclient
     vec swaydir;
     int suicided;
 
+    int following;
+    IVARP(followdist, 10, 50, 1000);
+    IVARP(followorient, 0, 1, 1);
+
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
     fpsent lastplayerstate;
@@ -48,13 +52,15 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
-          suicided(-1),
+          suicided(-1), 
+          following(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
         CCOMMAND(fpsclient, kill, "",  { self->suicide(self->player1); });
         CCOMMAND(fpsclient, taunt, "", { self->taunt(); });
+		CCOMMAND(fpsclient, follow, "s", { self->follow(args[0]); });
     }
 
     iclientcom      *getcom()  { return &cc; }
@@ -73,6 +79,13 @@ struct fpsclient : igameclient
         player1->lasttaunt = lastmillis;
         cc.addmsg(SV_TAUNT, "r");
     }
+
+	void follow(char *arg)
+    {
+        if(player1->state!=CS_SPECTATOR && arg[0]) return;
+        following = arg[0] ? cc.parseplayer(arg) : -1;
+        conoutf("follow %s", following>=0 ? "on" : "off");
+	}
 
     char *getclientmap() { return clientmap; }
 
@@ -116,6 +129,32 @@ struct fpsclient : igameclient
         return NULL;
     }
 
+    void followplayer(fpsent *target)
+    {
+		if(followorient() && target->state!=CS_DEAD) interpolateorientation(target, player1->yaw, player1->pitch);
+
+        physent followcam;
+        followcam.o = target->o;
+        followcam.yaw = player1->yaw;
+        followcam.pitch = player1->pitch;
+        followcam.type = ENT_CAMERA;
+        followcam.move = -1;
+        followcam.eyeheight = 2;
+        loopi(10)
+        {
+            if(!moveplayer(&followcam, 10, true, followdist())) break;
+        }
+
+        player1->o = followcam.o;
+    }
+
+    void stopfollowing()
+    {
+        if(following<0) return;
+        following = -1;
+        conoutf("follow off");
+    }
+
     void otherplayers()
     {
         loopv(players) if(players[i])
@@ -127,6 +166,7 @@ struct fpsclient : igameclient
                 continue;
             }
             if(lagtime && (players[i]->state==CS_ALIVE || (players[i]->state==CS_DEAD && lastmillis-players[i]->lastpain<2000)) && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+            if(player1->state==CS_SPECTATOR && following>=0 && following==players[i]->clientnum) followplayer(players[i]);
         }
     }
 
@@ -333,6 +373,7 @@ struct fpsclient : igameclient
     void clientdisconnected(int cn)
     {
         if(!players.inrange(cn)) return;
+        if(following==cn) stopfollowing();
         fpsent *d = players[cn];
         if(!d) return; 
         if(d->name[0]) conoutf("player %s disconnected", colorname(d));

@@ -81,6 +81,7 @@ struct clientcom : iclientcom
 
     void gamedisconnect()
     {
+        if(remote) cl.stopfollowing();
         connected = false;
         player1->clientnum = -1;
         c2sinit = false;
