@@ -107,12 +107,16 @@ struct scoreboard : g3d_callback
 
     static int scoregroupcmp(const scoregroup **x, const scoregroup **y)
     {
+        if(!(*x)->team)
+        {
+            if((*y)->team) return 1;
+        }
+        else if(!(*y)->team) return -1;
         if((*x)->score > (*y)->score) return -1;
         if((*x)->score < (*y)->score) return 1;
         if((*x)->players.length() > (*y)->players.length()) return -1;
         if((*x)->players.length() < (*y)->players.length()) return 1;
-        if(!(*x)->team) return (*y)->team ? 1 : 0;
-        return (*y)->team ? strcmp((*x)->team, (*y)->team) : -1;
+        return (*x)->team && (*y)->team ? strcmp((*x)->team, (*y)->team) : 0;
     }
 
     int groupplayers()
