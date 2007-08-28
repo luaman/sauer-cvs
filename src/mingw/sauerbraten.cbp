@@ -267,10 +267,6 @@
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="..\engine\crypto.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
 		<Unit filename="..\engine\cubeloader.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
