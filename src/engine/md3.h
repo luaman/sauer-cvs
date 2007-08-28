@@ -344,6 +344,12 @@ void md3shader(char *meshname, char *shader)
     loopmd3skins(meshname, s, s.shader = lookupshaderbyname(shader));
 }
 
+void md3scroll(char *meshname, float *scrollu, float *scrollv)
+{
+    if(renderpath!=R_FIXEDFUNCTION) return;
+    loopmd3skins(meshname, s, { s.scrollu = *scrollu; s.scrollv = *scrollv; });
+}
+
 void md3anim(char *anim, int *frame, int *range, float *speed, int *priority)
 {
     if(!loadingmd3 || loadingmd3->parts.empty()) { conoutf("not loading an md3"); return; }
@@ -374,6 +380,7 @@ COMMAND(md3alphablend, "si");
 COMMAND(md3envmap, "ss");
 COMMAND(md3translucent, "sf");
 COMMAND(md3shader, "ss");
+COMMAND(md3scroll, "sff");
 COMMAND(md3anim, "siifi");
 COMMAND(md3link, "iis");
             

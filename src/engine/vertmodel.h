@@ -50,10 +50,10 @@ struct vertmodel : model
         Texture *tex, *masks, *envmap;
         int override;
         Shader *shader;
-        float spec, ambient, glow, envmapmin, envmapmax, translucency, alphatest;
+        float spec, ambient, glow, envmapmin, envmapmax, translucency, scrollu, scrollv, alphatest;
         bool alphablend;
 
-        skin() : owner(0), tex(crosshair), masks(crosshair), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), alphatest(0.9f), alphablend(true) {}
+        skin() : owner(0), tex(crosshair), masks(crosshair), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), scrollu(0), scrollv(0), alphatest(0.9f), alphablend(true) {}
 
         bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
@@ -391,7 +391,7 @@ struct vertmodel : model
             return group->numframes>1 ? numtcverts : vverts.length()-voffset;
         }
 
-        void interpverts(anpos &cur, anpos *prev, float ai_t, bool norms, void *vbo)
+        void interpverts(anpos &cur, anpos *prev, float ai_t, bool norms, void *vbo, skin &s)
         {
             vert *vert1 = &verts[cur.fr1 * numverts],
                  *vert2 = &verts[cur.fr2 * numverts],
@@ -446,7 +446,18 @@ struct vertmodel : model
                         v.v = tc.v; \
                         body; \
                     }
-                if(norms)
+                if(s.scrollu || s.scrollv)
+                {
+                    float du = s.scrollu*lastmillis/1000.0f, dv = s.scrollv*lastmillis/1000.0f;    
+                    if(norms)
+                    {   
+                        if(prev) iploopvbo(vvert, { v.u += du; v.v += dv; v.pos = ip_pos_ai; v.norm = ip_norm_ai; })
+                        else iploopvbo(vvert, { v.u += du; v.v += dv; v.pos = ip_pos; v.norm = ip_norm; })
+                    }   
+                    else if(prev) iploopvbo(vvertff, { v.u += du; v.v += dv; v.pos = ip_pos_ai; })
+                    else iploopvbo(vvertff, { v.u += du; v.v += dv; v.pos = ip_pos; })
+                }
+                else if(norms)
                 {
                     if(prev) iploopvbo(vvert, { v.pos = ip_pos_ai; v.norm = ip_norm_ai; })
                     else iploopvbo(vvert, { v.pos = ip_pos; v.norm = ip_norm; })
@@ -489,7 +500,7 @@ struct vertmodel : model
                 return;
             }
             GLuint *list = NULL;
-            bool isstat = as.frame==0 && as.range==1, multitex = s.multitextured(), norms = s.normals();
+            bool isstat = as.frame==0 && as.range==1 && !s.scrollu && !s.scrollv, multitex = s.multitextured(), norms = s.normals();
             if(isstat)
             {
                 list = &lists[as.anim&ANIM_NOSKIN ? LIST_NOSKIN : (multitex ? (norms ? LIST_MULTITEXNORMS : LIST_MULTITEX) : (norms ? LIST_TEXNORMS : LIST_TEX))];
@@ -502,26 +513,34 @@ struct vertmodel : model
                 *list = glGenLists(1);
                 glNewList(*list, GL_COMPILE);
             } 
-            interpverts(cur, prev, ai_t, norms, NULL);
-            loopj(striplen)
+            interpverts(cur, prev, ai_t, norms, NULL, s);
+            if(stripidx[0]<tristrip::RESTART) glBegin(GL_TRIANGLE_STRIP); 
+            #define renderstripverts(b) \
+                loopj(striplen) \
+                { \
+                    ushort index = stripidx[j]; \
+                    if(index>=tristrip::RESTART) \
+                    { \
+                        if(j) glEnd(); \
+                        glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP); \
+                        continue; \
+                    } \
+                    tcvert &tc = tcverts[index]; \
+                    vert &v = stripbuf[tc.index]; \
+                    b; \
+                    glVertex3fv(v.pos.v); \
+                }
+            if(as.anim&ANIM_NOSKIN) renderstripverts({})
+            else if(s.scrollu || s.scrollv)
             {
-                ushort index = stripidx[j];
-                if(index>=tristrip::RESTART || !j)
-                {
-                    if(j) glEnd();
-                    glBegin(index==tristrip::LIST ? GL_TRIANGLES : GL_TRIANGLE_STRIP);
-                    if(index>=tristrip::RESTART) continue;
-                }
-                tcvert &tc = tcverts[index];
-                vert &v = stripbuf[tc.index];
-                if(!(as.anim&ANIM_NOSKIN))
-                {
-                    glTexCoord2f(tc.u, tc.v);
-                    if(norms) glNormal3fv(v.norm.v);
-                    if(multitex) glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v);
-                }
-                glVertex3fv(v.pos.v);
+                float du = s.scrollu*lastmillis/1000.0f, dv = s.scrollv*lastmillis/1000.0f;
+                if(norms && multitex) renderstripverts({ glTexCoord2f(tc.u+du, tc.v+dv); glNormal3fv(v.norm.v); glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u+du, tc.v+dv); })
+                else if(norms) renderstripverts({ glTexCoord2f(tc.u+du, tc.v+dv); glNormal3fv(v.norm.v); })
+                else if(multitex) renderstripverts({ glTexCoord2f(tc.u+du, tc.v+dv); glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u+du, tc.v+dv); })
             }
+            else if(norms && multitex) renderstripverts({ glTexCoord2f(tc.u, tc.v); glNormal3fv(v.norm.v); glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); })
+            else if(norms) renderstripverts({ glTexCoord2f(tc.u, tc.v); glNormal3fv(v.norm.v); })
+            else if(multitex) renderstripverts({ glTexCoord2f(tc.u, tc.v); glMultiTexCoord2f_(GL_TEXTURE1_ARB, tc.u, tc.v); }) 
             glEnd();
             if(isstat)
             {
@@ -559,6 +578,7 @@ struct vertmodel : model
         vvert *vdata;
         anpos cachecur, cacheprev;
         float cachet;
+        int cachemillis;
 
         meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), vbuf(0), ebuf(0), vdata(NULL) 
         {
@@ -750,7 +770,7 @@ struct vertmodel : model
             if(hasVBO)
             {
                 bool norms = false;
-                loopv(skins) if(skins[i].normals()) { norms = true; break; }
+                loopv(skins) if(skins[i].normals()) { norms = true; break; } 
                 if(vbuf && norms!=vnorms)
                 {
                     glDeleteBuffers_(1, &vbuf);
@@ -759,17 +779,33 @@ struct vertmodel : model
                     cachecur.fr1 = -1;
                 }
                 if(!vbuf) genvbo(norms);
-                if(numframes>1 && (cachecur!=cur || (prev ? cacheprev!=*prev || cachet!=ai_t : cacheprev.fr1>=0)))
+                if(numframes>1)
                 {
-                    cachecur = cur;
-                    if(prev) { cacheprev = *prev; cachet = ai_t; }
-                    else cacheprev.fr1 = -1;
-                    loopv(meshes) 
+                    if(cachecur!=cur || (prev ? cacheprev!=*prev || cachet!=ai_t : cacheprev.fr1>=0))
                     {
-                        meshes[i]->interpverts(cur, prev, ai_t, norms, norms ? &vdata[meshes[i]->voffset] : &((vvertff *)vdata)[meshes[i]->voffset]);
+                        cachecur = cur;
+                        if(prev) { cacheprev = *prev; cachet = ai_t; }
+                        else cacheprev.fr1 = -1;
+                        cachemillis = lastmillis;
+                        loopv(meshes) 
+                        {
+                            mesh &m = *meshes[i];
+                            m.interpverts(cur, prev, ai_t, norms, norms ? &vdata[m.voffset] : &((vvertff *)vdata)[m.voffset], skins[i]);
+                        }
+                        glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
+                        glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_STREAM_DRAW_ARB);    
                     }
-                    glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
-                    glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_STREAM_DRAW_ARB);    
+                    else if(cachemillis!=lastmillis) loopv(meshes)
+                    {
+                        skin &s = skins[i];
+                        if(!s.scrollu && !s.scrollv) continue;
+                        if(cachemillis!=lastmillis) { glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf); cachemillis = lastmillis; }
+                        mesh &m = *meshes[i];
+                        void *vbo = norms ? &vdata[m.voffset] : &((vvertff *)vdata)[m.voffset];
+                        m.interpverts(cur, prev, ai_t, norms, vbo, s);
+                        int sublen = (i+1<meshes.length() ? meshes[i+1]->voffset : vlen) - m.voffset;
+                        glBufferSubData_(GL_ARRAY_BUFFER_ARB, (uchar *)vbo - (uchar *)vdata, sublen * (norms ? sizeof(vvert) : sizeof(vvertff)), vbo);
+                    }
                 }
             }
 
