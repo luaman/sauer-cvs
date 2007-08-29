@@ -443,7 +443,7 @@ Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NU
                 s.native = false;
             if(!compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant, variant!=NULL))
                 s.native = false;
-            if(variant && !s.native)
+            if(!s.vs || !s.ps || (variant && !s.native))
             {
                 if(s.vs) { glDeletePrograms_(1, &s.vs); s.vs = 0; }
                 if(s.ps) { glDeletePrograms_(1, &s.ps); s.ps = 0; }
