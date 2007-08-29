@@ -31,7 +31,7 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
     if(msg && err!=-1)
     {
         conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
-        if(err>=0 && err<strlen(def))
+        if(err>=0 && err<(int)strlen(def))
         {
             loopi(err) putchar(*def++);
             puts(" <<HERE>> ");
