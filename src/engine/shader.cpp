@@ -668,6 +668,21 @@ COMMAND(setshader, "s");
 COMMAND(altshader, "ss");
 COMMAND(fastshader, "ssi");
 
+void isshaderdefined(char *name)
+{
+    Shader *s = lookupshaderbyname(name);
+    intret(s ? 1 : 0);
+}
+
+void isshadernative(char *name)
+{
+    Shader *s = lookupshaderbyname(name);
+    intret(s && s->native ? 1 : 0);
+}
+
+COMMAND(isshaderdefined, "s");
+COMMAND(isshadernative, "s");
+
 void setshaderparam(char *name, int type, int n, float x, float y, float z, float w)
 {
     if(!name && (n<0 || n>=MAXSHADERPARAMS))
