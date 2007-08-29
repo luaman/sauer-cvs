@@ -19,7 +19,7 @@ Shader *lookupshaderbyname(const char *name)
     return s && s->altshader ? s->altshader : s;
 }
 
-static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name, bool msg = true)
+static bool compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, char *name, bool msg = true, bool nativeonly = false)
 {
     glGenPrograms_(1, &idx);
     glBindProgram_(type, idx);
@@ -39,11 +39,12 @@ static void compileasmshader(GLenum type, GLuint &idx, char *def, char *tname, c
         }
     }
     else if(msg && !native) conoutf("%s:%s EXCEEDED NATIVE LIMITS", tname, name);
-    if(err!=-1 || !native)
+    if(err!=-1 || (!native && nativeonly))
     {
         glDeletePrograms_(1, &idx);
         idx = 0;
     }
+    return native!=0;
 }
 
 static void showglslinfo(GLhandleARB obj, char *tname, char *name)
@@ -438,8 +439,15 @@ Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NU
         }
         else
         {
-            compileasmshader(GL_VERTEX_PROGRAM_ARB,   s.vs, vs, "VS", name, !variant);
-            compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant);
+            if(!compileasmshader(GL_VERTEX_PROGRAM_ARB, s.vs, vs, "VS", name, !variant, variant!=NULL))
+                s.native = false;
+            if(!compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant, variant!=NULL))
+                s.native = false;
+            if(variant && !s.native)
+            {
+                if(s.vs) { glDeletePrograms_(1, &s.vs); s.vs = 0; }
+                if(s.ps) { glDeletePrograms_(1, &s.ps); s.ps = 0; }
+            }
         }
         if(!s.program && !s.vs && !s.ps)
         {
@@ -628,12 +636,19 @@ void setslotshader(Slot &s)
     }
 }
 
-void altshader(char *orig, char *altname)
+VAR(nativeshaders, 0, 1, 1);
+
+void altshader(char *origname, char *altname)
 {
-    if(lookupshaderbyname(orig)) return;
     Shader *alt = lookupshaderbyname(altname);
     if(!alt) return;
-    char *rname = newstring(orig);
+    Shader *orig = lookupshaderbyname(origname);
+    if(orig)
+    {
+        if(nativeshaders && !orig->native) orig->altshader = alt;
+        return;
+    }
+    char *rname = newstring(origname);
     Shader &s = shaders[rname];
     s.name = rname;
     s.altshader = alt;

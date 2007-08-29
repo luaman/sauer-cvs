@@ -91,9 +91,9 @@ struct Shader
     Shader *altshader, *fastshader[MAXSHADERDETAIL];
     vector<Shader *> variants;
     LocalShaderParamState *extvertparams[RESERVEDSHADERPARAMS], *extpixparams[RESERVEDSHADERPARAMS];
-    bool used;
+    bool used, native;
 
-    Shader() : name(NULL), type(SHADER_DEFAULT), vs(0), ps(0), program(0), vsobj(0), psobj(0), altshader(NULL), used(false)
+    Shader() : name(NULL), type(SHADER_DEFAULT), vs(0), ps(0), program(0), vsobj(0), psobj(0), altshader(NULL), used(false), native(true)
     {}
 
     ~Shader()
