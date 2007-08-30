@@ -809,7 +809,7 @@ VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
 VARP(crosshairfx, 0, 1, 1);
 
-static Texture *crosshair = NULL, *cursor = NULL;
+static Texture *crosshair = NULL;
 
 void loadcrosshair(const char *name)
 {
@@ -818,17 +818,9 @@ void loadcrosshair(const char *name)
 
 COMMAND(loadcrosshair, "s");
 
-void loadcursor(const char *name)
-{
-    cursor = textureload(name, 3, false);
-}
-
-COMMAND(loadcursor, "s");
-
 void writecrosshairs(FILE *f)
 {
     fprintf(f, "loadcrosshair \"%s\"\n", crosshair->name);
-    fprintf(f, "loadcursor \"%s\"\n", cursor->name);
     fprintf(f, "\n");
 }
 
@@ -837,6 +829,7 @@ void drawcrosshair(int w, int h)
     bool windowhit = g3d_windowhit(true, false);
     if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;
 
+    static Texture *cursor = NULL;
     if(!cursor) cursor = textureload("data/guicursor.png", 3, false);
     if(!crosshair) crosshair = textureload("data/crosshair.png", 3, false);
     if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
