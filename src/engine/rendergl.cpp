@@ -379,6 +379,7 @@ bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (refl
 
 void recomputecamera()
 {
+    cl->setupcamera();
     if(deathcam && player->state!=CS_DEAD) deathcam = false;
     extern int testanims;
     if(((editmode && !testanims) || !thirdperson) && player->state!=CS_DEAD)

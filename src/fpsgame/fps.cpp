@@ -82,7 +82,7 @@ struct fpsclient : igameclient
 
 	void follow(char *arg)
     {
-        if(player1->state!=CS_SPECTATOR) return;
+        if(player1->state!=CS_SPECTATOR && arg[0]) return;
         following = arg[0] ? cc.parseplayer(arg) : -1;
         conoutf("follow %s", following>=0 ? "on" : "off");
 	}
@@ -155,6 +155,14 @@ struct fpsclient : igameclient
         conoutf("follow off");
     }
 
+    void setupcamera()
+    {
+        if(player1->state!=CS_SPECTATOR || following<0) return;
+        fpsent *target = getclient(following);
+        if(!target || target->state!=CS_ALIVE) return;
+        followplayer(target);
+    }
+
     void otherplayers()
     {
         loopv(players) if(players[i])
@@ -166,7 +174,6 @@ struct fpsclient : igameclient
                 continue;
             }
             if(lagtime && (players[i]->state==CS_ALIVE || (players[i]->state==CS_DEAD && lastmillis-players[i]->lastpain<2000)) && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
-            if(player1->state==CS_SPECTATOR && following>=0 && following==players[i]->clientnum) followplayer(players[i]);
         }
     }
 
