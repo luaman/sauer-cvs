@@ -814,6 +814,7 @@ static Texture *crosshair = NULL;
 void loadcrosshair(const char *name)
 {
     crosshair = textureload(name, 3, false);
+    if(crosshair==notexture) crosshair = textureload("data/crosshair.png", 3, false);
 }
 
 COMMAND(loadcrosshair, "s");
