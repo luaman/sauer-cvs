@@ -262,7 +262,7 @@ struct md2 : vertmodel
         Texture *tex, *masks;
         loadskin(loadname, pname, tex, masks);
         mdl.initskins(tex, masks);
-        if(tex==crosshair) conoutf("could not load model skin for %s", name1);
+        if(tex==notexture) conoutf("could not load model skin for %s", name1);
         loadingmd2 = this;
         s_sprintfd(name3)("packages/models/%s/md2.cfg", loadname);
         if(!execfile(name3))

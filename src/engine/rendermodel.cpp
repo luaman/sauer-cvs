@@ -692,7 +692,7 @@ void findanims(const char *pattern, vector<int> &anims)
 
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks) // model skin sharing
 {
-#define ifnoload(tex, path) if((tex = textureload(path, 0, true, false))==crosshair)
+#define ifnoload(tex, path) if((tex = textureload(path, 0, true, false))==notexture)
 #define tryload(tex, path, prefix, name) \
     s_sprintfd(path)("%spackages/models/%s/%s.jpg", prefix, dir, name); \
     ifnoload(tex, path) \
@@ -709,7 +709,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
         } \
     }
      
-    masks = crosshair;
+    masks = notexture;
     tryload(skin, skinpath, "", "skin");
     if(renderpath!=R_FIXEDFUNCTION) { tryload(masks, maskspath, "", "masks"); }
     else { tryload(masks, maskspath, "<ffmask:25>", "masks"); }

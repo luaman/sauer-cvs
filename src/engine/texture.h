@@ -193,7 +193,7 @@ struct cubemapside
 
 extern cubemapside cubemapsides[6];
 
-extern Texture *crosshair;
+extern Texture *notexture;
 
 extern Shader *defaultshader, *notextureshader, *nocolorshader, *foggedshader, *foggednotextureshader;
 

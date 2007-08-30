@@ -568,8 +568,8 @@ int main(int argc, char **argv)
     persistidents = false;
     if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
     gl_init(scr_w, scr_h, colorbits, depthbits, fsaa);
-    crosshair = textureload("data/crosshair.png", 3, false);
-    if(!crosshair) fatal("could not find core textures");
+    notexture = textureload("data/notexture.png", 3, false);
+    if(!notexture) fatal("could not find core textures");
 
     log("console");
     if(!execfile("data/font.cfg")) fatal("cannot find font definitions");

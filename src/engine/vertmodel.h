@@ -53,7 +53,7 @@ struct vertmodel : model
         float spec, ambient, glow, envmapmin, envmapmax, translucency, scrollu, scrollv, alphatest;
         bool alphablend;
 
-        skin() : owner(0), tex(crosshair), masks(crosshair), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), scrollu(0), scrollv(0), alphatest(0.9f), alphablend(true) {}
+        skin() : owner(0), tex(notexture), masks(notexture), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), scrollu(0), scrollv(0), alphatest(0.9f), alphablend(true) {}
 
         bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
@@ -175,8 +175,8 @@ struct vertmodel : model
                 s = slot.sts[0].t;
                 if(slot.sts.length() >= 2) m = slot.sts[1].t;
             }
-            if((renderpath==R_FIXEDFUNCTION || !lightmodels) && !glowmodels && (!envmapmodels || !(as.anim&ANIM_ENVMAP) || envmapmax<=0)) m = crosshair;
-            setshader(as, m!=crosshair);
+            if((renderpath==R_FIXEDFUNCTION || !lightmodels) && !glowmodels && (!envmapmodels || !(as.anim&ANIM_ENVMAP) || envmapmax<=0)) m = notexture;
+            setshader(as, m!=notexture);
             if(s!=lasttex)
             {
                 if(enableglow) glActiveTexture_(GL_TEXTURE1_ARB);
@@ -212,7 +212,7 @@ struct vertmodel : model
                 if(enablealphatest) { glDisable(GL_ALPHA_TEST); enablealphatest = false; }
                 if(enablealphablend && !(as.anim&ANIM_TRANSLUCENT)) { glDisable(GL_BLEND); enablealphablend = false; }
             }
-            if(m!=lastmasks && m!=crosshair)
+            if(m!=lastmasks && m!=notexture)
             {
                 if(!enableglow) glActiveTexture_(GL_TEXTURE1_ARB);
                 glBindTexture(GL_TEXTURE_2D, m->gl);
@@ -892,7 +892,7 @@ struct vertmodel : model
             return true;
         }
 
-        void initskins(Texture *tex = crosshair, Texture *masks = crosshair)
+        void initskins(Texture *tex = notexture, Texture *masks = notexture)
         {
             if(!meshes) return;
             while(skins.length() < meshes->meshes.length())

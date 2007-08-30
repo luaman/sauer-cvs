@@ -1693,17 +1693,17 @@ struct texturegui : g3d_callback
                     int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
                     if(ti<curtexnum) 
                     {
-                        Texture *tex = crosshair;
+                        Texture *tex = notexture;
                         Slot &slot = lookuptexture(texmru[ti], false);
                         if(slot.sts.empty()) continue;
                         else if(slot.loaded) tex = slot.sts[0].t;
                         else if(slot.thumbnail) tex = slot.thumbnail;
                         else if(lastmillis-lastthumbnail>=thumbtime) { tex = loadthumbnail(slot); lastthumbnail = lastmillis; }
-                        if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=crosshair)) 
+                        if(g.texture(tex, 1.0)&G3D_UP && (slot.loaded || tex!=notexture)) 
                             edittex(ti);
                     }
                     else
-                        g.texture(crosshair, 1.0); //create an empty space
+                        g.texture(notexture, 1.0); //create an empty space
                 }
                 g.poplist();
             }

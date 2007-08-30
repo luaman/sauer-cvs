@@ -280,7 +280,7 @@ struct gui : g3d_gui
     int image(const char *path, float scale, bool overlaid)
     {
         Texture *t = textureload(path, 0, true, false);
-        if(t==crosshair) return 0;
+        if(t==notexture) return 0;
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
@@ -293,7 +293,7 @@ struct gui : g3d_gui
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;
-        if(t!=crosshair && visible()) icon_(t, true, true, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
+        if(t!=notexture && visible()) icon_(t, true, true, curx, cury, size, ishit(size+SHADOW, size+SHADOW));
         return layout(size+SHADOW, size+SHADOW);
     }
 

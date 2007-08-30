@@ -226,7 +226,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
 
 hashtable<char *, Texture> textures;
 
-Texture *crosshair = NULL; // used as default, ensured to be loaded
+Texture *notexture = NULL; // used as default, ensured to be loaded
 
 static GLenum texformat(int bpp)
 {
@@ -367,7 +367,7 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg)
     Texture *t = textures.access(path(tname));
     if(t) return t;
     SDL_Surface *s = texturedata(tname, NULL, msg); 
-    return s ? newtexture(tname, s, clamp, mipit) : crosshair;
+    return s ? newtexture(tname, s, clamp, mipit) : notexture;
 }
 
 void cleangl()
@@ -587,7 +587,7 @@ SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 
 static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
 {
-    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && (!glowpass || t.type!=TEX_GLOW) && !forceload) { t.t = crosshair; return; }
+    if(renderpath==R_FIXEDFUNCTION && t.type!=TEX_DIFFUSE && (!glowpass || t.type!=TEX_GLOW) && !forceload) { t.t = notexture; return; }
     vector<char> key; 
     addname(key, s, t);
     switch(t.type)
@@ -617,7 +617,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     t.t = textures.access(key.getbuf());
     if(t.t) return;
     SDL_Surface *ts = texturedata(NULL, &t);
-    if(!ts) { t.t = crosshair; return; }
+    if(!ts) { t.t = notexture; return; }
     switch(t.type)
     {
         case TEX_GLOW:
@@ -705,7 +705,7 @@ Texture *loadthumbnail(Slot &slot)
     else
     {
         SDL_Surface *s = texturedata(NULL, &slot.sts[0], false);
-        if(!s) slot.thumbnail = crosshair;
+        if(!s) slot.thumbnail = notexture;
         else
         {
             int xs = s->w, ys = s->h;

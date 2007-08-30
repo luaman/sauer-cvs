@@ -528,6 +528,7 @@ void writecfg()
     fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// delete this file to have %s overwrite these settings\n// modify settings in game, or put settings in %s to override anything\n\n", cl->defaultconfig(), cl->autoexec());
     cc->writeclientinfo(f);
     fprintf(f, "\n");
+    writecrosshairs(f);
     enumerate(*idents, ident, id,
         if(id._type==ID_VAR && id._persist)
         {
