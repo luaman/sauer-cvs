@@ -772,15 +772,14 @@ void gl_drawframe(int w, int h)
     }
 
     rendermaterials();
+    render_particles(curtime);
 
-    if(!isthirdperson()) 
+    if(!isthirdperson())
     {
         project(hudgunfov, aspect, farplane);
         cl->drawhudgun();
         project(fovy, aspect, farplane);
     }
-
-    render_particles(curtime);
 
     glDisable(GL_FOG);
     glDisable(GL_CULL_FACE);
