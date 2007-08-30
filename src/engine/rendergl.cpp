@@ -300,6 +300,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     if(strstr(exts, "GL_ARB_texture_cube_map"))
     {
+        glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &hwcubetexsize);
         hasCM = true;
         //conoutf("Using GL_ARB_texture_cube_map extension.");
     }

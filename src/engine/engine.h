@@ -106,7 +106,7 @@ struct font
 extern font *curfont;
 
 // texture
-extern int hwtexsize;
+extern int hwtexsize, hwcubetexsize;
 
 extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, bool msg = true);
 extern void loadalphamask(Texture *t);
