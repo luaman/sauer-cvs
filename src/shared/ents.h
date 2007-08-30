@@ -34,16 +34,6 @@ struct extentity : entity                       // part of the entity that doesn
 
 //extern vector<extentity *> ents;                // map entities
 
-struct animstate                                // used for animation blending of animated characters
-{
-    int anim, frame, range, basetime;
-    float speed;
-    animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { }
-
-    bool operator==(const animstate &o) const { return frame==o.frame && range==o.range && basetime==o.basetime && speed==o.speed; }
-    bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || basetime!=o.basetime || speed!=o.speed; }
-};
-
 enum 
 { 
     ANIM_DEAD = 0, ANIM_DYING, ANIM_IDLE, 
@@ -55,6 +45,30 @@ enum
     ANIM_VWEP, ANIM_SHIELD, ANIM_POWERUP, 
     ANIM_MAPMODEL, ANIM_TRIGGER, 
     NUMANIMS 
+};
+
+#define ANIM_INDEX       0xFF
+#define ANIM_LOOP        (1<<8)
+#define ANIM_START       (1<<9)
+#define ANIM_END         (1<<10)
+#define ANIM_REVERSE     (1<<11)
+#define ANIM_DIR         0xF00
+#define ANIM_SECONDARY   12
+#define ANIM_NOSKIN      (1<<24)
+#define ANIM_ENVMAP      (1<<25)
+#define ANIM_TRANSLUCENT (1<<26)
+#define ANIM_SHADOW      (1<<27)
+#define ANIM_SETTIME     (1<<28)
+#define ANIM_FLAGS       (0x7F<<24)
+
+struct animstate                                // used for animation blending of animated characters
+{
+    int anim, frame, range, basetime;
+    float speed;
+    animstate() : anim(0), frame(0), range(0), basetime(0), speed(100.0f) { }
+
+    bool operator==(const animstate &o) const { return frame==o.frame && range==o.range && (anim&(ANIM_SETTIME|ANIM_DIR))==(o.anim&(ANIM_SETTIME|ANIM_DIR)) && (anim&ANIM_SETTIME || basetime==o.basetime) && speed==o.speed; }
+    bool operator!=(const animstate &o) const { return frame!=o.frame || range!=o.range || (anim&(ANIM_SETTIME|ANIM_DIR))!=(o.anim&(ANIM_SETTIME|ANIM_DIR)) || (!(anim&ANIM_SETTIME) && basetime!=o.basetime) || speed!=o.speed; }
 };
 
 #define ANIM_INDEX       0xFF

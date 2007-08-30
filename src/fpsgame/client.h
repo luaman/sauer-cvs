@@ -34,7 +34,6 @@ struct clientcom : iclientcom
         CCOMMAND(clientcom, stopdemo, "", self->stopdemo());
         CCOMMAND(clientcom, cleardemos, "s", self->cleardemos(args[0]));
 
-        extern void result(const char *s);
         CCOMMAND(clientcom, getname, "", result(self->player1->name));
         CCOMMAND(clientcom, getteam, "", result(self->player1->team));
     }

@@ -11,7 +11,7 @@ struct vertmodel : model
                 
         void setframes(const animstate &as)
         {
-            int time = lastmillis-as.basetime;
+            int time = as.anim&ANIM_SETTIME ? as.basetime : lastmillis-as.basetime;
             fr1 = (int)(time/as.speed); // round to full frames
             t = (time-fr1*as.speed)/as.speed; // progress of the frame, value from 0.0f to 1.0f
             if(as.anim&ANIM_LOOP)
@@ -958,7 +958,12 @@ struct vertmodel : model
 
             as.anim &= (1<<ANIM_SECONDARY)-1;
             as.anim |= anim&ANIM_FLAGS;
-            as.basetime = as.anim&(ANIM_LOOP|ANIM_START|ANIM_END) && (anim>>ANIM_SECONDARY)&ANIM_INDEX ? -((int)(size_t)d&0xFFF) : basetime;
+            as.basetime = basetime;
+            if(as.anim&(ANIM_LOOP|ANIM_START|ANIM_END) && (anim>>ANIM_SECONDARY)&ANIM_INDEX)
+            {
+                as.anim &= ~ANIM_SETTIME;
+                as.basetime = -((int)(size_t)d&0xFFF);
+            }
             if(as.anim&(ANIM_START|ANIM_END))
             {
                 if(as.anim&ANIM_END) as.frame += as.range-1;
@@ -984,6 +989,7 @@ struct vertmodel : model
                     d->current[index] = as;
                     d->lastanimswitchtime[index] = lastmillis;
                 }
+                else if(as.anim&ANIM_SETTIME) d->current[index].basetime = as.basetime;
                 d->lastmodel[index] = this;
             }
             return true;
