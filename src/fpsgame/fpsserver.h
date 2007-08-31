@@ -1598,7 +1598,7 @@ struct fpsserver : igameserver
         gamestate &gs = ci->state;
         int wait = e.millis - gs.lastshot;
         if(!gs.isalive(gamemillis) ||
-           (gs.gunwait && wait<gs.gunwait) ||
+           wait<gs.gunwait ||
            e.gun<GUN_FIST || e.gun>GUN_PISTOL ||
            gs.ammo[e.gun]<=0)
             return;
