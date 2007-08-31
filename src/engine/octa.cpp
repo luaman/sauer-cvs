@@ -861,7 +861,7 @@ bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat, 
     {
         if(nmat != MAT_AIR && o.ext && o.ext->material == nmat) return true;
         if(isentirelysolid(o)) return false;
-        if(mat != MAT_AIR && o.ext && (o.ext->material == mat || (o.ext->material == MAT_GLASS && isliquid(o.ext->material)))) return false;
+        if(mat != MAT_AIR && o.ext && (o.ext->material == mat || (o.ext->material == MAT_GLASS && isliquid(mat)))) return false;
         if(isempty(o) || !touchingface(o, opposite(orient))) return true;
         if(faceedges(o, opposite(orient)) == F_SOLID) return false;
         facevec cf[4], of[4];
