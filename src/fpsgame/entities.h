@@ -87,12 +87,6 @@ struct entities : icliententities
     // these two functions are called when the server acknowledges that you really
     // picked up the item (in multiplayer someone may grab it before you).
 
-    void additem(int i, int &v)
-    {
-        ents[i]->spawned = false;
-        addammo(ents[i]->type, v);
-    }
-
     void pickupeffects(int n, fpsent *d)
     {
         if(!ents.inrange(n)) return;
