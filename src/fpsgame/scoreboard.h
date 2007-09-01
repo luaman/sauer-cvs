@@ -126,7 +126,7 @@ struct scoreboard : g3d_callback
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(!o || o->type==ENT_AI) continue;
+            if(!o || o->type==ENT_AI || !o->name[0]) continue;
             if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
             const char *team = m_teammode && o->team[0] ? o->team : NULL;
             bool found = false;
