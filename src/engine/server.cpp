@@ -557,50 +557,58 @@ void serverslice(uint timeout)   // main server update, called from main loop in
     }
 
     ENetEvent event;
-    if(enet_host_service(serverhost, &event, timeout) > 0)
-    switch(event.type)
+    bool serviced = false;
+    while(!serviced)
     {
-        case ENET_EVENT_TYPE_CONNECT:
+        if(enet_host_check_events(serverhost, &event) <= 0)
         {
-            client &c = addclient();
-            c.type = ST_TCPIP;
-            c.peer = event.peer;
-            c.peer->data = &c;
-            char hn[1024];
-            s_strcpy(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
-            printf("client connected (%s)\n", c.hostname);
-            int reason = DISC_MAXCLIENTS;
-            if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) 
+            if(enet_host_service(serverhost, &event, timeout) <= 0) break;
+            serviced = true;
+        }
+        switch(event.type)
+        {
+            case ENET_EVENT_TYPE_CONNECT:
             {
-                nonlocalclients++;
-                send_welcome(c.num);
+                client &c = addclient();
+                c.type = ST_TCPIP;
+                c.peer = event.peer;
+                c.peer->data = &c;
+                char hn[1024];
+                s_strcpy(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
+                printf("client connected (%s)\n", c.hostname);
+                int reason = DISC_MAXCLIENTS;
+                if(nonlocalclients<maxclients && !(reason = sv->clientconnect(c.num, c.peer->address.host))) 
+                {
+                    nonlocalclients++;
+                    send_welcome(c.num);
+                }
+                else disconnect_client(c.num, reason);
+                break;
             }
-            else disconnect_client(c.num, reason);
-            break;
+            case ENET_EVENT_TYPE_RECEIVE:
+            {
+                brec += event.packet->dataLength;
+                client *c = (client *)event.peer->data;
+                if(c) process(event.packet, c->num, event.channelID);
+                if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
+                break;
+            }
+            case ENET_EVENT_TYPE_DISCONNECT: 
+            {
+                client *c = (client *)event.peer->data;
+                if(!c) break;
+                printf("disconnected client (%s)\n", c->hostname);
+                sv->clientdisconnect(c->num);
+                nonlocalclients--;
+                c->type = ST_EMPTY;
+                event.peer->data = NULL;
+                sv->deleteinfo(c->info);
+                c->info = NULL;
+                break;
+            }
+            default:
+                break;
         }
-        case ENET_EVENT_TYPE_RECEIVE:
-        {
-            brec += event.packet->dataLength;
-            client *c = (client *)event.peer->data;
-            if(c) process(event.packet, c->num, event.channelID);
-            if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
-            break;
-        }
-        case ENET_EVENT_TYPE_DISCONNECT: 
-        {
-            client *c = (client *)event.peer->data;
-            if(!c) break;
-            printf("disconnected client (%s)\n", c->hostname);
-            sv->clientdisconnect(c->num);
-            nonlocalclients--;
-            c->type = ST_EMPTY;
-            event.peer->data = NULL;
-            sv->deleteinfo(c->info);
-            c->info = NULL;
-            break;
-        }
-        default:
-            break;
     }
     if(sv->sendpackets()) enet_host_flush(serverhost);
 }
