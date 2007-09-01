@@ -71,6 +71,8 @@ extern int entediting;
 bool editmode = false;
 bool havesel = false;
 
+bool selhmap = false;
+
 int *hmap = NULL; // heightmap
 ushort *htex = NULL; // textures for heightmap
 ushort htexture = 0; // single texture for heightmap
@@ -287,6 +289,7 @@ void editmoveplane(const vec &o, const vec &ray, int d, float off, vec &handle, 
     }
 }
 
+inline bool isheightmap(int orient, int d, cube *c);
 extern void entdrag(const vec &ray);
 extern bool hoveringonent(int ent, int orient);
 extern void renderentselection(const vec &o, const vec &ray, bool entmoving);
@@ -367,7 +370,7 @@ void cursorupdate()
             v.mul(wdist+0.1f);
             v.add(player->o);
             w = v;
-            lookupcube(w.x, w.y, w.z);
+            cube *c = &lookupcube(w.x, w.y, w.z);            
             if(gridlookup && !dragging && !moving && !havesel && !hmap) gridsize = lusize;
             int mag = lusize / gridsize;
             normalizelookupcube(w.x, w.y, w.z);
@@ -377,6 +380,24 @@ void cursorupdate()
             cor.mul(2).div(gridsize);
             od = dimension(orient);
             d = dimension(sel.orient);
+            
+            if(mag > 0) // TODO: clean this up
+            {
+                selhmap = isheightmap(orient, od, c);
+                if(!selhmap) {
+                    int o = (R[od]<<1) + (ray[R[od]] > 0 ? 0 : 1);
+                    selhmap = isheightmap(o, R[od], c);
+                    if(selhmap) 
+                        od = dimension(orient = o);
+                    else
+                    {
+                        o = (C[od]<<1) + (ray[C[od]] > 0 ? 0 : 1);
+                        selhmap = isheightmap(o, C[od], c);
+                        if(selhmap) 
+                            od = dimension(orient = o);
+                    }
+                }
+            }
 
             if(dragging) 
             {
@@ -432,7 +453,10 @@ void cursorupdate()
 
     if(!moving && !hovering)
     {
-        glColor3ub(120,120,120);
+        if(selhmap)
+            glColor3ub(0,200,0);
+        else
+            glColor3ub(120,120,120);
         boxs(orient, lu.tovec(), vec(lusize));
     }
 
@@ -708,6 +732,7 @@ void pastehilite()
 {
     if(!localedit) return;
 	sel.s = localedit->copy->s;
+    reorient();
     havesel = true;
 }
 
@@ -724,7 +749,7 @@ COMMANDN(undo, editundo, "");
 COMMANDN(redo, editredo, "");
 
 ///////////// height maps ////////////////
-
+//#define NEW_HMAP
 #ifdef NEW_HMAP
 
 #define clamp(a,b,c) (max(b, min(a, c)))
@@ -732,10 +757,12 @@ void createheightmap() {}
 
 union cface { uchar edge[4]; uint face; };
 
-const int MAXBRUSH = 16;
+#define MAXBRUSH    16
+#define MAXBRUSH2   8
 cface brush[MAXBRUSH][MAXBRUSH];
-VAR(brushx, 0, 25, MAXBRUSH);
-VAR(brushy, 0, 25, MAXBRUSH);
+VAR(brushsize, 16, 32, 64);
+VAR(brushx, 0, MAXBRUSH2, MAXBRUSH);
+VAR(brushy, 0, MAXBRUSH2, MAXBRUSH);
 int brushmaxx = 0;
 int brushmaxy = 0;
 
@@ -744,11 +771,13 @@ void clearbrush()
     loopi(MAXBRUSH) loopj(MAXBRUSH)
         brush[i][j].face = 0;
     brushmaxx = 0;
-    brushmaxy = 0;
+    brushmaxy = 0;    
 }
 
 void brushvert(int *x, int *y, int *v)
 {
+    *x += MAXBRUSH2 - brushx;
+    *y += MAXBRUSH2 - brushy;
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
     brush[*x][*y].edge[3]     = clamp(*v, 0, 8);
     brush[*x][*y+1].edge[1]   = clamp(*v, 0, 8);
@@ -764,71 +793,84 @@ COMMAND(clearbrush, "");
 COMMAND(brushvert, "iii");
 ICOMMAND(addhtex, "", hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[orient]);
 
+inline bool isheightmap(int o, int d, cube *c) 
+{
+    return !c->children && 
+           ( isempty(*c) ||
+           (         
+            (c->faces[R[d]] & 0x77777777) == 0 &&
+            (c->faces[C[d]] & 0x77777777) == 0 &&
+             c->texture[o] == hmaptexture
+           ));
+}
+
 struct heightmapper {
 
-    struct cache { int age; };
+    // flags: 1) zovr = 0x80808080 2) z = 0x7F
+#define PAINTED     0x100
+#define NOTHMAP     0x200
+    struct cache { uint info; uint mask; };
     cache map[MAXBRUSH][MAXBRUSH];
     
-    selinfo changes;
-    int age;
+    selinfo changes;    
     int d, dc, dr, biasup, br;
     int gx, gy, gz, mx, my, mz;
     uint fs, fn, fo;
 
-    heightmapper() : age(0) {}
-    
+    heightmapper() {}
+
     void edit(int dir, int mode) 
-    {        
-        age++;
+    {                 
         d  = dimension(sel.orient);
         dc = dimcoord(sel.orient);
         dr = dir;
         br = dir>0 ? 0x08080808 : 0;
-        biasup = mode == dir<0;
-        gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - brushx;
-        gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - brushy;
+     //   biasup = mode == dir<0;
+        biasup = dir<0;
+        gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - MAXBRUSH2;
+        gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - MAXBRUSH2;
         gz = (cur[D[d]] >> gridpower);
         fs = (dc ? 4 : 0);
         fo = (dc ? 0 : F_SOLID);
         fn = 0x0f0f0f0f << (4-fs);        
-        mx = brushmaxx;
-        my = brushmaxy;
+        mx = MAXBRUSH - 1;
+        my = MAXBRUSH - 1;
         mz = 10;    
 
-        changes.grid = gridsize;        
-        changes.o.x = gx << gridpower;
-        changes.o.y = gy << gridpower;
-        changes.o.z = gz << gridpower;
-        changes.s.x = brushmaxx;
-        changes.s.y = brushmaxy;
-        changes.s.z = 1;        
-        hedit(brushx, brushy, 1);        
+        loopi(MAXBRUSH) loopj(MAXBRUSH) {
+            map[i][j].mask = 0xffFFffFF;
+            map[i][j].info = 0;
+        }
+
+        printf("----------------\nup %d m %d %d\n----------------\n", biasup, mx, my);
+
+        changes.grid = gridsize;
+        changes.s = changes.o = cur;
+        hedit(MAXBRUSH2, MAXBRUSH2, 1, 0);
+        changes.s.sub(changes.o);
+        changes.s >>= gridpower;
         changed(changes);
     }
 
-    inline uint greytoggle(int a)
-    {
-        return (a&0xFFFF0000) + ((a&0xFF00)>>8) + ((a&0xFF)<<8);
-    }
-
-    inline bool isheightmap(cube *c) 
-    {
-        return !c->children &&
-             //  (c->faces[d] & fn) == 0 && 
-                (c->faces[R[d]] & 0x77777777) == 0 &&
-                (c->faces[C[d]] & 0x77777777) == 0 &&
-                c->texture[sel.orient] == hmaptexture;
-    }
+    inline uint greytoggle(uint a) { return (a&0xFFFF0000) + ((a&0xFF00)>>8) + ((a&0xFF)<<8); }
+    inline uint bitnormal(uint a)  { return 0x01010101 & (a | (a>>1) | (a>>2) | (a>>3)); }    
+    inline uint bitspread(uint a)  { return greytoggle(((a>>24)&0x000000FF) | ((a<<8)&0xFFFFFF00) | ((a<<24)&0xFF000000) | ((a>>8)&0x00FFFFFF) | a); };
 
     inline cube *getcube(const ivec &t, int f) 
     {   // TODO: This will most likely be bottle neck
         //       look at loopoctabox + precache for help
         int tz = t.z+(f*gridsize);
         cube *c = &lookupcube(t.x, t.y, tz, -gridsize);
-        if(!isheightmap(c)) return NULL;        
+        if(!isheightmap(sel.orient, d, c)) return NULL;        
         if(lusize > gridsize)
             c = &lookupcube(t.x, t.y, tz, gridsize);
-        discardchildren(*c); // necessary? for ext?     
+        discardchildren(*c); // necessary? for ext?             
+        if     (t.x < changes.o.x) changes.o.x = t.x;
+        else if(t.x > changes.s.x) changes.s.x = t.x;
+        if     (t.y < changes.o.y) changes.o.y = t.y;
+        else if(t.y > changes.s.y) changes.s.y = t.y;
+        if     (t.z < changes.o.z) changes.o.z = t.z;
+        else if(t.z > changes.s.z) changes.s.z = t.z;
         return c;
     }
 
@@ -849,29 +891,80 @@ struct heightmapper {
         uint pm = (v&0xffff)>0 ? 0x00ff00ff : 0xff00ff00;
         uint pv = (v&0xff00ff)>0 ? 0 : 0x88888888 & (~pm);
         face = face & pm | pv;        
+    }    
+ /* 
+    void printtab(int tab) {
+        loopi(tab)
+            printf(" ");       
     }
-    
-    void hedit(int x, int y, int z)
-    {            
-        if(map[x][y].age == age) return;        
+*/
+//#define DPRINT printtab(tab); printf
+
+    void hedit(int x, int y, int z, uint snap  /*, int tab*/)
+    {
+//        DPRINT("%d %d %d [%x] %x\n", x, y, z, snap, map[x][y].info);
+        if(NOTHMAP & map[x][y].info) return;
+        bool painted = map[x][y].info & PAINTED;
+        snap &= map[x][y].mask;             
+        if(painted && 0 == snap) return;        
+        uint paint = snap + (painted ? 0 : brush[x][y].face);
+        if (!paint) return;
+        if (!painted)
+            map[x][y].info |= PAINTED | (z + 64);        
+        if(snap) 
+            map[x][y].mask &= ~(bitnormal(snap)*0xff);                
+
         cube *a = NULL, *b = NULL, *c, *e = NULL;                
         ivec t(d, x+gx, y+gy, z+gz);        
         t <<= gridpower;        
-        map[x][y].age = age;  
-        if(NULL == (c = getcube(t, 0))) return;
+        if(NULL == (c = getcube(t, 0))) {
+            map[x][y].info |= NOTHMAP;
+            return;
+        }
         if(isempty(*c)) { 
+//            DPRINT("DROP\n");
             z--; // drop down
             t.z -= gridsize;
-            if(NULL == (c = getcube(t, 0))) return;
+            if(NULL == (c = getcube(t, 0))) {
+                map[x][y].info |= NOTHMAP;
+                return;
+            }
+//            if(isempty(*c)) {
+//                DPRINT("EMPTY\n");
+//            }
         }
-        bool ispair = 0;
-        uint face  = (c->faces[d]>>fs) & 0x0f0f0f0f;        
-             face += -dr * brush[x][y].face + br;
-        if(c->faces[R[d]] == F_SOLID) 
+        
+        uint face  = (c->faces[d]>>fs) & 0x0f0f0f0f;      
+     
+        if(!painted)                
+            map[x][y].info = ((face & 0x08080808)<<4) | PAINTED | (z + 64);           
+
+        if(c->faces[R[d]] == F_SOLID)           // was single
             face += 0x08080808;      
-        else if(NULL != (b = getcube(t, -1))) // waspair
-            face += (b->faces[d]>>fs) & 0x0f0f0f0f;            
-       
+        else if(NULL != (b = getcube(t, -1)))   // was pair
+            face += (b->faces[d]>>fs) & 0x0f0f0f0f;   
+        
+        // assert face .edges >= 8
+        // assert paint.edges <= 8
+
+  /*      { // debug            
+        DPRINT("face %x + %x + %x { %x } of %p (%p) \n", face, brush[x][y].face, snap,  paint, c, b);                        
+        cface test, ext, fac;
+        test.face = paint;
+        ext.face  = snap;
+
+        loopi(4)
+            if(test.edge[i] > 8)
+                DPRINT("WARNING!!!!!\n");            
+*/
+        face += -dr * paint + br;
+ /*       
+        fac.face = face;
+        loopi(4)
+            if(ext.edge[i] > 0 && (fac.edge[i] & 7))
+                DPRINT("NOT ALIGNED!!!!!\n");
+        }
+*/
         // seperate heights into 4 layers
         uint ovr =(face & 0x10101010) >> 1;
         uint mid = face & 0x08080808;                
@@ -882,52 +975,60 @@ struct heightmapper {
         if(dr>0) {
             ul = lo; lo = hi; hi = oh; oh = 0;
         }
-                
+ //       DPRINT("raw: %x = %x %x %x %x\n", face, oh, hi, lo, ul);        
+
         // cubify to 2 layers, apply bias
+        bool ispair = 0;
         uint *top, *base;  
-        if(hi==0x08080808)      { top = &oh; z++; }
-        else if(lo==0)          { top = &ul; z-=2; }
-        else if(oh!=0 && (biasup || lo==0x08080808))
-        {            
+        if(hi==0x08080808)      { top = &oh; }
+        else if(lo==0)          { top = &ul; }
+        else if(oh && (biasup || lo==0x08080808))
+        {              
+            snap += 0x08080808 - lo;
             top  = &oh;
-            base = &hi;
-            lo   = 0x08080808; // changes will usually affect neighbours...
+            base = &hi;            
+            lo   = 0x08080808;
             ispair = 1;
-            z++;
         }        
         else if(lo==0x08080808) { top = &hi; }
         else if(biasup || ul==0x08080808)
         {
+            snap += 0x08080808 - ul + oh;
             oh   = 0;
             top  = &hi;
             base = &lo;
             ul   = 0x08080808;
             ispair = 1;           
         }
-        else if(ul==0x08080808) { top = &lo; z--; }
+        else if(ul==0x08080808) { top = &lo; }
         else
         {
+            snap += oh;
             oh   = 0;
             top  = &lo;
             base = &ul;
-            ispair = 1;
-            z--;
+            ispair = 1;                
         }        
 
         if(ispair)
-        {            
-            uint gry = greytoggle((0x01010101&(*top))    | (0x01010101&(*top>>1)) | 
-                                  (0x01010101&(*top>>2)) | (0x01010101&(*top>>3)));
-            uint bup = greytoggle(((gry>>24)&0x000000FF) | ((gry<< 8)&0xFFFFFF00) |
-                                  ((gry<<24)&0xFF000000) | ((gry>> 8)&0x00FFFFFF) |
-                                    gry);           
-            *base &= ~(bup * 7);
-            *base |=   bup << 3;                        
-            ispair = *top != 0 && *base!=0x08080808;
+        {                                    
+            if(biasup) {                
+                uint bup = bitspread(greytoggle(bitnormal(*top)));
+                int old = *base;
+                *base &= ~(bup * 7);
+                *base |=   bup << 3;                        
+                snap += *base - old;
+            } else {
+                uint bup = ~bitspread(~greytoggle((*base & 0x08080808) >> 3));
+                int old = *top;
+                *top &= bup * 0xff;
+                snap += old - *top;
+            }
+            ispair = *top && *base!=0x08080808;
         }        
 
         // apply to cubes
-        if(oh!=F_EMPTY)         e = getcube(t, 1);
+        if(oh)                  e = getcube(t, 1);
         if(lo!=0x8080808 && !b) b = getcube(t, -1);
         if(ul!=0x8080808)       a = getcube(t, -2);        
         oh <<= fs;
@@ -943,13 +1044,24 @@ struct heightmapper {
             if(e)       pushside(e->faces[R[d]], oh);
             else if(a)  pushside(b->faces[R[d]], lo);
             else        pushside(c->faces[R[d]], hi);
-        }
+        }        
         
+        if(snap) 
+            map[x][y].mask &= ~(bitnormal(snap)*0xff);  
+
+ //       DPRINT("new: %x %x %x %x (%x) mask %x\n", oh, hi, lo, ul, snap, map[x][y].mask);
+ 
+         
+        uint zovr = map[x][y].info;
+        z = (map[x][y].info & 0x7f) - 64;            
+        
+//        DPRINT("info %x z %d\n", map[x][y].info, z);
+
         // continue to adjacent cubes
-        if(x>0)  hedit(x-1, y, z);
-        if(y>0)  hedit(x, y-1, z);
-        if(x<mx) hedit(x+1, y, z);
-        if(y<my) hedit(x, y+1, z);
+        if(x>0)  hedit(x-1, y, (zovr&0x00800080?z+1:z), (snap<<8) &0xff00ff00/*, tab+1*/);
+        if(x<mx) hedit(x+1, y, (zovr&0x80008000?z+1:z), (snap>>8) &0x00ff00ff/*, tab+1*/);        
+        if(y>0)  hedit(x, y-1, (zovr&0x00008080?z+1:z), (snap<<16)&0xffff0000/*, tab+1*/);
+        if(y<my) hedit(x, y+1, (zovr&0x80800000?z+1:z), (snap>>16)&0x0000ffff/*, tab+1*/);        
     }
 };
 
@@ -960,6 +1072,10 @@ void edithmap(int dir, int mode) {
 }
 
 #else
+
+inline bool isheightmap(int o, int d, cube *c) {
+    return 0;
+}
 
 void pushside(cube &c, int d, int x, int y, int z)
 {
