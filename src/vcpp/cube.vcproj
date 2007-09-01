@@ -53,7 +53,7 @@
 				StringPooling="true"
 				MinimalRebuild="false"
 				ExceptionHandling="2"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
 				EnableFunctionLevelLinking="false"
 				FloatingPointModel="0"
