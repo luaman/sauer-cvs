@@ -29,6 +29,7 @@ typedef unsigned int uint;
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+#define clamp(a,b,c) (max(b, min(a, c)))
 #define rnd(x) ((int)(randomMT()&0xFFFFFF)%(x))
 #define detrnd(s, x) ((int)(((((uint)(s))*1103515245+12345)>>16)%(x)))
 

@@ -203,9 +203,9 @@ ie: d=z => x=x, y=y, z=z
 **/
 
 // DIM: X=0 Y=1 Z=2.
-const int D[3] = {0, 1, 2}; // depth
-const int R[3] = {1, 2, 0}; // row
-const int C[3] = {2, 0, 1}; // col
+const int R[3]  = {1, 2, 0}; // row
+const int C[3]  = {2, 0, 1}; // col
+const int D[3]  = {0, 1, 2}; // depth
 
 struct ivec
 {
@@ -245,6 +245,8 @@ struct ivec
     //int idx(int i) { return v[i]; }
     bool operator==(const ivec &v) const { return x==v.x && y==v.y && z==v.z; }
     bool operator!=(const ivec &v) const { return x!=v.x || y!=v.y || z!=v.z; }
+    ivec &shl(int n) { x<<= n; y<<= n; z<<= n; return *this; }
+    ivec &shr(int n) { x>>= n; y>>= n; z>>= n; return *this; }
     ivec &mul(int n) { x *= n; y *= n; z *= n; return *this; }
     ivec &div(int n) { x /= n; y /= n; z /= n; return *this; }
     ivec &add(int n) { x += n; y += n; z += n; return *this; }
