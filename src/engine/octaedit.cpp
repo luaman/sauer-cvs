@@ -729,7 +729,8 @@ union cface { uchar edge[4]; uint face; };
 
 #define MAXBRUSH    16
 #define MAXBRUSH2   8
-union { uchar edge[4]; uint face; } brush[MAXBRUSH][MAXBRUSH];
+typedef union { uchar edge[4]; uint face; } brushval;
+brushval brush[MAXBRUSH][MAXBRUSH];
 VAR(brushsize, 16, 32, 64);
 VAR(brushx, 0, MAXBRUSH2, MAXBRUSH);
 VAR(brushy, 0, MAXBRUSH2, MAXBRUSH);
