@@ -774,8 +774,8 @@ inline bool isheightmap(int o, int d, bool empty, cube *c)
            ));
 }
 
-struct heightmapper {
-
+struct heightmapper 
+{
     // flags: 1) zovr = 0x80808080 2) z = 0x7F
 #define PAINTED     0x100
 #define NOTHMAP     0x200
@@ -808,7 +808,8 @@ struct heightmapper {
         my = MAXBRUSH - 1;
         mz = 10;    
 
-        loopi(MAXBRUSH) loopj(MAXBRUSH) {
+        loopi(MAXBRUSH) loopj(MAXBRUSH) 
+        {
             map[i][j].mask = 0xffFFffFF;
             map[i][j].info = 0;
         }
@@ -865,7 +866,8 @@ struct heightmapper {
         face = face & pm | pv;        
     }    
  
-    void printtab(int tab) {
+    void printtab(int tab) 
+    {
         loopi(tab)
             printf(" ");       
     }
@@ -876,12 +878,12 @@ struct heightmapper {
     {
         DPRINT("%d %d %d [%x] %x\n", x, y, z, snap, map[x][y].info);
         if(NOTHMAP & map[x][y].info) return;
-        bool painted = map[x][y].info & PAINTED;
+        bool painted = (map[x][y].info & PAINTED)!=0;
         snap &= map[x][y].mask;             
         if(painted && 0 == snap) return;        
         uint paint = snap + (painted ? 0 : brush[x][y].face);
-        if (!paint) return;
-        if (!painted)
+        if(!paint) return;
+        if(!painted)
             map[x][y].info |= PAINTED | (z + 64);        
         if(snap) 
             map[x][y].mask &= ~(bitnormal(snap)*0xff);                
@@ -889,19 +891,23 @@ struct heightmapper {
         cube *a = NULL, *b = NULL, *c, *e = NULL;                
         ivec t(d, x+gx, y+gy, z+gz);        
         t.shl(gridpower);
-        if(NULL == (c = getcube(t, 0))) {
+        if(!(c = getcube(t, 0))) 
+        {
             map[x][y].info |= NOTHMAP;
             return;
         }
-        if(isempty(*c)) { 
+        if(isempty(*c)) 
+        { 
             DPRINT("DROP\n");
             z--; // drop down
             t[d] -= gridsize;
-            if(NULL == (c = getcube(t, 0))) {
+            if(NULL == (c = getcube(t, 0))) 
+            {
                 map[x][y].info |= NOTHMAP;
                 return;
             }
-            if(isempty(*c)) {
+            if(isempty(*c)) 
+            {
                 DPRINT("EMPTY\n");
             }
         }
@@ -927,14 +933,16 @@ struct heightmapper {
         ext.face  = snap;
 
         loopi(4)
-            if(test.edge[i] > 8) {
+            if(test.edge[i] > 8) 
+            {
                 DPRINT("WARNING!!!!!\n");            
             }
         face += -dr * paint + br;
        
         fac.face = face;
         loopi(4)
-            if(ext.edge[i] > 0 && (fac.edge[i] & 7)) {
+            if(ext.edge[i] > 0 && (fac.edge[i] & 7)) 
+            {
                 DPRINT("NOT ALIGNED!!!!!\n");
             }
         }
@@ -946,7 +954,8 @@ struct heightmapper {
         uint hi  = face & ((mid>>3) * 0x7) | ovr;
         uint lo  = face - hi - oh;        
         uint ul  = 0x08080808;
-        if(dr>0) {
+        if(dr>0) 
+        {
             ul = lo; lo = hi; hi = oh; oh = 0;
         }
         DPRINT("raw: %x = %x %x %x %x\n", face, oh, hi, lo, ul);        
@@ -986,13 +995,16 @@ struct heightmapper {
 
         if(ispair)
         {                                    
-            if(biasup) {                
+            if(biasup) 
+            {                
                 uint bup = bitspread(greytoggle(bitnormal(*top)));
                 int old = *base;
                 *base &= ~(bup * 7);
                 *base |=   bup << 3;                        
                 snap += *base - old;
-            } else {
+            } 
+            else 
+            {
                 uint bup = ~bitspread(~greytoggle((*base & 0x08080808) >> 3));
                 int old = *top;
                 *top &= bup * 0xff;
@@ -1040,7 +1052,8 @@ struct heightmapper {
 };
 
 heightmapper hmapper;
-void edithmap(int dir, int mode) {    
+void edithmap(int dir, int mode) 
+{    
     if(multiplayer()) return;
     hmapper.edit(dir, mode);    
 }
