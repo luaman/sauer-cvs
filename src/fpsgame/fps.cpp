@@ -519,6 +519,8 @@ struct fpsclient : igameclient
         sway.add(swaydir).add(player1->o);
         if(!hudgunsway()) sway = player1->o;
         lightreaching(sway, color, dir);
+        dynlightreaching(sway, color, dir);
+
 #if 0
         if(player1->state!=CS_DEAD && player1->quadmillis)
         {
