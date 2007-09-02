@@ -1321,8 +1321,9 @@ struct fpsserver : igameserver
 
             case SV_RECORDDEMO:
             {
+                int val = getint(p);
                 if(ci->privilege<PRIV_ADMIN) break;
-                demonextmatch = getint(p)!=0;
+                demonextmatch = val!=0;
                 s_sprintfd(msg)("demo recording is %s for next match", demonextmatch ? "enabled" : "disabled"); 
                 sendservmsg(msg);
                 break;

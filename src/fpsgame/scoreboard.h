@@ -12,6 +12,7 @@ struct scoreboard : g3d_callback
     IVARP(showping, 0, 1, 1);
     IVARP(showspectators, 0, 1, 1);
     IVARP(highlightscore, 0, 1, 1);
+    IVARP(showconnecting, 0, 0, 1);
 
     scoreboard(fpsclient &_cl) : scoreson(false), cl(_cl)
     {
@@ -126,7 +127,7 @@ struct scoreboard : g3d_callback
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
-            if(!o || o->type==ENT_AI || !o->name[0]) continue;
+            if(!o || o->type==ENT_AI || (!showconnecting() && !o->name[0])) continue;
             if(o->state==CS_SPECTATOR) { spectators.add(o); continue; }
             const char *team = m_teammode && o->team[0] ? o->team : NULL;
             bool found = false;
