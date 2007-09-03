@@ -568,7 +568,7 @@ int main(int argc, char **argv)
     persistidents = false;
     if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
     gl_init(scr_w, scr_h, colorbits, depthbits, fsaa);
-    notexture = textureload("data/notexture.png", 3, false);
+    notexture = textureload("data/notexture.png");
     if(!notexture) fatal("could not find core textures");
 
     log("console");
