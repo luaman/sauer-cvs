@@ -1258,7 +1258,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     }
     else
     {
-        physicsrepeat = 1;
+        physicsrepeat = curtime>0 ? 1 : 0;
     }
     cleardynentcache();
 }
