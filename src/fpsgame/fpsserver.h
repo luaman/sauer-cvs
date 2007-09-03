@@ -141,7 +141,7 @@ struct fpsserver : igameserver
         string name, team, mapvote;
         int modevote;
         int privilege;
-        bool spectator, local;
+        bool spectator, local, timesync;
         int gameoffset;
         gamestate state;
         vector<gameevent> events;
@@ -161,7 +161,7 @@ struct fpsserver : igameserver
             mapvote[0] = 0;
             state.reset();
             events.setsizenodelete(0);
-            gameoffset = -1;
+            timesync = false;
         }
 
         void reset()
@@ -1077,8 +1077,9 @@ struct fpsserver : igameserver
             {
                 gameevent &shot = ci->addevent();
                 shot.type = GE_SHOT;
-                if(ci->gameoffset<0) 
+                if(!ci->timesync)
                 {
+                    ci->timesync = true;
                     ci->gameoffset = gamemillis - getint(p);
                     shot.shot.millis = gamemillis;
                 }
@@ -1103,8 +1104,9 @@ struct fpsserver : igameserver
             {
                 gameevent &exp = ci->addevent();
                 exp.type = GE_EXPLODE;
-                if(ci->gameoffset<0) 
+                if(!ci->timesync)
                 {
+                    ci->timesync = true;
                     ci->gameoffset = gamemillis - getint(p);
                     exp.explode.millis = gamemillis;
                 }
