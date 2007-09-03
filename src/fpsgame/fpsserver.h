@@ -1579,7 +1579,7 @@ struct fpsserver : igameserver
         {
             hitevent &h = ci->events[i].hit;
             clientinfo *target = (clientinfo *)getinfo(h.target);
-            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>=RL_DAMRAD) continue;
+            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>RL_DAMRAD) continue;
 
             int j = 1;
             for(j = 1; j<i; j++) if(ci->events[j].hit.target==h.target) break;
