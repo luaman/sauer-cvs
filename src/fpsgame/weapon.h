@@ -134,7 +134,8 @@ struct weaponstate
                         int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
                         hits.setsizenodelete(0);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
-                        cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, GUN_GL,
+                        if(bnc.local)
+                            cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, GUN_GL,
                                     hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                     }
                     delete &bnc;
@@ -370,7 +371,8 @@ struct weaponstate
             }
             if(exploded) 
             {
-                cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, p.gun,
+                if(p.local)
+                    cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, p.gun,
                             hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                 projs.remove(i--);
             }
