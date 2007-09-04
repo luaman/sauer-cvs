@@ -180,7 +180,6 @@ struct fpsclient : igameclient
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
         lastmillis = lm;
-        maptime += curtime;
         if(!curtime) return;
         physicsframe();
         et.checkquad(curtime, player1);
@@ -334,7 +333,7 @@ struct fpsclient : igameclient
             {
                 conoutf("\f2--- single player time score: ---");
                 int pen, score = 0;
-                pen = maptime/1000;       score += pen; if(pen) conoutf("\f2time taken: %d seconds", pen); 
+                pen = (lastmillis-maptime)/1000; score += pen; if(pen) conoutf("\f2time taken: %d seconds", pen); 
                 pen = player1->deaths*60; score += pen; if(pen) conoutf("\f2time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
                 pen = ms.remain*10;       score += pen; if(pen) conoutf("\f2time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
                 pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("\f2time penalty for lower skill level (20 seconds each): %d seconds", pen);
@@ -426,7 +425,7 @@ struct fpsclient : igameclient
         s_strcpy(clientmap, name);
         sb.showscores(false);
         intermission = false;
-        maptime = 0;
+        maptime = lastmillis;
         if(*name) conoutf("\f2game mode is %s", fpsserver::modestr(gamemode));
         if(m_sp)
         {
