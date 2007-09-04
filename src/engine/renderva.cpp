@@ -500,6 +500,7 @@ void renderoutline()
 
     glPushMatrix();
 
+    glEnable(GL_POLYGON_OFFSET_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
@@ -538,7 +539,8 @@ void renderoutline()
     if(dtoutline) glEnable(GL_DEPTH_TEST);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
+    glDisable(GL_POLYGON_OFFSET_LINE);
+
     glPopMatrix();
 
     if(hasVBO)

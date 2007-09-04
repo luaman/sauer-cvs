@@ -109,10 +109,18 @@ void drawskyoutline()
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     extern int wireframe;
-    if(!wireframe || !editmode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if(!wireframe)
+    {
+        glEnable(GL_POLYGON_OFFSET_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
     glColor3f(0.5f, 0.0f, 0.5f);
     rendersky(true);
-    if(!wireframe || !editmode) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if(!wireframe) 
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_POLYGON_OFFSET_LINE);
+    }
     glDepthMask(GL_TRUE);
     glEnable(GL_TEXTURE_2D);
 

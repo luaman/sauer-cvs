@@ -105,7 +105,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_POLYGON_OFFSET_LINE);
     glPolygonOffset(-3.0f, -3.0f);
 
     glCullFace(GL_FRONT);
@@ -739,7 +738,7 @@ void gl_drawframe(int w, int h)
 
     queryreflections();
 
-    if(!wireframe || !editmode) renderoutline();
+    if(!wireframe) renderoutline();
 
     rendermapmodels();
 
