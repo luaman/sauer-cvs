@@ -857,13 +857,13 @@ void clearenvmaps()
     envmaps.setsize(0);
 }
 
-VAR(aaenvmap, 0, 1, 1);
+VAR(aaenvmap, 0, 2, 4);
 
 GLuint genenvmap(const vec &o, int envmapsize)
 {
-    int rendersize = 1, sizelimit = min(hwcubetexsize, min(screen->w, screen->h));
+    int rendersize = 1<<(envmapsize+aaenvmap), sizelimit = min(hwcubetexsize, min(screen->w, screen->h));
     if(maxtexsize) sizelimit = min(sizelimit, maxtexsize);
-    while(rendersize*2 < sizelimit) rendersize *= 2;
+    while(rendersize > sizelimit) rendersize /= 2;
     int texsize = min(rendersize, 1<<envmapsize);
     if(!aaenvmap) rendersize = texsize;
     GLuint tex, rendertex = 0;
