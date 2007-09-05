@@ -234,19 +234,20 @@ struct cubeloader
 
     void load_cube_world(char *mname)
     {
+        int loadingstart = SDL_GetTicks();
         string pakname, cgzname;
         s_sprintf(pakname)("cube/%s", mname);
         s_sprintf(cgzname)("packages/%s.cgz", pakname);
         gzFile f = opengzfile(path(cgzname), "rb9");
         if(!f) { conoutf("could not read cube map %s", cgzname); return; }
-        emptymap(12, true);
-        freeocta(worldroot);
-        worldroot = newcubes(F_SOLID);
         c_header hdr;
         gzread(f, &hdr, sizeof(c_header)-sizeof(int)*16);
         endianswap(&hdr.version, sizeof(int), 4);
-        if(strncmp(hdr.head, "CUBE", 4)!=0) fatal("while reading map: header malformatted");
-        if(hdr.version>5) fatal("this map requires a newer version of sauerbraten");
+        if(strncmp(hdr.head, "CUBE", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; }
+        if(hdr.version>5) { conoutf("map %s requires a newer version of the cube 1 importer", cgzname); gzclose(f); return; }
+        emptymap(12, true);
+        freeocta(worldroot);
+        worldroot = newcubes(F_SOLID);
         s_sprintfd(cs)("importing %s", cgzname);
         computescreen(cs);
         if(hdr.version>=4)
@@ -336,7 +337,7 @@ struct cubeloader
         allchanged();
         loopv(et->getents()) if(et->getents()[i]->type!=ET_LIGHT) dropenttofloor(et->getents()[i]);
         entitiesinoctanodes();
-        conoutf("read cube map %s (%d milliseconds)", cgzname, SDL_GetTicks()-totalmillis);
+        conoutf("read cube map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
         startmap(pakname);
     }
 };
