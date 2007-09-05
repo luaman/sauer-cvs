@@ -549,7 +549,7 @@ int main(int argc, char **argv)
         if(stencilbits) 
         {
             SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, config&2 ? 1 : 0);
-            hasstencil = (config&1)!=0;
+            hasstencil = (config&2)!=0;
         }
         if(fsaa)
         {
