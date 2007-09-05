@@ -7,13 +7,13 @@ struct clientcom : iclientcom
     bool senditemstoserver;     // after a map change, since server doesn't have map data
     int lastping;
 
-    bool connected, remote;
+    bool connected, remote, demoplayback;
 
     bool spectator;
 
     fpsent *player1;
 
-    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), spectator(false), player1(_cl.player1)
+    clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), demoplayback(false), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(clientcom, say, "C", self->toserver(args[0]));
         CCOMMAND(clientcom, name, "s", self->switchname(args[0]));
@@ -768,6 +768,7 @@ struct clientcom : iclientcom
                 int on = getint(p);
                 if(on) player1->state = CS_SPECTATOR;
                 else stopdemo();
+                demoplayback = on!=0;
                 break;
             }
 

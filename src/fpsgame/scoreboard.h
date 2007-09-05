@@ -159,7 +159,7 @@ struct scoreboard : g3d_callback
    
         int gamemode = cl.gamemode;
         s_sprintfd(modemapstr)("%s: %s", fpsserver::modestr(gamemode), cl.getclientmap()[0] ? cl.getclientmap() : "[new map]");
-        if((gamemode>1 || (gamemode==0 && multiplayer(false))) && cl.minremain >= 0)
+        if((gamemode>1 || (gamemode==0 && (multiplayer(false) || cl.cc.demoplayback))) && cl.minremain >= 0)
         {
             if(!cl.minremain) s_strcat(modemapstr, ", intermission");
             else
@@ -201,13 +201,13 @@ struct scoreboard : g3d_callback
             g.text("", 0, "server");
             loopscoregroup(o,
             {
-                if(o==cl.player1 && highlightscore() && multiplayer(false))
+                if(o==cl.player1 && highlightscore() && (multiplayer(false) || cl.cc.demoplayback))
                 {
                     g.pushlist();
                     g.background(0x808080, numgroups>1 ? 3 : 5);
                 }
                 g.text("", 0, icon);
-                if(o==cl.player1 && highlightscore() && multiplayer(false)) g.poplist();
+                if(o==cl.player1 && highlightscore() && (multiplayer(false) || cl.cc.demoplayback)) g.poplist();
             });
             g.poplist();
 
@@ -230,7 +230,7 @@ struct scoreboard : g3d_callback
                 g.poplist();
             }
 
-            if(multiplayer(false))
+            if(multiplayer(false) || cl.cc.demoplayback)
             {
                 if(showpj())
                 {
