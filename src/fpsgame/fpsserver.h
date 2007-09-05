@@ -142,7 +142,7 @@ struct fpsserver : igameserver
         int modevote;
         int privilege;
         bool spectator, local, timesync;
-        int gameoffset;
+        int gameoffset, lastevent;
         gamestate state;
         vector<gameevent> events;
         vector<uchar> position, messages;
@@ -162,6 +162,7 @@ struct fpsserver : igameserver
             state.reset();
             events.setsizenodelete(0);
             timesync = false;
+            lastevent = 0;
         }
 
         void reset()
@@ -1651,7 +1652,12 @@ struct fpsserver : igameserver
             while(ci->events.length())
             {
                 gameevent &e = ci->events[0];
-                if(e.type<GE_SUICIDE && e.shot.millis>gamemillis) break;
+                if(e.type<GE_SUICIDE)
+                {
+                    if(e.shot.millis>gamemillis) break;
+                    if(e.shot.millis<ci->lastevent) { clearevent(ci); continue; }
+                    ci->lastevent = e.shot.millis;
+                }
                 switch(e.type)
                 {
                     case GE_SHOT: processevent(ci, e.shot); break;
