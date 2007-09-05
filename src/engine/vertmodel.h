@@ -50,18 +50,19 @@ struct vertmodel : model
         Texture *tex, *masks, *envmap;
         int override;
         Shader *shader;
-        float spec, ambient, glow, envmapmin, envmapmax, translucency, scrollu, scrollv, alphatest;
+        float spec, ambient, glow, fullbright, envmapmin, envmapmax, translucency, scrollu, scrollv, alphatest;
         bool alphablend;
 
-        skin() : owner(0), tex(notexture), masks(notexture), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), envmapmin(0), envmapmax(0), translucency(0.5f), scrollu(0), scrollv(0), alphatest(0.9f), alphablend(true) {}
+        skin() : owner(0), tex(notexture), masks(notexture), envmap(NULL), override(0), shader(NULL), spec(1.0f), ambient(0.3f), glow(3.0f), fullbright(0), envmapmin(0), envmapmax(0), translucency(0.5f), scrollu(0), scrollv(0), alphatest(0.9f), alphablend(true) {}
 
         bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
-        bool normals() { return renderpath!=R_FIXEDFUNCTION || lightmodels || envmapped(); }
+        bool normals() { return renderpath!=R_FIXEDFUNCTION || (lightmodels && !fullbright) || envmapped(); }
 
         void setuptmus(animstate &as, bool masked)
         {
-            if(lightmodels && !enablelighting) { glEnable(GL_LIGHTING); enablelighting = true; }
+            if(fullbright && enablelighting) { glDisable(GL_LIGHTING); enablelighting = false; }
+            else if(lightmodels && !enablelighting) { glEnable(GL_LIGHTING); enablelighting = true; }
             if(masked!=enableglow) lasttex = lastmasks = NULL;
             if(masked)
             {
@@ -69,13 +70,13 @@ struct vertmodel : model
                 int glowscale = glow>2 ? 4 : (glow > 1 ? 2 : 1);
                 float envmap = as.anim&ANIM_ENVMAP && envmapmax>0 ? 0.2f*envmapmax + 0.8f*envmapmin : 1;
                 colortmu(0, glow/glowscale, glow/glowscale, glow/glowscale);
-                if(lightmodels)
+                if(fullbright) glColor4f(fullbright/glowscale, fullbright/glowscale, fullbright/glowscale, envmap);
+                else if(lightmodels)
                 {
                     GLfloat material[4] = { 1.0f/glowscale, 1.0f/glowscale, 1.0f/glowscale, envmap };
                     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
                 }
-                else 
-                    glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, envmap);
+                else glColor4f(lightcolor.x/glowscale, lightcolor.y/glowscale, lightcolor.z/glowscale, envmap);
 
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 if(!enableglow || (!enableenvmap && as.anim&ANIM_ENVMAP && envmapmax>0) || as.anim&ANIM_TRANSLUCENT)
@@ -99,14 +100,15 @@ struct vertmodel : model
             else
             {
                 if(enableglow) disableglow(); 
-                if(lightmodels) 
+                if(fullbright) glColor4f(fullbright, fullbright, fullbright, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
+                else if(lightmodels) 
                 {
                     GLfloat material[4] = { 1, 1, 1, as.anim&ANIM_TRANSLUCENT ? translucency : 1 };
                     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, material);
                 }
                 else glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
             }
-            if(lightmodels)
+            if(lightmodels && !fullbright)
             {
                 float ambientk = min(ambient*0.75f, 1), 
                       diffusek = 1-ambientk;
@@ -135,24 +137,32 @@ struct vertmodel : model
                 if(!modelshaderenvmap)       modelshaderenvmap       = lookupshaderbyname("envmapmodel");
                 if(!modelshaderenvmapnospec) modelshaderenvmapnospec = lookupshaderbyname("envmapnospecmodel");
 
-                glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
-
-                setenvparamf("specscale", SHPARAM_PIXEL, 2, spec, spec, spec);
-                setenvparamf("ambient", SHPARAM_VERTEX, 3, ambient, ambient, ambient, 1);
-                setenvparamf("ambient", SHPARAM_PIXEL, 3, ambient, ambient, ambient, 1);
+                if(fullbright) 
+                {
+                    glColor4f(fullbright/2, fullbright/2, fullbright/2, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
+                    setenvparamf("ambient", SHPARAM_VERTEX, 3, 2, 2, 2, 1);
+                    setenvparamf("ambient", SHPARAM_PIXEL, 3, 2, 2, 2, 1);
+                }
+                else 
+                {
+                    glColor4f(lightcolor.x, lightcolor.y, lightcolor.z, as.anim&ANIM_TRANSLUCENT ? translucency : 1);
+                    setenvparamf("specscale", SHPARAM_PIXEL, 2, spec, spec, spec);
+                    setenvparamf("ambient", SHPARAM_VERTEX, 3, ambient, ambient, ambient, 1);
+                    setenvparamf("ambient", SHPARAM_PIXEL, 3, ambient, ambient, ambient, 1);
+                }
                 setenvparamf("glowscale", SHPARAM_PIXEL, 4, glow, glow, glow);
                 setenvparamf("millis", SHPARAM_VERTEX, 5, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
 
                 if(shader) shader->set();
                 else if(as.anim&ANIM_ENVMAP && envmapmax>0)
                 {
-                    if(lightmodels && (masked || spec>=0.01f)) modelshaderenvmap->set();
+                    if(lightmodels && !fullbright && (masked || spec>=0.01f)) modelshaderenvmap->set();
                     else modelshaderenvmapnospec->set();
                     setlocalparamf("envmapscale", SHPARAM_VERTEX, 5, envmapmin-envmapmax, envmapmax);
                 }
-                else if(masked && lightmodels) modelshadermasks->set();
+                else if(masked && lightmodels && !fullbright) modelshadermasks->set();
                 else if(masked && glowmodels) modelshadermasksnospec->set();
-                else if(spec>=0.01f && lightmodels) modelshader->set();
+                else if(spec>=0.01f && lightmodels && !fullbright) modelshader->set();
                 else modelshadernospec->set();
             }
         }
@@ -1097,10 +1107,11 @@ struct vertmodel : model
                     setenvparamf("direction", SHPARAM_VERTEX, 0, rdir.x, rdir.y, rdir.z);
                     setenvparamf("camera", SHPARAM_VERTEX, 1, rcampos.x, rcampos.y, rcampos.z, 1);
                 }
-                else if(lightmodels)
+                else if(lightmodels) loopv(skins) if(!skins[i].fullbright)
                 {
                     GLfloat pos[4] = { rdir.x*1000, rdir.y*1000, rdir.z*1000, 0 };
                     glLightfv(GL_LIGHT0, GL_POSITION, pos);
+                    break;
                 }
             }
 
@@ -1299,6 +1310,11 @@ struct vertmodel : model
     virtual void settranslucency(float translucency)
     {
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].translucency = translucency;
+    }
+
+    virtual void setfullbright(float fullbright)
+    {
+        loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].fullbright = fullbright;
     }
 
     virtual void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)

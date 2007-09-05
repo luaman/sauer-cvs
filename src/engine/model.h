@@ -30,6 +30,7 @@ struct model
     virtual void setalphatest(float alpha) {}
     virtual void setalphablend(bool blend) {}
     virtual void settranslucency(float translucency) {}
+    virtual void setfullbright(float fullbright) {}
 
     virtual void startrender() {}
     virtual void endrender() {}

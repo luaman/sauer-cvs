@@ -339,6 +339,11 @@ void md3translucent(char *meshname, float *translucency)
     loopmd3skins(meshname, s, s.translucency = *translucency);
 }
 
+void md3fullbright(char *meshname, float *fullbright)
+{
+    loopmd3skins(meshname, s, s.fullbright = *fullbright);
+}
+
 void md3shader(char *meshname, char *shader)
 {
     loopmd3skins(meshname, s, s.shader = lookupshaderbyname(shader));
@@ -379,6 +384,7 @@ COMMAND(md3alphatest, "sf");
 COMMAND(md3alphablend, "si");
 COMMAND(md3envmap, "ss");
 COMMAND(md3translucent, "sf");
+COMMAND(md3fullbright, "sf");
 COMMAND(md3shader, "ss");
 COMMAND(md3scroll, "sff");
 COMMAND(md3anim, "siifi");

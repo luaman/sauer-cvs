@@ -94,6 +94,14 @@ void mdltranslucent(float *translucency)
 
 COMMAND(mdltranslucent, "f");
 
+void mdlfullbright(float *fullbright)
+{
+    checkmdl;
+    loadingmodel->setfullbright(*fullbright);
+}
+
+COMMAND(mdlfullbright, "f");
+
 void mdlshader(char *shader)
 {
     checkmdl;
