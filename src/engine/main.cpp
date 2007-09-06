@@ -430,6 +430,9 @@ static bool findarg(int argc, char **argv, char *str)
     return false;
 }
 
+VARP(clockerror, 990000, 1000000, 1010000);
+VARP(clockfix, 0, 0, 1);
+
 int main(int argc, char **argv)
 {
     #ifdef WIN32
@@ -644,6 +647,8 @@ int main(int argc, char **argv)
     {
         static int frames = 0;
         int millis = SDL_GetTicks();
+        if(clockfix) millis = int(millis*(double(clockerror)/1000000));
+        if(millis<totalmillis) millis = totalmillis;
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
         curtime = (elapsed*gamespeed)/100;
