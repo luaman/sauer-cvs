@@ -430,8 +430,10 @@ static bool findarg(int argc, char **argv, char *str)
     return false;
 }
 
-VARP(clockerror, 990000, 1000000, 1010000);
-VARP(clockfix, 0, 0, 1);
+static int clockrealbase = 0, clockvirtbase = 0;
+static void clockreset() { clockrealbase = SDL_GetTicks(); clockvirtbase = totalmillis; }
+VARFP(clockerror, 990000, 1000000, 1010000, clockreset());
+VARFP(clockfix, 0, 0, 1, clockreset());
 
 int main(int argc, char **argv)
 {
@@ -646,8 +648,9 @@ int main(int argc, char **argv)
     for(;;)
     {
         static int frames = 0;
-        int millis = SDL_GetTicks();
+        int millis = SDL_GetTicks() - clockrealbase;
         if(clockfix) millis = int(millis*(double(clockerror)/1000000));
+        millis += clockvirtbase;
         if(millis<totalmillis) millis = totalmillis;
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
