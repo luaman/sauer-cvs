@@ -530,54 +530,6 @@ bool plcollide(physent *d, const vec &dir)    // collide with player or monster
     return true;
 }
 
-void rotatebb(vec &center, vec &radius, int yaw)
-{
-    yaw = (yaw+7)-(yaw+7)%15;
-    yaw = 180-yaw;
-    if(yaw<0) yaw += 360;
-    switch(yaw)
-    {
-        case 0: break;
-        case 180: 
-            center.x = -center.x;
-            center.y = -center.y;
-            break;
-        case 90:
-            swap(float, radius.x, radius.y);
-            swap(float, center.x, center.y);
-            center.x = -center.x;
-            break;
-        case 270: 
-            swap(float, radius.x, radius.y); 
-            swap(float, center.x, center.y);
-            center.y = -center.y;
-            break;
-        default: 
-            radius.x = radius.y = max(radius.x, radius.y) + max(fabs(center.x), fabs(center.y));
-            center.x = center.y = 0.0f;
-            break;
-    }
-}
-
-bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // collide with a mapmodel
-{
-    const vector<extentity *> &ents = et->getents();
-    loopv(oc.mapmodels)
-    {
-        extentity &e = *ents[oc.mapmodels[i]];
-        if(e.attr3 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
-        model *m = loadmodel(NULL, e.attr2);
-        if(!m || !m->collide) continue;
-        vec center, radius;
-        m->collisionbox(0, center, radius);
-        center.z -= radius.z;
-        radius.z *= 2;
-        rotatebb(center, radius, e.attr1);
-        if(!rectcollide(d, dir, center.add(e.o), radius.x, radius.y, radius.z, 0)) return false;
-    }
-    return true;
-}
-
 bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
     if(isentirelysolid(c) || (c.ext && (d->type<ENT_CAMERA || c.ext->material != MAT_CLIP) && isclipped(c.ext->material)))
@@ -629,7 +581,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
                     if(f.dot(dir) >= -cutoff) continue;
                     if(d->type<ENT_CAMERA && dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
                 }
-                if(f.x && (f.x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist && f.dist(vec(p.o.x + (f.x>0 ? -p.r.x : p.r.x), o.y, o.z)) >= vec(0, f.y*r, f.z*zr).magnitude()) continue; 
+                if(f.x && (f.x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist && f.dist(vec(p.o.x + (f.x>0 ? -p.r.x : p.r.x), o.y, o.z)) >= vec(0, f.y*r, f.z*zr).magnitude()) continue;
                 if(f.y && (f.y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist && f.dist(vec(o.x, p.o.y + (f.y>0 ? -p.r.y : p.r.y), o.z)) >= vec(f.x*r, 0, f.z*zr).magnitude()) continue;
                 if(f.z && (f.z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist && f.dist(vec(o.x, o.y, p.o.z + (f.z>0 ? -p.r.z : p.r.z))) >= vec(f.x*r, f.y*r, 0).magnitude()) continue;
                 w = &f;
@@ -650,7 +602,7 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
 {
     loopoctabox(cor, size, bo, bs)
     {
-        if(c[i].ext && c[i].ext->ents) if(!mmcollide(d, dir, *c[i].ext->ents)) return false;
+        if(c[i].ext && c[i].ext->ents) if(!mmcollide(d, dir, cutoff, *c[i].ext->ents, wall)) return false;
         ivec o(i, cor.x, cor.y, cor.z, size);
         if(c[i].children)
         {
@@ -1175,7 +1127,6 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
     // apply any player generated changes in velocity
     modifyvelocity(pl, local, water, floating, curtime);
-
     // apply gravity
     if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, secs);
 

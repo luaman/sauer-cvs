@@ -29,6 +29,14 @@ void mdlcollide(int *collide)
 
 COMMAND(mdlcollide, "i");
 
+void mdltricollide(int *tricollide)
+{
+    checkmdl;
+    loadingmodel->tricollide = *tricollide!=0;
+}   
+    
+COMMAND(mdltricollide, "i");
+
 void mdlspec(int *percent)
 {
     checkmdl;
