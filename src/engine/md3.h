@@ -193,12 +193,32 @@ struct md3 : vertmodel
         return group;
     }
 
+    bool loaddefaultparts()
+    {
+        const char *pname = parentdir(loadname);
+        part &mdl = *new part;
+        parts.add(&mdl);
+        mdl.model = this;
+        mdl.index = 0;
+        s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
+        mdl.meshes = sharemeshes(path(name1));
+        if(!mdl.meshes)
+        {
+            s_sprintfd(name2)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
+            mdl.meshes = sharemeshes(path(name2));
+            if(!mdl.meshes) return false;
+        }
+        Texture *tex, *masks;
+        loadskin(loadname, pname, tex, masks);
+        mdl.initskins(tex, masks);
+        if(tex==notexture) conoutf("could not load model skin for %s", name1);
+        return true;
+    }
+
     bool load()
     {
         if(loaded) return true;
         s_sprintf(md3dir)("packages/models/%s", loadname);
-
-        const char *pname = parentdir(loadname);
         s_sprintfd(cfgname)("packages/models/%s/md3.cfg", loadname);
 
         loadingmd3 = this;
@@ -210,22 +230,7 @@ struct md3 : vertmodel
         else // md3 without configuration, try default tris and skin
         {
             loadingmd3 = NULL;
-            part &mdl = *new part;
-            parts.add(&mdl);
-            mdl.model = this;
-            mdl.index = 0; 
-            s_sprintfd(name1)("packages/models/%s/tris.md3", loadname);
-            mdl.meshes = sharemeshes(path(name1));
-            if(!mdl.meshes)
-            {
-                s_sprintfd(name2)("packages/models/%s/tris.md3", pname);    // try md3 in parent folder (vert sharing)
-                mdl.meshes = sharemeshes(path(name2));
-                if(!mdl.meshes) return false;
-            }
-            Texture *tex, *masks;
-            loadskin(loadname, pname, tex, masks);
-            mdl.initskins(tex, masks);
-            if(tex==notexture) conoutf("could not load model skin for %s", name1);
+            if(!loaddefaultparts()) return false;
         }
         loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;

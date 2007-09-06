@@ -1263,13 +1263,20 @@ struct vertmodel : model
         return false;
     }
 
+    virtual bool loaddefaultparts()
+    {
+        return true;
+    }
+
     void setshader(Shader *shader)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].shader = shader;
     }
 
     void setenvmap(float envmapmin, float envmapmax, Texture *envmap)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins)
         {
             skin &s = parts[i]->skins[j];
@@ -1282,38 +1289,45 @@ struct vertmodel : model
         }
     }
 
-    virtual void setspec(float spec) 
+    void setspec(float spec) 
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].spec = spec;
     }
 
-    virtual void setambient(float ambient)
+    void setambient(float ambient)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].ambient = ambient;
     }
 
-    virtual void setglow(float glow)
+    void setglow(float glow)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].glow = glow;
     }
 
-    virtual void setalphatest(float alphatest)
+    void setalphatest(float alphatest)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].alphatest = alphatest;
     }
 
-    virtual void setalphablend(bool alphablend)
+    void setalphablend(bool alphablend)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].alphablend = alphablend;
     }
 
-    virtual void settranslucency(float translucency)
+    void settranslucency(float translucency)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].translucency = translucency;
     }
 
-    virtual void setfullbright(float fullbright)
+    void setfullbright(float fullbright)
     {
+        if(parts.empty()) loaddefaultparts();
         loopv(parts) loopvj(parts[i]->skins) parts[i]->skins[j].fullbright = fullbright;
     }
 
