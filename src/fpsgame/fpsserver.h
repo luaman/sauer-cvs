@@ -86,6 +86,11 @@ struct fpsserver : igameserver
             return state==CS_ALIVE || (state==CS_DEAD && gamemillis - lastdeath <= DEATHMILLIS);
         }
 
+        bool waitexpired(int gamemillis)
+        {
+            return gamemillis - lastshot >= gunwait;
+        }
+
         void reset()
         {
             if(state!=CS_SPECTATOR) state = CS_DEAD;
@@ -1078,13 +1083,17 @@ struct fpsserver : igameserver
             {
                 gameevent &shot = ci->addevent();
                 shot.type = GE_SHOT;
-                if(!ci->timesync)
-                {
-                    ci->timesync = true;
-                    ci->gameoffset = gamemillis - getint(p);
-                    shot.shot.millis = gamemillis;
+                #define seteventmillis(event) \
+                { \
+                    if(!ci->timesync || (ci->events.length()==1 && ci->state.waitexpired(gamemillis))) \
+                    { \
+                        ci->timesync = true; \
+                        ci->gameoffset = gamemillis - getint(p); \
+                        event.millis = gamemillis; \
+                    } \
+                    else event.millis = ci->gameoffset + getint(p); \
                 }
-                else shot.shot.millis = ci->gameoffset + getint(p);
+                seteventmillis(shot.shot);
                 shot.shot.gun = getint(p);
                 loopk(3) shot.shot.from[k] = getint(p)/DMF;
                 loopk(3) shot.shot.to[k] = getint(p)/DMF;
@@ -1105,13 +1114,7 @@ struct fpsserver : igameserver
             {
                 gameevent &exp = ci->addevent();
                 exp.type = GE_EXPLODE;
-                if(!ci->timesync)
-                {
-                    ci->timesync = true;
-                    ci->gameoffset = gamemillis - getint(p);
-                    exp.explode.millis = gamemillis;
-                }
-                else exp.explode.millis = ci->gameoffset + getint(p);
+                seteventmillis(exp.explode);
                 exp.explode.gun = getint(p);
                 int hits = getint(p);
                 loopk(hits)
