@@ -670,7 +670,6 @@ int main(int argc, char **argv)
 
         serverslice(0);
 
-        if(frames) updatefpshistory(elapsed);
         frames++;
 
         // miscellaneous general game effects
@@ -681,7 +680,11 @@ int main(int argc, char **argv)
 
         inbetweenframes = false;
         SDL_GL_SwapBuffers();
-        if(frames>2) gl_drawframe(screen->w, screen->h);
+        if(frames>5) 
+        {
+            updatefpshistory(elapsed);
+            gl_drawframe(screen->w, screen->h);
+        }
         inbetweenframes = true;
 
         SDL_Event event;
