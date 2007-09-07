@@ -144,7 +144,7 @@ COMMANDN(connect, connects, "s");
 COMMAND(lanconnect, "");
 COMMANDN(disconnect, trydisconnect, "");
 
-int lastupdate = 0;
+int lastupdate = -1000;
 
 void sendpackettoserv(ENetPacket *packet, int chan)
 {
