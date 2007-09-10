@@ -547,8 +547,6 @@ struct fpsserver : igameserver
         if(!demotmp) return;
         setvbuf(demotmp, NULL, _IONBF, 0);
 
-        sendservmsg("recording demo");
-
         demorecord = gzdopen(_dup(_fileno(demotmp)), "wb9");
         if(!demorecord)
         {
@@ -556,6 +554,8 @@ struct fpsserver : igameserver
             demotmp = NULL;
             return;
         }
+
+        sendservmsg("recording demo");
 
         demoheader hdr;
         memcpy(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic));
