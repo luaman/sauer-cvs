@@ -346,7 +346,7 @@ struct gui : g3d_gui
         length = min(length, (int)sizeof(string)-1);
         int w = char_width('%')*length + FONTW;
         char *result = NULL;
-        if(!layoutpass)
+        if(visible() && !layoutpass)
 		{
             bool hit = ishit(w, FONTH), editing = !strcmp(fieldname, name);            
             if(hit && (mousebuttons&G3D_DOWN) && !editing) //mouse request focus
