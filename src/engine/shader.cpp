@@ -215,7 +215,7 @@ void Shader::allocenvparams(Slot *slot)
         }
         else UNIFORMTEX("lightmap", 1);
         if(type & SHADER_ENVMAP) UNIFORMTEX("envmap", tmu++);
-        if(hasTF) UNIFORMTEX("shadowmap", 7);
+        if(hasTF && hasFBO) UNIFORMTEX("shadowmap", 7);
         int stex = 0;
         loopv(slot->sts)
         {
