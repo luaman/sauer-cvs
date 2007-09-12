@@ -546,7 +546,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             loopv(slot.sts) if(slot.sts[i].type==TEX_ENVMAP) { envmap = EMID_CUSTOM; break; }
             if(envmap==EMID_NONE) envmap = closestenvmap(i, x, y, z, size); 
         }
-        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? e.normals : NULL, envmap);
+        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
         if(!lodcube && slot.autograss && i!=O_BOTTOM) 
         {
             grasstri &g = grasstris.add();
