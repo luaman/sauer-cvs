@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-VARP(shadowmap, 0, 0, 1);
+VARP(shadowmap, 0, 1, 1);
 
 GLuint shadowmaptex = 0, shadowmapfb = 0, shadowmapdb = 0;
 GLuint blurtex = 0, blurfb = 0;
