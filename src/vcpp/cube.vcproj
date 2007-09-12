@@ -1074,6 +1074,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\shadowmap.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\texture.cpp"
 					>
 					<FileConfiguration
