@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
-VARP(shadowmap, 0, 1, 1);
+VARP(shadowmap, 0, 0, 1);
 
 GLuint shadowmaptex = 0, shadowmapfb = 0, shadowmapdb = 0;
 GLuint blurtex = 0, blurfb = 0;
@@ -19,6 +19,7 @@ VARFP(shadowmapsize, 7, 9, 11, cleanshadowmap());
 VARP(shadowmapradius, 64, 64, 256);
 VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
+VAR(fpshadowmap, 0, 1, 1);
 
 void createshadowmap()
 {
@@ -26,8 +27,10 @@ void createshadowmap()
 
     int smsize = min(1<<shadowmapsize, hwtexsize);
 
+    GLenum format = fpshadowmap ? GL_RGBA16F_ARB : GL_RGBA16_EXT;
+
     glGenTextures(1, &shadowmaptex);
-    createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, GL_RGBA16F_ARB);
+    createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, format);
 
     glGenFramebuffers_(1, &shadowmapfb);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
@@ -48,7 +51,7 @@ void createshadowmap()
     } while(depthfmts[++find]);
 
     glGenTextures(1, &blurtex);
-    createtexture(blurtex, smsize, smsize, NULL, 3, false, GL_RGBA16F_ARB);
+    createtexture(blurtex, smsize, smsize, NULL, 3, false, format);
 
     glGenFramebuffers_(1, &blurfb);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, blurfb);
@@ -96,7 +99,7 @@ void pushshadowmap()
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
     glTranslatef(0.5f, 0.5f, 0);
-    glScalef(0.5f, 0.5f, 1);
+    glScalef(0.5f, 0.5f, -1);
     glMultMatrixd(shadowmapprojection);
     glMultMatrixd(shadowmapmodelview);
     glPushMatrix();
@@ -177,11 +180,7 @@ void rendershadowmap()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(-shadowmapradius, shadowmapradius, -shadowmapradius, shadowmapradius, 0.0f, shadowmapdist);
-
-    GLint foop, bar;
-    glGetIntegerv(GL_PROJECTION_STACK_DEPTH, &foop);
-    glGetIntegerv(GL_MAX_PROJECTION_STACK_DEPTH, &bar);
+    glOrtho(-shadowmapradius, shadowmapradius, -shadowmapradius, shadowmapradius, -shadowmapdist, shadowmapdist);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
