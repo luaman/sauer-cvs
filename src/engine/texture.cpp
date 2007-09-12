@@ -190,28 +190,12 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         case GL_RGB16F_ARB:
         case GL_RGB32F_ARB:
             format = GL_RGB;
-#ifdef __APPLE__
-            /* Apple bug, crashes if any other component format is used */
-            component = GL_RGB;
-#else
-            /* performance is much better on nvidia if this component format is used */
-            /* necessary if using ATI_texture_float for bilinear filtering */
-            component = GL_RGB16_EXT;
-#endif
             type = GL_FLOAT;
             break;
 
         case GL_RGBA16F_ARB:
         case GL_RGBA32F_ARB:
             format = GL_RGBA;
-#ifdef __APPLE__
-            /* Apple bug, crashes if any other component format is used */
-            component = GL_RGBA;
-#else
-            /* performance is much better on nvidia if this component format is used */
-            /* necessary if using ATI_texture_float for bilinear filtering */
-            component = GL_RGBA16_EXT;
-#endif
             type = GL_FLOAT;
             break;
 
@@ -219,9 +203,15 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             type = GL_FLOAT;
             break;
 
-        case GL_RGB8:
         case GL_RGB5:
+        case GL_RGB8:
+        case GL_RGB16:
             format = GL_RGB;
+            break;
+
+        case GL_RGBA8:
+        case GL_RGBA16:
+            format = GL_RGBA;
             break;
     }
     uchar *scaled = NULL;

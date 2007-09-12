@@ -215,7 +215,7 @@ void Shader::allocenvparams(Slot *slot)
         }
         else UNIFORMTEX("lightmap", 1);
         if(type & SHADER_ENVMAP) UNIFORMTEX("envmap", tmu++);
-        if(hasTF && hasFBO) UNIFORMTEX("shadowmap", 7);
+        UNIFORMTEX("shadowmap", 7);
         int stex = 0;
         loopv(slot->sts)
         {
@@ -682,7 +682,7 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(s && renderpath!=R_FIXEDFUNCTION)
     {
         // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
-        if(hasTF && hasFBO && strstr(vs, "#pragma CUBE2_shadowmap")) genshadowmapvariant(*s, s->name, vs, ps);
+        if(strstr(vs, "#pragma CUBE2_shadowmap")) genshadowmapvariant(*s, s->name, vs, ps);
         else if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, s->name, vs, ps);
     }
     curparams.setsize(0);

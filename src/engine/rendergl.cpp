@@ -297,18 +297,10 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_EXT_packed_depth_stencil extension.");
     }
 
-    //extern int fpshadowmap;
-    if(strstr(exts, "GL_ARB_texture_float"))
+    if(strstr(exts, "GL_ARB_texture_float") || strstr(exts, "GL_ATI_texture_float"))
     {
         hasTF = true;
-    //    if(strstr(vendor, "ATI")) fpshadowmap = 0;
         //conoutf("Using GL_ARB_texture_float extension");
-    }
-    else if(strstr(exts, "GL_ATI_texture_float"))
-    {
-        hasTF = true;
-   //     fpshadowmap = 0;
-        //conoutf("Using GL_ATI_texture_float extension");
     }
 
     if(strstr(exts, "GL_ARB_texture_cube_map"))
@@ -747,10 +739,13 @@ void gl_drawframe(int w, int h)
 
     if(!hasFBO) drawreflections();
 
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
+    
+    extern GLuint shadowmapfb;
+    if(shadowmap && !shadowmapfb) rendershadowmap();
+
     glClear(GL_DEPTH_BUFFER_BIT|(wireframe && editmode ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
-    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
-   
     if(limitsky()) drawskybox(farplane, true);
 
     rendergeom();

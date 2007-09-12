@@ -440,7 +440,7 @@ void renderbatchedmodel(model *m, batchedmodel &b)
 {
     modelattach *a = NULL;
     if(b.attached>=0) a = &modelattached[b.attached];
-    if((!shadowmap || !hasTF || !hasFBO) && (b.cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil && (!reflecting || refracting))
+    if((!shadowmap || renderpath==R_FIXEDFUNCTION) && (b.cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil && (!reflecting || refracting))
     {
         vec center;
         float radius = m->boundsphere(0/*frame*/, center); // FIXME
@@ -578,7 +578,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(!m) return;
     vec center;
     float radius = 0;
-    bool shadow = (!shadowmap || !hasTF || !hasFBO) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
+    bool shadow = (!shadowmap || renderpath==R_FIXEDFUNCTION) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
     if(cull)
     {
         radius = m->boundsphere(0/*frame*/, center); // FIXME

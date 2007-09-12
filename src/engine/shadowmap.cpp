@@ -19,28 +19,60 @@ VARFP(shadowmapsize, 7, 9, 11, cleanshadowmap());
 VARP(shadowmapradius, 64, 64, 256);
 VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
+VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
+VARFP(shadowmapprecision, 0, 1, 1, cleanshadowmap());
 
 void createshadowmap()
 {
-    if(shadowmaptex || !hasTF || !hasFBO) return;
+    if(shadowmaptex || renderpath==R_FIXEDFUNCTION) return;
 
     int smsize = min(1<<shadowmapsize, hwtexsize);
 
-    GLenum format = GL_RGB16F_ARB;
-
     glGenTextures(1, &shadowmaptex);
-    createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, format);
+
+    if(!hasFBO)
+    {
+        while(smsize > min(screen->w, screen->h)) smsize /= 2;
+        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, GL_RGB);
+        return;
+    }
+
+    static GLenum colorfmts[] = { GL_RGB16F_ARB, GL_RGB16, GL_RGB, GL_RGB8, GL_FALSE };
 
     glGenFramebuffers_(1, &shadowmapfb);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
-    glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, shadowmaptex, 0);
 
+    int find = fpshadowmap && hasTF ? 0 : (shadowmapprecision ? 1 : 2);
+#ifdef __APPLE__
+    // Apple bug, high precision formats cause driver to crash
+    find = max(find, 2);
+#endif
+    do
+    {
+        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, colorfmts[find]);
+        glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, shadowmaptex, 0);
+        if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT)
+            break;
+    } while(colorfmts[++find]);
+
+    GLenum format = colorfmts[find];
+    if(!format) 
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+        glDeleteFramebuffers_(1, &shadowmapfb);
+        shadowmapfb = 0;
+
+        while(smsize > min(screen->w, screen->h)) smsize /= 2;
+        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, GL_RGB);
+        return;
+    }
+ 
     static GLenum depthfmts[] = { GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT32, GL_FALSE };
     
     glGenRenderbuffers_(1, &shadowmapdb);
     glBindRenderbuffer_(GL_RENDERBUFFER_EXT, shadowmapdb);
    
-    int find = 0; 
+    find = 0; 
     do
     {
         glRenderbufferStorage_(GL_RENDERBUFFER_EXT, depthfmts[find], smsize, smsize);
@@ -85,6 +117,8 @@ bool shadowmapping = false;
 
 GLdouble shadowmapprojection[16], shadowmapmodelview[16];
 
+VAR(shadowmapbias, 0, 10, 1024);
+
 void pushshadowmap()
 {
     if(!shadowmap || !shadowmaptex) return;
@@ -97,7 +131,7 @@ void pushshadowmap()
     glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
-    glTranslatef(0.5f, 0.5f, 0);
+    glTranslatef(0.5f, 0.5f, -shadowmapbias/1024.0f);
     glScalef(0.5f, 0.5f, -1);
     glMultMatrixd(shadowmapprojection);
     glMultMatrixd(shadowmapmodelview);
@@ -162,14 +196,23 @@ VAR(smscissor, 0, 1, 1);
     
 void rendershadowmap()
 {
-    if(!shadowmap) return;
+    if(!shadowmap || renderpath==R_FIXEDFUNCTION) return;
+
+    static int lastsize = 0;
+    int smsize = min(1<<shadowmapsize, hwtexsize);
+    if(!shadowmapfb) while(smsize > min(screen->w, screen->h)) smsize /= 2;
+    if(smsize!=lastsize) { cleanshadowmap(); lastsize = smsize; }
+
     if(!shadowmaptex) createshadowmap(); 
     if(!shadowmaptex) return;
 
-    int smsize = min(1<<shadowmapsize, hwtexsize);
+    if(shadowmapfb) 
+    {
+        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
+        glViewport(0, 0, smsize, smsize);
+    }
+    else glViewport(screen->w-smsize, screen->h-smsize, smsize, smsize);
 
-    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
-    glViewport(0, 0, smsize, smsize);
     glClearColor(0, 0, 0, 0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -202,7 +245,7 @@ void rendershadowmap()
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
     shadowmapping = true;
-    glScissor(blurshadowmap+2, blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
+    glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
     if(smscissor) glEnable(GL_SCISSOR_TEST);
     cl->rendergame();
     if(smscissor) glDisable(GL_SCISSOR_TEST);
@@ -213,6 +256,12 @@ void rendershadowmap()
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+
+    if(!shadowmapfb)
+    {
+        glBindTexture(GL_TEXTURE_2D, shadowmaptex);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-smsize, screen->h-smsize, smsize, smsize);
+    }
 
     if(blurshadowmap)
     {
@@ -233,10 +282,13 @@ void rendershadowmap()
 
         loopi(2)
         {
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, i ? shadowmapfb : blurfb);
-            glBindTexture(GL_TEXTURE_2D, i ? blurtex : shadowmaptex);
+            if(shadowmapfb) 
+            {
+                glBindFramebuffer_(GL_FRAMEBUFFER_EXT, i ? shadowmapfb : blurfb);
+                glBindTexture(GL_TEXTURE_2D, i ? blurtex : shadowmaptex);
+            }
  
-            float step = (blursmstep/100.0f)/smsize;
+            float step = blursmstep/(100.0f*smsize);
             setlocalparamf("blurstep", SHPARAM_PIXEL, 1, !i ? step : 0, i ? step : 0, 0, 0);
 
             glBegin(GL_QUADS);
@@ -245,13 +297,15 @@ void rendershadowmap()
             glTexCoord2f(1, 1); glVertex2f(1, 1);
             glTexCoord2f(0, 1); glVertex2f(-1, 1);
             glEnd();
+
+            if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-smsize, screen->h-smsize, smsize, smsize);
         }
         
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
 
-    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+    if(shadowmapfb) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     glViewport(0, 0, screen->w, screen->h);
 }
 
