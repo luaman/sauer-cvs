@@ -195,6 +195,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             component = GL_RGB;
 #else
             /* performance is much better on nvidia if this component format is used */
+            /* necessary if using ATI_texture_float for bilinear filtering */
             component = GL_RGB16_EXT;
 #endif
             type = GL_FLOAT;
@@ -208,6 +209,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             component = GL_RGBA;
 #else
             /* performance is much better on nvidia if this component format is used */
+            /* necessary if using ATI_texture_float for bilinear filtering */
             component = GL_RGBA16_EXT;
 #endif
             type = GL_FLOAT;

@@ -297,6 +297,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_EXT_packed_depth_stencil extension.");
     }
 
+    //extern int fpshadowmap;
     if(strstr(exts, "GL_ARB_texture_float"))
     {
         hasTF = true;
