@@ -596,7 +596,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
                 if(center.dist(camera1->o)-radius>reflectdist) return;
             }
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
-            if(shadowmapping && !isshadowmapcaster(center, radius)) return;
+            if(shadowmapping && !isshadowmapcaster(center, vec(radius, radius, radius))) return;
         }
         if(!shadowmapping && (cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     }
