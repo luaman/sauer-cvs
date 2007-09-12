@@ -19,7 +19,6 @@ VARFP(shadowmapsize, 7, 9, 11, cleanshadowmap());
 VARP(shadowmapradius, 64, 64, 256);
 VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
-VARF(fpshadowmap, 0, 0, 1, cleanshadowmap());
 
 void createshadowmap()
 {
@@ -27,7 +26,7 @@ void createshadowmap()
 
     int smsize = min(1<<shadowmapsize, hwtexsize);
 
-    GLenum format = fpshadowmap ? GL_RGBA16F_ARB : GL_RGBA16_EXT;
+    GLenum format = GL_RGB16F_ARB;
 
     glGenTextures(1, &shadowmaptex);
     createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, format);

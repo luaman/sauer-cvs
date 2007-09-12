@@ -297,17 +297,16 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         //conoutf("Using GL_EXT_packed_depth_stencil extension.");
     }
 
-    extern int fpshadowmap;
     if(strstr(exts, "GL_ARB_texture_float"))
     {
         hasTF = true;
-        if(strstr(vendor, "ATI")) fpshadowmap = 0;
+    //    if(strstr(vendor, "ATI")) fpshadowmap = 0;
         //conoutf("Using GL_ARB_texture_float extension");
     }
     else if(strstr(exts, "GL_ATI_texture_float"))
     {
         hasTF = true;
-        fpshadowmap = 0;
+   //     fpshadowmap = 0;
         //conoutf("Using GL_ATI_texture_float extension");
     }
 
