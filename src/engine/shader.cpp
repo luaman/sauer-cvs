@@ -476,7 +476,7 @@ static uint findusedtexcoords(char *str)
 
 VAR(reservedynlighttc, 1, 0, 0);
 
-static void gendynlightvariant(Shader &s, char *vs, char *ps, int row = 0)
+static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int row = 0)
 {
     int numlights = 0, lights[MAXDYNLIGHTS];
     if(s.type & SHADER_GLSLANG) numlights = MAXDYNLIGHTS;
@@ -560,13 +560,13 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps, int row = 0)
         vsdl.put(vspragma, strlen(vspragma)+1);
         psdl.put(pspragma, strlen(pspragma)+1);
        
-        s_sprintfd(name)("<dynlight %d>%s", i+1, s.name);
+        s_sprintfd(name)("<dynlight %d>%s", i+1, sname);
         Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf(), &s, row); 
         if(!variant) return;
     }
 }
 
-static void genshadowmapvariant(Shader &s, char *vs, char *ps)
+static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
 {
     int smtc = -1;
     if(!(s.type & SHADER_GLSLANG))
@@ -654,11 +654,11 @@ static void genshadowmapvariant(Shader &s, char *vs, char *ps)
     vssm.put(vspragma, strlen(vspragma)+1);
     pssm.put(pspragma, strlen(pspragma)+1);
 
-    s_sprintfd(name)("<shadowmap>%s", s.name);
+    s_sprintfd(name)("<shadowmap>%s", sname);
     Shader *variant = newshader(s.type, name, vssm.getbuf(), pssm.getbuf(), &s, 1);
     if(!variant) return;
 
-    if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*variant, vssm.getbuf(), pssm.getbuf(), 1);
+    if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(s, name, vssm.getbuf(), pssm.getbuf(), 1);
 }
 
 void shader(int *type, char *name, char *vs, char *ps)
@@ -682,8 +682,8 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(s && renderpath!=R_FIXEDFUNCTION)
     {
         // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
-        if(hasTF && hasFBO && strstr(vs, "#pragma CUBE2_shadowmap")) genshadowmapvariant(*s, vs, ps);
-        else if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
+        if(hasTF && hasFBO && strstr(vs, "#pragma CUBE2_shadowmap")) genshadowmapvariant(*s, s->name, vs, ps);
+        else if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, s->name, vs, ps);
     }
     curparams.setsize(0);
 }
