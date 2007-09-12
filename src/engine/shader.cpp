@@ -215,6 +215,7 @@ void Shader::allocenvparams(Slot *slot)
         }
         else UNIFORMTEX("lightmap", 1);
         if(type & SHADER_ENVMAP) UNIFORMTEX("envmap", tmu++);
+        if(hasTF) UNIFORMTEX("shadowmap", 7);
         int stex = 0;
         loopv(slot->sts)
         {
@@ -418,7 +419,7 @@ VARFN(shaders, useshaders, 0, 1, 1, initwarning());
 VARF(shaderprecision, 0, 0, 2, initwarning());
 VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
 
-Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NULL)
+Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NULL, int row = 0)
 {
     char *rname = newstring(name);
     Shader &s = shaders[rname];
@@ -435,7 +436,7 @@ Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NU
         {
             compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name, !variant);
             compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name, !variant);
-            linkglslprogram(s);
+            linkglslprogram(s, !variant);
         }
         else
         {
@@ -455,7 +456,7 @@ Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NU
             return NULL;
         }
     }
-    if(variant) variant->variants.add(&s);
+    if(variant) variant->variants[row].add(&s);
     return &s;
 }
 
@@ -475,7 +476,7 @@ static uint findusedtexcoords(char *str)
 
 VAR(reservedynlighttc, 1, 0, 0);
 
-static void gendynlightvariant(Shader &s, char *vs, char *ps)
+static void gendynlightvariant(Shader &s, char *vs, char *ps, int row = 0)
 {
     int numlights = 0, lights[MAXDYNLIGHTS];
     if(s.type & SHADER_GLSLANG) numlights = MAXDYNLIGHTS;
@@ -560,9 +561,104 @@ static void gendynlightvariant(Shader &s, char *vs, char *ps)
         psdl.put(pspragma, strlen(pspragma)+1);
        
         s_sprintfd(name)("<dynlight %d>%s", i+1, s.name);
-        Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf(), &s); 
+        Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf(), &s, row); 
         if(!variant) return;
     }
+}
+
+static void genshadowmapvariant(Shader &s, char *vs, char *ps)
+{
+    int smtc = -1;
+    if(!(s.type & SHADER_GLSLANG))
+    {
+        uint usedtc = findusedtexcoords(vs);
+        GLint maxtc = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
+        if(maxtc-reservedynlighttc<=0) return;
+        loopi(maxtc-reservedynlighttc) if(!(usedtc&(1<<i))) { smtc = i; break; }
+        if(smtc<0) return;
+    }
+
+    char *vspragma = strstr(vs, "#pragma CUBE2_shadowmap"), *pspragma = strstr(ps, "#pragma CUBE2_shadowmap");
+    string pslight;
+    vspragma += strcspn(vspragma, "\n");
+    if(*vspragma) vspragma++;
+
+    if(sscanf(pspragma, "#pragma CUBE2_shadowmap %s", pslight)!=1) return;
+
+    pspragma += strcspn(pspragma, "\n");
+    if(*pspragma) pspragma++;
+
+    vector<char> vssm, pssm;
+
+    if(s.type & SHADER_GLSLANG)
+    {
+        const char *tc = "varying vec3 shadowmaptc;\n";
+        vssm.put(tc, strlen(tc));
+        pssm.put(tc, strlen(tc));
+        const char *smtex = "uniform sampler2D shadowmap;\n";
+        pssm.put(smtex, strlen(smtex));
+        if(!strstr(ps, "ambient"))
+        {
+            const char *amb = "uniform vec4 ambient;\n";
+            pssm.put(amb, strlen(amb));
+        }
+    }
+
+    vssm.put(vs, vspragma-vs);
+    pssm.put(ps, pspragma-ps);
+
+    if(s.type & SHADER_GLSLANG)
+    {
+        const char *tc =
+            "shadowmaptc = vec3(gl_TextureMatrix[2] * gl_Vertex);\n"
+            "shadowmaptc.z -= gl_Color.w;\n";
+        vssm.put(tc, strlen(tc));
+        const char *sm =
+            "vec2 smvals = texture2D(shadowmap, shadowmaptc.xy).xy;\n"
+            "float smdepth = smvals.x/smvals.y + 1.0;\n"
+            "float smdiff = min(smvals.x - shadowmaptc.z, -0.3);\n"
+            "float shadowed = clamp((smvals.x < shadowmaptc.z ? smvals.y : 0.0) + smdiff, 0.0, 1.0);\n";
+        pssm.put(sm, strlen(sm));
+        s_sprintfd(smlight)("%s.rgb = mix(%s.rgb, ambient.rgb, shadowed);\n", pslight, pslight);
+        pssm.put(smlight, strlen(smlight));
+    }
+    else
+    {
+        const char *tc =
+            "TEMP smtc;\n"
+            "DP4 smtc.x, state.matrix.texture[2].row[0], vertex.position;\n"
+            "DP4 smtc.y, state.matrix.texture[2].row[1], vertex.position;\n"
+            "DP4 smtc.z, state.matrix.texture[2].row[2], vertex.position;\n"
+            "SUB smtc.z, smtc.z, vertex.color.w;\n";
+        vssm.put(tc, strlen(tc));
+        s_sprintfd(sm)("MOV result.texcoord[%d], smtc;\n", smtc);
+        vssm.put(sm, strlen(sm));
+
+        s_sprintf(sm)(
+            "TEMP smvals, smdenom, smdiff, shadowed;\n"
+            "TEX smvals, fragment.texcoord[%d], texture[7], 2D;\n"
+            "RCP smdenom, smvals.y;\n"
+            "MAD smvals.x, smvals.x, smdenom, 1;\n"
+            "SUB smdiff, smvals.x, fragment.texcoord[%d].z;\n",
+            smtc, smtc);
+        pssm.put(sm, strlen(sm));
+        s_sprintf(sm)(
+            "CMP shadowed, smdiff, smvals.y, 0;\n"
+            "MIN smdiff, smdiff, -0.3;\n"
+            "ADD_SAT shadowed, shadowed, smdiff;\n"
+            "LRP %s.rgb, shadowed, program.env[5], %s;\n",
+            pslight, pslight);
+        pssm.put(sm, strlen(sm));
+    }
+    vssm.put(vspragma, strlen(vspragma)+1);
+    pssm.put(pspragma, strlen(pspragma)+1);
+
+    s_sprintfd(name)("<shadowmap>%s", s.name);
+    Shader *variant = newshader(s.type, name, vssm.getbuf(), pssm.getbuf(), &s, 1);
+    if(!variant) return;
+
+    if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*variant, vssm.getbuf(), pssm.getbuf(), 1);
 }
 
 void shader(int *type, char *name, char *vs, char *ps)
@@ -586,7 +682,8 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(s && renderpath!=R_FIXEDFUNCTION)
     {
         // '#' is a comment in vertex/fragment programs, while '#pragma' allows an escape for GLSL, so can handle both at once
-        if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
+        if(hasTF && hasFBO && strstr(vs, "#pragma CUBE2_shadowmap")) genshadowmapvariant(*s, vs, ps);
+        else if(strstr(vs, "#pragma CUBE2_dynlight")) gendynlightvariant(*s, vs, ps);
     }
     curparams.setsize(0);
 }

@@ -187,6 +187,13 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
     GLenum format = component, type = GL_UNSIGNED_BYTE;
     switch(component)
     {
+        case GL_RGBA16_EXT:
+        case GL_RGBA16F_ARB:
+        case GL_RGBA32F_ARB:
+            format = GL_RGBA;
+            type = GL_FLOAT;
+            break;
+
         case GL_DEPTH_COMPONENT:
             type = GL_FLOAT;
             break;

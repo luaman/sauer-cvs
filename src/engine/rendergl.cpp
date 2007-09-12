@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -295,6 +295,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         hasDS = true;
         //conoutf("Using GL_EXT_packed_depth_stencil extension.");
+    }
+
+    if(strstr(exts, "GL_ARB_texture_float"))// || strstr(exts, "GL_ATI_texture_float"))
+    {
+        hasTF = true;
+        //conoutf("Using GL_ARB_texture_float extension");
     }
 
     if(strstr(exts, "GL_ARB_texture_cube_map"))
@@ -629,8 +635,12 @@ static void setfog(int fogmat)
     if(renderpath!=R_FIXEDFUNCTION) setfogplane();
 }
 
+bool envmapping = false;
+
 void drawcubemap(int size, const vec &o, float yaw, float pitch)
 {
+    envmapping = true;
+
     physent *oldcamera = camera1;
     static physent cmcamera;
     cmcamera = *player;
@@ -686,6 +696,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     glDisable(GL_TEXTURE_2D);
 
     camera1 = oldcamera;
+    envmapping = false;
 }
 
 VAR(hudgunfov, 10, 65, 150);
@@ -731,7 +742,7 @@ void gl_drawframe(int w, int h)
     glClear(GL_DEPTH_BUFFER_BIT|(wireframe && editmode ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
-    
+   
     if(limitsky()) drawskybox(farplane, true);
 
     rendergeom();
@@ -853,6 +864,8 @@ void drawcrosshair(int w, int h)
 
 VARP(showfpsrange, 0, 0, 1);
 
+VAR(debugsm, 0, 0, 1);
+
 void gl_drawhud(int w, int h, int fogmat)
 {
     if(editmode && !hidehud)
@@ -874,6 +887,14 @@ void gl_drawhud(int w, int h, int fogmat)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, w, h, 0, -1, 1);
+
+    glColor3f(1, 1, 1);
+
+    if(debugsm)
+    {
+        extern void viewshadowmap();
+        viewshadowmap();
+    }
 
     glEnable(GL_BLEND);
 

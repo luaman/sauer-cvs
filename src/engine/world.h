@@ -82,8 +82,8 @@ struct vertexffc : vvec {};
 struct fvertexffc : vec {};
 struct vertexff : vertexffc { short u, v; };
 struct fvertexff : fvertexffc { short u, v; };
-struct vertex : vertexff { bvec n; };
-struct fvertex : fvertexff { bvec n; };
+struct vertex : vertexff { bvec n; uchar alpha; };
+struct fvertex : fvertexff { bvec n; uchar alpha; };
 
 extern int floatvtx;
 

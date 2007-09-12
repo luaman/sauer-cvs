@@ -1072,17 +1072,20 @@ static struct partmap { int type; int color; } partmaps[] =
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
 {
+    if(shadowmapping) return;
     int radius = (type==5 || type == 24) ? 50 : 150;
     regularsplash(partmaps[type].type, partmaps[type].color, radius, num, fade, p, delay);
 }
 
 void particle_splash(int type, int num, int fade, const vec &p) 
 {
+    if(shadowmapping) return;
     splash(partmaps[type].type, partmaps[type].color, 150, num, fade, p);
 }
 
 void particle_trail(int type, int fade, const vec &s, const vec &e)
 {
+    if(shadowmapping) return;
     vec v;
     float d = e.dist(s, v);
     v.div(d*2);
@@ -1101,6 +1104,7 @@ VARP(particletext, 0, 1, 1);
 
 void particle_text(const vec &s, char *t, int type, int fade)
 {
+    if(shadowmapping) return;
     if(!particletext || camera1->o.dist(s) > 128) return;
     if(t[0]=='@') t = newstring(t);
     newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->text = t;
@@ -1108,16 +1112,19 @@ void particle_text(const vec &s, char *t, int type, int fade)
 
 void particle_meter(const vec &s, float val, int type, int fade)
 {
+    if(shadowmapping) return;
     newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->val = val;
 }
 
 void particle_flare(const vec &p, const vec &dest, int fade, int type)
 {
+    if(shadowmapping) return;
     newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color);
 }
 
 void particle_fireball(const vec &dest, float max, int type)
 {
+    if(shadowmapping) return;
     int maxsize = int(max) - 4;
     newparticle(dest, vec(0, 0, 1), maxsize*25, partmaps[type].type, partmaps[type].color)->val = maxsize;
 }

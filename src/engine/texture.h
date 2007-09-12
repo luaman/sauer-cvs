@@ -74,6 +74,7 @@ enum
 };
 
 #define MAXSHADERDETAIL 3
+#define MAXVARIANTROWS 2
 
 extern int shaderdetail;
 
@@ -89,7 +90,7 @@ struct Shader
     GLhandleARB program, vsobj, psobj;
     vector<LocalShaderParamState> defaultparams, extparams;
     Shader *altshader, *fastshader[MAXSHADERDETAIL];
-    vector<Shader *> variants;
+    vector<Shader *> variants[MAXVARIANTROWS];
     LocalShaderParamState *extvertparams[RESERVEDSHADERPARAMS], *extpixparams[RESERVEDSHADERPARAMS];
     bool used, native;
 
@@ -106,11 +107,11 @@ struct Shader
     void setslotparams(Slot &slot);
     void bindprograms();
 
-    Shader *variant(int i)
+    Shader *variant(int col, int row = 0)
     {
         if(!this || renderpath==R_FIXEDFUNCTION) return this;
         Shader *s = shaderdetail < MAXSHADERDETAIL ? fastshader[shaderdetail] : this;
-        return s->variants.inrange(i) ? s->variants[i] : s;
+        return row>=0 && row<MAXVARIANTROWS && s->variants[row].inrange(col) ? s->variants[row][col] : s;
     }
 
     void set(Slot *slot = NULL)

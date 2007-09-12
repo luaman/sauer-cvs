@@ -32,6 +32,7 @@ CLIENT_OBJS= \
 	engine/server.o	\
 	engine/serverbrowser.o \
 	engine/shader.o \
+	engine/shadowmap.o \
 	engine/sound.o \
 	engine/texture.o \
 	engine/water.o \

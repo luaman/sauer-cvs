@@ -123,8 +123,22 @@ extern ushort closestenvmap(const vec &o);
 extern ushort closestenvmap(int orient, int x, int y, int z, int size);
 extern GLuint lookupenvmap(ushort emid);
 
+// shadowmap
+
+extern int shadowmap;
+extern bool shadowmapping;
+
+extern bool isshadowmapcaster(const vec &o, const vec &rad);
+extern bool isshadowmapreceiver(vtxarray *va);
+extern void rendershadowmap();
+extern void pushshadowmap();
+extern void popshadowmap();
+extern void adjustshadowmatrix(const ivec &o, float scale);
+
 // rendergl
-extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;
+
+extern bool envmapping;
 
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();

@@ -48,7 +48,7 @@ void genverts(void *buf)
         else if(floatvtx) { GENVERTSUV(fvertexff, buf, {}); }
         else { GENVERTSUV(vertexff, buf, {}); }
     }
-    else if(floatvtx) { GENVERTSUV(fvertex, buf, { f->n = v.n; }); }
+    else if(floatvtx) { GENVERTSUV(fvertex, buf, { f->n = v.n; f->alpha = v.alpha; }); }
 }
 
 struct vboinfo
@@ -174,7 +174,7 @@ struct vechash
     vechash() { clear(); }
     void clear() { loopi(size) table[i] = -1; chain.setsizenodelete(0); }
 
-    int access(const vvec &v, short tu, short tv, const bvec &n)
+    int access(const vvec &v, short tu, short tv, const bvec &n, uchar alpha)
     {
         const uchar *iv = (const uchar *)&v;
         uint h = 5381;
@@ -183,7 +183,7 @@ struct vechash
         for(int i = table[h]; i>=0; i = chain[i])
         {
             const vertex &c = verts[i];
-            if(c.x==v.x && c.y==v.y && c.z==v.z && c.n==n)
+            if(c.x==v.x && c.y==v.y && c.z==v.z && c.n==n && c.alpha==alpha)
             {
                  if(!tu && !tv) return i; 
                  if(c.u==tu && c.v==tv) return i;
@@ -194,6 +194,7 @@ struct vechash
         vtx.u = tu;
         vtx.v = tv;
         vtx.n = n;
+        vtx.alpha = alpha;
         chain.add(table[h]);
         return table[h] = verts.length()-1;
     }
@@ -300,7 +301,8 @@ struct lodcollect
                     // necessary to copy these in case vechash reallocates verts before copying vtx
                     vvec vv = vtx;
                     bvec n = vtx.n;
-                    t.dims[l][j] = vh.access(vv, u, v, n);
+                    uchar alpha = vtx.alpha;
+                    t.dims[l][j] = vh.access(vv, u, v, n, alpha);
                 }
             }
             sortval *dst = indices.access(sortkey(k.tex, t.unlit, k.envmap));
@@ -459,9 +461,40 @@ int addtriindexes(usvector &v, int index[4])
     return tris;
 }
 
+int calcshadowmask(uchar *alpha, vvec *vv)
+{
+    int planes = 0;
+    if(renderpath==R_FIXEDFUNCTION || vv[0]==vv[2]) { memset(alpha, 0, 4); return planes; }
+    if(vv[0]!=vv[1] && vv[1]!=vv[2])
+    {
+        vvec e1(vv[1]), e2(vv[2]);
+        e1.sub(vv[0]);
+        e2.sub(vv[0]);
+        vec v;
+        v.cross(e1.tovec(), e2.tovec());
+        memset(alpha, v.z<=0 ? 255 : 0, 4); 
+        planes++;
+    }
+    if(vv[0]!=vv[3] && vv[2]!=vv[3])
+    {
+        vvec e1(vv[2]), e2(vv[3]);
+        e1.sub(vv[0]);
+        e2.sub(vv[0]);
+        vec v;
+        v.cross(e1.tovec(), e2.tovec());
+        alpha[3] = v.z<=0 ? 255 : 0;
+        if(!planes) memset(alpha, alpha[3], 3);
+        planes++;
+    }
+    if(!planes) memset(alpha, 0, 4);
+    return planes;
+}
+
 void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals, ushort envmap = EMID_NONE)
 {
     int index[4];
+    uchar alpha[4];
+    calcshadowmask(alpha, vv);
     loopk(4)
     {
         short u, v;
@@ -471,7 +504,7 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
             v = short((surface->y + (surface->texcoords[k*2 + 1] / 255.0f) * (surface->h - 1) + 0.5f) * SHRT_MAX/LM_PACKH);
         }
         else u = v = 0;
-        index[k] = vh.access(vv[k], u, v, renderpath!=R_FIXEDFUNCTION && normals ? normals->normals[k] : bvec(128, 128, 128));
+        index[k] = vh.access(vv[k], u, v, renderpath!=R_FIXEDFUNCTION && normals ? normals->normals[k] : bvec(128, 128, 128), alpha[k]);
     }
 
     extern vector<GLuint> lmtexids;
@@ -513,7 +546,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube)
             loopv(slot.sts) if(slot.sts[i].type==TEX_ENVMAP) { envmap = EMID_CUSTOM; break; }
             if(envmap==EMID_NONE) envmap = closestenvmap(i, x, y, z, size); 
         }
-        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
+        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? e.normals : NULL, envmap);
         if(!lodcube && slot.autograss && i!=O_BOTTOM) 
         {
             grasstri &g = grasstris.add();
@@ -611,7 +644,7 @@ void addskyverts(const ivec &o, int size)
                     if(coords[dim]) vv[dim] += size<<VVEC_FRAC;
                     vv[c] = coords[c] ? m.u2 : m.u1;
                     vv[r] = coords[r] ? m.v2 : m.v1;
-                    index[k] = vh.access(vv, 0, 0, bvec(128, 128, 128));
+                    index[k] = vh.access(vv, 0, 0, bvec(128, 128, 128), 0);
                 }
                 addtriindexes((!l ? l0 : l1).skyindices, index);
             }

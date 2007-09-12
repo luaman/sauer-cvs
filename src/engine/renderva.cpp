@@ -173,7 +173,7 @@ void resetorigin()
     vaorigin = ivec(-1, -1, -1);
 }
 
-void setorigin(vtxarray *va)
+void setorigin(vtxarray *va, bool shadowmatrix = false)
 {
     ivec o(va->x, va->y, va->z);
     o.mask(~VVEC_INT_MASK);
@@ -185,6 +185,8 @@ void setorigin(vtxarray *va)
         glTranslatef(o.x, o.y, o.z);
         static const float scale = 1.0f/(1<<VVEC_FRAC);
         glScalef(scale, scale, scale);
+
+        if(shadowmatrix) adjustshadowmatrix(o, scale);
     }
 }
 
@@ -886,7 +888,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         if(noglow) return;
     }
 
-    setorigin(va);
+    setorigin(va, pass==RENDERPASS_LIGHTMAP && !envmapping);
     bool vbufchanged = true;
     if(hasVBO)
     {
@@ -1001,7 +1003,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     if(pass==RENDERPASS_LIGHTMAP && renderpath!=R_FIXEDFUNCTION)
     {
-        if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        if(vbufchanged) glColorPointer(shadowmap && hasTF && hasFBO ? 4 : 3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
 
         setdynlights(va);
@@ -1016,7 +1018,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
-    bool mtglow = false;
+    bool mtglow = false, shadowmapreceiver = pass==RENDERPASS_LIGHTMAP && !envmapping && isshadowmapreceiver(va);
     float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)
@@ -1104,8 +1106,9 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             else if(pass==RENDERPASS_LIGHTMAP && s)
             {
-                if(visibledynlights.empty()) s->set(&slot);
-                else s->variant(visibledynlights.length()-1)->set(&slot);
+                if(shadowmapreceiver) s->variant(min(s->variants[1].length()-1, visibledynlights.length()), 1)->set(&slot);
+                else if(visibledynlights.empty()) s->set(&slot);
+                else s->variant(min(s->variants[0].length()-1, visibledynlights.length()-1))->set(&slot);
 
                 int tmu = 2;
                 if(s->type&SHADER_NORMALSLMS) tmu++;
@@ -1226,6 +1229,21 @@ static void disabletexgen()
 
 void setupTMUs()
 {
+    if(!reflecting && !refracting && !envmapping && shadowmap)
+    {
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+        if(hasVBO)
+        {
+            glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+            glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        }
+
+        rendershadowmap();
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+    }
+
     glColor3f(1, 1, 1);
 
     setuptexgen();
@@ -1325,7 +1343,7 @@ VAR(showva, 0, 0, 1);
 
 void rendergeommultipass(renderstate &cur, int pass)
 {
-    cur.vbufGL = 0;
+    cur.vbufGL = cur.ebufGL = 0;
     for(vtxarray *va = FIRSTVA; va; va = NEXTVA)
     {
         lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1356,7 +1374,11 @@ void rendergeom()
     }
 
     bool doOQ = !refracting && (reflecting ? camera1->o.z >= reflecting && hasOQ && oqfrags && oqreflect : zpass!=0);
-    if(!doOQ) setupTMUs();
+    if(!doOQ) 
+    {
+        setupTMUs();
+        if(shadowmap) pushshadowmap();
+    }
 
     limitdynlights();
 
@@ -1435,15 +1457,21 @@ void rendergeom()
 
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
     if(!cur.depthmask) { cur.depthmask = true; glDepthMask(GL_TRUE); }
-
+    
     if(doOQ)
     {
         setupTMUs();
+        if(shadowmap)
+        {
+            pushshadowmap();
+            resetorigin();
+        }
         glDepthFunc(GL_LEQUAL);
 #ifdef SHOWVA
         int showvas = 0;
 #endif
-        cur.vbufGL = 0;
+        cur.vbufGL = cur.ebufGL = 0;
+        cur.texture = 0;
         for(vtxarray **prevva = &FIRSTVA, *va = FIRSTVA; va; prevva = &NEXTVA, va = NEXTVA)
         {
             lodlevel &lod = va->curlod ? va->l1 : va->l0;
@@ -1485,6 +1513,8 @@ void rendergeom()
         }
         glDepthFunc(GL_LESS);
     }
+
+    if(shadowmap) popshadowmap();
 
     cleanupTMU1();
 

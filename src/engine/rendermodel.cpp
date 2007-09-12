@@ -440,7 +440,7 @@ void renderbatchedmodel(model *m, batchedmodel &b)
 {
     modelattach *a = NULL;
     if(b.attached>=0) a = &modelattached[b.attached];
-    if((b.cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil && (!reflecting || refracting))
+    if((!shadowmap || !hasTF || !hasFBO) && (b.cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil && (!reflecting || refracting))
     {
         vec center;
         float radius = m->boundsphere(0/*frame*/, center); // FIXME
@@ -450,7 +450,14 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     }
 
     int anim = b.anim;
-    if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
+    if(shadowmapping)
+    {
+        anim |= ANIM_NOSKIN;
+        static Shader *shadowmapshader = NULL;
+        if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmap");
+        shadowmapshader->set();
+    }
+    else if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
 
     m->setskin(b.tex);
     m->render(anim, b.varseed, b.speed, b.basetime, b.pos, b.yaw, b.pitch, b.d, a, b.color, b.dir);
@@ -566,11 +573,12 @@ VARP(maxmodelradiusdistance, 10, 100, 1000);
 
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, const vec &o, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, modelattach *a)
 {
+    if(shadowmapping && !(cull&(MDL_SHADOW|MDL_DYNSHADOW))) return;
     model *m = loadmodel(mdl); 
     if(!m) return;
     vec center;
     float radius = 0;
-    bool shadow = (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
+    bool shadow = (!shadowmap || !hasTF || !hasFBO) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
     if(cull)
     {
         radius = m->boundsphere(0/*frame*/, center); // FIXME
@@ -588,8 +596,9 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
                 if(center.dist(camera1->o)-radius>reflectdist) return;
             }
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
+            if(shadowmapping && !isshadowmapcaster(center, radius)) return;
         }
-        if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
+        if(!shadowmapping && (cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     }
     if(showboundingbox)
     {
@@ -609,13 +618,13 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         }
     }
 
-    if(d) 
+    if(d && !shadowmapping) 
     {
         lightreaching(d->o, color, dir);
         cl->lighteffects(d, color, dir);
     }
     vec dyncolor(color), dyndir(dir);
-    dynlightreaching(o, dyncolor, dyndir);
+    if(!shadowmapping) dynlightreaching(o, dyncolor, dyndir);
     if(a) for(int i = 0; a[i].name; i++)
     {
         a[i].m = loadmodel(a[i].name);
@@ -650,7 +659,14 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
-    if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
+    if(shadowmapping) 
+    {
+        anim |= ANIM_NOSKIN;
+        static Shader *shadowmapshader = NULL;
+        if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmap");
+        shadowmapshader->set();
+    }
+    else if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
     m->setskin(tex);
     m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, a, dyncolor, dyndir);
