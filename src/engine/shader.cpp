@@ -617,8 +617,8 @@ static void genshadowmapvariant(Shader &s, char *vs, char *ps)
         const char *sm =
             "vec2 smvals = texture2D(shadowmap, shadowmaptc.xy).xy;\n"
             "float smdepth = smvals.x/smvals.y + 1.0;\n"
-            "float smdiff = min(smvals.x - shadowmaptc.z, -0.3);\n"
-            "float shadowed = clamp((smvals.x < shadowmaptc.z ? smvals.y : 0.0) + smdiff, 0.0, 1.0);\n";
+            "float smdiff = min(shadowmaptc.z - smvals.x, -0.3);\n"
+            "float shadowed = clamp((shadowmaptc.z < smvals.x ? smvals.y : 0.0) + smdiff, 0.0, 1.0);\n";
         pssm.put(sm, strlen(sm));
         s_sprintfd(smlight)("%s.rgb = mix(%s.rgb, ambient.rgb, shadowed);\n", pslight, pslight);
         pssm.put(smlight, strlen(smlight));
@@ -630,7 +630,7 @@ static void genshadowmapvariant(Shader &s, char *vs, char *ps)
             "DP4 smtc.x, state.matrix.texture[2].row[0], vertex.position;\n"
             "DP4 smtc.y, state.matrix.texture[2].row[1], vertex.position;\n"
             "DP4 smtc.z, state.matrix.texture[2].row[2], vertex.position;\n"
-            "SUB smtc.z, smtc.z, vertex.color.w;\n";
+            "ADD smtc.z, smtc.z, vertex.color.w;\n";
         vssm.put(tc, strlen(tc));
         s_sprintfd(sm)("MOV result.texcoord[%d], smtc;\n", smtc);
         vssm.put(sm, strlen(sm));
@@ -639,8 +639,8 @@ static void genshadowmapvariant(Shader &s, char *vs, char *ps)
             "TEMP smvals, smdenom, smdiff, shadowed;\n"
             "TEX smvals, fragment.texcoord[%d], texture[7], 2D;\n"
             "RCP smdenom, smvals.y;\n"
-            "MAD smvals.x, smvals.x, smdenom, 1;\n"
-            "SUB smdiff, smvals.x, fragment.texcoord[%d].z;\n",
+            "MAD smvals.x, smvals.x, smdenom, -1;\n"
+            "SUB smdiff, fragment.texcoord[%d].z, smvals.x;\n",
             smtc, smtc);
         pssm.put(sm, strlen(sm));
         s_sprintf(sm)(
