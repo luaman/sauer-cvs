@@ -639,7 +639,7 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         vssm.put(sm, strlen(sm));
 
         s_sprintf(sm)(
-            "TEMP smvals, smdenom, smdiff, shadowed;\n"
+            "TEMP smvals, smdenom, smdiff, shadowed, smambient;\n"
             "TEX smvals, fragment.texcoord[%d], texture[7], 2D;\n"
             "RCP smdenom, smvals.y;\n"
             "MAD smvals.xz, smvals, smdenom, -1;\n"
@@ -649,8 +649,8 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         s_sprintf(sm)(
             "CMP shadowed, smdiff.x, smvals.y, 0;\n"
             "CMP shadowed, -smdiff.z, shadowed, 0;\n" 
-            "LRP shadowed.rgb, shadowed, program.env[7], %s;\n"
-            "MIN %s.rgb, shadowed, %s;\n",
+            "MIN smambient.rgb, program.env[7], %s;\n"
+            "LRP %s.rgb, shadowed, smambient, %s;\n",
             pslight, pslight, pslight);
         pssm.put(sm, strlen(sm));
     }
