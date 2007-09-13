@@ -11,7 +11,6 @@ CLIENT_OBJS= \
 	engine/client.o \
 	engine/command.o \
 	engine/console.o \
-	engine/crypto.o \
 	engine/cubeloader.o \
 	engine/grass.o \
 	engine/lightmap.o \
@@ -32,6 +31,7 @@ CLIENT_OBJS= \
 	engine/server.o \
 	engine/serverbrowser.o \
 	engine/shader.o \
+	engine/shadowmap.o \
 	engine/sound.o \
 	engine/texture.o \
 	engine/water.o \
