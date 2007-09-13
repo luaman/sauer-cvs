@@ -211,6 +211,8 @@ void rendershadowmapcasters(int smsize)
     shadowmapping = false;
 }
 
+VAR(smdepthpeel, 0, 1, 1);
+
 void rendershadowmap()
 {
     if(!shadowmap || renderpath==R_FIXEDFUNCTION) return;
@@ -262,7 +264,7 @@ void rendershadowmap()
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
     rendershadowmapcasters(smsize);
-    rendershadowmapreceivers();
+    if(smdepthpeel) rendershadowmapreceivers();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
