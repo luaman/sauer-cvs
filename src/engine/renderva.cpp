@@ -556,6 +556,77 @@ void renderoutline()
     defaultshader->set();
 }
 
+void rendershadowmapreceivers()
+{
+    if(!hasBE) return;
+
+    static Shader *shadowmapshader = NULL;
+    if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmapreceiver");
+    shadowmapshader->set();
+
+    glDisable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glCullFace(GL_BACK);
+    glDepthMask(GL_FALSE);
+    glDepthFunc(GL_GREATER);
+    glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
+
+    glEnable(GL_BLEND);
+    glBlendEquation_(GL_MAX_EXT);
+    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+ 
+    glPushMatrix();
+
+    resetorigin();
+    GLuint vbufGL = 0, ebufGL = 0;
+    for(vtxarray *va = visibleva; va; va = va->next)
+    {
+        lodlevel &lod = va->curlod ? va->l1 : va->l0;
+        if(va->curvfc >= VFC_FOGGED || !isshadowmapreceiver(va)) continue;
+
+        setorigin(va);
+
+        bool vbufchanged = true;
+        if(hasVBO)
+        {
+            if(vbufGL == va->vbufGL) vbufchanged = false;
+            else
+            {
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbufGL);
+                vbufGL = va->vbufGL;
+            }
+            if(ebufGL != lod.ebufGL)
+            {
+                glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, lod.ebufGL);
+                ebufGL = lod.ebufGL;
+            }
+        }
+        if(vbufchanged) glVertexPointer(3, floatvtx ? GL_FLOAT : GL_SHORT, VTXSIZE, &(va->vbuf[0].x));
+
+        drawvatris(va, 3*lod.tris, lod.ebuf);
+        xtravertsva += va->verts;
+    }
+
+    glPopMatrix();
+
+    glDisable(GL_BLEND);
+    glBlendEquation_(GL_FUNC_ADD_EXT);
+
+    glCullFace(GL_FRONT);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+    if(hasVBO)
+    {
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_2D);
+}
+
 #define NUMCAUSTICS 32
 
 VAR(causticscale, 0, 100, 10000);

@@ -450,13 +450,7 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     }
 
     int anim = b.anim;
-    if(shadowmapping)
-    {
-        anim |= ANIM_NOSKIN;
-        static Shader *shadowmapshader = NULL;
-        if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmap");
-        shadowmapshader->set();
-    }
+    if(shadowmapping) anim |= ANIM_NOSKIN;
     else if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
 
     m->setskin(b.tex);
@@ -659,13 +653,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
-    if(shadowmapping) 
-    {
-        anim |= ANIM_NOSKIN;
-        static Shader *shadowmapshader = NULL;
-        if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmap");
-        shadowmapshader->set();
-    }
+    if(shadowmapping) anim |= ANIM_NOSKIN;
     else if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
     m->setskin(tex);

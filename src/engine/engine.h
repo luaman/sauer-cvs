@@ -54,6 +54,9 @@ extern PFNGLGENERATEMIPMAPEXTPROC          glGenerateMipmap_;
 // GL_EXT_draw_range_elements
 extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
 
+// GL_EXT_blend_minmax
+extern PFNGLBLENDEQUATIONEXTPROC glBlendEquation_;
+
 // GL_EXT_packed_depth_stencil
 #ifndef GL_DEPTH_STENCIL_EXT
 #define GL_DEPTH_STENCIL_EXT 0x84F9
@@ -134,9 +137,10 @@ extern void rendershadowmap();
 extern void pushshadowmap();
 extern void popshadowmap();
 extern void adjustshadowmatrix(const ivec &o, float scale);
+extern void rendershadowmapreceivers();
 
 // rendergl
-extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;
 
 extern bool envmapping;
 

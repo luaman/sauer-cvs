@@ -21,7 +21,7 @@ VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
 VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
 VARFP(shadowmapprecision, 0, 1, 1, cleanshadowmap());
-VAR(shadowmapfalloff, 0, 64, 512);
+VARP(shadowmapambient, 0, 48, 255);
 
 void createshadowmap()
 {
@@ -141,7 +141,7 @@ void pushshadowmap()
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 
-    setenvparamf("shadowmapparams", SHPARAM_PIXEL, 7, float(shadowmapdist)/float(shadowmapfalloff));
+    setenvparamf("shadowmapambient", SHPARAM_PIXEL, 7, shadowmapambient/255.0f, shadowmapambient/255.0f, shadowmapambient/255.0f);
 }
 
 void adjustshadowmatrix(const ivec &o, float scale)
@@ -196,7 +196,21 @@ bool isshadowmapreceiver(vtxarray *va)
 }
 
 VAR(smscissor, 0, 1, 1);
-    
+   
+void rendershadowmapcasters(int smsize)
+{
+    static Shader *shadowmapshader = NULL;
+    if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmapcaster");
+    shadowmapshader->set();
+
+    shadowmapping = true;
+    glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
+    if(smscissor) glEnable(GL_SCISSOR_TEST);
+    cl->rendergame();
+    if(smscissor) glDisable(GL_SCISSOR_TEST);
+    shadowmapping = false;
+}
+
 void rendershadowmap()
 {
     if(!shadowmap || renderpath==R_FIXEDFUNCTION) return;
@@ -247,12 +261,8 @@ void rendershadowmap()
     glGetDoublev(GL_PROJECTION_MATRIX, shadowmapprojection);
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
-    shadowmapping = true;
-    glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
-    if(smscissor) glEnable(GL_SCISSOR_TEST);
-    cl->rendergame();
-    if(smscissor) glDisable(GL_SCISSOR_TEST);
-    shadowmapping = false;
+    rendershadowmapcasters(smsize);
+    rendershadowmapreceivers();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

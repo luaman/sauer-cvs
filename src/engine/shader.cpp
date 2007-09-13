@@ -598,7 +598,7 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         pssm.put(tc, strlen(tc));
         const char *smtex = 
             "uniform sampler2D shadowmap;\n"
-            "uniform vec4 shadowmapparams;\n";
+            "uniform vec4 shadowmapambient;\n";
         pssm.put(smtex, strlen(smtex));
         if(!strstr(ps, "ambient"))
         {
@@ -617,13 +617,13 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
             "shadowmaptc.z -= gl_Color.w;\n";
         vssm.put(tc, strlen(tc));
         const char *sm =
-            "vec2 smvals = texture2D(shadowmap, shadowmaptc.xy).xy;\n"
-            "float smdepth = smvals.x/smvals.y + 1.0;\n"
-            "float smdiff = shadowmaptc.z - smvals.x;\n"
-            "smvals.y = clamp(smvals.y + shadowmapparams.x*smdiff, 0.0, 1.0);\n"
-            "float shadowed = smdiff < 0.0 ? smvals.y : 0.0;\n";
+            "vec3 smvals = texture2D(shadowmap, shadowmaptc.xy).xyz;\n"
+            "vec2 smdiff = shadowmaptc.zz - (smvals.xz/smvals.y + 1.0);\n"
+            "float shadowed = smdiff.x < 0.0 && smdiff.y > 0.0 ? smvals.y : 0.0;\n";
         pssm.put(sm, strlen(sm));
-        s_sprintfd(smlight)("%s.rgb = mix(%s.rgb, ambient.rgb, shadowed);\n", pslight, pslight);
+        s_sprintfd(smlight)(
+            "%s.rgb = min(%s.rgb, mix(%s.rgb, shadowmapambient.rgb, shadowed));\n", 
+            pslight, pslight, pslight);
         pssm.put(smlight, strlen(smlight));
     }
     else
@@ -642,15 +642,16 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
             "TEMP smvals, smdenom, smdiff, shadowed;\n"
             "TEX smvals, fragment.texcoord[%d], texture[7], 2D;\n"
             "RCP smdenom, smvals.y;\n"
-            "MAD smvals.x, smvals.x, smdenom, -1;\n"
-            "SUB smdiff, fragment.texcoord[%d].z, smvals.x;\n",
+            "MAD smvals.xz, smvals, smdenom, -1;\n"
+            "SUB smdiff, fragment.texcoord[%d].z, smvals;\n",
             smtc, smtc);
         pssm.put(sm, strlen(sm));
         s_sprintf(sm)(
-            "MAD_SAT smvals.y, smdiff, program.env[7].x, smvals.y;\n" 
-            "CMP shadowed, smdiff, smvals.y, 0;\n"
-            "LRP %s.rgb, shadowed, program.env[5], %s;\n",
-            pslight, pslight);
+            "CMP shadowed, smdiff.x, smvals.y, 0;\n"
+            "CMP shadowed, -smdiff.z, shadowed, 0;\n" 
+            "LRP shadowed.rgb, shadowed, program.env[7], %s;\n"
+            "MIN %s.rgb, shadowed, %s;\n",
+            pslight, pslight, pslight);
         pssm.put(sm, strlen(sm));
     }
     vssm.put(vspragma, strlen(vspragma)+1);
