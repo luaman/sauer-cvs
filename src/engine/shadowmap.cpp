@@ -263,6 +263,7 @@ void rendershadowmap()
     glGetDoublev(GL_PROJECTION_MATRIX, shadowmapprojection);
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
+    setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/1024.0f, 1 - 2*shadowmapbias/1024.0f);
     rendershadowmapcasters(smsize);
     if(smdepthpeel) rendershadowmapreceivers();
 
