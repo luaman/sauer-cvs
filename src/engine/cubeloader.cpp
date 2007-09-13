@@ -243,8 +243,19 @@ struct cubeloader
         c_header hdr;
         gzread(f, &hdr, sizeof(c_header)-sizeof(int)*16);
         endianswap(&hdr.version, sizeof(int), 4);
-        if(strncmp(hdr.head, "CUBE", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; }
-        if(hdr.version>5) { conoutf("map %s requires a newer version of the cube 1 importer", cgzname); gzclose(f); return; }
+        bool mod = false;
+        if(strncmp(hdr.head, "CUBE", 4)) 
+        { 
+            if(!strncmp(hdr.head, "ACMP", 4)) mod = true;
+            else
+            {
+                conoutf("map %s has malformatted header", cgzname); 
+                gzclose(f); 
+                return; 
+            }
+        }
+        else if(hdr.version>5) mod = true;
+        if(hdr.version>5 && !mod) { conoutf("map %s requires a newer version of the cube 1 importer", cgzname); gzclose(f); return; }
         emptymap(12, true);
         freeocta(worldroot);
         worldroot = newcubes(F_SOLID);
@@ -259,7 +270,8 @@ struct cubeloader
         {
             hdr.waterlevel = -100000;
         }
-        loopi(hdr.numents)
+        if(mod) gzseek(f, hdr.numents*sizeof(c_persistent_entity), SEEK_CUR);
+        else loopi(hdr.numents)
         {
             c_persistent_entity e;
             gzread(f, &e, sizeof(c_persistent_entity));
@@ -342,7 +354,7 @@ struct cubeloader
     }
 };
 
-void importcube(char *name) 
+void importcube(char *name)
 { 
     if(multiplayer()) return;
     cubeloader().load_cube_world(name); 
