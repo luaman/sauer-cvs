@@ -596,7 +596,9 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         const char *tc = "varying vec3 shadowmaptc;\n";
         vssm.put(tc, strlen(tc));
         pssm.put(tc, strlen(tc));
-        const char *smtex = "uniform sampler2D shadowmap;\n";
+        const char *smtex = 
+            "uniform sampler2D shadowmap;\n"
+            "uniform vec4 shadowmapparams;\n";
         pssm.put(smtex, strlen(smtex));
         if(!strstr(ps, "ambient"))
         {
@@ -617,8 +619,9 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         const char *sm =
             "vec2 smvals = texture2D(shadowmap, shadowmaptc.xy).xy;\n"
             "float smdepth = smvals.x/smvals.y + 1.0;\n"
-            "float smdiff = min(shadowmaptc.z - smvals.x, -0.3);\n"
-            "float shadowed = clamp((shadowmaptc.z < smvals.x ? smvals.y : 0.0) + smdiff, 0.0, 1.0);\n";
+            "float smdiff = shadowmaptc.z - smvals.x;\n"
+            "smvals.y = clamp(smvals.y + shadowmapparams.x*smdiff, 0.0, 1.0);\n"
+            "float shadowed = smdiff < 0.0 ? smvals.y : 0.0;\n";
         pssm.put(sm, strlen(sm));
         s_sprintfd(smlight)("%s.rgb = mix(%s.rgb, ambient.rgb, shadowed);\n", pslight, pslight);
         pssm.put(smlight, strlen(smlight));
@@ -644,9 +647,8 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
             smtc, smtc);
         pssm.put(sm, strlen(sm));
         s_sprintf(sm)(
+            "MAD_SAT smvals.y, smdiff, program.env[7].x, smvals.y;\n" 
             "CMP shadowed, smdiff, smvals.y, 0;\n"
-            "MIN smdiff, smdiff, -0.3;\n"
-            "ADD_SAT shadowed, shadowed, smdiff;\n"
             "LRP %s.rgb, shadowed, program.env[5], %s;\n",
             pslight, pslight);
         pssm.put(sm, strlen(sm));

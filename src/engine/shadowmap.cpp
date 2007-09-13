@@ -21,6 +21,7 @@ VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
 VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
 VARFP(shadowmapprecision, 0, 1, 1, cleanshadowmap());
+VAR(shadowmapfalloff, 0, 48, 512);
 
 void createshadowmap()
 {
@@ -139,6 +140,8 @@ void pushshadowmap()
     glMatrixMode(GL_MODELVIEW);
     glActiveTexture_(GL_TEXTURE0_ARB);
     glClientActiveTexture_(GL_TEXTURE0_ARB);
+
+    setenvparamf("shadowmapparams", SHPARAM_PIXEL, 7, float(shadowmapdist)/float(shadowmapfalloff));
 }
 
 void adjustshadowmatrix(const ivec &o, float scale)
