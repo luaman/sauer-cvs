@@ -20,7 +20,7 @@ VARP(shadowmapradius, 64, 96, 256);
 VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
 VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
-VARFP(shadowmapprecision, 0, 1, 1, cleanshadowmap());
+VARFP(shadowmapprecision, 0, 0, 1, cleanshadowmap());
 VARP(shadowmapambient, 0, 48, 255);
 
 void createshadowmap()
