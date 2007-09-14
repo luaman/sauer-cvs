@@ -16,7 +16,7 @@ void cleanshadowmap()
 }
 
 VARFP(shadowmapsize, 7, 9, 11, cleanshadowmap());
-VARP(shadowmapradius, 64, 64, 256);
+VARP(shadowmapradius, 64, 96, 256);
 VAR(shadowmapheight, 0, 32, 128);
 VARP(shadowmapdist, 128, 256, 512);
 VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
@@ -118,7 +118,7 @@ bool shadowmapping = false;
 
 GLdouble shadowmapprojection[16], shadowmapmodelview[16];
 
-VAR(shadowmapbias, 0, 10, 1024);
+VAR(shadowmapbias, 0, 20, 1024);
 
 void pushshadowmap()
 {
@@ -173,24 +173,32 @@ void popshadowmap()
     glActiveTexture_(GL_TEXTURE0_ARB);
 }
 
-vec shadowfocus(0, 0, 0);
+#define SHADOWSKEW 0.7071068f
+
+vec shadowfocus(0, 0, 0), shadowdir(0, SHADOWSKEW, 1);
 
 bool isshadowmapcaster(const vec &o, const vec &rad)
 {
+    float dz = o.z - shadowfocus.z;
+    float cx = shadowfocus.x - dz*shadowdir.x, cy = shadowfocus.y - dz*shadowdir.y;
+    float skew = rad.z*SHADOWSKEW;
     if(!shadowmapping ||
        o.z + rad.z <= shadowfocus.z - shadowmapdist || o.z - rad.z >= shadowfocus.z ||
-       o.x + rad.x <= shadowfocus.x - shadowmapradius || o.x - rad.x >= shadowfocus.x + shadowmapradius ||
-       o.y + rad.y <= shadowfocus.y - shadowmapradius || o.y - rad.y >= shadowfocus.y + shadowmapradius)
+       o.x + rad.x <= cx - shadowmapradius-skew || o.x - rad.x >= cx + shadowmapradius+skew ||
+       o.y + rad.y <= cy - shadowmapradius-skew || o.y - rad.y >= cy + shadowmapradius+skew)
         return false;
     return true;
 }
 
 bool isshadowmapreceiver(vtxarray *va)
 {
+    float dz = va->z + va->size/2 - shadowfocus.z;
+    float cx = shadowfocus.x - dz*shadowdir.x, cy = shadowfocus.y - dz*shadowdir.y;
+    float skew = va->size/2*SHADOWSKEW;
     if(!shadowmap || !shadowmaptex ||
        va->z + va->size <= shadowfocus.z - shadowmapdist || va->z >= shadowfocus.z ||
-       va->x + va->size <= shadowfocus.x - shadowmapradius || va->x >= shadowfocus.x + shadowmapradius || 
-       va->y + va->size <= shadowfocus.y - shadowmapradius || va->y >= shadowfocus.y + shadowmapradius) 
+       va->x + va->size <= cx - shadowmapradius-skew || va->x >= cx + shadowmapradius+skew || 
+       va->y + va->size <= cy - shadowmapradius-skew || va->y >= cy + shadowmapradius+skew) 
         return false;
     return true;
 }
@@ -212,6 +220,14 @@ void rendershadowmapcasters(int smsize)
 }
 
 VAR(smdepthpeel, 0, 1, 1);
+
+void setshadowdir(int angle)
+{
+    shadowdir = vec(0, SHADOWSKEW, 1);
+    shadowdir.rotate_around_z(angle*RAD);
+}
+
+VARF(shadowmapangle, 0, 0, 360, setshadowdir(shadowmapangle));
 
 void rendershadowmap()
 {
@@ -244,21 +260,30 @@ void rendershadowmap()
     glOrtho(-shadowmapradius, shadowmapradius, -shadowmapradius, shadowmapradius, -shadowmapdist, shadowmapdist);
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    // just face straight down for now
-    glRotatef(-90.0f, -1, 0, 0);
-    // move from RH to Z-up LH quake style worldspace
-    glRotatef(-90, 1, 0, 0);
-    glScalef(1, -1, 1);
-
+    
+    vec skewdir(shadowdir);
+    skewdir.neg();
+    skewdir.rotate_around_z(-camera1->yaw*RAD);
+ 
     vec dir;
-    vecfromyawpitch(camera1->yaw, 0, 1, 0, dir);
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, dir);
+    dir.z = 0;
     dir.mul(shadowmapradius);
-    dir.z += shadowmapheight;
+
+    GLfloat skew[] =
+    {
+        1, 0, 0, 0, 
+        0, 1, 0, 0,
+        skewdir.x, skewdir.y, 1, 0,
+        0, 0, 0, 1
+    };
+    glLoadMatrixf(skew);
+    glTranslatef(skewdir.x*shadowmapheight, skewdir.y*shadowmapheight + dir.magnitude(), -shadowmapheight);
+    glRotatef(camera1->yaw, 0, 0, -1);
+    glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);
     shadowfocus = camera1->o;
     shadowfocus.add(dir);
-    glTranslatef(-shadowfocus.x, -shadowfocus.y, -shadowfocus.z);
+    shadowfocus.add(vec(-shadowdir.x, -shadowdir.y, 1).mul(shadowmapheight));
 
     glGetDoublev(GL_PROJECTION_MATRIX, shadowmapprojection);
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);

@@ -463,6 +463,7 @@ int addtriindexes(usvector &v, int index[4])
 
 int calcshadowmask(uchar *alpha, vvec *vv)
 {
+    extern vec shadowdir;
     int planes = 0;
     if(renderpath==R_FIXEDFUNCTION || vv[0]==vv[2]) { memset(alpha, 0, 4); return planes; }
     if(vv[0]!=vv[1] && vv[1]!=vv[2])
@@ -472,7 +473,7 @@ int calcshadowmask(uchar *alpha, vvec *vv)
         e2.sub(vv[0]);
         vec v;
         v.cross(e1.tovec(), e2.tovec());
-        memset(alpha, v.z<=0 ? 255 : 0, 4); 
+        memset(alpha, v.dot(shadowdir)<=0 ? 255 : 0, 4); 
         planes++;
     }
     if(vv[0]!=vv[3] && vv[2]!=vv[3])
@@ -482,7 +483,7 @@ int calcshadowmask(uchar *alpha, vvec *vv)
         e2.sub(vv[0]);
         vec v;
         v.cross(e1.tovec(), e2.tovec());
-        alpha[3] = v.z<=0 ? 255 : 0;
+        alpha[3] = v.dot(shadowdir)<=0 ? 255 : 0;
         if(!planes) memset(alpha, alpha[3], 3);
         planes++;
     }
