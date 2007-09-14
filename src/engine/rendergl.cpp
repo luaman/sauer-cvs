@@ -85,6 +85,7 @@ VAR(ati_oq_bug, 0, 0, 1);
 VAR(nvidia_texgen_bug, 0, 0, 1);
 VAR(apple_glsldepth_bug, 0, 0, 1);
 VAR(intel_quadric_bug, 0, 0, 1);
+VAR(minimizetcusage, 1, 0, 0);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -165,8 +166,10 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         floatvtx = 1;
         conoutf("WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
 
-        extern int reservedynlighttc;
+        extern int reservedynlighttc, reserveshadowmaptc;
         reservedynlighttc = 2;
+        reserveshadowmaptc = 3;
+		minimizetcusage = 1;
     }
     else if(strstr(vendor, "Tungsten"))
     {

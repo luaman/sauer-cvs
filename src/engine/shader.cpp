@@ -474,6 +474,7 @@ static uint findusedtexcoords(char *str)
     return used;
 }
 
+VAR(reserveshadowmaptc, 1, 0, 0);
 VAR(reservedynlighttc, 1, 0, 0);
 
 static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int row = 0)
@@ -485,8 +486,9 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
         uint usedtc = findusedtexcoords(vs);
         GLint maxtc = 0;
         glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
-        if(maxtc-reservedynlighttc<=0) return;
-        loopi(maxtc-reservedynlighttc) if(!(usedtc&(1<<i))) 
+        int reservetc = row ? reserveshadowmaptc : reservedynlighttc;
+        if(maxtc-reservetc<=0) return;
+        loopi(maxtc-reservetc) if(!(usedtc&(1<<i))) 
         {
             lights[numlights++] = i;    
             if(numlights>=MAXDYNLIGHTS) break;
@@ -574,8 +576,8 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         uint usedtc = findusedtexcoords(vs);
         GLint maxtc = 0;
         glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
-        if(maxtc-reservedynlighttc<=0) return;
-        loopi(maxtc-reservedynlighttc) if(!(usedtc&(1<<i))) { smtc = i; break; }
+        if(maxtc-reserveshadowmaptc<=0) return;
+        loopi(maxtc-reserveshadowmaptc) if(!(usedtc&(1<<i))) { smtc = i; break; }
         if(smtc<0) return;
     }
 
