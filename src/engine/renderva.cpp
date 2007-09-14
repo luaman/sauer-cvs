@@ -574,7 +574,7 @@ void rendershadowmapreceivers()
 
     glEnable(GL_BLEND);
     glBlendEquation_(GL_MAX_EXT);
-    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+    glBlendFunc(GL_ONE, GL_ONE);
  
     glPushMatrix();
 
