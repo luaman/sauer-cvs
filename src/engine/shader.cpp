@@ -622,7 +622,7 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
             "float shadowed = smdiff.x < 0.0 && smdiff.y > 0.0 ? smvals.y : 0.0;\n";
         pssm.put(sm, strlen(sm));
         s_sprintfd(smlight)(
-            "%s.rgb = min(%s.rgb, mix(%s.rgb, shadowmapambient.rgb, shadowed));\n", 
+            "%s.rgb = mix(%s.rgb, min(%s.rgb, shadowmapambient.rgb), shadowed);\n", 
             pslight, pslight, pslight);
         pssm.put(smlight, strlen(smlight));
     }
