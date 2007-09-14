@@ -169,7 +169,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         extern int reservedynlighttc, reserveshadowmaptc;
         reservedynlighttc = 2;
         reserveshadowmaptc = 3;
-		minimizetcusage = 1;
     }
     else if(strstr(vendor, "Tungsten"))
     {
