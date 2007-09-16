@@ -4,7 +4,11 @@
 VARP(shadowmap, 0, 0, 1);
 
 GLuint shadowmaptex = 0, shadowmapfb = 0, shadowmapdb = 0;
+int shadowmaptexsize = 0;
+
 GLuint blurtex = 0, blurfb = 0;
+#define BLURTILES 8
+uchar blurtiles[BLURTILES * BLURTILES];
 
 void cleanshadowmap()
 {
@@ -27,14 +31,14 @@ void createshadowmap()
 {
     if(shadowmaptex || renderpath==R_FIXEDFUNCTION) return;
 
-    int smsize = min(1<<shadowmapsize, hwtexsize);
+    shadowmaptexsize = min(1<<shadowmapsize, hwtexsize);
 
     glGenTextures(1, &shadowmaptex);
 
     if(!hasFBO)
     {
-        while(smsize > min(screen->w, screen->h)) smsize /= 2;
-        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, GL_RGB);
+        while(shadowmaptexsize > min(screen->w, screen->h)) shadowmaptexsize /= 2;
+        createtexture(shadowmaptex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, GL_RGB);
         return;
     }
 
@@ -50,7 +54,7 @@ void createshadowmap()
 #endif
     do
     {
-        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, colorfmts[find]);
+        createtexture(shadowmaptex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, colorfmts[find]);
         glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, shadowmaptex, 0);
         if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT)
             break;
@@ -63,8 +67,8 @@ void createshadowmap()
         glDeleteFramebuffers_(1, &shadowmapfb);
         shadowmapfb = 0;
 
-        while(smsize > min(screen->w, screen->h)) smsize /= 2;
-        createtexture(shadowmaptex, smsize, smsize, NULL, 3, false, GL_RGB);
+        while(shadowmaptexsize > min(screen->w, screen->h)) shadowmaptexsize /= 2;
+        createtexture(shadowmaptex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, GL_RGB);
         return;
     }
  
@@ -76,14 +80,14 @@ void createshadowmap()
     find = 0; 
     do
     {
-        glRenderbufferStorage_(GL_RENDERBUFFER_EXT, depthfmts[find], smsize, smsize);
+        glRenderbufferStorage_(GL_RENDERBUFFER_EXT, depthfmts[find], shadowmaptexsize, shadowmaptexsize);
         glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, shadowmapdb);
         if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT)
             break;
     } while(depthfmts[++find]);
 
     glGenTextures(1, &blurtex);
-    createtexture(blurtex, smsize, smsize, NULL, 3, false, format);
+    createtexture(blurtex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, format);
 
     glGenFramebuffers_(1, &blurfb);
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, blurfb);
@@ -97,6 +101,7 @@ void setupblurkernel();
 VARFP(blurshadowmap, 0, 2, 3, setupblurkernel());
 VARP(blursmstep, 50, 100, 200);
 VARFP(blursmsigma, 50, 100, 200, setupblurkernel());
+VAR(blurtile, 0, 1, 1);
 
 float blurkernel[4] = { 0, 0, 0, 0 };
 
@@ -229,6 +234,16 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
     smx2 = max(smx2, min(x2, 1));
     smy2 = max(smy2, min(y2, 1));
 
+    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
+	int tx1 = max(0, min(BLURTILES - 1, int((x1-blurerror + 1)/2 * BLURTILES))),
+		ty1 = max(0, min(BLURTILES - 1, int((y1-blurerror + 1)/2 * BLURTILES))),
+		tx2 = max(0, min(BLURTILES - 1, int((x2+blurerror + 1)/2 * BLURTILES))),
+		ty2 = max(0, min(BLURTILES - 1, int((y2+blurerror + 1)/2 * BLURTILES)));
+
+	for(int y = ty1; y <= ty2; y++)
+	for(int x = tx1; x <= tx2; x++)
+		blurtiles[y*BLURTILES + x] = 1;
+
     shadowmapcasters++;
     return true;
 }
@@ -238,8 +253,23 @@ bool isshadowmapreceiver(vtxarray *va)
     if(!shadowmap || !shadowmaptex || !shadowmapcasters) return false;
     float x1, y1, x2, y2;
     calcshadowmapbb(vec(va->x, va->y, va->z).add(va->size/2), SQRT2*va->size/2, va->size/2, x1, y1, x2, y2);
-    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmapsize;
+
+    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
     if(x2+blurerror < smx1 || y2+blurerror < smy1 || x1-blurerror > smx2 || y1-blurerror > smy2) return false;
+
+	if(!blurtile) return true;
+
+	int tx1 = max(0, min(BLURTILES - 1, int((x1 + 1)/2 * BLURTILES))),
+		ty1 = max(0, min(BLURTILES - 1, int((y1 + 1)/2 * BLURTILES))),
+		tx2 = max(0, min(BLURTILES - 1, int((x2 + 1)/2 * BLURTILES))),
+		ty2 = max(0, min(BLURTILES - 1, int((y2 + 1)/2 * BLURTILES)));
+
+	for(int y = ty1; y <= ty2; y++)
+	for(int x = tx1; x <= tx2; x++)
+		if(blurtiles[y*BLURTILES + x]) return true;
+	
+	return false;
+
 #if 0
     // cheaper inexact test
     float dz = va->z + va->size/2 - shadowfocus.z;
@@ -250,13 +280,13 @@ bool isshadowmapreceiver(vtxarray *va)
        va->x + va->size <= cx - shadowmapradius-skew || va->x >= cx + shadowmapradius+skew || 
        va->y + va->size <= cy - shadowmapradius-skew || va->y >= cy + shadowmapradius+skew) 
         return false;
+	return true;
 #endif
-    return true;
 }
 
 VAR(smscissor, 0, 1, 1);
    
-void rendershadowmapcasters(int smsize)
+void rendershadowmapcasters()
 {
     static Shader *shadowmapshader = NULL;
     if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmapcaster");
@@ -266,10 +296,15 @@ void rendershadowmapcasters(int smsize)
     smx2 = smy2 = -1;
     smx1 = smy1 = 1;
 
+	memset(blurtiles, 0, sizeof(blurtiles));
+
     shadowmapping = true;
     if(smscissor) 
     {
-        glScissor((shadowmapfb ? 0 : screen->w-smsize) + 2, (shadowmapfb ? 0 : screen->h-smsize) + 2, smsize - 2*2, smsize - 2*2);
+        glScissor((shadowmapfb ? 0 : screen->w-shadowmaptexsize) + 2, 
+				  (shadowmapfb ? 0 : screen->h-shadowmaptexsize) + 2, 
+				  shadowmaptexsize - 2*2, 
+				  shadowmaptexsize - 2*2);
         glEnable(GL_SCISSOR_TEST);
     }
     cl->rendergame();
@@ -291,10 +326,9 @@ void rendershadowmap()
 {
     if(!shadowmap || renderpath==R_FIXEDFUNCTION) return;
 
-    static int lastsize = 0;
     int smsize = min(1<<shadowmapsize, hwtexsize);
     if(!shadowmapfb) while(smsize > min(screen->w, screen->h)) smsize /= 2;
-    if(smsize!=lastsize) { cleanshadowmap(); lastsize = smsize; }
+    if(smsize!=shadowmaptexsize) cleanshadowmap();
 
     if(!shadowmaptex) createshadowmap(); 
     if(!shadowmaptex) return;
@@ -302,9 +336,9 @@ void rendershadowmap()
     if(shadowmapfb) 
     {
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
-        glViewport(0, 0, smsize, smsize);
+        glViewport(0, 0, shadowmaptexsize, shadowmaptexsize);
     }
-    else glViewport(screen->w-smsize, screen->h-smsize, smsize, smsize);
+    else glViewport(screen->w-shadowmaptexsize, screen->h-shadowmaptexsize, shadowmaptexsize, shadowmaptexsize);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -347,7 +381,7 @@ void rendershadowmap()
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
     setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/1024.0f, 1 - 2*shadowmapbias/1024.0f);
-    rendershadowmapcasters(smsize);
+    rendershadowmapcasters();
     if(shadowmapcasters && smdepthpeel) rendershadowmapreceivers();
 
     glMatrixMode(GL_PROJECTION);
@@ -356,14 +390,14 @@ void rendershadowmap()
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    int smx = int(0.5f*(smx1 + 1)*smsize), 
-        smy = int(0.5f*(smy1 + 1)*smsize),
-        smw = int(0.5f*(smx2 - smx1)*smsize),
-        smh = int(0.5f*(smy2 - smy1)*smsize);
+    int smx = int(0.5f*(smx1 + 1)*shadowmaptexsize), 
+        smy = int(0.5f*(smy1 + 1)*shadowmaptexsize),
+        smw = int(0.5f*(smx2 - smx1)*shadowmaptexsize),
+        smh = int(0.5f*(smy2 - smy1)*shadowmaptexsize);
     if(shadowmapcasters && !shadowmapfb)
     {
         glBindTexture(GL_TEXTURE_2D, shadowmaptex);
-        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-smsize, screen->h-smsize, smsize, smsize);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-shadowmaptexsize, screen->h-shadowmaptexsize, shadowmaptexsize, shadowmaptexsize);
     }
 
     if(shadowmapcasters && blurshadowmap)
@@ -411,17 +445,34 @@ void rendershadowmap()
                 glBindTexture(GL_TEXTURE_2D, i ? blurtex : shadowmaptex);
             }
  
-            float step = blursmstep/(100.0f*smsize);
+            float step = blursmstep/(100.0f*shadowmaptexsize);
             setlocalparamf("blurstep", SHPARAM_PIXEL, 1, !i ? step : 0, i ? step : 0, 0, 0);
 
             glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2f(-1, -1);
-            glTexCoord2f(1, 0); glVertex2f(1, -1);
-            glTexCoord2f(1, 1); glVertex2f(1, 1);
-            glTexCoord2f(0, 1); glVertex2f(-1, 1);
+			if(blurtile)
+			{
+				float tsz = 1.0f/BLURTILES, vsz = 2*tsz;
+				loop(y, BLURTILES) loop(x, BLURTILES) if(blurtiles[y*BLURTILES + x])
+				{
+					float tx = x*tsz,
+						  ty = y*tsz,
+						  vx = 2*tx - 1, vy = 2*ty - 1;
+					glTexCoord2f(tx,     ty);     glVertex2f(vx,     vy);
+					glTexCoord2f(tx+tsz, ty);     glVertex2f(vx+vsz, vy);
+					glTexCoord2f(tx+tsz, ty+tsz); glVertex2f(vx+vsz, vy+vsz);
+					glTexCoord2f(tx,     ty+tsz); glVertex2f(vx,     vy+vsz);
+				}
+			}
+			else
+			{
+				glTexCoord2f(0, 0); glVertex2f(-1, -1);
+				glTexCoord2f(1, 0); glVertex2f(1, -1);
+				glTexCoord2f(1, 1); glVertex2f(1, 1);
+				glTexCoord2f(0, 1); glVertex2f(-1, 1);
+			}
             glEnd();
 
-            if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, blurx-(screen->w-smsize), blury-(screen->h-smsize), blurx, blury, blurw, blurh);
+            if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, blurx-(screen->w-shadowmaptexsize), blury-(screen->h-shadowmaptexsize), blurx, blury, blurw, blurh);
         }
        
         if(smscissor) glDisable(GL_SCISSOR_TEST);
@@ -442,14 +493,10 @@ void viewshadowmap()
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, shadowmaptex);
     glBegin(GL_QUADS);
-    glTexCoord2f(0, 0);
-    glVertex2i(0, 0);
-    glTexCoord2f(1, 0);
-    glVertex2i(screen->w/2, 0);
-    glTexCoord2f(1, 1);
-    glVertex2i(screen->w/2, screen->h/2);
-    glTexCoord2f(0, 1);
-    glVertex2i(0, screen->h/2);
+    glTexCoord2f(0, 0); glVertex2i(0, 0);
+    glTexCoord2f(1, 0); glVertex2i(screen->w/2, 0);
+    glTexCoord2f(1, 1); glVertex2i(screen->w/2, screen->h/2);
+    glTexCoord2f(0, 1); glVertex2i(0, screen->h/2);
     glEnd();
     notextureshader->set();
     glDisable(GL_TEXTURE_2D);
@@ -468,5 +515,25 @@ void viewshadowmap()
         glEnd();
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
+	if(blurtile && shadowmapcasters)
+	{
+		glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glBegin(GL_QUADS);
+		loop(y, BLURTILES) loop(x, BLURTILES) if(blurtiles[y*BLURTILES + x])
+		{
+			float vx = (float(x)/BLURTILES)*screen->w/2,
+				  vy = (float(y)/BLURTILES)*screen->h/2,
+				  vw = (1.0f/BLURTILES)*screen->w/2,
+				  vh = (1.0f/BLURTILES)*screen->h/2;
+			glVertex2f(vx, vy);
+			glVertex2f(vx+vw, vy);
+			glVertex2f(vx+vw, vy+vh);
+			glVertex2f(vx, vy+vh);
+		}
+		glEnd();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	}
 }
 
