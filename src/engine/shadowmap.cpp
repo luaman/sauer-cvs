@@ -176,22 +176,72 @@ void popshadowmap()
 #define SHADOWSKEW 0.7071068f
 
 vec shadowfocus(0, 0, 0), shadowdir(0, SHADOWSKEW, 1);
+VAR(shadowmapcasters, 1, 0, 0);
 
-bool isshadowmapcaster(const vec &o, const vec &rad)
+bool isshadowmapcaster(const vec &o, float rad)
 {
+    // cheaper inexact test
     float dz = o.z - shadowfocus.z;
     float cx = shadowfocus.x - dz*shadowdir.x, cy = shadowfocus.y - dz*shadowdir.y;
-    float skew = rad.z*SHADOWSKEW;
+    float skew = rad*SHADOWSKEW;
     if(!shadowmapping ||
-       o.z + rad.z <= shadowfocus.z - shadowmapdist || o.z - rad.z >= shadowfocus.z ||
-       o.x + rad.x <= cx - shadowmapradius-skew || o.x - rad.x >= cx + shadowmapradius+skew ||
-       o.y + rad.y <= cy - shadowmapradius-skew || o.y - rad.y >= cy + shadowmapradius+skew)
+       o.z + rad <= shadowfocus.z - shadowmapdist || o.z - rad >= shadowfocus.z ||
+       o.x + rad <= cx - shadowmapradius-skew || o.x - rad >= cx + shadowmapradius+skew ||
+       o.y + rad <= cy - shadowmapradius-skew || o.y - rad >= cy + shadowmapradius+skew)
         return false;
+    return true;
+}
+
+float smx1 = 0, smy1 = 0, smx2 = 0, smy2 = 0;
+
+void calcshadowmapbb(const vec &o, float xyrad, float zrad, float &x1, float &y1, float &x2, float &y2)
+{
+    vec skewdir(shadowdir);
+    skewdir.neg();
+    skewdir.rotate_around_z(-camera1->yaw*RAD);
+
+    vec ro(o);
+    ro.sub(camera1->o);
+    ro.rotate_around_z(-camera1->yaw*RAD);
+    ro.x += ro.z * skewdir.x;
+    ro.y += ro.z * skewdir.y + shadowmapradius * cosf(camera1->pitch*RAD);
+
+    vec high(ro), low(ro);
+    high.x += zrad * skewdir.x;
+    high.y += zrad * skewdir.y;
+    low.x -= zrad * skewdir.x;
+    low.y -= zrad * skewdir.y;
+
+    x1 = (min(high.x, low.x) - xyrad) / shadowmapradius;
+    y1 = (min(high.y, low.y) - xyrad) / shadowmapradius;
+    x2 = (max(high.x, low.x) + xyrad) / shadowmapradius;
+    y2 = (max(high.y, low.y) + xyrad) / shadowmapradius;
+}
+
+bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
+{
+    float x1, y1, x2, y2;
+    calcshadowmapbb(o, xyrad, zrad, x1, y1, x2, y2);
+    if(x1 >= 1 || y1 >= 1 || x2 <= -1 || y2 <= -1) return false;
+
+    smx1 = min(smx1, max(x1, -1));
+    smy1 = min(smy1, max(y1, -1));
+    smx2 = max(smx2, min(x2, 1));
+    smy2 = max(smy2, min(y2, 1));
+
+    shadowmapcasters++;
     return true;
 }
 
 bool isshadowmapreceiver(vtxarray *va)
 {
+    if(!shadowmapcasters) return false;
+    float x1, y1, x2, y2;
+    calcshadowmapbb(vec(va->x, va->y, va->z).add(va->size/2), SQRT2*va->size/2, va->size/2, x1, y1, x2, y2);
+    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmapsize;
+    if(x2+blurerror < smx1 || y2+blurerror < smy1 || x1-blurerror > smx2 || y1-blurerror > smy2) return false;
+#if 0
+    // cheaper inexact test
     float dz = va->z + va->size/2 - shadowfocus.z;
     float cx = shadowfocus.x - dz*shadowdir.x, cy = shadowfocus.y - dz*shadowdir.y;
     float skew = va->size/2*SHADOWSKEW;
@@ -200,6 +250,7 @@ bool isshadowmapreceiver(vtxarray *va)
        va->x + va->size <= cx - shadowmapradius-skew || va->x >= cx + shadowmapradius+skew || 
        va->y + va->size <= cy - shadowmapradius-skew || va->y >= cy + shadowmapradius+skew) 
         return false;
+#endif
     return true;
 }
 
@@ -211,9 +262,16 @@ void rendershadowmapcasters(int smsize)
     if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmapcaster");
     shadowmapshader->set();
 
+    shadowmapcasters = 0;
+    smx2 = smy2 = -1;
+    smx1 = smy1 = 1;
+
     shadowmapping = true;
-    glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
-    if(smscissor) glEnable(GL_SCISSOR_TEST);
+    if(smscissor) 
+    {
+        glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
+        glEnable(GL_SCISSOR_TEST);
+    }
     cl->rendergame();
     if(smscissor) glDisable(GL_SCISSOR_TEST);
     shadowmapping = false;
@@ -228,6 +286,8 @@ void setshadowdir(int angle)
 }
 
 VARF(shadowmapangle, 0, 0, 360, setshadowdir(shadowmapangle));
+
+VAR(smc, 0, 0, 1);
 
 void rendershadowmap()
 {
@@ -290,7 +350,8 @@ void rendershadowmap()
 
     setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/1024.0f, 1 - 2*shadowmapbias/1024.0f);
     rendershadowmapcasters(smsize);
-    if(smdepthpeel) rendershadowmapreceivers();
+    shadowmapcasters += smc;
+    if(shadowmapcasters && smdepthpeel) rendershadowmapreceivers();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -298,13 +359,17 @@ void rendershadowmap()
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    if(!shadowmapfb)
+    int smx = int(0.5f*(smx1 + 1)*smsize), 
+        smy = int(0.5f*(smy1 + 1)*smsize),
+        smw = int(0.5f*(smx2 - smx1)*smsize),
+        smh = int(0.5f*(smy2 - smy1)*smsize);
+    if(shadowmapcasters && !shadowmapfb)
     {
         glBindTexture(GL_TEXTURE_2D, shadowmaptex);
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-smsize, screen->h-smsize, smsize, smsize);
     }
 
-    if(blurshadowmap)
+    if(shadowmapcasters && blurshadowmap)
     {
         if(!blurkernel[0]) setupblurkernel();
 
@@ -320,6 +385,16 @@ void rendershadowmap()
         blurshader[blurshadowmap-1]->set();
 
         setlocalparamfv("blurkernel", SHPARAM_PIXEL, 0, blurkernel);
+
+        int blurx = (shadowmapfb ? 0 : screen->w-smsize) + max(blurshadowmap+2, smx - blurshadowmap - 2),
+            blury = (shadowmapfb ? 0 : screen->h-smsize) + max(blurshadowmap+2, smy - blurshadowmap - 2),
+            blurw = min(smsize-2*(blurshadowmap+2), smw + blurshadowmap + 2),
+            blurh = min(smsize-2*(blurshadowmap+2), smh + blurshadowmap + 2);
+        if(smscissor)
+        {
+            glScissor(blurx, blury, blurw, blurh);
+            glEnable(GL_SCISSOR_TEST);
+        }
 
         loopi(2)
         {
@@ -339,9 +414,11 @@ void rendershadowmap()
             glTexCoord2f(0, 1); glVertex2f(-1, 1);
             glEnd();
 
-            if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-smsize, screen->h-smsize, smsize, smsize);
+            if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, blurx-(screen->w-smsize), blury-(screen->h-smsize), blurx, blury, blurw, blurh);
         }
-        
+       
+        if(smscissor) glDisable(GL_SCISSOR_TEST);
+
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
@@ -369,5 +446,20 @@ void viewshadowmap()
     glEnd();
     notextureshader->set();
     glDisable(GL_TEXTURE_2D);
+    if(smscissor && shadowmapcasters)
+    {
+        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+        int smx = int(0.5f*(smx1 + 1)*screen->w/2),
+            smy = int(0.5f*(smy1 + 1)*screen->h/2),
+            smw = int(0.5f*(smx2 - smx1)*screen->w/2),
+            smh = int(0.5f*(smy2 - smy1)*screen->h/2);
+        glBegin(GL_QUADS);
+        glVertex2i(smx, smy);
+        glVertex2i(smx + smw, smy);
+        glVertex2i(smx + smw, smy + smh);
+        glVertex2i(smx, smy+smh);
+        glEnd();
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
 }
 

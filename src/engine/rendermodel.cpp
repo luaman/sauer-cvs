@@ -450,7 +450,14 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     }
 
     int anim = b.anim;
-    if(shadowmapping) anim |= ANIM_NOSKIN;
+    if(shadowmapping) 
+    { 
+        anim |= ANIM_NOSKIN; 
+        vec center;
+        float radius = m->boundsphere(0/*frame*/, center); // FIXME
+        center.add(b.pos);
+        addshadowmapcaster(center, radius, radius);
+    }
     else if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
 
     m->setskin(b.tex);
@@ -590,7 +597,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
                 if(center.dist(camera1->o)-radius>reflectdist) return;
             }
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
-            if(shadowmapping && !isshadowmapcaster(center, vec(radius, radius, radius))) return;
+            if(shadowmapping && !isshadowmapcaster(center, radius)) return;
         }
         if(!shadowmapping && (cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
     }
@@ -653,7 +660,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         if((cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) { m->endrender(); return; }
     }
 
-    if(shadowmapping) anim |= ANIM_NOSKIN;
+    if(shadowmapping) { anim |= ANIM_NOSKIN; addshadowmapcaster(center, radius, radius); }
     else if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
     m->setskin(tex);

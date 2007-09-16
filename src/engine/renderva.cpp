@@ -1074,10 +1074,12 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             vbufchanged = true;
         }
     }
-
+    
+    bool shadowmapreceiver = false;
     if(pass==RENDERPASS_LIGHTMAP && renderpath!=R_FIXEDFUNCTION)
     {
-        if(vbufchanged) glColorPointer(shadowmap ? 4 : 3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        if(!envmapping) shadowmapreceiver = isshadowmapreceiver(va);
+        if(vbufchanged) glColorPointer(shadowmapreceiver ? 4 : 3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
 
         setdynlights(va);
@@ -1092,7 +1094,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
-    bool mtglow = false, shadowmapreceiver = pass==RENDERPASS_LIGHTMAP && !envmapping && isshadowmapreceiver(va);
+    bool mtglow = false;
     float lastscale = -1;
     Slot *lastslot = NULL;
     loopi(lod.texs)

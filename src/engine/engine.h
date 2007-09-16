@@ -131,7 +131,8 @@ extern GLuint lookupenvmap(ushort emid);
 extern int shadowmap;
 extern bool shadowmapping;
 
-extern bool isshadowmapcaster(const vec &o, const vec &rad);
+extern bool isshadowmapcaster(const vec &o, float rad);
+extern bool addshadowmapcaster(const vec &o, float xyrad, float zrad);
 extern bool isshadowmapreceiver(vtxarray *va);
 extern void rendershadowmap();
 extern void pushshadowmap();
