@@ -235,7 +235,7 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
 
 bool isshadowmapreceiver(vtxarray *va)
 {
-    if(!shadowmapcasters) return false;
+    if(!shadowmap || !shadowmaptex || !shadowmapcasters) return false;
     float x1, y1, x2, y2;
     calcshadowmapbb(vec(va->x, va->y, va->z).add(va->size/2), SQRT2*va->size/2, va->size/2, x1, y1, x2, y2);
     float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmapsize;
