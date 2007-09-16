@@ -287,8 +287,6 @@ void setshadowdir(int angle)
 
 VARF(shadowmapangle, 0, 0, 360, setshadowdir(shadowmapangle));
 
-VAR(smc, 0, 0, 1);
-
 void rendershadowmap()
 {
     if(!shadowmap || renderpath==R_FIXEDFUNCTION) return;
@@ -350,7 +348,6 @@ void rendershadowmap()
 
     setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/1024.0f, 1 - 2*shadowmapbias/1024.0f);
     rendershadowmapcasters(smsize);
-    shadowmapcasters += smc;
     if(shadowmapcasters && smdepthpeel) rendershadowmapreceivers();
 
     glMatrixMode(GL_PROJECTION);
