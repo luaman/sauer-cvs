@@ -225,6 +225,8 @@ void calcshadowmapbb(const vec &o, float xyrad, float zrad, float &x1, float &y1
 
 bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
 {
+    if(o.z + zrad <= shadowfocus.z - shadowmapdist || o.z - zrad >= shadowfocus.z) return false;
+
     float x1, y1, x2, y2;
     calcshadowmapbb(o, xyrad, zrad, x1, y1, x2, y2);
     if(x1 >= 1 || y1 >= 1 || x2 <= -1 || y2 <= -1) return false;
@@ -251,6 +253,9 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
 bool isshadowmapreceiver(vtxarray *va)
 {
     if(!shadowmap || !shadowmaptex || !shadowmapcasters) return false;
+
+    if(va->z + va->size <= shadowfocus.z - shadowmapdist || va->z >= shadowfocus.z) return false;
+
     float x1, y1, x2, y2;
     calcshadowmapbb(vec(va->x, va->y, va->z).add(va->size/2), SQRT2*va->size/2, va->size/2, x1, y1, x2, y2);
 
