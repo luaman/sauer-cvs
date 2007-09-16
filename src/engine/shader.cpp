@@ -616,7 +616,7 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
     {
         const char *tc =
             "shadowmaptc = vec3(gl_TextureMatrix[2] * gl_Vertex);\n"
-            "shadowmaptc.z -= gl_Color.w;\n";
+            "shadowmaptc.z += gl_Color.w;\n";
         vssm.put(tc, strlen(tc));
         const char *sm =
             "vec3 smvals = texture2D(shadowmap, shadowmaptc.xy).xyz;\n"
