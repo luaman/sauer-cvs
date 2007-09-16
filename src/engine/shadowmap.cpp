@@ -7,8 +7,8 @@ GLuint shadowmaptex = 0, shadowmapfb = 0, shadowmapdb = 0;
 int shadowmaptexsize = 0;
 
 GLuint blurtex = 0, blurfb = 0;
-#define BLURTILES 8
-uchar blurtiles[BLURTILES * BLURTILES];
+#define BLURTILES 16
+uint blurtiles[BLURTILES+1];
 
 void cleanshadowmap()
 {
@@ -237,14 +237,13 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
     smy2 = max(smy2, min(y2, 1));
 
     float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
-	int tx1 = max(0, min(BLURTILES - 1, int((x1-blurerror + 1)/2 * BLURTILES))),
-		ty1 = max(0, min(BLURTILES - 1, int((y1-blurerror + 1)/2 * BLURTILES))),
-		tx2 = max(0, min(BLURTILES - 1, int((x2+blurerror + 1)/2 * BLURTILES))),
-		ty2 = max(0, min(BLURTILES - 1, int((y2+blurerror + 1)/2 * BLURTILES)));
+    int tx1 = max(0, min(BLURTILES - 1, int((x1-blurerror + 1)/2 * BLURTILES))),
+        ty1 = max(0, min(BLURTILES - 1, int((y1-blurerror + 1)/2 * BLURTILES))),
+        tx2 = max(0, min(BLURTILES - 1, int((x2+blurerror + 1)/2 * BLURTILES))),
+        ty2 = max(0, min(BLURTILES - 1, int((y2+blurerror + 1)/2 * BLURTILES)));
 
-	for(int y = ty1; y <= ty2; y++)
-	for(int x = tx1; x <= tx2; x++)
-		blurtiles[y*BLURTILES + x] = 1;
+    uint mask = ((1<<(tx2+1))-1) & ~((1<<tx1)-1);
+    for(int y = ty1; y <= ty2; y++) blurtiles[y] |= mask;
 
     shadowmapcasters++;
     return true;
@@ -262,18 +261,17 @@ bool isshadowmapreceiver(vtxarray *va)
     float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
     if(x2+blurerror < smx1 || y2+blurerror < smy1 || x1-blurerror > smx2 || y1-blurerror > smy2) return false;
 
-	if(!blurtile) return true;
+    if(!blurtile) return true;
 
-	int tx1 = max(0, min(BLURTILES - 1, int((x1 + 1)/2 * BLURTILES))),
-		ty1 = max(0, min(BLURTILES - 1, int((y1 + 1)/2 * BLURTILES))),
-		tx2 = max(0, min(BLURTILES - 1, int((x2 + 1)/2 * BLURTILES))),
-		ty2 = max(0, min(BLURTILES - 1, int((y2 + 1)/2 * BLURTILES)));
+    int tx1 = max(0, min(BLURTILES - 1, int((x1 + 1)/2 * BLURTILES))),
+        ty1 = max(0, min(BLURTILES - 1, int((y1 + 1)/2 * BLURTILES))),
+        tx2 = max(0, min(BLURTILES - 1, int((x2 + 1)/2 * BLURTILES))),
+        ty2 = max(0, min(BLURTILES - 1, int((y2 + 1)/2 * BLURTILES)));
 
-	for(int y = ty1; y <= ty2; y++)
-	for(int x = tx1; x <= tx2; x++)
-		if(blurtiles[y*BLURTILES + x]) return true;
-	
-	return false;
+    uint mask = ((1<<(tx2+1))-1) & ~((1<<tx1)-1);
+    for(int y = ty1; y <= ty2; y++) if(blurtiles[y] & mask) return true;
+    
+    return false;
 
 #if 0
     // cheaper inexact test
@@ -285,7 +283,7 @@ bool isshadowmapreceiver(vtxarray *va)
        va->x + va->size <= cx - shadowmapradius-skew || va->x >= cx + shadowmapradius+skew || 
        va->y + va->size <= cy - shadowmapradius-skew || va->y >= cy + shadowmapradius+skew) 
         return false;
-	return true;
+    return true;
 #endif
 }
 
@@ -301,15 +299,15 @@ void rendershadowmapcasters()
     smx2 = smy2 = -1;
     smx1 = smy1 = 1;
 
-	memset(blurtiles, 0, sizeof(blurtiles));
+    memset(blurtiles, 0, sizeof(blurtiles));
 
     shadowmapping = true;
     if(smscissor) 
     {
         glScissor((shadowmapfb ? 0 : screen->w-shadowmaptexsize) + 2, 
-				  (shadowmapfb ? 0 : screen->h-shadowmaptexsize) + 2, 
-				  shadowmaptexsize - 2*2, 
-				  shadowmaptexsize - 2*2);
+                  (shadowmapfb ? 0 : screen->h-shadowmaptexsize) + 2, 
+                  shadowmaptexsize - 2*2, 
+                  shadowmaptexsize - 2*2);
         glEnable(GL_SCISSOR_TEST);
     }
     cl->rendergame();
@@ -454,27 +452,42 @@ void rendershadowmap()
             setlocalparamf("blurstep", SHPARAM_PIXEL, 1, !i ? step : 0, i ? step : 0, 0, 0);
 
             glBegin(GL_QUADS);
-			if(blurtile)
-			{
-				float tsz = 1.0f/BLURTILES, vsz = 2*tsz;
-				loop(y, BLURTILES) loop(x, BLURTILES) if(blurtiles[y*BLURTILES + x])
-				{
-					float tx = x*tsz,
-						  ty = y*tsz,
-						  vx = 2*tx - 1, vy = 2*ty - 1;
-					glTexCoord2f(tx,     ty);     glVertex2f(vx,     vy);
-					glTexCoord2f(tx+tsz, ty);     glVertex2f(vx+vsz, vy);
-					glTexCoord2f(tx+tsz, ty+tsz); glVertex2f(vx+vsz, vy+vsz);
-					glTexCoord2f(tx,     ty+tsz); glVertex2f(vx,     vy+vsz);
-				}
-			}
-			else
-			{
-				glTexCoord2f(0, 0); glVertex2f(-1, -1);
-				glTexCoord2f(1, 0); glVertex2f(1, -1);
-				glTexCoord2f(1, 1); glVertex2f(1, 1);
-				glTexCoord2f(0, 1); glVertex2f(-1, 1);
-			}
+            if(blurtile)
+            {
+                float tsz = 1.0f/BLURTILES;
+                int ystart = 0;
+                loop(y, BLURTILES+1) 
+                {
+                    if(blurtiles[y] == blurtiles[ystart]) continue;
+                    uint mask = blurtiles[ystart];
+                    int xstart = -1;
+                    if(mask) loop(x, BLURTILES+1) 
+                    {
+                        if(mask & (1<<x)) { if(xstart<0) xstart = x; }
+                        else if(xstart>=0)
+                        {
+                            float tx = xstart*tsz,
+                                  ty = ystart*tsz,
+                                  tw = (x-xstart)*tsz,
+                                  th = (y-ystart)*tsz,
+                                  vx = 2*tx - 1, vy = 2*ty - 1, vw = tw*2, vh = th*2;
+                            glTexCoord2f(tx,    ty);    glVertex2f(vx,    vy);
+                            glTexCoord2f(tx+tw, ty);    glVertex2f(vx+vw, vy);
+                            glTexCoord2f(tx+tw, ty+th); glVertex2f(vx+vw, vy+vh);
+                            glTexCoord2f(tx,    ty+th); glVertex2f(vx,    vy+vh);
+                            xstart = -1;
+                        }
+                    }
+                    ystart = y;
+                }
+            }
+            else
+            {
+                glTexCoord2f(0, 0); glVertex2f(-1, -1);
+                glTexCoord2f(1, 0); glVertex2f(1, -1);
+                glTexCoord2f(1, 1); glVertex2f(1, 1);
+                glTexCoord2f(0, 1); glVertex2f(-1, 1);
+            }
             glEnd();
 
             if(!shadowmapfb) glCopyTexSubImage2D(GL_TEXTURE_2D, 0, blurx-(screen->w-shadowmaptexsize), blury-(screen->h-shadowmaptexsize), blurx, blury, blurw, blurh);
@@ -520,25 +533,39 @@ void viewshadowmap()
         glEnd();
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-	if(blurtile && shadowmapcasters)
-	{
-		glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glBegin(GL_QUADS);
-		loop(y, BLURTILES) loop(x, BLURTILES) if(blurtiles[y*BLURTILES + x])
-		{
-			float vx = (float(x)/BLURTILES)*screen->w/2,
-				  vy = (float(y)/BLURTILES)*screen->h/2,
-				  vw = (1.0f/BLURTILES)*screen->w/2,
-				  vh = (1.0f/BLURTILES)*screen->h/2;
-			glVertex2f(vx, vy);
-			glVertex2f(vx+vw, vy);
-			glVertex2f(vx+vw, vy+vh);
-			glVertex2f(vx, vy+vh);
-		}
-		glEnd();
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	}
+    if(blurtile && shadowmapcasters)
+    {
+        glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBegin(GL_QUADS);
+        float vxsz = float(screen->w/2)/BLURTILES, vysz = float(screen->h/2)/BLURTILES;
+        int ystart = 0;
+        loop(y, BLURTILES+1)
+        {
+            if(blurtiles[y] == blurtiles[ystart]) continue;
+            uint mask = blurtiles[ystart];
+            int xstart = -1; 
+            if(mask) loop(x, BLURTILES+1)
+            {
+                if(mask & (1<<x)) { if(xstart<0) xstart = x; }
+                else if(xstart>=0)
+                {
+                    float vx = xstart*vxsz,
+                          vy = ystart*vysz,
+                          vw = (x-xstart)*vxsz,
+                          vh = (y-ystart)*vysz;
+                    glVertex2f(vx,    vy);
+                    glVertex2f(vx+vw, vy);
+                    glVertex2f(vx+vw, vy+vh);
+                    glVertex2f(vx,    vy+vh);
+                    xstart = -1;
+                }
+            }
+            ystart = y;
+        }
+        glEnd();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
 }
 
