@@ -269,7 +269,7 @@ void rendershadowmapcasters(int smsize)
     shadowmapping = true;
     if(smscissor) 
     {
-        glScissor((shadowmapfb ? 0 : screen->w-smsize) + blurshadowmap+2, (shadowmapfb ? 0 : screen->h-smsize) + blurshadowmap+2, smsize-2*(blurshadowmap+2), smsize-2*(blurshadowmap+2));
+        glScissor((shadowmapfb ? 0 : screen->w-smsize) + 2, (shadowmapfb ? 0 : screen->h-smsize) + 2, smsize - 2*2, smsize - 2*2);
         glEnable(GL_SCISSOR_TEST);
     }
     cl->rendergame();
@@ -383,10 +383,10 @@ void rendershadowmap()
 
         setlocalparamfv("blurkernel", SHPARAM_PIXEL, 0, blurkernel);
 
-        int blurx = (shadowmapfb ? 0 : screen->w-smsize) + max(blurshadowmap+2, smx - blurshadowmap - 2),
-            blury = (shadowmapfb ? 0 : screen->h-smsize) + max(blurshadowmap+2, smy - blurshadowmap - 2),
-            blurw = min(smsize-2*(blurshadowmap+2), smw + blurshadowmap + 2),
-            blurh = min(smsize-2*(blurshadowmap+2), smh + blurshadowmap + 2);
+        int blurx = (shadowmapfb ? 0 : screen->w-smsize) + max(2, smx - 2),
+            blury = (shadowmapfb ? 0 : screen->h-smsize) + max(2, smy - 2),
+            blurw = min(smsize - 2*2, smw + 2),
+            blurh = min(smsize - 2*2, smh + 2);
         if(smscissor)
         {
             glScissor(blurx, blury, blurw, blurh);
