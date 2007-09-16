@@ -382,11 +382,21 @@ void rendershadowmap()
         blurshader[blurshadowmap-1]->set();
 
         setlocalparamfv("blurkernel", SHPARAM_PIXEL, 0, blurkernel);
+   
+        int blurx = smx - blurshadowmap,
+            blury = smy - blurshadowmap,
+            blurw = smw + 2*blurshadowmap,
+            blurh = smh + 2*blurshadowmap;
+        if(blurx < 2) { blurw -= 2 - blurx; blurx = 2; }
+        if(blury < 2) { blurh -= 2 - blury; blury = 2; }
+        if(blurx + blurw > smsize - 2) blurw = (smsize - 2) - blurx; 
+        if(blury + blurh > smsize - 2) blurh = (smsize - 2) - blury;
+        if(!shadowmapfb)
+        {
+            blurx += screen->w - smsize;
+            blury += screen->h - smsize;
+        }
 
-        int blurx = (shadowmapfb ? 0 : screen->w-smsize) + max(2, smx - 2),
-            blury = (shadowmapfb ? 0 : screen->h-smsize) + max(2, smy - 2),
-            blurw = min(smsize - 2*2, smw + 2),
-            blurh = min(smsize - 2*2, smh + 2);
         if(smscissor)
         {
             glScissor(blurx, blury, blurw, blurh);
