@@ -11,9 +11,6 @@ GLuint blurtex = 0, blurfb = 0;
 #define BLURTILEMASK (0xFFFFFFFFU>>(32-BLURTILES))
 uint blurtiles[BLURTILES+1];
 
-VAR(debugsm, 0, 0, 1);
-uint debugtiles[BLURTILES+1];
-
 void cleanshadowmap()
 {
     if(shadowmapfb) { glDeleteFramebuffers_(1, &shadowmapfb); shadowmapfb = 0; }
@@ -317,8 +314,6 @@ void rendershadowmapcasters()
     cl->rendergame();
     if(smscissor) glDisable(GL_SCISSOR_TEST);
     shadowmapping = false;
-
-    if(debugsm) memcpy(debugtiles, blurtiles, sizeof(blurtiles));
 }
 
 VAR(smdepthpeel, 0, 1, 1);
@@ -460,10 +455,13 @@ void rendershadowmap()
             glBegin(GL_QUADS);
             if(blurtile)
             {
+                uint tiles[sizeof(blurtiles)/sizeof(uint)];
+                memcpy(tiles, blurtiles, sizeof(blurtiles));
+
                 float tsz = 1.0f/BLURTILES;
                 loop(y, BLURTILES+1)
                 {
-                    uint mask = blurtiles[y];
+                    uint mask = tiles[y];
                     int x = 0;
                     while(mask)
                     {
@@ -473,7 +471,7 @@ void rendershadowmap()
                         do { mask >>= 1; x++; } while(mask&1);
                         uint strip = (BLURTILEMASK>>(BLURTILES - x)) & (BLURTILEMASK<<xstart);
                         int yend = y;
-                        do { blurtiles[yend] &= ~strip; yend++; } while((blurtiles[yend] & strip) == strip);
+                        do { tiles[yend] &= ~strip; yend++; } while((tiles[yend] & strip) == strip);
                         float tx = xstart*tsz,
                               ty = y*tsz,
                               tw = (x-xstart)*tsz,
@@ -507,6 +505,8 @@ void rendershadowmap()
     if(shadowmapfb) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
     glViewport(0, 0, screen->w, screen->h);
 }
+
+VAR(debugsm, 0, 0, 1);
 
 void viewshadowmap()
 {
@@ -544,7 +544,7 @@ void viewshadowmap()
         float vxsz = float(screen->w/2)/BLURTILES, vysz = float(screen->h/2)/BLURTILES;
         loop(y, BLURTILES+1)
         {
-            uint mask = debugtiles[y];
+            uint mask = blurtiles[y];
             int x = 0;
             while(mask) 
             {
@@ -554,7 +554,7 @@ void viewshadowmap()
                 do { mask >>= 1; x++; } while(mask&1);
                 uint strip = (BLURTILEMASK>>(BLURTILES - x)) & (BLURTILEMASK<<xstart);
                 int yend = y;
-                do { debugtiles[yend] &= ~strip; yend++; } while((debugtiles[yend] & strip) == strip);
+                do { blurtiles[yend] &= ~strip; yend++; } while((blurtiles[yend] & strip) == strip);
                 float vx = xstart*vxsz,
                       vy = y*vysz,
                       vw = (x-xstart)*vxsz,
