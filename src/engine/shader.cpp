@@ -469,6 +469,7 @@ static uint findusedtexcoords(char *str)
         if(!tc) break;
         tc += strlen("result.texcoord[");
         int n = strtol(tc, &str, 10);
+        if(n<0 || n>=16) continue;
         used |= 1<<n;
     }
     return used;
@@ -476,78 +477,78 @@ static uint findusedtexcoords(char *str)
 
 static bool findunusedtexcoordcomponent(char *str, int &texcoord, int &component)
 {
-	uchar texcoords[16];
-	memset(texcoords, 0, sizeof(texcoords));
+    uchar texcoords[16];
+    memset(texcoords, 0, sizeof(texcoords));
     for(;;)
     {
         char *tc = strstr(str, "result.texcoord[");
         if(!tc) break;
         tc += strlen("result.texcoord[");
         int n = strtol(tc, &str, 10);
-		if(n>=sizeof(texcoords)) continue;
-		while(*str && *str!=']') str++;
-		if(*str==']')
-		{
-			if(*++str!='.') { texcoords[n] = 0xF; continue; }
-			for(;;) 
-			{
-				switch(*++str)
-				{
-					case 'r': case 'x': texcoords[n] |= 1; continue;
-					case 'g': case 'y': texcoords[n] |= 2; continue;
-					case 'b': case 'z': texcoords[n] |= 4; continue;
-					case 'a': case 'w': texcoords[n] |= 8; continue;
-				}
-				break;
-			}
-		}
+        if(n<0 || n>=(int)sizeof(texcoords)) continue;
+        while(*str && *str!=']') str++;
+        if(*str==']')
+        {
+            if(*++str!='.') { texcoords[n] = 0xF; continue; }
+            for(;;) 
+            {
+                switch(*++str)
+                {
+                    case 'r': case 'x': texcoords[n] |= 1; continue;
+                    case 'g': case 'y': texcoords[n] |= 2; continue;
+                    case 'b': case 'z': texcoords[n] |= 4; continue;
+                    case 'a': case 'w': texcoords[n] |= 8; continue;
+                }
+                break;
+            }
+        }
     }
-	loopi(sizeof(texcoords)) if(texcoords[i]>0 && texcoords[i]<0xF)
-	{
-		loopk(4) if(!(texcoords[i]&(1<<k))) { texcoord = i; component = k; return true; }
-	}
-	return false;
+    loopi(sizeof(texcoords)) if(texcoords[i]>0 && texcoords[i]<0xF)
+    {
+        loopk(4) if(!(texcoords[i]&(1<<k))) { texcoord = i; component = k; return true; }
+    }
+    return false;
 }
 
 #define EMUFOGVS(cond, vsbuf, start, end, fogcoord, fogtc, fogcomp) \
-		if(cond) \
-		{ \
-			vsbuf.put(start, fogcoord-start); \
-			const char *afterfogcoord = fogcoord + strlen("result.fogcoord"); \
-			if(*afterfogcoord=='.') afterfogcoord += 2; \
-			s_sprintfd(repfogcoord)("result.texcoord[%d].%c", fogtc, fogcomp==3 ? 'w' : 'x'+fogcomp); \
-			vsbuf.put(repfogcoord, strlen(repfogcoord)); \
-			vsbuf.put(afterfogcoord, end-afterfogcoord); \
-		} \
-        else vsbuf.put(start, end-start);
+    if(cond) \
+    { \
+        vsbuf.put(start, fogcoord-start); \
+        const char *afterfogcoord = fogcoord + strlen("result.fogcoord"); \
+        if(*afterfogcoord=='.') afterfogcoord += 2; \
+        s_sprintfd(repfogcoord)("result.texcoord[%d].%c", fogtc, fogcomp==3 ? 'w' : 'x'+fogcomp); \
+        vsbuf.put(repfogcoord, strlen(repfogcoord)); \
+        vsbuf.put(afterfogcoord, end-afterfogcoord); \
+    } \
+    else vsbuf.put(start, end-start);
 
 #define EMUFOGPS(cond, psbuf, fogtc, fogcomp) \
-		if(cond) \
-		{ \
-			char *fogoption = strstr(psbuf.getbuf(), "OPTION ARB_fog_linear;"); \
-			/*                    OPTION ARB_fog_linear; */ \
-			const char *tmpdef = "TEMP emufogcolor;     "; \
-			if(fogoption) while(*tmpdef) *fogoption++ = *tmpdef++; \
-			/*                    result.color */\
-			const char *tmpuse = " emufogcolor"; \
-			char *str = psbuf.getbuf(); \
-			for(;;) \
-			{ \
-				str = strstr(str, "result.color"); \
-				if(!str) break; \
-				memcpy(str, tmpuse, strlen(tmpuse)); \
-			} \
-			char *end = strstr(psbuf.getbuf(), "END"); \
-			if(end) psbuf.setsizenodelete(end - psbuf.getbuf()); \
-			s_sprintfd(calcfog)( \
-				"TEMP emufog;\n" \
-				"SUB emufog, state.fog.params.z, fragment.texcoord[%d].%c;\n" \
-				"MUL_SAT emufog, emufog, state.fog.params.w;\n" \
-				"LRP result.color, emufog, emufogcolor, state.fog.color;\n" \
-				"END\n", \
-				fogtc, fogcomp==3 ? 'w' : 'x'+fogcomp); \
-			psbuf.put(calcfog, strlen(calcfog)+1); \
-		}
+    if(cond) \
+    { \
+        char *fogoption = strstr(psbuf.getbuf(), "OPTION ARB_fog_linear;"); \
+        /*                    OPTION ARB_fog_linear; */ \
+        const char *tmpdef = "TEMP emufogcolor;     "; \
+        if(fogoption) while(*tmpdef) *fogoption++ = *tmpdef++; \
+        /*                    result.color */\
+        const char *tmpuse = " emufogcolor"; \
+        char *str = psbuf.getbuf(); \
+        for(;;) \
+        { \
+            str = strstr(str, "result.color"); \
+            if(!str) break; \
+            memcpy(str, tmpuse, strlen(tmpuse)); \
+        } \
+        char *end = strstr(psbuf.getbuf(), "END"); \
+        if(end) psbuf.setsizenodelete(end - psbuf.getbuf()); \
+        s_sprintfd(calcfog)( \
+            "TEMP emufog;\n" \
+            "SUB emufog, state.fog.params.z, fragment.texcoord[%d].%c;\n" \
+            "MUL_SAT emufog, emufog, state.fog.params.w;\n" \
+            "LRP result.color, emufog, emufogcolor, state.fog.color;\n" \
+            "END\n", \
+            fogtc, fogcomp==3 ? 'w' : 'x'+fogcomp); \
+        psbuf.put(calcfog, strlen(calcfog)+1); \
+    }
 
 VAR(reserveshadowmaptc, 1, 0, 0);
 VAR(reservedynlighttc, 1, 0, 0);
@@ -555,8 +556,8 @@ VAR(reservedynlighttc, 1, 0, 0);
 static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int row = 0)
 {
     int numlights = 0, lights[MAXDYNLIGHTS];
-	int emufogtc = -1, emufogcomp = -1;
-	const char *emufogcoord = NULL;
+    int emufogtc = -1, emufogcomp = -1;
+    const char *emufogcoord = NULL;
     if(s.type & SHADER_GLSLANG) numlights = MAXDYNLIGHTS;
     else
     {
@@ -570,17 +571,17 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
             lights[numlights++] = i;    
             if(numlights>=MAXDYNLIGHTS) break;
         }
-		extern int emulatefog;
-		if(emulatefog && reservetc>0 && numlights+1<MAXDYNLIGHTS && !(usedtc&(1<<(maxtc-reservetc))) && strstr(ps, "OPTION ARB_fog_linear;"))
-		{
-			emufogcoord = strstr(vs, "result.fogcoord");
-			if(emufogcoord)
-			{
-				emufogtc = maxtc-reservetc;
-				emufogcomp = 3;
-				lights[numlights++] = maxtc-reservetc;
-			}
-		}
+        extern int emulatefog;
+        if(emulatefog && reservetc>0 && numlights+1<MAXDYNLIGHTS && !(usedtc&(1<<(maxtc-reservetc))) && strstr(ps, "OPTION ARB_fog_linear;"))
+        {
+            emufogcoord = strstr(vs, "result.fogcoord");
+            if(emufogcoord)
+            {
+                emufogtc = maxtc-reservetc;
+                emufogcomp = 3;
+                lights[numlights++] = maxtc-reservetc;
+            }
+        }
         if(!numlights) return;
     }
 
@@ -618,8 +619,8 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
             }
         }
             
-		EMUFOGVS(emufogcoord && i+1==numlights && emufogcoord < vspragma, vsdl, vs, vspragma, emufogcoord, emufogtc, emufogcomp);
-		psdl.put(ps, pspragma-ps);
+        EMUFOGVS(emufogcoord && i+1==numlights && emufogcoord < vspragma, vsdl, vs, vspragma, emufogcoord, emufogtc, emufogcomp);
+        psdl.put(ps, pspragma-ps);
 
         loopk(i+1)
         {
@@ -648,10 +649,10 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
             psdl.put(dl, strlen(dl));
         }
 
-		EMUFOGVS(emufogcoord && i+1==numlights && emufogcoord >= vspragma, vsdl, vspragma, vspragma+strlen(vspragma)+1, emufogcoord, emufogtc, emufogcomp);
+        EMUFOGVS(emufogcoord && i+1==numlights && emufogcoord >= vspragma, vsdl, vspragma, vspragma+strlen(vspragma)+1, emufogcoord, emufogtc, emufogcomp);
         psdl.put(pspragma, strlen(pspragma)+1);
        
-		EMUFOGPS(emufogcoord && i+1==numlights, psdl, emufogtc, emufogcomp);
+        EMUFOGPS(emufogcoord && i+1==numlights, psdl, emufogtc, emufogcomp);
 
         s_sprintfd(name)("<dynlight %d>%s", i+1, sname);
         Shader *variant = newshader(s.type, name, vsdl.getbuf(), psdl.getbuf(), &s, row); 
@@ -662,21 +663,21 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
 static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
 {
     int smtc = -1, emufogtc = -1, emufogcomp = -1;
-	const char *emufogcoord = NULL;
+    const char *emufogcoord = NULL;
     if(!(s.type & SHADER_GLSLANG))
     {
         uint usedtc = findusedtexcoords(vs);
         GLint maxtc = 0;
         glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
         if(maxtc-reserveshadowmaptc<0) return;
-		loopi(maxtc-reserveshadowmaptc) if(!(usedtc&(1<<i))) { smtc = i; break; }
-		extern int emulatefog;
-		if(smtc<0 && emulatefog && reserveshadowmaptc>0 && !(usedtc&(1<<(maxtc-reserveshadowmaptc))) && strstr(ps, "OPTION ARB_fog_linear;"))
-		{
-			emufogcoord = strstr(vs, "result.fogcoord");
-			if(!emufogcoord || !findunusedtexcoordcomponent(vs, emufogtc, emufogcomp)) return;
-			smtc = maxtc-reserveshadowmaptc;
-		}
+        loopi(maxtc-reserveshadowmaptc) if(!(usedtc&(1<<i))) { smtc = i; break; }
+        extern int emulatefog;
+        if(smtc<0 && emulatefog && reserveshadowmaptc>0 && !(usedtc&(1<<(maxtc-reserveshadowmaptc))) && strstr(ps, "OPTION ARB_fog_linear;"))
+        {
+            emufogcoord = strstr(vs, "result.fogcoord");
+            if(!emufogcoord || !findunusedtexcoordcomponent(vs, emufogtc, emufogcomp)) return;
+            smtc = maxtc-reserveshadowmaptc;
+        }
         if(smtc<0) return;
     }
 
@@ -708,7 +709,7 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         }
     }
 
-	EMUFOGVS(emufogcoord && emufogcoord < vspragma, vssm, vs, vspragma, emufogcoord, emufogtc, emufogcomp);
+    EMUFOGVS(emufogcoord && emufogcoord < vspragma, vssm, vs, vspragma, emufogcoord, emufogtc, emufogcomp);
     pssm.put(ps, pspragma-ps);
 
     if(s.type & SHADER_GLSLANG)
@@ -756,10 +757,10 @@ static void genshadowmapvariant(Shader &s, char *sname, char *vs, char *ps)
         pssm.put(sm, strlen(sm));
     }
 
-	EMUFOGVS(emufogcoord && emufogcoord >= vspragma, vssm, vspragma, vspragma+strlen(vspragma)+1, emufogcoord, emufogtc, emufogcomp);
+    EMUFOGVS(emufogcoord && emufogcoord >= vspragma, vssm, vspragma, vspragma+strlen(vspragma)+1, emufogcoord, emufogtc, emufogcomp);
     pssm.put(pspragma, strlen(pspragma)+1);
 
-	EMUFOGPS(emufogcoord, pssm, emufogtc, emufogcomp);
+    EMUFOGPS(emufogcoord, pssm, emufogtc, emufogcomp);
 
     s_sprintfd(name)("<shadowmap>%s", sname);
     Shader *variant = newshader(s.type, name, vssm.getbuf(), pssm.getbuf(), &s, 1);
