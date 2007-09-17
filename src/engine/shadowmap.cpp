@@ -123,7 +123,7 @@ bool shadowmapping = false;
 
 GLdouble shadowmapprojection[16], shadowmapmodelview[16];
 
-VAR(shadowmapbias, 0, 20, 1024);
+VARP(shadowmapbias, 0, 20, 1024);
 
 void pushshadowmap()
 {
