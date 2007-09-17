@@ -87,6 +87,7 @@ VAR(apple_glsldepth_bug, 0, 0, 1);
 VAR(apple_minmax_bug, 0, 0, 1);
 VAR(intel_quadric_bug, 0, 0, 1);
 VAR(minimizetcusage, 1, 0, 0);
+VAR(emulatefog, 1, 0, 0);
 
 void gl_init(int w, int h, int bpp, int depth, int fsaa)
 {
@@ -171,6 +172,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         reservedynlighttc = 2;
         reserveshadowmaptc = 3;
 		minimizetcusage = 1;
+		emulatefog = 1;
     }
     else if(strstr(vendor, "Tungsten"))
     {
