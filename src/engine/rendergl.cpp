@@ -887,8 +887,6 @@ void drawcrosshair(int w, int h)
 
 VARP(showfpsrange, 0, 0, 1);
 
-VAR(debugsm, 0, 0, 1);
-
 void gl_drawhud(int w, int h, int fogmat)
 {
     if(editmode && !hidehud)
@@ -913,6 +911,7 @@ void gl_drawhud(int w, int h, int fogmat)
 
     glColor3f(1, 1, 1);
 
+    extern int debugsm;
     if(debugsm)
     {
         extern void viewshadowmap();

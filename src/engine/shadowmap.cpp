@@ -7,8 +7,12 @@ GLuint shadowmaptex = 0, shadowmapfb = 0, shadowmapdb = 0;
 int shadowmaptexsize = 0;
 
 GLuint blurtex = 0, blurfb = 0;
-#define BLURTILES 16
+#define BLURTILES 32
+#define BLURTILEMASK (0xFFFFFFFFU>>(32-BLURTILES))
 uint blurtiles[BLURTILES+1];
+
+VAR(debugsm, 0, 0, 1);
+uint debugtiles[BLURTILES+1];
 
 void cleanshadowmap()
 {
@@ -242,7 +246,7 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
         tx2 = max(0, min(BLURTILES - 1, int((x2+blurerror + 1)/2 * BLURTILES))),
         ty2 = max(0, min(BLURTILES - 1, int((y2+blurerror + 1)/2 * BLURTILES)));
 
-    uint mask = ((1<<(tx2+1))-1) & ~((1<<tx1)-1);
+    uint mask = (BLURTILEMASK>>(BLURTILES - (tx2+1))) & (BLURTILEMASK<<tx1);
     for(int y = ty1; y <= ty2; y++) blurtiles[y] |= mask;
 
     shadowmapcasters++;
@@ -268,7 +272,7 @@ bool isshadowmapreceiver(vtxarray *va)
         tx2 = max(0, min(BLURTILES - 1, int((x2 + 1)/2 * BLURTILES))),
         ty2 = max(0, min(BLURTILES - 1, int((y2 + 1)/2 * BLURTILES)));
 
-    uint mask = ((1<<(tx2+1))-1) & ~((1<<tx1)-1);
+    uint mask = (BLURTILEMASK>>(BLURTILES - (tx2+1))) & (BLURTILEMASK<<tx1);
     for(int y = ty1; y <= ty2; y++) if(blurtiles[y] & mask) return true;
     
     return false;
@@ -313,6 +317,8 @@ void rendershadowmapcasters()
     cl->rendergame();
     if(smscissor) glDisable(GL_SCISSOR_TEST);
     shadowmapping = false;
+
+    if(debugsm) memcpy(debugtiles, blurtiles, sizeof(blurtiles));
 }
 
 VAR(smdepthpeel, 0, 1, 1);
@@ -455,30 +461,29 @@ void rendershadowmap()
             if(blurtile)
             {
                 float tsz = 1.0f/BLURTILES;
-                int ystart = 0;
-                loop(y, BLURTILES+1) 
+                loop(y, BLURTILES+1)
                 {
-                    if(blurtiles[y] == blurtiles[ystart]) continue;
-                    uint mask = blurtiles[ystart];
-                    int xstart = -1;
-                    if(mask) loop(x, BLURTILES+1) 
+                    uint mask = blurtiles[y];
+                    int x = 0;
+                    while(mask)
                     {
-                        if(mask & (1<<x)) { if(xstart<0) xstart = x; }
-                        else if(xstart>=0)
-                        {
-                            float tx = xstart*tsz,
-                                  ty = ystart*tsz,
-                                  tw = (x-xstart)*tsz,
-                                  th = (y-ystart)*tsz,
-                                  vx = 2*tx - 1, vy = 2*ty - 1, vw = tw*2, vh = th*2;
-                            glTexCoord2f(tx,    ty);    glVertex2f(vx,    vy);
-                            glTexCoord2f(tx+tw, ty);    glVertex2f(vx+vw, vy);
-                            glTexCoord2f(tx+tw, ty+th); glVertex2f(vx+vw, vy+vh);
-                            glTexCoord2f(tx,    ty+th); glVertex2f(vx,    vy+vh);
-                            xstart = -1;
-                        }
+                        while(!(mask&0xFF)) { mask >>= 8; x += 8; }
+                        while(!(mask&1)) { mask >>= 1; x++; }
+                        int xstart = x;
+                        do { mask >>= 1; x++; } while(mask&1);
+                        uint strip = (BLURTILEMASK>>(BLURTILES - x)) & (BLURTILEMASK<<xstart);
+                        int yend = y;
+                        do { blurtiles[yend] &= ~strip; yend++; } while((blurtiles[yend] & strip) == strip);
+                        float tx = xstart*tsz,
+                              ty = y*tsz,
+                              tw = (x-xstart)*tsz,
+                              th = (yend-y)*tsz,
+                              vx = 2*tx - 1, vy = 2*ty - 1, vw = tw*2, vh = th*2;
+                        glTexCoord2f(tx,    ty);    glVertex2f(vx,    vy);
+                        glTexCoord2f(tx+tw, ty);    glVertex2f(vx+vw, vy);
+                        glTexCoord2f(tx+tw, ty+th); glVertex2f(vx+vw, vy+vh);
+                        glTexCoord2f(tx,    ty+th); glVertex2f(vx,    vy+vh);
                     }
-                    ystart = y;
                 }
             }
             else
@@ -536,35 +541,36 @@ void viewshadowmap()
     if(blurtile && shadowmapcasters)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBegin(GL_QUADS);
         float vxsz = float(screen->w/2)/BLURTILES, vysz = float(screen->h/2)/BLURTILES;
-        int ystart = 0;
         loop(y, BLURTILES+1)
         {
-            if(blurtiles[y] == blurtiles[ystart]) continue;
-            uint mask = blurtiles[ystart];
-            int xstart = -1; 
-            if(mask) loop(x, BLURTILES+1)
+            uint mask = debugtiles[y];
+            int x = 0;
+            while(mask) 
             {
-                if(mask & (1<<x)) { if(xstart<0) xstart = x; }
-                else if(xstart>=0)
+                while(!(mask&0xFF)) { mask >>= 8; x += 8; }
+                while(!(mask&1)) { mask >>= 1; x++; }
+                int xstart = x;
+                do { mask >>= 1; x++; } while(mask&1);
+                uint strip = (BLURTILEMASK>>(BLURTILES - x)) & (BLURTILEMASK<<xstart);
+                int yend = y;
+                do { debugtiles[yend] &= ~strip; yend++; } while((debugtiles[yend] & strip) == strip);
+                float vx = xstart*vxsz,
+                      vy = y*vysz,
+                      vw = (x-xstart)*vxsz,
+                      vh = (yend-y)*vysz;
+                loopi(2)
                 {
-                    float vx = xstart*vxsz,
-                          vy = ystart*vysz,
-                          vw = (x-xstart)*vxsz,
-                          vh = (y-ystart)*vysz;
+                    glColor3f(1, 1, i ? 1.0f : 0.5f); 
+                    glBegin(i ? GL_LINE_LOOP : GL_QUADS);
                     glVertex2f(vx,    vy);
                     glVertex2f(vx+vw, vy);
                     glVertex2f(vx+vw, vy+vh);
                     glVertex2f(vx,    vy+vh);
-                    xstart = -1;
+                    glEnd();
                 }
             }
-            ystart = y;
         }
-        glEnd();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 }
