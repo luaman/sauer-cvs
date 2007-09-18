@@ -511,25 +511,26 @@ VAR(debugsm, 0, 0, 1);
 void viewshadowmap()
 {
     if(!shadowmap || !shadowmaptex) return;
+    int w = min(screen->w, screen->h)/2, h = w;
     defaultshader->set();
     glColor3f(1, 1, 1);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, shadowmaptex);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0); glVertex2i(0, 0);
-    glTexCoord2f(1, 0); glVertex2i(screen->w/2, 0);
-    glTexCoord2f(1, 1); glVertex2i(screen->w/2, screen->h/2);
-    glTexCoord2f(0, 1); glVertex2i(0, screen->h/2);
+    glTexCoord2f(1, 0); glVertex2i(w, 0);
+    glTexCoord2f(1, 1); glVertex2i(w, h);
+    glTexCoord2f(0, 1); glVertex2i(0, h);
     glEnd();
     notextureshader->set();
     glDisable(GL_TEXTURE_2D);
     if(smscissor && shadowmapcasters)
     {
         glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
-        int smx = int(0.5f*(smx1 + 1)*screen->w/2),
-            smy = int(0.5f*(smy1 + 1)*screen->h/2),
-            smw = int(0.5f*(smx2 - smx1)*screen->w/2),
-            smh = int(0.5f*(smy2 - smy1)*screen->h/2);
+        int smx = int(0.5f*(smx1 + 1)*w),
+            smy = int(0.5f*(smy1 + 1)*h),
+            smw = int(0.5f*(smx2 - smx1)*w),
+            smh = int(0.5f*(smy2 - smy1)*h);
         glBegin(GL_QUADS);
         glVertex2i(smx, smy);
         glVertex2i(smx + smw, smy);
@@ -541,7 +542,7 @@ void viewshadowmap()
     if(blurtile && shadowmapcasters)
     {
         glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
-        float vxsz = float(screen->w/2)/BLURTILES, vysz = float(screen->h/2)/BLURTILES;
+        float vxsz = float(w)/BLURTILES, vysz = float(h)/BLURTILES;
         loop(y, BLURTILES+1)
         {
             uint mask = blurtiles[y];
