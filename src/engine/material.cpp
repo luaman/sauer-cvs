@@ -283,7 +283,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
             ++cur;
          if(!isliquid(start->material) || start->orient != O_TOP || !vertwater)
          {
-            if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
+            if(start!=matbuf) memmove(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf += mergemats(matbuf, cur-start);
          }
          else if(cur-start>=4)
@@ -294,7 +294,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
          }
          else
          {
-            if(start!=matbuf) memcpy(matbuf, start, (cur-start)*sizeof(materialsurface));
+            if(start!=matbuf) memmove(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf += cur-start;
          }
     }
