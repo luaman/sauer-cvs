@@ -266,7 +266,7 @@ bool checkquery(occludequery *query, bool nowait)
     return fragments < (uint)(reflecting ? oqreflect : oqfrags);
 }
 
-void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o)
+void drawbb(const ivec &bo, const ivec &br, const vec &camera)
 {
     glBegin(GL_QUADS);
 
