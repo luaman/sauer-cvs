@@ -795,14 +795,14 @@ void gl_drawframe(int w, int h)
 
     if(hasFBO) drawreflections();
 
-    renderwater();
-    rendergrass();
-
-    if(waterrefract) 
+    if(waterrefract)
     {
         defaultshader->set();
         cl->rendergame();
     }
+
+    renderwater();
+    rendergrass();
 
     rendermaterials();
     render_particles(curtime);
