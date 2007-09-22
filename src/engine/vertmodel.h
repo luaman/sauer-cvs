@@ -259,6 +259,16 @@ struct vertmodel : model
 
     struct meshgroup;
 
+    struct vbocacheentry
+    {
+        GLuint vbuf;
+        anpos cur, prev;
+        float t;
+        int millis;
+
+        vbocacheentry() : vbuf(0) { cur.fr1 = prev.fr1 = -1; }
+    };
+
     struct mesh
     {
         meshgroup *group;        
@@ -481,11 +491,11 @@ struct vertmodel : model
             #undef ip_v_ai
         }
 
-        void render(animstate &as, anpos &cur, anpos *prev, float ai_t, skin &s)
+        void render(animstate &as, anpos &cur, anpos *prev, float ai_t, skin &s, vbocacheentry *vc)
         {
             s.bind(as);
 
-            if(group->vbuf)
+            if(vc && vc->vbuf)
             {
                 if(s.multitextured())
                 {
@@ -582,17 +592,16 @@ struct vertmodel : model
         float scale;
         vec translate;
 
-        GLuint vbuf, ebuf;
-        int vlen;
-        bool vnorms;
-        vvert *vdata;
-        anpos cachecur, cacheprev;
-        float cachet;
-        int cachemillis;
+        static const int MAXVBOCACHE = 5;
+        vbocacheentry vbocache[MAXVBOCACHE];
 
-        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), vbuf(0), ebuf(0), vdata(NULL) 
+        GLuint ebuf;
+        bool vnorms;
+        int vlen;
+        vvert *vdata;
+
+        meshgroup() : next(NULL), shared(0), name(NULL), tags(NULL), numtags(0), numframes(0), scale(1), translate(0, 0, 0), ebuf(0), vdata(NULL) 
         {
-            cachecur.fr1 = cacheprev.fr1 = -1;
         }
 
         virtual ~meshgroup()
@@ -600,7 +609,7 @@ struct vertmodel : model
             DELETEA(name);
             meshes.deletecontentsp();
             DELETEA(tags);
-            if(vbuf) glDeleteBuffers_(1, &vbuf);
+            loopi(MAXVBOCACHE) if(vbocache[i].vbuf) glDeleteBuffers_(1, &vbocache[i].vbuf);
             if(ebuf) glDeleteBuffers_(1, &ebuf);
             DELETEA(vdata);
             DELETEP(next);
@@ -711,21 +720,24 @@ struct vertmodel : model
             matrix[15] = 1.0f;
         }
 
-        void genvbo(bool norms)
+        void genvbo(bool norms, vbocacheentry &vc)
         {
-            vnorms = norms;
+            glGenBuffers_(1, &vc.vbuf);
+
+            if(ebuf) return;
 
             vector<ushort> idxs;
             vector<vvert> vverts;
 
+            vnorms = norms;
             vlen = 0;
             loopv(meshes) vlen += meshes[i]->genvbo(idxs, vlen, vverts, norms);
 
-            glGenBuffers_(1, &vbuf);
+            glGenBuffers_(1, &vc.vbuf);
             if(numframes>1) { DELETEA(vdata); vdata = new vvert[vlen]; }
             else
             {
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, vc.vbuf);
                 if(!norms)
                 {
                     vvertff *ff = new vvertff[vverts.length()];
@@ -741,13 +753,13 @@ struct vertmodel : model
             glBufferData_(GL_ELEMENT_ARRAY_BUFFER_ARB, idxs.length()*sizeof(ushort), idxs.getbuf(), GL_STATIC_DRAW_ARB);
         }
 
-        void bindvbo(animstate &as)
+        void bindvbo(animstate &as, vbocacheentry &vc)
         {
             size_t vertsize = vnorms ? sizeof(vvert) : sizeof(vvertff);
             vvert *vverts = 0;
-            if(lastvbo!=vbuf)
+            if(lastvbo!=vc.vbuf)
             {
-                glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
+                glBindBuffer_(GL_ARRAY_BUFFER_ARB, vc.vbuf);
                 glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, ebuf);
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glVertexPointer(3, GL_FLOAT, vertsize, &vverts->pos);
@@ -757,7 +769,7 @@ struct vertmodel : model
             {
                 if(enabletc) disabletc();
             }
-            else 
+            else
             {
                 if(!enabletc)
                 {
@@ -772,57 +784,72 @@ struct vertmodel : model
                     enablemtc = false;
                 }
             }
-            lastvbo = vbuf;
+            lastvbo = vc.vbuf;
         }
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t, vector<skin> &skins)
         {
+            vbocacheentry *vc = NULL;
             if(hasVBO)
             {
-                bool norms = false;
-                loopv(skins) if(skins[i].normals()) { norms = true; break; } 
-                if(vbuf && norms!=vnorms)
+                if(numframes<=1) vc = vbocache;
+                else
                 {
-                    glDeleteBuffers_(1, &vbuf);
-                    glDeleteBuffers_(1, &ebuf);
-                    vbuf = ebuf = 0;
-                    cachecur.fr1 = -1;
+                    loopi(MAXVBOCACHE)
+                    {
+                        vbocacheentry &c = vbocache[i];
+                        if(!c.vbuf) continue;
+                        if(c.cur==cur && (prev ? c.prev==*prev && c.t==ai_t : c.prev.fr1<0)) { vc = &c; break; }
+                    }
+                    if(!vc) loopi(MAXVBOCACHE) { vc = &vbocache[i]; if(!vc->vbuf || vc->millis < lastmillis) break; }
                 }
-                if(!vbuf) genvbo(norms);
+                bool norms = false;
+                loopv(skins) if(skins[i].normals()) { norms = true; break; }
+                if(ebuf && norms!=vnorms)
+                {
+                    loopi(MAXVBOCACHE)
+                    {
+                        vbocacheentry &c = vbocache[i];
+                        if(c.vbuf) { glDeleteBuffers_(1, &c.vbuf); c.vbuf = 0; c.cur.fr1 = -1; }
+                    }
+                    glDeleteBuffers_(1, &ebuf);
+                    ebuf = 0;
+                }
+                if(!vc->vbuf) genvbo(norms, *vc);
                 if(numframes>1)
                 {
-                    if(cachecur!=cur || (prev ? cacheprev!=*prev || cachet!=ai_t : cacheprev.fr1>=0))
+                    if(vc->cur!=cur || (prev ? vc->prev!=*prev || vc->t!=ai_t : vc->prev.fr1>=0))
                     {
-                        cachecur = cur;
-                        if(prev) { cacheprev = *prev; cachet = ai_t; }
-                        else cacheprev.fr1 = -1;
-                        cachemillis = lastmillis;
-                        loopv(meshes) 
+                        vc->cur = cur;
+                        if(prev) { vc->prev = *prev; vc->t = ai_t; }
+                        else vc->prev.fr1 = -1;
+                        vc->millis = lastmillis;
+                        loopv(meshes)
                         {
                             mesh &m = *meshes[i];
                             m.interpverts(cur, prev, ai_t, norms, norms ? &vdata[m.voffset] : &((vvertff *)vdata)[m.voffset], skins[i]);
                         }
-                        glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf);
-                        glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_STREAM_DRAW_ARB);    
+                        glBindBuffer_(GL_ARRAY_BUFFER_ARB, vc->vbuf);
+                        glBufferData_(GL_ARRAY_BUFFER_ARB, vlen * (norms ? sizeof(vvert) : sizeof(vvertff)), vdata, GL_STREAM_DRAW_ARB);
                     }
-                    else if(cachemillis!=lastmillis) loopv(meshes)
+                    else if(vc->millis!=lastmillis) loopv(meshes)
                     {
                         skin &s = skins[i];
                         if(!s.scrollu && !s.scrollv) continue;
-                        if(cachemillis!=lastmillis) { glBindBuffer_(GL_ARRAY_BUFFER_ARB, vbuf); cachemillis = lastmillis; }
+                        if(vc->millis!=lastmillis) { glBindBuffer_(GL_ARRAY_BUFFER_ARB, vc->vbuf); vc->millis = lastmillis; }
                         mesh &m = *meshes[i];
                         void *vbo = norms ? &vdata[m.voffset] : &((vvertff *)vdata)[m.voffset];
                         m.interpverts(cur, prev, ai_t, norms, vbo, s);
-                        int sublen = (i+1<meshes.length() ? meshes[i+1]->voffset : vlen) - m.voffset;
+                        int sublen = (i+1<meshes.length() ? meshes[i+1]->voffset : vlen) - m.voffset; 
                         glBufferSubData_(GL_ARRAY_BUFFER_ARB, (uchar *)vbo - (uchar *)vdata, sublen * (norms ? sizeof(vvert) : sizeof(vvertff)), vbo);
                     }
                 }
+
+                if(vc->vbuf) bindvbo(as, *vc);
+                else if(lastvbo) disablevbo();
             }
 
-            if(vbuf) bindvbo(as);
-            else if(lastvbo) disablevbo();
-
-            loopv(meshes) meshes[i]->render(as, cur, prev, ai_t, skins[i]);
+            loopv(meshes) meshes[i]->render(as, cur, prev, ai_t, skins[i], vc);
         }
     };
 

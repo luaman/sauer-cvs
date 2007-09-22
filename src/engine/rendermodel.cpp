@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "engine.h"
 
+VARP(oqdynent, 0, 1, 1);
 VARP(animationinterpolationtime, 0, 150, 1000);
 VARP(orientinterpolationtime, 0, 75, 1000);
 
@@ -565,6 +566,21 @@ void endmodelquery()
 
 VARP(maxmodelradiusdistance, 10, 100, 1000);
 
+void rendermodelquery(model *m, dynent *d, const vec &center, float radius)
+{
+    d->query = newquery(d);
+    if(!d->query) return;
+    nocolorshader->set();
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    startquery(d->query);
+    int br = int(radius*2)+1;
+    drawbb(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br));
+    endquery(d->query);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+}   
+
 void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, int tex, const vec &o, float yaw, float pitch, float speed, int basetime, dynent *d, int cull, modelattach *a)
 {
     if(shadowmapping && !(cull&(MDL_SHADOW|MDL_DYNSHADOW))) return;
@@ -577,7 +593,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     {
         radius = m->boundsphere(0/*frame*/, center); // FIXME
         center.add(o);
-        if((cull&MDL_CULL_DIST) && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
+        if(cull&MDL_CULL_DIST && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
         {
             if(reflecting)
@@ -592,11 +608,17 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
             if(shadowmapping && !isshadowmapcaster(center, radius)) return;
         }
-        if(shadowmapping)
+        if(!shadowmapping && cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius)) return;
+        if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->query)
         {
-            if(!addshadowmapcaster(center, radius, radius)) return;
+            occludequery *query = (occludequery *)d->query;
+            if(query->owner==d && checkquery(query))
+            {
+                if(!reflecting && !refracting && !shadowmapping && cull&MDL_CULL_QUERY) rendermodelquery(m, d, center, radius);
+                return;
+            }
         }
-        else if((cull&MDL_CULL_OCCLUDED) && modeloccluded(center, radius)) return;
+        if(shadowmapping && !addshadowmapcaster(center, radius, radius)) return;
     }
     if(showboundingbox && !shadowmapping)
     {
@@ -628,6 +650,8 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         a[i].m = loadmodel(a[i].name);
         if(a[i].m && a[i].m->type()!=m->type()) a[i].m = NULL;
     }
+
+    bool doOQ = cull&MDL_CULL_QUERY && !reflecting && !refracting && !shadowmapping && hasOQ && oqdynent && d;
   
     if(numbatches>=0)
     {
@@ -646,6 +670,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         b.d = d;
         b.attached = a ? modelattached.length() : -1;
         if(a) for(int i = 0;; i++) { modelattached.add(a[i]); if(!a[i].name) break; }
+        if(doOQ) d->query = b.query = newquery(d);
         return;
     }
 
@@ -660,8 +685,16 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     if(shadowmapping) anim |= ANIM_NOSKIN;
     else if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT; 
 
+    if(doOQ)
+    {
+        d->query = newquery(d);
+        if(d->query) startquery(d->query);
+    }
+
     m->setskin(tex);
     m->render(anim, varseed, speed, basetime, o, yaw, pitch, d, a, dyncolor, dyndir);
+
+    if(doOQ && d->query) endquery(d->query);
 
     m->endrender();
 }
@@ -806,7 +839,7 @@ void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int 
         if((anim&ANIM_INDEX)==ANIM_IDLE && (anim>>ANIM_SECONDARY)&ANIM_INDEX) anim >>= ANIM_SECONDARY;
     }
     if(!((anim>>ANIM_SECONDARY)&ANIM_INDEX)) anim |= (ANIM_IDLE|ANIM_LOOP)<<ANIM_SECONDARY;
-    int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED;
+    int flags = MDL_CULL_VFC | MDL_CULL_OCCLUDED | MDL_CULL_QUERY;
     if(d->type!=ENT_PLAYER) flags |= MDL_CULL_DIST;
     if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_DYNSHADOW;
     vec color, dir;

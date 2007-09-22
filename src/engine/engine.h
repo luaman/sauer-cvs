@@ -233,8 +233,9 @@ extern occludequery *newquery(void *owner);
 extern bool checkquery(occludequery *query, bool nowait = false);
 extern void resetqueries();
 extern int getnumqueries();
+extern void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->o);
 
-#define startquery(query) { glBeginQuery_(GL_SAMPLES_PASSED_ARB, (query)->id); }
+#define startquery(query) { glBeginQuery_(GL_SAMPLES_PASSED_ARB, ((occludequery *)(query))->id); }
 #define endquery(query) \
     { \
         glEndQuery_(GL_SAMPLES_PASSED_ARB); \
