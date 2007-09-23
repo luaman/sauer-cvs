@@ -358,14 +358,16 @@ struct weaponstate
                 }
                 else 
                 {   
-                    if(p.gun==GUN_RL) 
+                    vec pos(v);
+                    pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
+                    if(p.gun==GUN_RL)
                     {
-                        regular_particle_splash(5, 2, 300, v); 
+                        regular_particle_splash(5, 2, 300, pos);
                     }
-                    else 
+                    else
                     {
-                         regular_particle_splash(1, 2, 300, v); 
-                         particle_splash(guns[p.gun].part, 1, 1, v);
+                         regular_particle_splash(1, 2, 300, pos);
+                         particle_splash(guns[p.gun].part, 1, 1, pos);
                     }
                 }   
             }
