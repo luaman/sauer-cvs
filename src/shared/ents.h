@@ -134,8 +134,9 @@ struct dynent : physent                         // animated characters, or chara
     int lastanimswitchtime[2];
     void *lastmodel[2];
     void *query;
+    int occluded;
 
-    dynent() : lastyaw(0), lastpitch(0), orientmillis(0), query(NULL)
+    dynent() : lastyaw(0), lastpitch(0), orientmillis(0), query(NULL), occluded(0)
     { 
         reset(); 
         loopi(2) { lastanimswitchtime[i] = -1; lastmodel[i] = NULL; } 

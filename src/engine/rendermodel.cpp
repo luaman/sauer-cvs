@@ -610,15 +610,32 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         }
         if(shadowmapping)
         {
+            if(d)
+            {
+                if(cull&MDL_CULL_OCCLUDED && d->occluded>=OCCLUDE_PARENT) return;
+                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->occluded+1>=OCCLUDE_BB && d->query)
+                {
+                    occludequery *query = (occludequery *)d->query;
+                    if(query->owner==d && checkquery(query)) return;
+                }
+            }
             if(!addshadowmapcaster(center, radius, radius)) return;
         }
-        else if(cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius)) return;
-        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->query)
+        else if(cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius))
+        {
+            if(!reflecting && !refracting && d) d->occluded = OCCLUDE_PARENT;
+            return;
+        }
+        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d && d->query)
         {
             occludequery *query = (occludequery *)d->query;
             if(query->owner==d && checkquery(query))
             {
-                if(!reflecting && !refracting && cull&MDL_CULL_QUERY) rendermodelquery(m, d, center, radius);
+                if(!reflecting && !refracting)
+                {
+                    if(d->occluded<OCCLUDE_BB) d->occluded++;
+                    rendermodelquery(m, d, center, radius);
+                }
                 return;
             }
         }
