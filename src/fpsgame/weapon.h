@@ -120,7 +120,12 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
-            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) regular_particle_splash(5, 1, 150, bnc.o);
+            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) 
+            {
+                vec pos(bnc.o);
+                pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
+                regular_particle_splash(5, 1, 150, pos);
+            }
             vec old(bnc.o);
             int rtime = time;
             while(rtime > 0)
