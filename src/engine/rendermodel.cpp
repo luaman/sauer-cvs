@@ -660,6 +660,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
 
     if(d && !shadowmapping) 
     {
+        if(!reflecting && !refracting) d->occluded = OCCLUDE_NOTHING;
         lightreaching(d->o, color, dir);
         cl->lighteffects(d, color, dir);
     }
