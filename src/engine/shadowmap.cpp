@@ -61,40 +61,44 @@ void createshadowmap()
             break;
     } while(colorfmts[++find]);
 
-    GLenum format = colorfmts[find];
-    if(!format) 
+    GLenum colorfmt = colorfmts[find];
+    if(colorfmt)
     {
-        glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
-        glDeleteFramebuffers_(1, &shadowmapfb);
-        shadowmapfb = 0;
+        static GLenum depthfmts[] = { GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT32, GL_FALSE };
 
-        while(shadowmaptexsize > min(screen->w, screen->h)) shadowmaptexsize /= 2;
-        createtexture(shadowmaptex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, GL_RGB);
-        return;
-    }
+        glGenRenderbuffers_(1, &shadowmapdb);
+        glBindRenderbuffer_(GL_RENDERBUFFER_EXT, shadowmapdb);
+
+        find = 0;
+        do
+        {
+            glRenderbufferStorage_(GL_RENDERBUFFER_EXT, depthfmts[find], shadowmaptexsize, shadowmaptexsize);
+            glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, shadowmapdb);
+            if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT)
+                break;
+        } while(depthfmts[++find]);
+
+        if(depthfmts[find])
+        {
+            glGenTextures(1, &blurtex);
+            createtexture(blurtex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, colorfmt);
+
+            glGenFramebuffers_(1, &blurfb);
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, blurfb);
+            glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, blurtex, 0);
+            glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, shadowmapdb);
  
-    static GLenum depthfmts[] = { GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT32, GL_FALSE };
-    
-    glGenRenderbuffers_(1, &shadowmapdb);
-    glBindRenderbuffer_(GL_RENDERBUFFER_EXT, shadowmapdb);
-   
-    find = 0; 
-    do
-    {
-        glRenderbufferStorage_(GL_RENDERBUFFER_EXT, depthfmts[find], shadowmaptexsize, shadowmaptexsize);
-        glFramebufferRenderbuffer_(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, shadowmapdb);
-        if(glCheckFramebufferStatus_(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT)
-            break;
-    } while(depthfmts[++find]);
-
-    glGenTextures(1, &blurtex);
-    createtexture(blurtex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, format);
-
-    glGenFramebuffers_(1, &blurfb);
-    glBindFramebuffer_(GL_FRAMEBUFFER_EXT, blurfb);
-    glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, blurtex, 0);
+            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+            return;
+        }
+    }
 
     glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
+    glDeleteFramebuffers_(1, &shadowmapfb);
+    shadowmapfb = 0;
+
+    while(shadowmaptexsize > min(screen->w, screen->h)) shadowmaptexsize /= 2;
+    createtexture(shadowmaptex, shadowmaptexsize, shadowmaptexsize, NULL, 3, false, GL_RGB);
 }
 
 void setupblurkernel();
@@ -343,6 +347,11 @@ void rendershadowmap()
 
     if(shadowmapfb) 
     {
+        if(blurfb)
+        {
+            swap(GLuint, shadowmapfb, blurfb);
+            swap(GLuint, shadowmaptex, blurtex);
+        }
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
         glViewport(0, 0, shadowmaptexsize, shadowmaptexsize);
     }
