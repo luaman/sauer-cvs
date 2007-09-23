@@ -608,17 +608,20 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             if(isvisiblesphere(radius, center) >= VFC_FOGGED) return;
             if(shadowmapping && !isshadowmapcaster(center, radius)) return;
         }
-        if(!shadowmapping && cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius)) return;
-        if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->query)
+        if(shadowmapping)
+        {
+            if(!addshadowmapcaster(center, radius, radius)) return;
+        }
+        else if(cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius)) return;
+        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->query)
         {
             occludequery *query = (occludequery *)d->query;
             if(query->owner==d && checkquery(query))
             {
-                if(!reflecting && !refracting && !shadowmapping && cull&MDL_CULL_QUERY) rendermodelquery(m, d, center, radius);
+                if(!reflecting && !refracting && cull&MDL_CULL_QUERY) rendermodelquery(m, d, center, radius);
                 return;
             }
         }
-        if(shadowmapping && !addshadowmapcaster(center, radius, radius)) return;
     }
     if(showboundingbox && !shadowmapping)
     {
