@@ -623,7 +623,11 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
         }
         else if(cull&MDL_CULL_OCCLUDED && modeloccluded(center, radius))
         {
-            if(!reflecting && !refracting && d) d->occluded = OCCLUDE_PARENT;
+            if(!reflecting && !refracting && d)
+            {
+                d->occluded = OCCLUDE_PARENT;
+                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent) rendermodelquery(m, d, center, radius);
+            }
             return;
         }
         else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d && d->query)
