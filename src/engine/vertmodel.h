@@ -592,7 +592,7 @@ struct vertmodel : model
         float scale;
         vec translate;
 
-        static const int MAXVBOCACHE = 5;
+        static const int MAXVBOCACHE = 8;
         vbocacheentry vbocache[MAXVBOCACHE];
 
         GLuint ebuf;
