@@ -444,7 +444,7 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     if((!shadowmap || renderpath==R_FIXEDFUNCTION) && (b.cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil && (!reflecting || refracting))
     {
         vec center;
-        float radius = m->boundsphere(0/*frame*/, center); // FIXME
+        float radius = m->boundsphere(0/*frame*/, center, a); // FIXME
         center.add(b.pos);
         rendershadow(b.dir, m, b.anim, b.varseed, b.pos, center, radius, b.yaw, b.pitch, b.speed, b.basetime, b.d, b.cull, a);
         if((b.cull&MDL_CULL_VFC) && refracting && center.z-radius>=refracting) return;
@@ -591,7 +591,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
     bool shadow = (!shadowmap || renderpath==R_FIXEDFUNCTION) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
     if(cull)
     {
-        radius = m->boundsphere(0/*frame*/, center); // FIXME
+        radius = m->boundsphere(0/*frame*/, center, a); // FIXME
         center.add(o);
         if(cull&MDL_CULL_DIST && center.dist(camera1->o)/radius>maxmodelradiusdistance) return;
         if(cull&MDL_CULL_VFC)
@@ -613,11 +613,7 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             if(d)
             {
                 if(cull&MDL_CULL_OCCLUDED && d->occluded>=OCCLUDE_PARENT) return;
-                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->occluded+1>=OCCLUDE_BB && d->query)
-                {
-                    occludequery *query = (occludequery *)d->query;
-                    if(query->owner==d && checkquery(query)) return;
-                }
+                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->occluded+1>=OCCLUDE_BB && d->query && d->query->owner==d && checkquery(d->query)) return;
             }
             if(!addshadowmapcaster(center, radius, radius)) return;
         }
@@ -630,18 +626,14 @@ void rendermodel(vec &color, vec &dir, const char *mdl, int anim, int varseed, i
             }
             return;
         }
-        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d && d->query)
+        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d && d->query && d->query->owner==d && checkquery(d->query))
         {
-            occludequery *query = (occludequery *)d->query;
-            if(query->owner==d && checkquery(query))
+            if(!reflecting && !refracting) 
             {
-                if(!reflecting && !refracting)
-                {
-                    if(d->occluded<OCCLUDE_BB) d->occluded++;
-                    rendermodelquery(m, d, center, radius);
-                }
-                return;
+                if(d->occluded<OCCLUDE_BB) d->occluded++;
+                rendermodelquery(m, d, center, radius);
             }
+            return;
         }
     }
     if(showboundingbox && !shadowmapping)

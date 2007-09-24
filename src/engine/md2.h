@@ -236,6 +236,22 @@ struct md2 : vertmodel
         }
     }
 
+    void extendbb(int frame, vec &center, vec &radius, modelattach &a)
+    {
+        vec acenter, aradius;
+        a.m->boundbox(frame, acenter, aradius);
+        vec bbmin, bbmax;
+        loopi(3)
+        {
+            bbmin[i] = min(acenter[i]-aradius[i], center[i]-radius[i]);
+            bbmax[i] = max(acenter[i]+aradius[i], center[i]+radius[i]);
+        }
+        radius = bbmax;
+        radius.sub(bbmin).mul(0.5f);
+        center = bbmin;
+        center.add(radius);
+    }   
+
     meshgroup *loadmeshes(char *name)
     {
         md2meshgroup *group = new md2meshgroup();

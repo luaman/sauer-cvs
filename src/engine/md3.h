@@ -186,6 +186,14 @@ struct md3 : vertmodel
         }
     }
 
+    void extendbb(int frame, vec &center, vec &radius, modelattach &a)
+    {
+        vec acenter, aradius;
+        a.m->boundbox(frame, acenter, aradius);
+        float margin = 2*max(aradius.x, max(aradius.y, aradius.z));
+        radius.add(margin);
+    }
+
     meshgroup *loadmeshes(char *name)
     {
         md3meshgroup *group = new md3meshgroup();

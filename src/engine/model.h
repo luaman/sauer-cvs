@@ -14,6 +14,7 @@ struct model
     model() : spin(0), collide(true), tricollide(false), cullface(true), shadow(true), scale(1.0f), translate(0, 0, 0), bih(0), bbcenter(0, 0, 0), bbradius(0, 0, 0), eyeheight(0.9f), collideradius(0), collideheight(0), batch(-1) {}
     virtual ~model() { DELETEP(bih); }
     virtual void calcbb(int frame, vec &center, vec &radius) = 0;
+    virtual void extendbb(int frame, vec &center, vec &radius, modelattach &a) {}
     virtual void render(int anim, int varseed, float speed, int basetime, const vec &o, float yaw, float pitch, dynent *d, modelattach *a = NULL, const vec &color = vec(0, 0, 0), const vec &dir = vec(0, 0, 0)) = 0;
     virtual void setskin(int tex = 0) = 0;
     virtual bool load() = 0;
@@ -35,7 +36,7 @@ struct model
     virtual void startrender() {}
     virtual void endrender() {}
 
-    void boundbox(int frame, vec &center, vec &radius)
+    void boundbox(int frame, vec &center, vec &radius, modelattach *a = NULL)
     {
         if(frame) calcbb(frame, center, radius);
         else
@@ -44,12 +45,13 @@ struct model
             center = bbcenter;
             radius = bbradius;
         }
+        if(a) for(int i = 0; a[i].name; i++) if(a[i].m) extendbb(frame, center, radius, a[i]);
     }
 
     void collisionbox(int frame, vec &center, vec &radius)
     {
         boundbox(frame, center, radius);
-        if(collideradius) 
+        if(collideradius)
         {
             center[0] = center[1] = 0;
             radius[0] = radius[1] = collideradius;
@@ -60,10 +62,10 @@ struct model
         }
     }
 
-    float boundsphere(int frame, vec &center)
+    float boundsphere(int frame, vec &center, modelattach *a = NULL)
     {
         vec radius;
-        boundbox(frame, center, radius);
+        boundbox(frame, center, radius, a);
         return radius.magnitude();
     }
 
