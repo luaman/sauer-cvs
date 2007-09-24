@@ -636,16 +636,23 @@ VAR(causticscale, 0, 100, 10000);
 VAR(causticmillis, 0, 50, 1000);
 VARP(caustics, 0, 1, 1);
 
+static Texture *caustictex[NUMCAUSTICS] = { NULL };
+
+void loadcaustics()
+{
+    if(caustictex[0]) return;
+    loopi(NUMCAUSTICS)
+    {
+        s_sprintfd(name)("<mad:0.6,0.4>packages/caustics/caust%.2d.png", i);
+        caustictex[i] = textureload(name);
+    }
+}
+
 void rendercaustics(float z, bool refract)
 {
     if(!caustics || !causticscale || !causticmillis) return;
 
-    static Texture *caustics[NUMCAUSTICS] = { NULL };
-    if(!caustics[0]) loopi(NUMCAUSTICS)
-    {
-        s_sprintfd(name)("<mad:0.6,0.4>packages/caustics/caust%.2d.png", i);
-        caustics[i] = textureload(name);
-    }
+    if(!caustictex[0]) loadcaustics();
 
     GLfloat oldfogc[4];
     glGetFloatv(GL_FOG_COLOR, oldfogc);
@@ -672,16 +679,16 @@ void rendercaustics(float z, bool refract)
     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
 
     int tex = (lastmillis/causticmillis)%NUMCAUSTICS;
-    glBindTexture(GL_TEXTURE_2D, caustics[tex]->gl);
+    glBindTexture(GL_TEXTURE_2D, caustictex[tex]->gl);
 
     if(renderpath!=R_FIXEDFUNCTION)
     {
         glActiveTexture_(GL_TEXTURE1_ARB);
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, caustics[(tex+1)%NUMCAUSTICS]->gl);
+        glBindTexture(GL_TEXTURE_2D, caustictex[(tex+1)%NUMCAUSTICS]->gl);
         glActiveTexture_(GL_TEXTURE0_ARB);
-   
-        float frac = float(lastmillis%causticmillis)/causticmillis; 
+
+        float frac = float(lastmillis%causticmillis)/causticmillis;
         setenvparamf("frameoffset", SHPARAM_PIXEL, 0, frac, frac, frac);
     }
 
