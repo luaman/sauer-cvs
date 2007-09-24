@@ -633,7 +633,7 @@ void rendershadowmapreceivers()
 #define NUMCAUSTICS 32
 
 VAR(causticscale, 0, 100, 10000);
-VAR(causticmillis, 0, 50, 1000);
+VAR(causticmillis, 0, 75, 1000);
 VARP(caustics, 0, 1, 1);
 
 static Texture *caustictex[NUMCAUSTICS] = { NULL };
@@ -681,15 +681,25 @@ void rendercaustics(float z, bool refract)
     int tex = (lastmillis/causticmillis)%NUMCAUSTICS;
     glBindTexture(GL_TEXTURE_2D, caustictex[tex]->gl);
 
-    if(renderpath!=R_FIXEDFUNCTION)
+    float frac = float(lastmillis%causticmillis)/causticmillis;
+    if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
     {
         glActiveTexture_(GL_TEXTURE1_ARB);
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, caustictex[(tex+1)%NUMCAUSTICS]->gl);
+        if(renderpath==R_FIXEDFUNCTION)
+        {
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
+            glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+            setuptmu(1, "T , P @ Ca");
+        }
         glActiveTexture_(GL_TEXTURE0_ARB);
 
-        float frac = float(lastmillis%causticmillis)/causticmillis;
-        setenvparamf("frameoffset", SHPARAM_PIXEL, 0, frac, frac, frac);
+        if(renderpath!=R_FIXEDFUNCTION) setenvparamf("frameoffset", SHPARAM_PIXEL, 0, frac, frac, frac);
     }
 
     static Shader *causticshader = NULL;
@@ -700,7 +710,7 @@ void rendercaustics(float z, bool refract)
 
     glPushMatrix();
 
-    glColor3f(1, 1, 1);
+    glColor4f(1, 1, 1, frac);
 
     resetorigin();
     GLuint vbufGL = 0, ebufGL = 0;
@@ -746,9 +756,15 @@ void rendercaustics(float z, bool refract)
     }
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    if(renderpath!=R_FIXEDFUNCTION)
+    if(renderpath!=R_FIXEDFUNCTION || maxtmus>=2)
     {
         glActiveTexture_(GL_TEXTURE1_ARB);
+        if(renderpath==R_FIXEDFUNCTION)
+        {
+            resettmu(1);
+            glDisable(GL_TEXTURE_GEN_S);
+            glDisable(GL_TEXTURE_GEN_T);
+        }
         glDisable(GL_TEXTURE_2D);
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
