@@ -398,6 +398,11 @@ void setupmaterials()
         water[i].m->light = water[root].m->light;
         water[i].m->depth = (short)(water[root].depth/water[root].area);
     }
+    if(water.length()) 
+    {
+        extern void loadcaustics();
+        loadcaustics();
+    }
 }
 
 VARP(showmat, 0, 1, 1);

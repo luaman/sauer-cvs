@@ -500,8 +500,6 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
     }
 
-    loadcaustics();
-
     initlights();
     allchanged(true);
 
