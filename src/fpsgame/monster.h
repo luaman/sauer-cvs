@@ -4,7 +4,8 @@ struct monsterset
 {
     fpsclient &cl;
     vector<extentity *> &ents;
-    
+    vector<int> teleports;
+
     static const int TOTMFREQ = 13;
     static const int NUMMONSTERTYPES = 8;
 
@@ -179,7 +180,19 @@ struct monsterset
                     
             }
 
-            if(move || moving) moveplayer(this, 2, false);        // use physics to move monster
+            if(move || moving) 
+            {
+                vec pos(o);
+                pos.sub(eyeheight);
+                loopv(ms->teleports) // equivalent of player entity touch, but only teleports are used
+                {
+                    entity &e = *ms->ents[ms->teleports[i]];
+                    float dist = e.o.dist(pos);
+                    if(dist<16) cl.et.teleport(ms->teleports[i], this);
+                }
+
+                moveplayer(this, 2, false);        // use physics to move monster
+            }
         }
 
         void monsterpain(int damage, fpsent *d)
@@ -279,6 +292,11 @@ struct monsterset
                 monstertotal++;
             }
         }
+        teleports.setsizenodelete(0);
+        if(m_dmsp || m_classicsp)
+        {
+            loopv(ents) if(ents[i]->type==TELEPORT) teleports.add(i);
+        }
     }
 
     void endsp(bool allkilled)
@@ -306,20 +324,6 @@ struct monsterset
         }
         
         if(monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
-        
-        loopvj(ents)             // equivalent of player entity touch, but only teleports are used
-        {
-            entity &e = *ents[j];
-            if(e.type!=TELEPORT) continue;
-            vec v = e.o;
-            loopv(monsters) if(monsters[i]->state==CS_ALIVE)
-            {
-                v.z += monsters[i]->eyeheight;
-                float dist = v.dist(monsters[i]->o);
-                v.z -= monsters[i]->eyeheight;
-                if(dist<16) cl.et.teleport(j, monsters[i]);
-            }
-        }
         
         bool monsterwashurt = monsterhurt;
         
