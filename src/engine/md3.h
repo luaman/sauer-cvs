@@ -191,7 +191,8 @@ struct md3 : vertmodel
         vec acenter, aradius;
         a.m->boundbox(frame, acenter, aradius);
         float margin = 2*max(aradius.x, max(aradius.y, aradius.z));
-        radius.add(margin);
+        radius.x += margin;
+        radius.y += margin;
     }
 
     meshgroup *loadmeshes(char *name)
