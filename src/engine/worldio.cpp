@@ -500,16 +500,10 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
     }
 
+    loadcaustics();
+
     initlights();
     allchanged(true);
-
-    extern vector<vtxarray *> valist;
-    extern void loadcaustics();
-    loopv(valist) if(valist[i]->l0.matsurfs)
-    {
-        loadcaustics();
-        break;
-    }
 
     computescreen(mname, mapshot!=notexture ? mapshot : NULL);
     attachentities();
