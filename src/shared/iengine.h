@@ -125,8 +125,9 @@ extern void particle_splash(int type, int num, int fade, const vec &p);
 extern void particle_trail(int type, int fade, const vec &from, const vec &to);
 extern void particle_text(const vec &s, char *t, int type, int fade = 2000);
 extern void particle_meter(const vec &s, float val, int type, int fade = 1);
-extern void particle_flare(const vec &p, const vec &dest, int fade, int type = 10);
+extern void particle_flare(const vec &p, const vec &dest, int fade, int type = 10, physent *owner = NULL);
 extern void particle_fireball(const vec &dest, float max, int type);
+extern void removetrackedparticles(physent *owner = NULL);
 
 // worldio
 extern void load_world(const char *mname, const char *cname = NULL);

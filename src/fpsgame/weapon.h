@@ -391,10 +391,10 @@ struct weaponstate
     {
         if(d!=player1) return from;
         vec offset(from);
-        offset.add(vec(to).sub(from).normalize().mul(6));
+        offset.add(vec(to).sub(from).normalize().mul(2));
         if(cl.hudgun())
         {
-            offset.sub(vec(camup).mul(0.2f));
+            offset.sub(vec(camup).mul(1.0f));
             offset.add(vec(camright).mul(0.8f));
         }
         return offset;
@@ -404,7 +404,6 @@ struct weaponstate
     {
         playsound(guns[gun].sound, d==player1 ? NULL : &d->o);
         int pspeed = 25;
-        vec behind = vec(from).sub(to).normalize().mul(4).add(from);
         switch(gun)
         {
             case GUN_FIST:
@@ -415,7 +414,7 @@ struct weaponstate
                 loopi(SGRAYS)
                 {
                     particle_splash(0, 20, 250, sg[i]);
-                    particle_flare(hudgunorigin(gun, behind, sg[i], d), sg[i], 300, 10);
+                    particle_flare(hudgunorigin(gun, from, sg[i], d), sg[i], 300, 10);
                 }
                 break;
             }
@@ -425,7 +424,7 @@ struct weaponstate
             {
                 particle_splash(0, 200, 250, to);
                 //particle_trail(1, 10, from, to);
-                particle_flare(hudgunorigin(gun, behind, to, d), to, 600, 10);
+                particle_flare(hudgunorigin(gun, from, to, d), to, 600, 10);
                 break;
             }
 
@@ -537,7 +536,6 @@ struct weaponstate
         if(d->gunselect) d->ammo[d->gunselect]--;
         vec from = d->o;
         vec to = targ;
-        from.z -= 0.8f;    // below eye
 
         vec unitv;
         float dist = to.dist(from, unitv);

@@ -385,6 +385,7 @@ struct fpsclient : igameclient
         if(d->name[0]) conoutf("player %s disconnected", colorname(d));
         ws.removebouncers(d);
         ws.removeprojectiles(d);
+        removetrackedparticles(d);
         DELETEP(players[cn]);
         cleardynentcache();
     }
@@ -620,6 +621,16 @@ struct fpsclient : igameclient
             color.y = color.y*(1-t) + t;
         }
 #endif
+    }
+
+    void particletrack(physent *owner, vec &o, vec &d)
+    {
+        if(owner->type!=ENT_PLAYER && owner->type!=ENT_AI) return;
+        float dist = o.dist(d);
+        vecfromyawpitch(owner->yaw, owner->pitch, 1, 0, d);
+        float newdist = raycube(owner->o, d, dist, RAY_CLIPMAT|RAY_POLY);
+        d.mul(min(newdist, dist)).add(owner->o);
+        o = ws.hudgunorigin(GUN_PISTOL, owner->o, d, (fpsent *)owner);
     }
 
     void newmap(int size)

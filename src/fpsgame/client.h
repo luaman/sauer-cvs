@@ -87,6 +87,7 @@ struct clientcom : iclientcom
         player1->lifesequence = 0;
         player1->privilege = PRIV_NONE;
         spectator = false;
+        removetrackedparticles();
         loopv(cl.players) DELETEP(cl.players[i]);
         cleardynentcache();
     }

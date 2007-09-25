@@ -521,7 +521,7 @@ static void cleanupexplosion()
     }
 }
 
-#define MAXPARTYPES 21
+#define MAXPARTYPES 22
 
 struct particle
 {   
@@ -532,6 +532,7 @@ struct particle
     {
         char *text;         // will call delete[] on this only if it starts with an @
         float val;
+        physent *owner;
     };
 };
     
@@ -554,7 +555,7 @@ static bool emit_particles()
     return emit;
 }
 
-static Texture *parttexs[9];
+static Texture *parttexs[10];
 
 void particleinit()
 {    
@@ -567,6 +568,7 @@ void particleinit()
     parttexs[6] = textureload("data/martin/spark.png");
     parttexs[7] = textureload("data/explosion.jpg");   
     parttexs[8] = textureload("data/blood.png");
+    parttexs[9] = textureload("data/lightning.jpg");
     loopi(MAXPARTYPES) parlist[i] = NULL;
 }
 
@@ -581,11 +583,13 @@ enum
     PT_METERVS,
     PT_FIREBALL,
     PT_DECAL,
+    PT_LIGHTNING,
 
-    PT_ENT  = 1<<8,
-    PT_MOD  = 1<<9,
-    PT_RND4 = 1<<10,
-    PT_LERP = 1<<11 // Use very sparingly!
+    PT_ENT   = 1<<8,
+    PT_MOD   = 1<<9,
+    PT_RND4  = 1<<10,
+    PT_LERP  = 1<<11, // Use very sparingly!
+    PT_TRACK = 1<<12,
 };
 
 // @TODO reorder so as to draw meters & lerps first to reduce visual errors
@@ -611,7 +615,8 @@ static struct parttype { int type; int gr, tex; float sz; int collide; } parttyp
     { PT_ENT,        -20,  2,  2.4f,  0 }, // 17 big  slowly rising smoke, entity
     { 0,             -15,  2,  2.4f,  0 }, // 18 big  fast rising smoke          
     { PT_ENT|PT_TRAIL|PT_LERP, 2, 0, 0.60f, 0 }, // 19 water, entity 
-    { PT_ENT,         20,  1,  4.8f,  0 }  // 20 fireball1, entity
+    { PT_ENT,         20,  1,  4.8f,  0 }, // 20 fireball1, entity
+    { PT_LIGHTNING|PT_TRACK,    0,  9, 0.28f,  0 }, // 21 lightning
 };
 
 static particle *newparticle(const vec &o, const vec &d, int fade, int type, int color)
@@ -658,12 +663,37 @@ void clearparticles()
     }
 }   
 
+void removetrackedparticles(physent *owner)
+{
+    loopi(MAXPARTYPES) if(parttypes[i].type&PT_TRACK)
+    { 
+        for(particle **prev = &parlist[i], *cur = parlist[i]; cur; cur = *prev)
+        {
+            if(!owner || cur->owner==owner) 
+            {
+                *prev = cur->next;
+                cur->next = parempty;
+                parempty = cur;
+            }
+            else prev = &cur->next;
+        }
+    }
+}
+
 VARP(outlinemeters, 0, 0, 1);
 
 #define COLLIDERADIUS 8.0f
 #define COLLIDEERROR 1.0f
 
 VARP(decalfade, 1, 10000, 60000);
+
+#define MAXLIGHTNINGSTEPS 64
+#define LIGHTNINGSTEP 8
+int lnjitterx[MAXLIGHTNINGSTEPS], lnjittery[MAXLIGHTNINGSTEPS];
+int lastlnjitter = 0;
+
+VAR(lnjittermillis, 0, 100, 1000);
+VAR(lnjitterradius, 0, 2, 100);
 
 void render_particles(int time)
 {
@@ -696,36 +726,62 @@ void render_particles(int time)
         }
         if(pt.tex >= 0) glBindTexture(GL_TEXTURE_2D, parttexs[pt.tex]->gl);
     
-        bool quads = (type == PT_PART || type == PT_FLARE || type == PT_TRAIL || type == PT_DECAL);
-        if(quads) glBegin(GL_QUADS);
-        else
+        bool quads = false;
+        switch(type)
         {
-           if(type==PT_FIREBALL) setupexplosion();
-           else
-           {
-                if(type==PT_METER || type==PT_METERVS)
+            case PT_PART:
+            case PT_FLARE:
+            case PT_TRAIL:
+            case PT_DECAL:
+                quads = true;
+                glBegin(GL_QUADS);
+                break;
+
+            case PT_LIGHTNING:
+                if(lastmillis-lastlnjitter > lnjittermillis)
                 {
-                    glDisable(GL_BLEND);
-                    glDisable(GL_TEXTURE_2D);
-                    foggednotextureshader->set();
+                    lastlnjitter = lastmillis - (lastmillis%lnjittermillis);
+                    loopi(MAXLIGHTNINGSTEPS)
+                    {
+                        lnjitterx[i] = -lnjitterradius + rnd(2*lnjitterradius + 1);
+                        lnjittery[i] = -lnjitterradius + rnd(2*lnjitterradius + 1);
+                    }
                 }
+
+                quads = true;
+                glDisable(GL_CULL_FACE);
+                break;
+
+            case PT_FIREBALL:
+                setupexplosion();
+                break;
+           
+            case PT_METER:
+            case PT_METERVS:
+                glDisable(GL_BLEND);
+                glDisable(GL_TEXTURE_2D);
+                foggednotextureshader->set();
                 glFogfv(GL_FOG_COLOR, oldfogc);
-           } 
+                break;
+
+            default:
+                glFogfv(GL_FOG_COLOR, oldfogc);
+                break;
         }
-            
+           
         for(particle *p, **pp = &parlist[i]; (p = *pp);)
         {   
-            int ts = (lastmillis-p->millis);
+            int ts = lastmillis-p->millis, blend;
             bool remove = false;
-            int blend;
-            vec o = p->o;
+            vec o = p->o, d = p->d;
+            if(pt.type&PT_TRACK && p->owner) cl->particletrack(p->owner, o, d);
             uchar color[3] = {p->color>>16, (p->color>>8)&0xFF, p->color&0xFF};
             if(p->fade > 5) 
             {   //parametric coordinate generation (but only if its going to show for more than one frame)
                 if(pt.gr)
                 {
                     float t = (float)(ts);
-                    vec v = p->d;
+                    vec v = d;
                     v.mul(t/5000.0f);
                     o.add(v);
                     o.z -= t*t/(2.0f * 5000.0f * pt.gr);
@@ -758,9 +814,42 @@ void render_particles(int time)
                     ty = 0.5f*((i>>1)&1);
                     tsz = 0.5f;
                 }
-                if(type==PT_FLARE || type==PT_TRAIL)
+                if(type==PT_LIGHTNING)
+                {
+                    vec step(d);
+                    step.sub(o);
+                    float len = step.magnitude();
+                    int numsteps = min(int(ceil(len/LIGHTNINGSTEP)), MAXLIGHTNINGSTEPS);
+                    if(numsteps > 1) step.mul(LIGHTNINGSTEP/len);
+                    int jitteroffset = detrnd((size_t)p, MAXLIGHTNINGSTEPS);
+                    vec cur(o);
+                    glBegin(GL_QUAD_STRIP);
+                    loopj(numsteps)
+                    {
+                        vec next(cur);
+                        next.add(step);
+                        if(j+1==numsteps) next = d;
+                        next.add(vec(camright).mul(sz*lnjitterx[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
+                        next.add(vec(camup).mul(sz*lnjittery[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
+                        vec dir1 = next, dir2 = next, across;
+                        dir1.sub(cur);
+                        dir2.sub(camera1->o);
+                        across.cross(dir2, dir1).normalize().mul(sz);
+                        float tx1 = j&1 ? tx : tx+tsz, tx2 = j&1 ? tx+tsz : tx;
+                        glTexCoord2f(tx2, ty+tsz); glVertex3f(cur.x-across.x, cur.y-across.y, cur.z-across.z);
+                        glTexCoord2f(tx2, ty);     glVertex3f(cur.x+across.x, cur.y+across.y, cur.z+across.z);
+                        if(j+1==numsteps)
+                        {
+                            glTexCoord2f(tx1, ty+tsz); glVertex3f(next.x-across.x, next.y-across.y, next.z-across.z);
+                            glTexCoord2f(tx1, ty);     glVertex3f(next.x+across.x, next.y+across.y, next.z+across.z);
+                        }
+                        cur = next;
+                    }
+                    glEnd();
+                }
+                else if(type==PT_FLARE || type==PT_TRAIL)
                 {					
-                    vec e = p->d;
+                    vec e = d;
                     if(type==PT_TRAIL)
                     {
                         if(pt.gr) e.z -= float(ts)/pt.gr;
@@ -782,10 +871,10 @@ void render_particles(int time)
                     if(type==PT_DECAL)
                     {
                         vec udir, vdir;        
-                        udir.orthogonal(p->d);
+                        udir.orthogonal(d);
                         udir.normalize();
                         udir.mul(sz);
-                        vdir.cross(p->d, udir);
+                        vdir.cross(d, udir);
                         v[0].add(udir);
                         v[1].add(vdir);
                         v[2].sub(udir);
@@ -958,22 +1047,36 @@ void render_particles(int time)
             else
                 pp = &p->next;
         }
-        
-        if(quads) glEnd();
-        else
+       
+        switch(type)
         {
-            if(type==PT_FIREBALL) cleanupexplosion();
-            else
-            {
-                if(type==PT_METER || type==PT_METERVS)
-                {
-                    glEnable(GL_BLEND);
-                    glEnable(GL_TEXTURE_2D);
-                    foggedshader->set();
-                }
-                else glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            case PT_PART:
+            case PT_FLARE:
+            case PT_TRAIL:
+            case PT_DECAL:
+                glEnd();
+                break;
+
+            case PT_LIGHTNING:
+                glEnable(GL_CULL_FACE);
+                break;
+
+            case PT_FIREBALL:
+                cleanupexplosion();
+                break;
+
+            case PT_METER:
+            case PT_METERVS:
+                glEnable(GL_BLEND);
+                glEnable(GL_TEXTURE_2D);
+                foggedshader->set();
                 glFogfv(GL_FOG_COLOR, zerofog);
-            }
+                break;
+    
+            default:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                glFogfv(GL_FOG_COLOR, zerofog);
+                break;
         }
         
         if(pt.type&PT_MOD) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -1067,7 +1170,8 @@ static struct partmap { int type; int color; } partmaps[] =
     { 17, 0x897661}, // 24 greyish-brown:   big  slowly rising smoke
     { 18, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
     { 19, 0x3232FF}, // 26 water  
-    { 20, 0xFFC8C8}  // 27 yellow: fireball1
+    { 20, 0xFFC8C8}, // 27 yellow: fireball1
+    { 21, 0xFFFFFF}, // 28 lightning
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
@@ -1116,10 +1220,10 @@ void particle_meter(const vec &s, float val, int type, int fade)
     newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->val = val;
 }
 
-void particle_flare(const vec &p, const vec &dest, int fade, int type)
+void particle_flare(const vec &p, const vec &dest, int fade, int type, physent *owner)
 {
     if(shadowmapping) return;
-    newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color);
+    newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color)->owner = owner;
 }
 
 void particle_fireball(const vec &dest, float max, int type)
