@@ -389,8 +389,20 @@ struct weaponstate
 
     vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d)
     {
-        if(d!=player1) return from;
         vec offset(from);
+        if(d!=player1 || !isthirdperson()) 
+        {
+            vec front, right;
+            vecfromyawpitch(d->yaw, 0, 1, 0, front);
+            offset.add(front.mul(d->radius));
+            if(d->type!=ENT_AI || cl.ms.monstertypes[((monsterset::monster *)d)->mtype].vwepname)
+            {
+                offset.z -= d->eyeheight/2;
+                vecfromyawpitch(d->yaw, 0, 0, -1, right);
+                offset.add(right.mul(0.5f*d->radius));
+            }
+            return offset;
+        }
         offset.add(vec(to).sub(from).normalize().mul(2));
         if(cl.hudgun())
         {
