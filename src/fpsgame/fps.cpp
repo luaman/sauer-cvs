@@ -179,6 +179,7 @@ struct fpsclient : igameclient
 
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
+        if(!maptime) { maptime = lm + curtime; return; }
         lastmillis = lm;
         if(!curtime) return;
         physicsframe();
@@ -426,7 +427,7 @@ struct fpsclient : igameclient
         s_strcpy(clientmap, name);
         sb.showscores(false);
         intermission = false;
-        maptime = lastmillis;
+        maptime = 0;
         if(*name) conoutf("\f2game mode is %s", fpsserver::modestr(gamemode));
         if(m_sp)
         {
