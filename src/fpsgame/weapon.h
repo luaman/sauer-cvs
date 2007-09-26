@@ -273,7 +273,7 @@ struct weaponstate
         }
     }
 
-    float rocketdist(fpsent *o, vec &dir, vec &v)
+    float rocketdist(fpsent *o, vec &dir, const vec &v)
     {
         vec middle = o->o;
         middle.z += (o->aboveeye-o->eyeheight)/2;
@@ -304,7 +304,7 @@ struct weaponstate
 
     void splash(projectile &p, vec &v, dynent *notthis, int qdam)
     {
-        if(p.gun!=GUN_RL)
+        if(guns[p.gun].part)
         {
             particle_splash(0, 100, 200, v);
             playsound(S_FEXPLODE, &v);
@@ -322,7 +322,8 @@ struct weaponstate
         if(!intersect(o, p.o, v)) return false;
         splash(p, v, o, qdam);
         vec dir;
-        rocketdist(o, dir, v);
+        if(guns[p.gun].part) { dir = v; dir.normalize(); }
+        else rocketdist(o, dir, v);
         hit(qdam, o, p.owner, dir, p.gun, 0);
         return true;
     }
@@ -349,7 +350,7 @@ struct weaponstate
                 {
                     fpsent *o = (fpsent *)cl.iterdynents(j);
                     if(!o || p.owner==o || o->o.reject(v, 10.0f)) continue;
-                    if(projdamage(o, p, v, qdam)) exploded = true;
+                    if(projdamage(o, p, v, qdam)) { exploded = true; break; }
                 }
             }
             if(!exploded)
@@ -365,14 +366,14 @@ struct weaponstate
                 {   
                     vec pos(v);
                     pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
-                    if(p.gun==GUN_RL)
-                    {
-                        regular_particle_splash(5, 2, 300, pos);
-                    }
-                    else
+                    if(guns[p.gun].part)
                     {
                          regular_particle_splash(1, 2, 300, pos);
                          particle_splash(guns[p.gun].part, 1, 1, pos);
+                    }
+                    else
+                    {
+                        regular_particle_splash(5, 2, 300, pos);
                     }
                 }   
             }
