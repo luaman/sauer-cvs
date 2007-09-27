@@ -1345,10 +1345,14 @@ static void makeparticles(entity &e)
         case 3: //fire ball - <size> <rgb>
             newparticle(e.o, vec(0, 0, 1), 1, 16, colorfromattr(e.attr3))->val = 1+e.attr2;
             break;
-        case 4: //tape - <dir> <length> <rgb>
-            if(e.attr2 >= 256) regularshape(10, 1+e.attr3, colorfromattr(e.attr4), e.attr2-256, 5, 200, e.o);
-            else newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, 10, colorfromattr(e.attr4));
+        case 4: //tape/lightning - <dir> <length> <rgb>
+        case 7:
+        {
+            int type = (e.attr1==4) ? 10 : 21;
+            if(e.attr2 >= 256) regularshape(type, 1+e.attr3, colorfromattr(e.attr4), e.attr2-256, 5, 200, e.o);
+            else newparticle(e.o, offsetvec(e.o, e.attr2, 1+e.attr3), 1, type, colorfromattr(e.attr4));
             break;
+        }
         case 5: //meter, metervs - <percent> <rgb>
         case 6:
             newparticle(e.o, vec(0, 0, 1), 1, (e.attr1==5)?13:14, colorfromattr(e.attr3))->val = min(1.0, float(e.attr2)/100);
