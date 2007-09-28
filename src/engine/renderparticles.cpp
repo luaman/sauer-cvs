@@ -822,15 +822,19 @@ void render_particles(int time)
                     int numsteps = min(int(ceil(len/LIGHTNINGSTEP)), MAXLIGHTNINGSTEPS);
                     if(numsteps > 1) step.mul(LIGHTNINGSTEP/len);
                     int jitteroffset = detrnd((size_t)p, MAXLIGHTNINGSTEPS);
-                    vec cur(o);
+                    vec cur(o), up, right;
+                    up.orthogonal(step);
+                    up.normalize();
+                    right.cross(up, step);
+                    right.normalize();
                     glBegin(GL_QUAD_STRIP);
                     loopj(numsteps)
                     {
                         vec next(cur);
                         next.add(step);
                         if(j+1==numsteps) next = d;
-                        next.add(vec(camright).mul(sz*lnjitterx[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
-                        next.add(vec(camup).mul(sz*lnjittery[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
+                        next.add(vec(right).mul(sz*lnjitterx[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
+                        next.add(vec(up).mul(sz*lnjittery[(j+jitteroffset)%MAXLIGHTNINGSTEPS]));
                         vec dir1 = next, dir2 = next, across;
                         dir1.sub(cur);
                         dir2.sub(camera1->o);
