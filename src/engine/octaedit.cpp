@@ -71,6 +71,7 @@ extern int entediting;
 bool editmode = false;
 bool havesel = false;
 bool selhmap = false;
+int  horient = 0;
 
 extern int entmoving;
 
@@ -363,22 +364,11 @@ void cursorupdate()
             od = dimension(orient);
             d = dimension(sel.orient);
             
-            if(mag > 0) // TODO: clean this up
+            if(mag > 0)
             {
-                selhmap = isheightmap(orient, od, false, c);
-                if(!selhmap) {
-                    int o = (R[od]<<1) + (ray[R[od]] > 0 ? 0 : 1);
-                    selhmap = isheightmap(o, R[od], false, c);
-                    if(selhmap) 
-                        od = dimension(orient = o);
-                    else
-                    {
-                        o = (C[od]<<1) + (ray[C[od]] > 0 ? 0 : 1);
-                        selhmap = isheightmap(o, C[od], false, c);
-                        if(selhmap) 
-                            od = dimension(orient = o);
-                    }
-                }
+                selhmap = isheightmap(horient, dimension(horient), false, c);     
+                if(selhmap)
+                    od = dimension(orient = horient);
             }
 
             if(dragging) 
@@ -765,7 +755,7 @@ int hmaptexture = -1; // will probably want list
 
 COMMAND(clearbrush, "");
 COMMAND(brushvert, "iii");
-ICOMMAND(addhtex, "", hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[orient]);
+ICOMMAND(addhtex, "", hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
 ICOMMAND(hmapcancel, "", hmaptexture = -1; );
 
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
@@ -849,11 +839,13 @@ namespace hmap
             printf(" ");       
     }
 
-#define DPRINT fflush(stdout); printtab(tab); printf
+//#define DPRINT fflush(stdout); printtab(tab); printf
+#define DPRINT 
 
     void hedit(int x, int y, int z, uint snap, int tab)
     {
         DPRINT("%d %d %d [%x] %x\n", x, y, z, snap, flags[x][y]);
+        // return early if possible
         if((NOTHMAP & flags[x][y])) return ;
         bool painted = (flags[x][y] & PAINTED)!=0;
         snap &= mask[x][y];
@@ -867,13 +859,13 @@ namespace hmap
         if(snap)
             mask[x][y] &= ~(bitnormal(snap)*0xf);                
 
+        // get cubes and initialize
         cube *a = NULL, *b = NULL, *c, *e = NULL;                
         ivec t(d, x+gx, y+gy, z+gz);        
         t.shl(gridpower);
         uint face;
       
         c = getcube(t, 0);
-
         if(!c || isempty(*c)) 
         { 
             DPRINT("DROP\n");
@@ -882,7 +874,6 @@ namespace hmap
             e = c;
             c = getcube(t, 0);            
         } 
-
         if(!c || isempty(*c))
         {
             DPRINT("NOT\n");            
@@ -895,18 +886,11 @@ namespace hmap
             e = getcube(t, fg);
         }
 
-        face = getface(c, d);           
-        
-        if (face == 0x08080808 && (!e || !isempty(*e)))
-        {
-            DPRINT("WALL\n");            
-            flags[x][y] |= NOTHMAP;
-            return;
-        }
-
+        face = getface(c, d);                          
         b = getcube(t, -fg);
-        a = getcube(t, -fg-fg);    
-
+        a = getcube(t, -fg-fg);
+        b = !b || isempty(*b) ? NULL : b;
+        a = !a || isempty(*a) ? NULL : a;
         
         if(painted)
         {
@@ -916,6 +900,13 @@ namespace hmap
         }
         else
         {
+            if(face == 0x08080808 && (!e || !isempty(*e)))
+            {
+                DPRINT("WALL\n");            
+                flags[x][y] |= NOTHMAP;
+                return;
+            }
+
             flags[x][y]  = PAINTED | (z + 64);                    
             mask [x][y] |= ((face & 0x08080808)<<4);
 
@@ -937,7 +928,7 @@ namespace hmap
         test.face = paint;
         ext.face  = snap;
 
-        loopi(4)
+        loopi(4) // assertion
             if(test.edge[i] > 8) 
             {
                 DPRINT("WARNING!!!!!\n");            
@@ -946,7 +937,7 @@ namespace hmap
         face += -dr * paint;
        
         fac.face = face;
-        loopi(4)
+        loopi(4) // assertion
             if(ext.edge[i] > 0 && (fac.edge[i] & 7)) 
             {
                 DPRINT("NOT ALIGNED!!!!!\n");
@@ -1048,11 +1039,13 @@ namespace hmap
         DPRINT("new: %x %x %x %x (%x) mask %x\n", oh, hi, lo, ul, snap, mask[x][y]);
  
         z = (flags[x][y] & 0x7f) - 64; 
-        uint zovr = mask[x][y];        
+        uint zovr = mask[x][y];
         
         DPRINT("info %x z %d\n", flags[x][y], z);
 
         // continue to adjacent cubes
+        // backtrack first to save some stack
+        // TOFIX: not endian friendly
         if(x>mx) hedit(x-1, y, (zovr&0x00800080?z+f1:z), (snap<<8) &0x0f000f00, tab+1);
         if(x<nx) hedit(x+1, y, (zovr&0x80008000?z+f1:z), (snap>>8) &0x000f000f, tab+1);        
         if(y>my) hedit(x, y-1, (zovr&0x00008080?z+f1:z), (snap<<16)&0x0f0f0000, tab+1);
@@ -1087,19 +1080,22 @@ namespace hmap
             mask [i][j] = 0x0f0f0f0f;
             flags[i][j] = 0;
         }
-        
-        ivec t(d, clamp(MAXBRUSH2, mx, nx), clamp(MAXBRUSH2, my, ny), f1);
+        int x = clamp(MAXBRUSH2, mx, nx);
+        int y = clamp(MAXBRUSH2, my, ny);
+        int z = f1;        
+        ivec t(d, x+gx, y+gy, z+gz);
+        t.shl(gridpower);
         cube *c = getcube(t, 0);
-        if(NULL == c || isempty(*c)) {
-            t[D[d]] = 0;
+        if(!c || isempty(*c)) {
+            z = 0;
         }
                     
-        printf("----------------\n%x g %d %d %d \n----------------\n", fs, gx, gy, gz);
-        printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
+   //     printf("----------------\n%x g %d %d %d \n----------------\n", fs, gx, gy, gz);
+   //     printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
 
         changes.grid = gridsize;
         changes.s = changes.o = cur;
-        hedit(t[R[d]], t[C[d]], t[D[d]], 0, 0);
+        hedit(x, y, z, 0, 0);
         changes.s.sub(changes.o);
         changes.s.shr(gridpower);
         changed(changes);
@@ -1109,9 +1105,14 @@ namespace hmap
 void edithmap(int dir, int mode) {    
 
     if(multiplayer()) return;
-    long time = SDL_GetTicks();
+    if (!dimcoord(sel.orient))
+    {
+        conoutf("negative orientations not supported yet");
+        return;
+    }
+//    long time = SDL_GetTicks();
     hmap::run(dir, mode);    
-    conoutf("-- edit time (%d) ms --", SDL_GetTicks()-time);
+ //   conoutf("-- edit time (%d) ms --", SDL_GetTicks()-time);
 }
 
 ///////////// main cube edit ////////////////
