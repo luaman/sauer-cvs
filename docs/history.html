@@ -168,6 +168,12 @@
 </div>
 
 <ul>
+<li>fixed bug with explosions not doing damage</li>
+<li>made client and server sync their clocks as often as possible to compensate for inaccurate clocks on some hardware</li>
+<li>player animation is now cached so its only done once per frame despite multipass rendering (reflections, shadows, etc.)</li>
+<li>player models now use occlusion queries so only visible players are animated (huge SP speedup with lots of monsters)</li>
+<li>environment map textures are now automatically scaled so that all sides have matching resolution</li>
+<li>added lightning particles</li>
 <li>added experimental soft shadow system based on shadowmapping and depth peeling</li>
 <li>added spectator follow camera (via "follow" command")</li>
 <li>added "loadcrosshair" command</li>
