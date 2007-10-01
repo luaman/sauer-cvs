@@ -887,8 +887,8 @@ namespace hmap
         }
 
         face = getface(c, d);                          
-        b = getcube(t, -fg);
-        a = getcube(t, -fg-fg);
+        b = getcube(t, -(int)fg);
+        a = getcube(t, -(int)fg-(int)fg);
         b = !b || isempty(*b) ? NULL : b;
         a = !a || isempty(*a) ? NULL : a;
         
