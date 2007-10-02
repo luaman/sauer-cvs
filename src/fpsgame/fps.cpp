@@ -256,6 +256,12 @@ struct fpsclient : igameclient
         return player1->state!=CS_DEAD && !intermission; 
     }
 
+    bool allowmove(physent *d)
+    {
+        if(d->type!=ENT_PLAYER) return true;
+        return lastmillis-((fpsent *)d)->lasttaunt>=1000;
+    }
+
     void damaged(int damage, fpsent *d, fpsent *actor, bool local = true)
     {
         if(d->state!=CS_ALIVE || intermission) return;

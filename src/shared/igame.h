@@ -64,6 +64,7 @@ struct igameclient
     virtual void gameplayhud(int w, int h) = 0;
     virtual void drawhudgun() = 0;
     virtual bool canjump() = 0;
+    virtual bool allowmove(physent *d) { return true; }
     virtual void doattack(bool on) = 0;
     virtual dynent *iterdynents(int i) = 0;
     virtual int numdynents() = 0;
