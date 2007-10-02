@@ -831,7 +831,7 @@ bool move(physent *d, vec &dir)
 {
     vec old(d->o);
 #if 0
-    if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && (d->move || d->strafe))
+    if(d->physstate == PHYS_STEP_DOWN && dir.z <= 0.0f && cl->allowmove(pl) && (d->move || d->strafe))
     {
         float step = dir.magnitude()*STEPSPEED;
         if(trystepdown(d, dir, step, 0.75f, 0.25f)) return true;
@@ -1068,7 +1068,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         }
     }
 
-    if(m.iszero() && (pl->move || pl->strafe))
+    if(m.iszero() && cl->allowmove(pl) && (pl->move || pl->strafe))
     {
         vecfromyawpitch(pl->yaw, floating || water || pl->type==ENT_CAMERA ? pl->pitch : 0, pl->move, pl->strafe, m);
 
@@ -1091,7 +1091,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     {
         if(pl==player) d.mul(floatspeed/100.0f);
     }
-    else if(!water) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
+    else if(!water && cl->allowmove(pl)) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE && pl->move>=0 ? 1.3f : 1.0f)); // EXPERIMENTAL
     float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
 
