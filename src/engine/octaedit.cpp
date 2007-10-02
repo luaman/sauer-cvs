@@ -1057,8 +1057,10 @@ namespace hmap
         br = dir>0 ? 0x08080808 : 0;
      //   biasup = mode == dir<0;
         biasup = dir<0;
-        gx = (cur[R[d]] >> gridpower) + (sel.corner&1 ? 0 : -1) - MAXBRUSH2;
-        gy = (cur[C[d]] >> gridpower) + (sel.corner&2 ? 0 : -1) - MAXBRUSH2;
+        int cx = (sel.corner&1 ? 0 : -1);
+        int cy = (sel.corner&2 ? 0 : -1);
+        gx = (cur[R[d]] >> gridpower) + cx - MAXBRUSH2;
+        gy = (cur[C[d]] >> gridpower) + cy - MAXBRUSH2;
         gz = (cur[D[d]] >> gridpower);
         fs = dc ? 4 : 0;
         fo = dc ? 0 : F_SOLID;
@@ -1077,15 +1079,10 @@ namespace hmap
             mask [i][j] = 0x01010101;
             flags[i][j] = 0;
         }
-        int x = clamp(MAXBRUSH2, mx, nx);
-        int y = clamp(MAXBRUSH2, my, ny);
+        int x = clamp(MAXBRUSH2-cx, mx, nx);
+        int y = clamp(MAXBRUSH2-cy, my, ny);
         int z = f1;        
-        ivec t(d, x+gx, y+gy, z+gz);
-        t.shl(gridpower);
-        cube *c = getcube(t, 0);
-        if(!c || isempty(*c)) {
-            z = 0;
-        }
+        
                     
  //       printf("----------------\n%x g %d %d %d \n----------------\n", fs, gx, gy, gz);
   //      printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
