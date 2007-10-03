@@ -298,9 +298,14 @@ static Texture *newtexture(const char *rname, SDL_Surface *s, int clamp = 0, boo
     }
     GLenum format = texformat(t->bpp);
     resizetexture(w, h, mipit, format);
-    if(w != t->xs || h != t->ys) 
-        gluScaleImage(format, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, s->pixels);
-    createtexture(t->gl, w, h, s->pixels, clamp, mipit, format);
+    uchar *pixels = (uchar *)s->pixels;
+    if(w != t->xs || h != t->ys)
+    {
+        if(w*h > t->xs*t->ys) pixels = new uchar[formatsize(format)*w*h];
+        gluScaleImage(format, t->xs, t->ys, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, pixels);
+    }
+    createtexture(t->gl, w, h, pixels, clamp, mipit, format);
+    if(pixels!=s->pixels) delete[] pixels;
     SDL_FreeSurface(s);
     return t;
 }
@@ -831,7 +836,7 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
         SDL_Surface *s = surface[i];
         if(s->w != w || s->h != h)
         {
-            if(!pixels) pixels = new uchar[3*w*h];
+            if(!pixels) pixels = new uchar[formatsize(format)*w*h];
             gluScaleImage(format, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, pixels);
         }
         createtexture(!i ? t->gl : 0, w, h, s->w != w || s->h != h ? pixels : s->pixels, 3, mipit, format, cubemapsides[i].target);
