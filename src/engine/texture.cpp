@@ -825,14 +825,19 @@ Texture *cubemaploadwildcard(const char *name, bool mipit, bool msg)
     int h = t->ys = tsize;
     resizetexture(w, h, mipit, format, GL_TEXTURE_CUBE_MAP_ARB);
     glGenTextures(1, &t->gl);
+    uchar *pixels = NULL;
     loopi(6)
     {
         SDL_Surface *s = surface[i];
         if(s->w != w || s->h != h)
-            gluScaleImage(format, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, s->pixels);
-        createtexture(!i ? t->gl : 0, w, h, s->pixels, 3, mipit, format, cubemapsides[i].target);
+        {
+            if(!pixels) pixels = new uchar[3*w*h];
+            gluScaleImage(format, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, w, h, GL_UNSIGNED_BYTE, pixels);
+        }
+        createtexture(!i ? t->gl : 0, w, h, s->w != w || s->h != h ? pixels : s->pixels, 3, mipit, format, cubemapsides[i].target);
         SDL_FreeSurface(s);
     }
+    if(pixels) delete[] pixels;
     if(mipit && canhwmipmap(compressedformat(format, w, h))) glGenerateMipmap_(GL_TEXTURE_CUBE_MAP_ARB);
     return t;
 }
