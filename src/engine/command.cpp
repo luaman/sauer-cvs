@@ -468,10 +468,21 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     
                 case ID_ALIAS:                              // alias, also used as functions and (global) variables
                 {
+                    static vector<ident *> argids;
                     for(int i = 1; i<numargs; i++)
                     {
-                        s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
-                        pusha(t, w[i]);
+                        if(i > argids.length())
+                        {
+                            s_sprintfd(argname)("arg%d", i);
+                            ident *id = idents->access(argname);
+                            if(!id)
+                            {
+                                ident init(ID_ALIAS, newstring(argname), newstring(""), persistidents);
+                                id = idents->access(init._name, &init);
+                            }
+                            argids.add(id);
+                        }
+                        pushident(*argids[i-1], w[i]); // set any arguments as (global) arg values so functions can access them
                         w[i] = NULL;
                     }
                     _numargs = numargs-1;
@@ -483,11 +494,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     if(id->_isexecuting != id->_action && id->_isexecuting != wasexecuting) delete[] id->_isexecuting;
                     id->_isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
-                    for(int i = 1; i<numargs; i++)
-                    {
-                        s_sprintfd(t)("arg%d", i);          // set any arguments as (global) arg values so functions can access them
-                        pop(t);
-                    }
+                    for(int i = 1; i<numargs; i++) popident(*argids[i-1]);
                     break;
                 }
             }
