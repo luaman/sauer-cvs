@@ -385,24 +385,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
             }
             else switch(id->_type)
             {
-                case ID_ICOMMAND:
-                {
-                    switch(id->_narg[0])
-                    {
-                        default: id->run(w+1); break;
-                        case 'D': id->run((char **)addreleaseaction(id->_name)); break;
-                        case 'C': 
-                        { 
-                            char *r = conc(w+1, numargs-1, true); 
-                            id->run(&r); 
-                            delete[] r; 
-                            break;
-                        }
-                    }
-                    setretval(commandret);
-                    break;
-                }
-
+                case ID_CCOMMAND:
                 case ID_COMMAND:                     // game defined commands
                 {    
                     void *v[MAXWORDS];
@@ -412,6 +395,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         float f;
                     } nstor[MAXWORDS];
                     int n = 0, wn = 0;
+                    if(id->_type==ID_CCOMMAND) v[n++] = id->self;
                     for(char *a = id->_narg; *a; a++) switch(*a)
                     {
                         case 's':                                 v[n] = w[++wn];     n++; break;
@@ -564,10 +548,10 @@ COMMAND(writecfg, "");
 void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); }
 void intret            (int v) { string b; itoa(b, v); commandret = newstring(b); }
 
-ICOMMAND(if, "sss", commandret = executeret(args[0][0]!='0' ? args[1] : args[2]));
+ICOMMAND(if, "sss", (char *cond, char *t, char *f), commandret = executeret(cond[0]!='0' ? t : f));
 
-ICOMMAND(loop, "sss", { int n = parseint(args[1]); loopi(n) { intset(args[0], i); execute(args[2]); } });
-ICOMMAND(while, "ss", while(execute(args[0])) execute(args[1]));    // can't get any simpler than this :)
+ICOMMAND(loop, "sis", (char *var, int *n, char *body), loopi(*n) { intset(var, i); execute(body); });
+ICOMMAND(while, "ss", (char *cond, char *body), while(execute(cond)) execute(body));    // can't get any simpler than this :)
 
 void concat(const char *s) { commandret = newstring(s); }
 void result(const char *s) { commandret = newstring(s); }
@@ -677,7 +661,7 @@ void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); }  COMMANDN(rnd, rndn, 
 
 void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); }  COMMANDN(strcmp, strcmpa, "ss");
 
-ICOMMAND(echo, "C", conoutf("\f1%s", args[0]));
+ICOMMAND(echo, "C", (char *s), conoutf("\f1%s", s));
 
 void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); } COMMANDN(strstr, strstra, "ss");
 

@@ -1289,15 +1289,15 @@ bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bound
         && p->z >= d->o.z-d->eyeheight;
 }
 
-#define dir(name,v,d,s,os) ICOMMAND(name, "D", { player->s = args!=NULL; player->v = player->s ? d : (player->os ? -(d) : 0); });
+#define dir(name,v,d,s,os) ICOMMAND(name, "D", (int *down), { player->s = *down!=0; player->v = player->s ? d : (player->os ? -(d) : 0); });
 
 dir(backward, move,   -1, k_down,  k_up);
 dir(forward,  move,    1, k_up,    k_down);
 dir(left,     strafe,  1, k_left,  k_right);
 dir(right,    strafe, -1, k_right, k_left);
 
-ICOMMAND(jump,   "D", { if(cl->canjump()) player->jumpnext = args!=NULL; });
-ICOMMAND(attack, "D", { cl->doattack(args!=NULL); });
+ICOMMAND(jump,   "D", (int *down), { if(cl->canjump()) player->jumpnext = *down!=0; });
+ICOMMAND(attack, "D", (int *down), { cl->doattack(*down!=0); });
 
 VARP(sensitivity, 0, 7, 1000);
 VARP(sensitivityscale, 1, 1, 100);

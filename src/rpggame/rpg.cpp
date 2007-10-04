@@ -30,8 +30,8 @@ struct rpgclient : igameclient, g3d_callback
 
     rpgclient() : et(*this), os(*this), player1(os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1)
     {
-        CCOMMAND(rpgclient, map, "s", load_world(args[0]));    
-        CCOMMAND(rpgclient, showinventory, "", self->showinventory());    
+        CCOMMAND(map, "s", (rpgclient *self, char *s), load_world(s));    
+        CCOMMAND(showinventory, "", (rpgclient *self), self->showinventory());    
     }
     ~rpgclient() {}
 

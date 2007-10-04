@@ -57,10 +57,10 @@ struct fpsclient : igameclient
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
-        CCOMMAND(fpsclient, mode, "s", { self->setmode(atoi(args[0])); });
-        CCOMMAND(fpsclient, kill, "",  { self->suicide(self->player1); });
-        CCOMMAND(fpsclient, taunt, "", { self->taunt(); });
-		CCOMMAND(fpsclient, follow, "s", { self->follow(args[0]); });
+        CCOMMAND(mode, "i", (fpsclient *self, int *val), { self->setmode(*val); });
+        CCOMMAND(kill, "",  (fpsclient *self), { self->suicide(self->player1); });
+        CCOMMAND(taunt, "", (fpsclient *self), { self->taunt(); });
+        CCOMMAND(follow, "s", (fpsclient *self, char *s), { self->follow(s); });
     }
 
     iclientcom      *getcom()  { return &cc; }
