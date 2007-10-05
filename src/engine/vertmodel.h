@@ -308,6 +308,7 @@ struct vertmodel : model
         int numverts, numtris;
 
         int voffset, eoffset, elen;
+        ushort minvert, maxvert;
 
         mesh() : group(0), name(0), verts(0), tcverts(0), bumpverts(0), tris(0)
         {
@@ -477,6 +478,7 @@ struct vertmodel : model
         {
             voffset = offset;
             eoffset = idxs.length();
+            minvert = 0xFFFF;
             loopi(numtris)
             {
                 tri &t = tris[i];
@@ -486,13 +488,15 @@ struct vertmodel : model
                     vert &v = verts[t.vert[j]];
                     loopvk(vverts)
                     {
-                        if(comparevert(vverts[k], j, tc, v)) { idxs.add((ushort)k); goto found; }
+                        if(comparevert(vverts[k], j, tc, v)) { minvert = min(minvert, (ushort)k); idxs.add((ushort)k); goto found; }
                     }
                     idxs.add(vverts.length());
                     assignvert(vverts.add(), j, tc, v);
                     found:;
                 }
             }
+            minvert = min(minvert, vverts.length()-1);
+            maxvert = max(minvert, vverts.length()-1);
             elen = idxs.length()-eoffset;
             return vverts.length()-voffset;
         }
@@ -506,6 +510,8 @@ struct vertmodel : model
                 tri &t = tris[i];
                 loopj(3) idxs.add(voffset+t.vert[j]);
             }
+            minvert = voffset;
+            maxvert = voffset + numverts-1;
             elen = idxs.length()-eoffset;
             return numverts;
         }
@@ -599,7 +605,7 @@ struct vertmodel : model
                 }
             }
 
-            if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, group->numframes>1 ? voffset : 0, group->numframes>1 ? voffset+numverts-1 : group->vlen-1, elen, GL_UNSIGNED_SHORT, &group->edata[eoffset]);
+            if(hasDRE) glDrawRangeElements_(GL_TRIANGLES, minvert, maxvert, elen, GL_UNSIGNED_SHORT, &group->edata[eoffset]);
             else glDrawElements(GL_TRIANGLES, elen, GL_UNSIGNED_SHORT, &group->edata[eoffset]);
             glde++;
             xtravertsva += numverts;
