@@ -907,6 +907,8 @@ struct vertmodel : model
                 }
                 if(hasVBO) { if(ebuf) { glDeleteBuffers_(1, &ebuf); ebuf = 0; } }
                 else DELETEA(vdata);
+                lastvbuf = lasttcbuf = lastmtcbuf = NULL;
+                lastebuf = 0;
             }
             if(hasVBO ? !vc->vbuf : !vc->vdata) genvbo(norms, tangents, *vc);
             if(numframes>1)
@@ -921,7 +923,7 @@ struct vertmodel : model
                     loopv(meshes) 
                     {
                         mesh &m = *meshes[i];
-                        m.interpverts(cur, prev, ai_t, norms, tangents, &vdata[m.voffset*vertsize], skins[i]);
+                        m.interpverts(cur, prev, ai_t, norms, tangents, (hasVBO ? vdata : vc->vdata) + m.voffset*vertsize, skins[i]);
                     }
                     if(hasVBO)
                     {
