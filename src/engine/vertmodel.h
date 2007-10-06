@@ -884,18 +884,6 @@ struct vertmodel : model
 
         void render(animstate &as, anpos &cur, anpos *prev, float ai_t, vector<skin> &skins)
         {
-            vbocacheentry *vc = NULL;
-            if(numframes<=1) vc = vbocache;
-            else 
-            {
-                loopi(MAXVBOCACHE)
-                {
-                    vbocacheentry &c = vbocache[i];
-                    if(hasVBO ? !c.vbuf : !c.vdata) continue;
-                    if(c.cur==cur && (prev ? c.prev==*prev && c.t==ai_t : c.prev.fr1<0)) { vc = &c; break; }
-                }
-                if(!vc) loopi(MAXVBOCACHE) { vc = &vbocache[i]; if((hasVBO ? !vc->vbuf : !vc->vdata) || vc->millis < lastmillis) break; }
-            }
             bool norms = false, tangents = false;
             loopv(skins) 
             {
@@ -915,6 +903,18 @@ struct vertmodel : model
                 else DELETEA(vdata);
                 lastvbuf = lasttcbuf = lastmtcbuf = NULL;
                 lastebuf = 0;
+            }
+            vbocacheentry *vc = NULL;
+            if(numframes<=1) vc = vbocache;
+            else
+            {
+                loopi(MAXVBOCACHE)
+                {
+                    vbocacheentry &c = vbocache[i];
+                    if(hasVBO ? !c.vbuf : !c.vdata) continue;
+                    if(c.cur==cur && (prev ? c.prev==*prev && c.t==ai_t : c.prev.fr1<0)) { vc = &c; break; }
+                }
+                if(!vc) loopi(MAXVBOCACHE) { vc = &vbocache[i]; if((hasVBO ? !vc->vbuf : !vc->vdata) || vc->millis < lastmillis) break; }
             }
             if(hasVBO ? !vc->vbuf : !vc->vdata) genvbo(norms, tangents, *vc);
             if(numframes>1)
