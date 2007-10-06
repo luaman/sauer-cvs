@@ -669,7 +669,6 @@ struct vertmodel : model
             DELETEA(name);
             meshes.deletecontentsp();
             DELETEA(tags);
-            DELETEA(vdata);
             if(ebuf) glDeleteBuffers_(1, &ebuf);
             loopi(MAXVBOCACHE) 
             {
