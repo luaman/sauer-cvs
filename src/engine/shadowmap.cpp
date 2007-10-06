@@ -128,7 +128,8 @@ bool shadowmapping = false;
 
 GLdouble shadowmapprojection[16], shadowmapmodelview[16];
 
-VARP(shadowmapbias, 0, 20, 1024);
+VARP(shadowmapbias, 0, 5, 1024);
+VARP(shadowmappeelbias, 0, 20, 1024);
 
 void pushshadowmap()
 {
@@ -142,7 +143,7 @@ void pushshadowmap()
     glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
-    glTranslatef(0.5f, 0.5f, -shadowmapbias/1024.0f);
+    glTranslatef(0.5f, 0.5f, -shadowmapbias/float(shadowmapdist));
     glScalef(0.5f, 0.5f, -1);
     glMultMatrixd(shadowmapprojection);
     glMultMatrixd(shadowmapmodelview);
@@ -410,7 +411,7 @@ void rendershadowmap()
     glGetDoublev(GL_PROJECTION_MATRIX, shadowmapprojection);
     glGetDoublev(GL_MODELVIEW_MATRIX, shadowmapmodelview);
 
-    setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/1024.0f, 1 - 2*shadowmapbias/1024.0f);
+    setenvparamf("shadowmapbias", SHPARAM_VERTEX, 0, -shadowmapbias/float(shadowmapdist), 1 - (shadowmapbias + shadowmappeelbias)/float(shadowmapdist));
     rendershadowmapcasters();
     if(shadowmapcasters && smdepthpeel) rendershadowmapreceivers();
 
