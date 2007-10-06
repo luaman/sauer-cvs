@@ -780,7 +780,7 @@ static vector<mergedface> vamerges[VVEC_INT];
 
 void genmergedfaces(cube &c, const ivec &co, int size, int minlevel = 0)
 {
-    if(!c.ext || !c.ext->merges) return;
+    if(!c.ext || !c.ext->merges || isempty(c)) return;
     int index = 0;
     loopi(6) if(c.ext->mergeorigin & (1<<i))
     {
