@@ -543,7 +543,7 @@ void writeobj(char *name)
             verts += vtxsize;
         }
         ushort *ebuf = va.l0.ebuf;
-        loopi(va.l0.texs) loopl(3) loopj(va.l0.eslist[i].length[l]/3)
+        loopi(va.l0.tris)
         {
             fprintf(f, "f");
             for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-va.verts);

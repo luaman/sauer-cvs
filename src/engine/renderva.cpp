@@ -1029,7 +1029,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                     lastdraw = offset;
                 }
                 lastslot = &slot;
-                loopl(3) offset += lod.eslist[i].length[l];
+                offset += lod.eslist[i].length[5];
             }
             if(offset > lastdraw)
             {
@@ -1101,8 +1101,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
     bool shadowmapreceiver = false;
     if(pass==RENDERPASS_LIGHTMAP && renderpath!=R_FIXEDFUNCTION)
     {
-        if(!envmapping) shadowmapreceiver = isshadowmapreceiver(va);
-        if(vbufchanged) glColorPointer(shadowmapreceiver ? 4 : 3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
+        if(!envmapping && !va->curlod) shadowmapreceiver = isshadowmapreceiver(va);
+        if(vbufchanged) glColorPointer(3, GL_UNSIGNED_BYTE, VTXSIZE, floatvtx ? &(((fvertex *)va->vbuf)[0].n) : &(va->vbuf[0].n));
         setenvparamfv("camera", SHPARAM_VERTEX, 4, vec4(camera1->o, 1).sub(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec()).mul(1<<VVEC_FRAC).v);
 
         setdynlights(va);
@@ -1117,17 +1117,19 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
     ushort *ebuf = lod.ebuf;
     int lastlm = -1, lastxs = -1, lastys = -1, lastl = -1, lastenvmap = -1, envmapped = 0;
-    bool mtglow = false;
+    bool mtglow = false, shadowmapped = false;
     float lastscale = -1;
     Slot *lastslot = NULL;
+    Shader *lastshader = NULL;
     loopi(lod.texs)
     {
-        Slot &slot = lookuptexture(lod.eslist[i].texture);
+        const elementset &es = lod.eslist[i];
+        Slot &slot = lookuptexture(es.texture);
         Texture *tex = slot.sts[0].t;
         Shader *s = slot.shader;
 
         extern vector<GLuint> lmtexids;
-        int lmid = lod.eslist[i].lmid, curlm = pass==RENDERPASS_LIGHTMAP ? lmtexids[lmid] : -1;
+        int lmid = es.lmid, curlm = pass==RENDERPASS_LIGHTMAP ? lmtexids[lmid] : -1;
         if(s && renderpath!=R_FIXEDFUNCTION && pass==RENDERPASS_LIGHTMAP)
         {
             int tmu = 2;
@@ -1142,7 +1144,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             if(s->type&SHADER_ENVMAP)
             {
-                int envmap = lod.eslist[i].envmap;
+                int envmap = es.envmap;
                 if((!lastslot || s->type!=lastslot->shader->type || (envmap==EMID_CUSTOM ? &slot!=lastslot : envmap!=lastenvmap)) && hasCM)
                 {
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu);
@@ -1194,7 +1196,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 }
                 if(pass==RENDERPASS_GLOW && noglow) 
                 {
-                    loopl(3) ebuf += lod.eslist[i].length[l];
+                    ebuf += es.length[5];
                     continue;
                 }
                 else if(mtglow)
@@ -1205,10 +1207,6 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             }
             else if(pass==RENDERPASS_LIGHTMAP && s)
             {
-                if(shadowmapreceiver) s->variant(min(s->variants[1].length()-1, visibledynlights.length()), 1)->set(&slot);
-                else if(visibledynlights.empty()) s->set(&slot);
-                else s->variant(min(s->variants[0].length()-1, visibledynlights.length()-1))->set(&slot);
-
                 int tmu = 2;
                 if(s->type&SHADER_NORMALSLMS) tmu++;
                 if(s->type&SHADER_ENVMAP) tmu++;
@@ -1220,28 +1218,44 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                     glBindTexture(GL_TEXTURE_2D, t.t->gl);
                 }
                 glActiveTexture_(GL_TEXTURE0_ARB);
+
+                lastshader = NULL;
             }
             lastslot = &slot;
         }
 
         float scale = slot.sts[0].scale;
         if(!scale) scale = 1;
-        loopl(3) if(lod.eslist[i].length[l])
+        loopk(shadowmapreceiver ? 2 : 1) loopl(3)
         {
+            int dim = 2*l+k;
+            ushort offset = dim>0 ? es.length[dim-1] : 0,
+                   len = es.length[dim + (shadowmapreceiver ? 0 : 1)] - offset;
+            if(!len) continue;
+
+            if(pass==RENDERPASS_LIGHTMAP && s && (lastshader!=s || shadowmapped!=(k!=0)))
+            {
+                if(k) s->variant(min(s->variants[1].length()-1, visibledynlights.length()), 1)->set(&slot);
+                else if(visibledynlights.empty()) s->set(&slot);
+                else s->variant(min(s->variants[0].length()-1, visibledynlights.length()-1))->set(&slot);
+                shadowmapped = k!=0;
+                lastshader = s;
+            }
+
             if(lastl!=l || lastxs!=tex->xs || lastys!=tex->ys || lastscale!=scale || (s && s->type&SHADER_GLSLANG))
             {
-                static int si[] = { 1, 0, 0 };
-                static int ti[] = { 2, 2, 1 };
+                static const int si[] = { 1, 0, 0 };
+                static const int ti[] = { 2, 2, 1 };
 
-                GLfloat s[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                s[si[l]] = 8.0f/scale/(tex->xs<<VVEC_FRAC);
-                GLfloat t[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                t[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/scale/(tex->ys<<VVEC_FRAC);
+                GLfloat sgen[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                sgen[si[l]] = 8.0f/scale/(tex->xs<<VVEC_FRAC);
+                GLfloat tgen[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                tgen[ti[l]] = (l <= 1 ? -8.0f : 8.0f)/scale/(tex->ys<<VVEC_FRAC);
 
                 if(renderpath==R_FIXEDFUNCTION)
                 {
-                    glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                    glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                    glTexGenfv(GL_S, GL_OBJECT_PLANE, sgen);
+                    glTexGenfv(GL_T, GL_OBJECT_PLANE, tgen);
                     // KLUGE: workaround for buggy nvidia drivers
                     // object planes are somehow invalid unless texgen is toggled
                     extern int nvidia_texgen_bug;
@@ -1256,16 +1270,22 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                     if(mtglow)
                     {
                         glActiveTexture_(GL_TEXTURE2_ARB);
-                        glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
-                        glTexGenfv(GL_T, GL_OBJECT_PLANE, t);
+                        glTexGenfv(GL_S, GL_OBJECT_PLANE, sgen);
+                        glTexGenfv(GL_T, GL_OBJECT_PLANE, tgen);
                         glActiveTexture_(GL_TEXTURE0_ARB);
                     }
                 }
                 else
                 {
                     // have to pass in env, otherwise same problem as fixed function
-                    setlocalparamfv("texgenS", SHPARAM_VERTEX, 0, s);
-                    setlocalparamfv("texgenT", SHPARAM_VERTEX, 1, t);
+                    setlocalparamfv("texgenS", SHPARAM_VERTEX, 0, sgen);
+                    setlocalparamfv("texgenT", SHPARAM_VERTEX, 1, tgen);
+
+                    if(pass==RENDERPASS_LIGHTMAP && s && s->type&SHADER_NORMALSLMS && (lastl!=l || s->type&SHADER_GLSLANG))
+                    {
+                        setlocalparamfv("orienttangent", SHPARAM_VERTEX, 2, orientation_tangent[l]);
+                        setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
+                    }
                 }
 
                 lastxs = tex->xs;
@@ -1274,15 +1294,11 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 lastscale = scale;
             }
 
-            if(pass==RENDERPASS_LIGHTMAP && s && s->type&SHADER_NORMALSLMS && renderpath!=R_FIXEDFUNCTION)
-            {
-                setlocalparamfv("orienttangent", SHPARAM_VERTEX, 2, orientation_tangent[l]);
-                setlocalparamfv("orientbinormal", SHPARAM_VERTEX, 3, orientation_binormal[l]);
-            }
-
-            drawvatris(va, lod.eslist[i].length[l], ebuf, lod.eslist[i].minvert[l], lod.eslist[i].maxvert[l]);
-            ebuf += lod.eslist[i].length[l];  // Advance to next array.
+            ushort minvert = es.minvert[dim], maxvert = es.maxvert[dim];
+            if(!shadowmapreceiver) { minvert = min(minvert, es.minvert[dim+1]); maxvert = max(maxvert, es.maxvert[dim+1]); }
+            drawvatris(va, len, &ebuf[offset], minvert, maxvert);
         }
+        ebuf += es.length[5];
     }
 
     if(mtglow)

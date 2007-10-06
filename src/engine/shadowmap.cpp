@@ -272,13 +272,15 @@ bool isshadowmapreceiver(vtxarray *va)
 {
     if(!shadowmap || !shadowmaptex || !shadowmapcasters) return false;
 
-    if(va->max.z <= shadowfocus.z - shadowmapdist || va->min.z >= shadowfocus.z) return false;
+    if(va->shadowmapmax.z <= shadowfocus.z - shadowmapdist || va->shadowmapmin.z >= shadowfocus.z) return false;
 
-    vec center(va->min.tovec());
-    center.add(va->max.tovec()).mul(0.5f);
-    float xyrad = SQRT2*0.5f*max(va->max.x-va->min.x, va->max.y-va->min.y),
-          zrad = 0.5f*(va->max.z-va->min.z),
+    float xyrad = SQRT2*0.5f*max(va->shadowmapmax.x-va->shadowmapmin.x, va->shadowmapmax.y-va->shadowmapmin.y),
+          zrad = 0.5f*(va->shadowmapmax.z-va->shadowmapmin.z),
           x1, y1, x2, y2;
+    if(xyrad<0 || zrad<0) return false;
+
+    vec center(va->shadowmapmin.tovec());
+    center.add(va->shadowmapmax.tovec()).mul(0.5f);
     calcshadowmapbb(center, xyrad, zrad, x1, y1, x2, y2);
 
     float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
