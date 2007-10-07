@@ -521,7 +521,7 @@ void writeobj(char *name)
     hasVBO = false;
     allchanged();
     s_sprintfd(fname)("%s.obj", name);
-    FILE *f = openfile(fname, "w"); 
+    FILE *f = openfile(path(fname), "w"); 
     if(!f) return;
     fprintf(f, "# obj file of sauerbraten level\n");
     extern vector<vtxarray *> valist;
