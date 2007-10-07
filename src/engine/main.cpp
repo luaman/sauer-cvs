@@ -108,6 +108,7 @@ void screenshot(char *filename)
         s_sprintf(buf)("screenshot_%d.bmp", lastmillis);
         filename = buf;
     }
+    else path(filename);
     SDL_SaveBMP(image, findfile(filename, "wb"));
     SDL_FreeSurface(image);
 }
