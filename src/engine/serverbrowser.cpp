@@ -461,7 +461,7 @@ COMMAND(updatefrommaster, "");
 void writeservercfg()
 {
     if(!cl->savedservers()) return;
-    FILE *f = openfile(cl->savedservers(), "w");
+    FILE *f = openfile(path(cl->savedservers(), true), "w");
     if(!f) return;
     fprintf(f, "// servers connected to are added here automatically\n\n");
     loopvrev(servers) fprintf(f, "addserver %s\n", servers[i].name);
