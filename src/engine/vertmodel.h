@@ -60,7 +60,7 @@ struct vertmodel : model
 
         bool multitextured() { return enableglow; }
         bool envmapped() { return hasCM && envmapmax>0 && envmapmodels && (renderpath!=R_FIXEDFUNCTION || maxtmus>=3); }
-        bool bumpmapped() { return renderpath!=R_FIXEDFUNCTION && hasVBO && normalmap && bumpmodels; }
+        bool bumpmapped() { return renderpath!=R_FIXEDFUNCTION && normalmap && bumpmodels; }
         bool normals() { return renderpath!=R_FIXEDFUNCTION || (lightmodels && !fullbright) || envmapped() || bumpmapped(); }
         bool tangents() { return bumpmapped(); }
 
