@@ -1116,14 +1116,9 @@ struct vertmodel : model
                 }
                 else if(d->current[index]!=as)
                 {
-                    int diff = lastmillis-d->lastanimswitchtime[index];
-                    if(diff>animationinterpolationtime*2) d->current[index] = as;
-                    else
-                    {
-                        if(diff>animationinterpolationtime/2) d->prev[index] = d->current[index];
-                        d->current[index] = as;
-                        d->lastanimswitchtime[index] = lastmillis;
-                    }
+                    if(lastmillis-d->lastanimswitchtime[index]>animationinterpolationtime/2) d->prev[index] = d->current[index];
+                    d->current[index] = as;
+                    d->lastanimswitchtime[index] = lastmillis;
                 }
                 else if(as.anim&ANIM_SETTIME) d->current[index].basetime = as.basetime;
                 d->lastmodel[index] = this;
