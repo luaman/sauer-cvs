@@ -902,7 +902,9 @@ void render_particles(int time)
             {
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
-               
+              
+                if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
+
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
@@ -943,9 +945,6 @@ void render_particles(int time)
                     {
                         setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
                         setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-
-                        // object is rolled, so object space fogging (used in shader refraction) won't work, so just use constant fog
-                        if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
                     }
 
                     glRotatef(lastmillis/7.0f, -rotdir.x, rotdir.y, -rotdir.z);
@@ -1073,13 +1072,15 @@ void render_particles(int time)
             case PT_METERVS:
                 glEnable(GL_BLEND);
                 glEnable(GL_TEXTURE_2D);
+                if(reflecting && refracting) setfogplane(1, refracting);
                 foggedshader->set();
                 glFogfv(GL_FOG_COLOR, zerofog);
                 break;
-    
+
             default:
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                 glFogfv(GL_FOG_COLOR, zerofog);
+                if(reflecting && refracting) setfogplane(1, refracting, true);
                 break;
         }
         
