@@ -510,8 +510,8 @@ static void cleanupexplosion()
     {
         if(explosion2d) glDisableClientState(GL_TEXTURE_COORD_ARRAY); 
 
-        foggedshader->set();
         if(reflecting && refracting) setfogplane(1, refracting);
+        foggedshader->set();
     }
 
     if(hasVBO) 
