@@ -1111,7 +1111,7 @@ struct vertmodel : model
             {
                 if(d->lastmodel[index]!=this || d->lastanimswitchtime[index]==-1)
                 {
-                    d->current[index] = as;
+                    d->prev[index] = d->current[index] = as;
                     d->lastanimswitchtime[index] = lastmillis-animationinterpolationtime*2;
                 }
                 else if(d->current[index]!=as)
