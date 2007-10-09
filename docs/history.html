@@ -173,6 +173,7 @@
 <li>taunting now causes player to stop moving</li>
 <li>fixed bug with explosions not doing damage</li>
 <li>made client and server sync their clocks as often as possible to compensate for inaccurate clocks on some hardware</li>
+<li>replaced the display list fallback for models with vertex arrays instead (allows better reuse of model animation on older 3D cards)</li>
 <li>player animation is now cached so its only done once per frame despite multipass rendering (reflections, shadows, etc.)</li>
 <li>player models now use occlusion queries so only visible players are animated (huge SP speedup with lots of monsters)</li>
 <li>environment map textures are now automatically scaled so that all sides have matching resolution</li>
