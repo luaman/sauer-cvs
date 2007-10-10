@@ -139,6 +139,7 @@ extern void pushshadowmap();
 extern void popshadowmap();
 extern void adjustshadowmatrix(const ivec &o, float scale);
 extern void rendershadowmapreceivers();
+extern void guessshadowdir();
 
 // rendergl
 extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;

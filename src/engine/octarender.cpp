@@ -1080,6 +1080,7 @@ void allchanged(bool load)
     memset(cstats, 0, sizeof(cstat)*32);
     resetqueries();
     if(load) initenvmaps();
+    guessshadowdir();
     octarender();
     if(load) precacheall();
     setupmaterials();
