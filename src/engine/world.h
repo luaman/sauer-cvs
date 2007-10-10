@@ -42,6 +42,9 @@ enum                            // cube empty-space materials
     MAT_EDIT                    // basis for the edit volumes of the above materials
 };
 
+#define WATER_AMPLITUDE 0.8f
+#define WATER_OFFSET 1.1f
+
 enum 
 { 
     MATSURF_NOT_VISIBLE = 0,

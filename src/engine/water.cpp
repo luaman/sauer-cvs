@@ -15,14 +15,14 @@ float wcol[4];
     inline void vertw(float v1, float v2, float v3, float t) \
     { \
         float angle = (v1-wx1)/wsize*(v2-wy1)/wsize*(v1-wx2)*(v2-wy2)*59/23+t; \
-        float s = sinf(angle), h = 0.8f*s-1.1f; \
+        float s = sinf(angle), h = WATER_AMPLITUDE*s-WATER_OFFSET; \
         body; \
         glVertex3f(v1, v2, v3+h); \
     }
 #define VERTWN(vertw, body) \
     inline void vertw(float v1, float v2, float v3) \
     { \
-        float h = -1.1f; \
+        float h = -WATER_OFFSET; \
         body; \
         glVertex3f(v1, v2, v3+h); \
     }
@@ -361,7 +361,7 @@ void renderwaterff()
     }
 
     int lastdepth = -1;
-    float offset = -1.1f;
+    float offset = -WATER_OFFSET;
 
     uchar wcolub[3];
     getwatercolour(wcolub);
@@ -487,7 +487,7 @@ void renderwater()
     vec ambient(max(hdr.skylight[0], hdr.ambient), max(hdr.skylight[1], hdr.ambient), max(hdr.skylight[2], hdr.ambient));
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
-    float offset = -1.1f;
+    float offset = -WATER_OFFSET;
     bool blended = true;
     loopi(MAXREFLECTIONS)
     {
@@ -790,7 +790,7 @@ void queryreflections()
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
-            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, renderpath==R_FIXEDFUNCTION || vertwater ? 0.1f : 1.1f);
+            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, renderpath==R_FIXEDFUNCTION || vertwater ? 0.1f : WATER_OFFSET);
         }
         glEnd();
         endquery(ref.query);
@@ -860,7 +860,7 @@ void drawreflections()
 
     static int lastdrawn = 0;
     int refs = 0, n = lastdrawn;
-    float offset = -1.1f;
+    float offset = -WATER_OFFSET;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[++n%MAXREFLECTIONS];
