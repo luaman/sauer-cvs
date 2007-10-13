@@ -70,7 +70,7 @@ ivec cur, lastcur;
 extern int entediting;
 bool editmode = false;
 bool havesel = false;
-bool selhmap = false;
+bool hmapsel = false;
 int  horient = 0;
 
 extern int entmoving;
@@ -82,8 +82,6 @@ VARF(dragging, 0, 0, 1,
     sel.grid = gridsize;
     sel.orient = orient;
 );
-
-VAR(selectcorners, 0, 0, 1);
 
 VARF(moving, 0, 0, 1,
     if(!moving) return;
@@ -119,6 +117,8 @@ VARF(gridpower, 3-VVEC_FRAC, 3, VVEC_INT-1,
 
 VAR(passthroughsel, 0, 0, 1);
 VAR(editing, 1, 0, 0);
+VAR(selectcorners, 0, 0, 1);
+VARF(hmapedit, 0, 0, 1, cancelsel());
 
 void toggleedit()
 {
@@ -295,6 +295,7 @@ void cursorupdate()
         odc = dimcoord(orient);
 
     bool hovering = false;
+    hmapsel = false;
            
     if(moving)
     {       
@@ -354,7 +355,7 @@ void cursorupdate()
             v.add(player->o);
             w = v;
             cube *c = &lookupcube(w.x, w.y, w.z);            
-            if(gridlookup && !dragging && !moving && !havesel && !selhmap) gridsize = lusize;
+            if(gridlookup && !dragging && !moving && !havesel && hmapedit!=1) gridsize = lusize;
             int mag = lusize / gridsize;
             normalizelookupcube(w.x, w.y, w.z);
             if(sdist == 0 || sdist > wdist) rayrectintersect(lu.tovec(), vec(gridsize), player->o, ray, t=0, orient); // just getting orient     
@@ -364,10 +365,10 @@ void cursorupdate()
             od = dimension(orient);
             d = dimension(sel.orient);
             
-            if(mag > 0)
+            if(mag > 0 && hmapedit==1)
             {
-                selhmap = isheightmap(horient, dimension(horient), false, c);     
-                if(selhmap)
+                hmapsel = isheightmap(horient, dimension(horient), false, c);     
+                if(hmapsel)
                     od = dimension(orient = horient);
             }
 
@@ -427,7 +428,7 @@ void cursorupdate()
 
     if(!moving && !hovering)
     {
-        if(selhmap)
+        if(hmapsel)
             glColor3ub(0,200,0);
         else
             glColor3ub(120,120,120);
@@ -755,7 +756,7 @@ int hmaptexture = -1; // will probably want list
 
 COMMAND(clearbrush, "");
 COMMAND(brushvert, "iii");
-ICOMMAND(addhtex, "", (), hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
+ICOMMAND(hmapaddtex, "", (), hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
 ICOMMAND(hmapcancel, "", (), hmaptexture = -1; );
 
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
@@ -1081,11 +1082,10 @@ namespace hmap
         }
         int x = clamp(MAXBRUSH2-cx, mx, nx);
         int y = clamp(MAXBRUSH2-cy, my, ny);
-        int z = f1;        
-        
+        int z = f1;                
                     
- //       printf("----------------\n%x g %d %d %d \n----------------\n", fs, gx, gy, gz);
-  //      printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
+   //    printf("----------------\n%x g %d %d %d \n----------------\n", fs, gx, gy, gz);
+   //    printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
 
         changes.grid = gridsize;
         changes.s = changes.o = cur;
@@ -1097,8 +1097,7 @@ namespace hmap
 }
 
 void edithmap(int dir, int mode) {    
-
-    if(multiplayer()) return;
+    if(multiplayer() || !hmapsel) return;
     if (!dimcoord(sel.orient))
     {
         conoutf("negative orientations not supported yet");
@@ -1106,7 +1105,7 @@ void edithmap(int dir, int mode) {
     }
  //   long time = SDL_GetTicks();
     hmap::run(dir, mode);    
-  //  conoutf("-- edit time (%d) ms --", SDL_GetTicks()-time);
+ //   conoutf("-- edit time (%d) ms --", SDL_GetTicks()-time);
 }
 
 ///////////// main cube edit ////////////////
@@ -1229,10 +1228,10 @@ void mpeditface(int dir, int mode, selinfo &sel, bool local)
 void editface(int *dir, int *mode)
 {
     if(noedit(moving!=0)) return;
-    if(selhmap)
-        edithmap(*dir, *mode);
-    else
-       mpeditface(*dir, *mode, sel, true);
+    if(hmapedit!=1)
+        mpeditface(*dir, *mode, sel, true);        
+    else 
+        edithmap(*dir, *mode);       
 }
 
 VAR(selectionsurf, 0, 0, 1);
