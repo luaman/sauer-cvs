@@ -1038,8 +1038,8 @@ namespace hmap
         if(ispair) 
         {
                  if(e && top==&oh) pushside(e->faces[R[d]], oh);
-            else if(b && top==&lo) pushside(b->faces[R[d]], lo);
-            else if(c)             pushside(c->faces[R[d]], hi);
+            else if(c && top==&hi) pushside(c->faces[R[d]], hi);
+            else if(b && top==&lo) pushside(b->faces[R[d]], lo);            
         }        
         
         snap = bitnormal(snap);
