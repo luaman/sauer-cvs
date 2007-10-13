@@ -1451,10 +1451,6 @@ void cleanupTMU1()
     glClientActiveTexture_(GL_TEXTURE0_ARB);
 }
 
-#ifdef SHOWVA
-VAR(showva, 0, 0, 1);
-#endif
-
 #define FIRSTVA (reflecting && !refracting && camera1->o.z >= reflecting ? reflectedva : visibleva)
 #define NEXTVA (reflecting && !refracting && camera1->o.z >= reflecting ? va->rnext : va->next)
 
@@ -1584,9 +1580,6 @@ void rendergeom()
             resetorigin();
         }
         glDepthFunc(GL_LEQUAL);
-#ifdef SHOWVA
-        int showvas = 0;
-#endif
         cur.vbufGL = cur.ebufGL = 0;
         cur.texture = 0;
         for(vtxarray **prevva = &FIRSTVA, *va = FIRSTVA; va; prevva = &NEXTVA, va = NEXTVA)
@@ -1615,17 +1608,6 @@ void rendergeom()
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;
 
-#ifdef SHOWVA
-            if(showva && editmode && renderpath==R_FIXEDFUNCTION)
-            {
-                if(insideva(va, worldpos)) 
-                {
-                    glColor3f(1, showvas/3.0f, 1-showvas/3.0f);
-                    showvas++;
-                }
-                else glColor3f(1, 1, 1);
-            }
-#endif
             renderva(cur, va, lod, nolights ? RENDERPASS_COLOR : RENDERPASS_LIGHTMAP);
         }
         glDepthFunc(GL_LESS);
