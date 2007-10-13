@@ -759,9 +759,23 @@ COMMAND(brushvert, "iii");
 ICOMMAND(hmapaddtex, "", (), hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
 ICOMMAND(hmapcancel, "", (), hmaptexture = -1; );
 
+bool ischildless(cube &c)
+{
+    if(!c.children)
+        return true;
+    loopi(8)
+    {
+        if(!ischildless(c.children[i]) || !isempty(c.children[i]))
+            return false;
+    }
+    emptyfaces(c);
+    discardchildren(c);    
+    return true;
+}
+
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
 {
-    return !c->children && 
+    return ischildless(*c) && 
            ( (empty && isempty(*c)) ||
            (         
             (c->faces[R[d]] & 0x77777777) == 0 &&
@@ -789,14 +803,13 @@ namespace hmap
     inline uint bitspread(uint a)  { return greytoggle(((a>>24)&0x000000FF) | ((a<<8)&0xFFFFFF00) | ((a<<24)&0xFF000000) | ((a>>8)&0x00FFFFFF) | a); };
 
     inline cube *getcube(ivec t, int f) 
-    {   // TODO: This will most likely be bottle neck
-        //       look at loopoctabox + precache for help
+    {
         t[d] += f;    
         cube *c = &lookupcube(t.x, t.y, t.z, -gridsize);
         if(!isheightmap(sel.orient, d, true, c)) return NULL;        
         if(lusize > gridsize)
             c = &lookupcube(t.x, t.y, t.z, gridsize);
-        discardchildren(*c); // necessary? for ext?             
+        discardchildren(*c);    
         if     (t.x < changes.o.x) changes.o.x = t.x;
         else if(t.x > changes.s.x) changes.s.x = t.x;
         if     (t.y < changes.o.y) changes.o.y = t.y;
@@ -1090,8 +1103,7 @@ namespace hmap
         changes.grid = gridsize;
         changes.s = changes.o = cur;
         hedit(x, y, z, 0, 0);
-        changes.s.sub(changes.o);
-        changes.s.shr(gridpower);
+        changes.s.sub(changes.o).shr(gridpower).add(1);
         changed(changes);
     }
 }
