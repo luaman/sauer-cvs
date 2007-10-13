@@ -752,12 +752,14 @@ void brushvert(int *x, int *y, int *v)
     brushmaxy = max(brushmaxy, *y+1);
 }
 
-int hmaptexture = -1; // will probably want list
+#define HMAPTEXMAX  64
+int htextures[HMAPTEXMAX];
+int htexsize = 0;
 
 COMMAND(clearbrush, "");
 COMMAND(brushvert, "iii");
-ICOMMAND(hmapaddtex, "", (), hmaptexture = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
-ICOMMAND(hmapcancel, "", (), hmaptexture = -1; );
+ICOMMAND(hmapaddtex, "", (), htextures[htexsize++] = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
+ICOMMAND(hmapcancel, "", (), htexsize = 0; );
 
 bool ischildless(cube &c)
 {
@@ -773,6 +775,14 @@ bool ischildless(cube &c)
     return true;
 }
 
+inline bool ishtexture(int t)
+{    
+    loopi(htexsize) // TODO: optimize with special tex index region
+        if(t == htextures[i])
+            return true;
+    return false;
+}
+
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
 {
     return ischildless(*c) && 
@@ -780,7 +790,7 @@ inline bool isheightmap(int o, int d, bool empty, cube *c)
            (         
             (c->faces[R[d]] & 0x77777777) == 0 &&
             (c->faces[C[d]] & 0x77777777) == 0 &&
-             c->texture[o] == hmaptexture
+            ishtexture(c->texture[o])
            ));
 }
 
