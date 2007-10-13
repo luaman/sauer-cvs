@@ -35,7 +35,8 @@ void fatal(char *s, char *o)    // failure exit
     #ifdef WIN32
         MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
     #endif
-    cleanup();
+    SDL_ShowCursor(1);
+    SDL_Quit();
     exit(EXIT_FAILURE);
 }
 
