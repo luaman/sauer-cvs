@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTFLAGS=-O3 -fomit-frame-pointer
 CXXFLAGS= $(CXXOPTFLAGS) -Wall -fsigned-char -Ienet/include -Iinclude -Ishared -Iengine -Ifpsgame
 
-CLIENT_LIBS=-Lenet -Llib.mingw -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32 -lwinmm
+CLIENT_LIBS=-Lenet -Lmingw/lib -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32 -lwinmm
 CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
