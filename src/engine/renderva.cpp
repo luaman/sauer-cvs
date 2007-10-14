@@ -468,7 +468,7 @@ void rendermapmodels()
     if(!colormask)
     {
         glDepthMask(GL_TRUE);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, reflecting && refracting && renderpath!=R_FIXEDFUNCTION ? GL_FALSE : GL_TRUE);
     }
 }
 
