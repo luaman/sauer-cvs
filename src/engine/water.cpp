@@ -492,6 +492,8 @@ void renderwater()
 
     if(waterreflect || waterrefract) glMatrixMode(GL_TEXTURE);
 
+    GLfloat oldfogc[4];
+    glGetFloatv(GL_FOG_COLOR, oldfogc);
     vec ambient(max(hdr.skylight[0], hdr.ambient), max(hdr.skylight[1], hdr.ambient), max(hdr.skylight[2], hdr.ambient));
     entity *lastlight = (entity *)-1;
     int lastdepth = -1;
@@ -517,8 +519,14 @@ void renderwater()
         }
         else if(waterreflect)
         {
-            if(camera1->o.z < ref.height+offset) { if(blended) { glDepthMask(GL_TRUE); glDisable(GL_BLEND); blended = false; } }
+            GLfloat fogc[4] = { 0, 0, 0, 1 };
+            if(camera1->o.z < ref.height+offset) 
+            { 
+                if(blended) { glDepthMask(GL_TRUE); glDisable(GL_BLEND); blended = false; } 
+                loopk(3) fogc[k] = oldfogc[k];
+            }
             else if(!blended) { glDepthMask(GL_FALSE); glEnable(GL_BLEND); blended = true; }
+            setlocalparamfv("rgbafog", SHPARAM_PIXEL, 6, fogc);
         }
 
         bool begin = false;
