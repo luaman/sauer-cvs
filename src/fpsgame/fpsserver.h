@@ -1408,7 +1408,7 @@ struct fpsserver : igameserver
                 int mn = getint(p);
                 if(mastermask&MM_AUTOAPPROVE) break;
                 clientinfo *candidate = (clientinfo *)getinfo(mn);
-                if(!candidate || !candidate->wantsmaster || mn==sender || getclientip(mn)==getclientip(sender)) break;
+                if(!candidate || !candidate->wantsmaster || mn==sender) break;// || getclientip(mn)==getclientip(sender)) break;
                 setmaster(candidate, true, "", true);
                 break;
             }
@@ -1790,7 +1790,7 @@ struct fpsserver : igameserver
             else if(!approved && !(mastermask&MM_AUTOAPPROVE) && !ci->privilege)
             {
                 ci->wantsmaster = true;
-                s_sprintfd(msg)("%s wants master. Type \"/approvemaster %d\" to approve.", colorname(ci));
+                s_sprintfd(msg)("%s wants master. Type \"/approvemaster %d\" to approve.", colorname(ci), ci->clientnum);
                 sendservmsg(msg);
                 return;
             }
