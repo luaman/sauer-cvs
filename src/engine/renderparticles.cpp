@@ -903,7 +903,7 @@ void render_particles(int time)
                 glPushMatrix();
                 glTranslatef(o.x, o.y, o.z);
               
-                if(reflecting && refracting) setfogplane(0, refracting - o.z, true);
+                if(reflecting && refracting && renderpath!=R_FIXEDFUNCTION) setfogplane(0, refracting - o.z, true);
 
                 if(type==PT_FIREBALL)
                 {
@@ -1072,7 +1072,7 @@ void render_particles(int time)
             case PT_METERVS:
                 glEnable(GL_BLEND);
                 glEnable(GL_TEXTURE_2D);
-                if(reflecting && refracting) setfogplane(1, refracting);
+                if(reflecting && refracting && renderpath!=R_FIXEDFUNCTION) setfogplane(1, refracting);
                 foggedshader->set();
                 glFogfv(GL_FOG_COLOR, zerofog);
                 break;
@@ -1080,7 +1080,7 @@ void render_particles(int time)
             default:
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                 glFogfv(GL_FOG_COLOR, zerofog);
-                if(reflecting && refracting) setfogplane(1, refracting, true);
+                if(reflecting && refracting && renderpath!=R_FIXEDFUNCTION) setfogplane(1, refracting, true);
                 break;
         }
         
