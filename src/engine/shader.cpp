@@ -537,6 +537,7 @@ static bool findunusedtexcoordcomponent(char *str, int &texcoord, int &component
             str = strstr(str, "result.color"); \
             if(!str) break; \
             if(str[12]!='.' || (str[13]!='a' && str[13]!='w')) memcpy(str, tmpuse, strlen(tmpuse)); \
+            str += 12; \
         } \
         s_sprintfd(fogtcstr)("fragment.texcoord[%d].%c", fogtc, fogcomp==3 ? 'w' : 'x'+fogcomp); \
         str = strstr(psbuf.getbuf(), "fragment.fogcoord.x"); \
