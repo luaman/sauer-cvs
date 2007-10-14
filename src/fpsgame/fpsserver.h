@@ -146,7 +146,7 @@ struct fpsserver : igameserver
         string name, team, mapvote;
         int modevote;
         int privilege;
-        bool spectator, local, timesync;
+        bool spectator, local, timesync, wantsmaster;
         int gameoffset, lastevent;
         gamestate state;
         vector<gameevent> events;
@@ -174,7 +174,7 @@ struct fpsserver : igameserver
         {
             name[0] = team[0] = 0;
             privilege = PRIV_NONE;
-            spectator = local = false;
+            spectator = local = wantsmaster = false;
             position.setsizenodelete(0);
             messages.setsizenodelete(0);
             mapchange();
@@ -192,7 +192,11 @@ struct fpsserver : igameserver
         int time;
         uint ip;
     };
-   
+  
+    #define MM_MODE 0xF
+    #define MM_AUTOAPPROVE 0x1000
+    #define MM_DEFAULT (MM_MODE | MM_AUTOAPPROVE)
+
     enum { MM_OPEN = 0, MM_VETO, MM_LOCKED, MM_PRIVATE };
  
     bool notgotitems, notgotbases;        // true when map has changed and waiting for clients to send item
@@ -311,7 +315,7 @@ struct fpsserver : igameserver
     captureservmode capturemode;
     servmode *smode;
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(~0), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) 
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(MM_DEFAULT), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), smode(NULL) 
     {
         serverdesc[0] = '\0';
         masterpass[0] = '\0';
@@ -1399,6 +1403,16 @@ struct fpsserver : igameserver
                 break;
             }
 
+            case SV_APPROVEMASTER:
+            {
+                int mn = getint(p);
+                if(mastermask&MM_AUTOAPPROVE) break;
+                clientinfo *candidate = (clientinfo *)getinfo(mn);
+                if(!candidate || !candidate->wantsmaster || mn==sender || getclientip(mn)==getclientip(sender)) break;
+                setmaster(candidate, true, "", true);
+                break;
+            }
+
             default:
             {
                 int size = msgsizelookup(type);
@@ -1756,36 +1770,45 @@ struct fpsserver : igameserver
         }
     }
 
-    void setmaster(clientinfo *ci, bool val, const char *pass = "")
+    void setmaster(clientinfo *ci, bool val, const char *pass = "", bool approved = false)
     {
+        if(approved && (!val || !ci->wantsmaster)) return;
         const char *name = "";
-        if(val) 
+        if(val)
         {
             if(ci->privilege)
             {
                 if(!masterpass[0] || !pass[0]==(ci->privilege!=PRIV_ADMIN)) return;
             }
-            else if(ci->state.state==CS_SPECTATOR && (!masterpass[0] || !pass[0])) return;
+            else if(ci->state.state==CS_SPECTATOR && (!masterpass[0] || strcmp(masterpass, pass))) return;
             loopv(clients) if(ci!=clients[i] && clients[i]->privilege)
             {
                 if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->privilege = PRIV_NONE;
                 else return;
             }
-            if(masterpass[0] && pass[0] && !strcmp(masterpass, pass)) ci->privilege = PRIV_ADMIN;
+            if(masterpass[0] && !strcmp(masterpass, pass)) ci->privilege = PRIV_ADMIN;
+            else if(!approved && !(mastermask&MM_AUTOAPPROVE) && !ci->privilege)
+            {
+                ci->wantsmaster = true;
+                s_sprintfd(msg)("%s wants master. Type \"/approvemaster %d\" to approve.", colorname(ci));
+                sendservmsg(msg);
+                return;
+            }
             else ci->privilege = PRIV_MASTER;
             name = privname(ci->privilege);
-        }        
-        else 
+        }
+        else
         {
             if(!ci->privilege) return;
             name = privname(ci->privilege);
             ci->privilege = 0;
         }
         mastermode = MM_OPEN;
-        s_sprintfd(msg)("%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
+        s_sprintfd(msg)("%s %s %s", colorname(ci), val ? (approved ? "approved for" : "claimed") : "relinquished", name);
         sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;
+        loopv(clients) clients[i]->wantsmaster = false;
     }
 
     void localconnect(int n)

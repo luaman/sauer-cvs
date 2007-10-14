@@ -25,6 +25,7 @@ struct clientcom : iclientcom
         CCOMMAND(spectator, "is", (clientcom *self, int *val, char *who), self->togglespectator(*val, who));
         CCOMMAND(mastermode, "i", (clientcom *self, int *val), if(self->remote) self->addmsg(SV_MASTERMODE, "ri", *val));
         CCOMMAND(setmaster, "s", (clientcom *self, char *s), self->setmaster(s));
+        CCOMMAND(approvemaster, "s", (clientcom *self, char *s), self->approvemaster(s));
         CCOMMAND(setteam, "ss", (clientcom *self, char *who, char *team), self->setteam(who, team));
         CCOMMAND(getmap, "", (clientcom *self), self->getmap());
         CCOMMAND(sendmap, "", (clientcom *self), self->sendmap());
@@ -155,6 +156,13 @@ struct clientcom : iclientcom
         if(!arg[1] && isdigit(arg[0])) val = atoi(arg); 
         else passwd = arg;
         addmsg(SV_SETMASTER, "ris", val, passwd);
+    }
+
+    void approvemaster(const char *who)
+    {
+        if(!remote) return;
+        int i = parseplayer(who);
+        if(i>=0) addmsg(SV_APPROVEMASTER, "ri", i);
     }
 
     void togglespectator(int val, const char *who)
