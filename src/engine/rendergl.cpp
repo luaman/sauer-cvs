@@ -592,7 +592,11 @@ void drawreflection(float z, bool refract, bool clear)
     extern void renderreflectedgeom(float z, bool refract);
     renderreflectedgeom(z, refract);
 
-    if(refract) rendercaustics(z, refract);
+    if(refract) 
+    {
+        if(renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+        rendercaustics(z, refract);
+    }
 
     extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
@@ -610,6 +614,8 @@ void drawreflection(float z, bool refract, bool clear)
     if(refract) rendergrass();
     rendermaterials(z, refract);
     render_particles(0);
+
+    if(refract && renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     setfogplane();
 

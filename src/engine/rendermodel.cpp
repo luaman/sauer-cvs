@@ -364,7 +364,7 @@ void rendershadow(vec &dir, model *m, int anim, int varseed, const vec &o, vec c
         glEnd();
         glPopMatrix();
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, reflecting && refracting && renderpath!=R_FIXEDFUNCTION ? GL_FALSE : GL_TRUE);
     }
 
     if(renderpath!=R_FIXEDFUNCTION && refracting) setfogplane(0, max(0.1f, refracting-center.z));
@@ -581,7 +581,7 @@ void rendermodelquery(model *m, dynent *d, const vec &center, float radius)
     int br = int(radius*2)+1;
     drawbb(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br));
     endquery(d->query);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, reflecting && refracting && renderpath!=R_FIXEDFUNCTION ? GL_FALSE : GL_TRUE);
     glDepthMask(GL_TRUE);
 }   
 
