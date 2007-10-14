@@ -573,7 +573,7 @@ static void gendynlightvariant(Shader &s, char *sname, char *vs, char *ps, int r
         uint usedtc = findusedtexcoords(vs);
         GLint maxtc = 0;
         glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &maxtc);
-        int reservetc = row ? reserveshadowmaptc : reservedynlighttc;
+        int reservetc = row%2 ? reserveshadowmaptc : reservedynlighttc;
         if(maxtc-reservetc<0) return;
         loopi(maxtc-reservetc) if(!(usedtc&(1<<i))) 
         {

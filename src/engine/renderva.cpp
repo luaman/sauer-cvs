@@ -1239,7 +1239,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 if(reflecting && refracting && hasFBO && waterrefract && waterfade)
                 {
                     if(k) s->variant(min(s->variants[3].length()-1, visibledynlights.length()), 3)->set(&slot);
-                    s->variant(min(s->variants[2].length()-1, visibledynlights.length()), 2)->set(&slot);
+                    else s->variant(min(s->variants[2].length()-1, visibledynlights.length()), 2)->set(&slot);
                 }
                 else if(k) s->variant(min(s->variants[1].length()-1, visibledynlights.length()), 1)->set(&slot);
                 else if(visibledynlights.empty()) s->set(&slot);
