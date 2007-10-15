@@ -175,9 +175,9 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
         glBindTexture(target, tnum);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+        if(target!=GL_TEXTURE_1D) glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, 
             mipit ?
                 (trilinear ? 
                     (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) : 
@@ -233,11 +233,19 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels); 
             if(subtarget==target) glGenerateMipmap_(target);
         } 
+        else if(target==GL_TEXTURE_1D)
+        {
+            if(gluBuild1DMipmaps(subtarget, compressed, w, format, type, pixels))
+            {
+                if(compressed==component || gluBuild1DMipmaps(subtarget, component, w, format, type, pixels)) conoutf("could not build mipmaps");
+            }
+        }
         else if(gluBuild2DMipmaps(subtarget, compressed, w, h, format, type, pixels))
         {
             if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) conoutf("could not build mipmaps");
         }
     }
+    else if(target==GL_TEXTURE_1D) glTexImage1D(subtarget, 0, component, w, 0, format, type, pixels);
     else glTexImage2D(subtarget, 0, component, w, h, 0, format, type, pixels);
     if(scaled) delete[] scaled;
 }
