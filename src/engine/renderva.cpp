@@ -1351,14 +1351,11 @@ void setupTMUs(renderstate &cur, bool causticspass, bool fogpass)
                 cur.causticstmu = 0;
                 cur.diffusetmu = 2;
                 cur.lightmaptmu = 3;
-                if(fogpass && glowpass && maxtmus >= 6) { cur.glowtmu = 4; cur.fogtmu = 5; }
-                else if(fogpass && maxtmus>=5) cur.fogtmu = 4;
-                else if(glowpass && maxtmus>=5) cur.glowtmu = 4;
-            }
-            else if(maxtmus>=4 && glowpass)
-            {
-                cur.glowtmu = 2;
-                if(fogpass) cur.fogtmu = 3;
+                if(maxtmus>=5)
+                {
+                    if(fogpass) cur.fogtmu = 4;
+                    else if(glowpass) cur.glowtmu = 4;
+                }
             }
             else if(fogpass && !causticspass) cur.fogtmu = 2;
             else if(glowpass) cur.glowtmu = 2;
