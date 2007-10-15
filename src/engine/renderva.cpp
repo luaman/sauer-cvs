@@ -1661,7 +1661,7 @@ void rendergeom(bool causticspass, bool fogpass)
                 glActiveTexture_(GL_TEXTURE1_ARB);
                 glEnable(GL_TEXTURE_1D);
                 setuptexgen(1);
-                setuptmu(1, "P , C @ Ta");
+                setuptmu(1, "C , P @ Ta");
                 if(!fogtex) createfogtex();
                 glBindTexture(GL_TEXTURE_1D, fogtex);    
                 glColor3f(0, 0, 0);
