@@ -220,11 +220,16 @@ extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va, bool reparent = true);
 
 // renderva
+extern GLuint fogtex;
+
 extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov);
 extern void reflectvfcP(float z);
 extern void restorevfcP();
+extern void createfogtex();
+extern void rendergeom(bool causticspass = false, bool fogpass = false);
 extern void rendermapmodels();
-extern void rendergeom();
+extern void renderreflectedgeom(float z, bool refract, bool causticspass = false, bool fogpass = false);
+extern void renderreflectedmapmodels(float z, bool refract);
 extern void renderoutline();
 extern bool rendersky(bool explicitonly = false, float zreflect = 0);
 
@@ -259,7 +264,7 @@ extern void drawmaterial(int orient, int x, int y, int z, int csize, int rsize, 
 
 // water
 extern float reflecting, refracting;
-extern int reflectdist, vertwater, waterfog, lavafog;
+extern int reflectdist, vertwater, refractfog, waterrefract, waterreflect, waterfade, caustics, waterfog, lavafog;
 
 extern void invalidatereflections();
 extern void cleanreflections();

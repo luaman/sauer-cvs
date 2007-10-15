@@ -510,8 +510,6 @@ void setfogplane(float scale, float z, bool flush)
     }
 }
 
-extern void rendercaustics(float z, bool refract);
-
 void drawreflection(float z, bool refract, bool clear)
 {
     uchar wcol[3];
@@ -529,8 +527,8 @@ void drawreflection(float z, bool refract, bool clear)
     if(refract) refracting = z;
 
     float oldfogstart, oldfogend, oldfogcolor[4];
-
-    if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
+    if(renderpath==R_FIXEDFUNCTION && refract && refractfog) glDisable(GL_FOG);
+    else if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
     {
         glGetFloatv(GL_FOG_START, &oldfogstart);
         glGetFloatv(GL_FOG_END, &oldfogend);
@@ -589,16 +587,10 @@ void drawreflection(float z, bool refract, bool clear)
 
     //if(!refract && explicitsky) drawskylimits(true, z);
 
-    extern void renderreflectedgeom(float z, bool refract);
-    renderreflectedgeom(z, refract);
+    renderreflectedgeom(z, refract, caustics && refract, (renderpath!=R_FIXEDFUNCTION || refractfog) && refract);
 
-    if(refract) 
-    {
-        if(renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-        rendercaustics(z, refract);
-    }
+    if(refract && renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
-    extern void renderreflectedmapmodels(float z, bool refract);
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
 
@@ -628,7 +620,8 @@ void drawreflection(float z, bool refract, bool clear)
         glCullFace(GL_FRONT);
     }
 
-    if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
+    if(renderpath==R_FIXEDFUNCTION && refract && refractfog) glEnable(GL_FOG);
+    else if((renderpath!=R_FIXEDFUNCTION && refract) || camera1->o.z < z)
     {
         glFogf(GL_FOG_START, oldfogstart);
         glFogf(GL_FOG_END, oldfogend);
@@ -774,7 +767,13 @@ void gl_drawframe(int w, int h)
 
     if(limitsky()) drawskybox(farplane, true);
 
-    rendergeom();
+    bool causticspass = false;
+    if(caustics && fogmat==MAT_WATER)
+    {
+        cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
+        if(s.ext && s.ext->material==MAT_WATER) causticspass = true;
+    }
+    rendergeom(causticspass);
 
     queryreflections();
 
@@ -782,17 +781,10 @@ void gl_drawframe(int w, int h)
 
     rendermapmodels();
 
-    extern int waterrefract;
     if(!waterrefract) 
     {
         defaultshader->set();
         cl->rendergame();
-    }
-
-    if(fogmat==MAT_WATER)
-    {
-        cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
-        if(s.ext && s.ext->material==MAT_WATER) rendercaustics(0, false);
     }
 
     defaultshader->set();

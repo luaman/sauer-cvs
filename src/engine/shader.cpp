@@ -1124,8 +1124,14 @@ struct tmu
     { GL_MODULATE, { GL_TEXTURE, GL_PREVIOUS_ARB, GL_CONSTANT_ARB }, { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA }, 1 } \
 }
 
-tmu tmus[4] =
+#define MAXTMUS 8
+
+tmu tmus[MAXTMUS] =
 {
+    INVALIDTMU,
+    INVALIDTMU,
+    INVALIDTMU,
+    INVALIDTMU,
     INVALIDTMU,
     INVALIDTMU,
     INVALIDTMU,
@@ -1227,7 +1233,7 @@ void inittmus()
     if(hasTE && hasMT)
     {
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&maxtmus);
-        maxtmus = max(1, min(4, maxtmus));
+        maxtmus = max(1, min(MAXTMUS, maxtmus));
         loopi(maxtmus)
         {
             glActiveTexture_(GL_TEXTURE0_ARB+i);
@@ -1235,11 +1241,16 @@ void inittmus()
         }
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
-    if(renderpath==R_FIXEDFUNCTION && maxtmus<2)
+    if(renderpath==R_FIXEDFUNCTION)
     {
-        nolights = nowater = nomasks = 1;
-        extern int lightmodels;
-        lightmodels = 0;
+        if(maxtmus<4) caustics = 0;
+        if(maxtmus<2)
+        {
+            nolights = nowater = nomasks = 1;
+            extern int lightmodels;
+            lightmodels = 0;
+            refractfog = 0;
+        }
     }
 }
 

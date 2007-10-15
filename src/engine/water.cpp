@@ -3,6 +3,7 @@
 
 VARFP(waterreflect, 0, 1, 1, cleanreflections());
 VARFP(waterrefract, 0, 1, 1, cleanreflections());
+VARP(refractfog, 0, 1, 1);
 
 /* vertex water */
 VARP(watersubdiv, 0, 2, 3);
@@ -294,7 +295,7 @@ void setprojtexmatrix(Reflection &ref, bool init = true)
 
 void setuprefractTMUs()
 {
-    setuptmu(0, "K , T @ Ka");
+    if(!refractfog) setuptmu(0, "K , T @ Ka");
 
     glActiveTexture_(GL_TEXTURE1_ARB);
     glEnable(GL_TEXTURE_2D);
