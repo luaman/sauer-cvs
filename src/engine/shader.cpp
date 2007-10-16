@@ -819,8 +819,6 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(lookupshaderbyname(name)) return;
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        s_sprintfd(info)("shader %s", name);
-        show_out_of_renderloop_progress(0.0, info);
         if((renderpath!=R_GLSLANG && *type & SHADER_GLSLANG) ||
            (!hasCM && strstr(ps, *type & SHADER_GLSLANG ? "textureCube" : "CUBE")) ||
            (!hasTR && strstr(ps, *type & SHADER_GLSLANG ? "texture2DRect" : "RECT")))
@@ -832,6 +830,8 @@ void shader(int *type, char *name, char *vs, char *ps)
             curparams.setsize(0);
             return;
         }
+        s_sprintfd(info)("shader %s", name);
+        show_out_of_renderloop_progress(0.0, info);
     }
     Shader *s = newshader(*type, name, vs, ps);
     if(s && renderpath!=R_FIXEDFUNCTION)
