@@ -283,8 +283,8 @@ void setprojtexmatrix(Reflection &ref, bool init = true)
         glGetFloatv(GL_MODELVIEW_MATRIX, mm);
 
         glLoadIdentity();
-        glTranslatef(0.5f, 0.5f, 0.5f);
-        glScalef(0.5f, 0.5f, 0.5f);
+        glTranslatef(0.5f, 0.5f, 0);
+        glScalef(0.5f, 0.5f, 1);
         glMultMatrixf(pm);
         glMultMatrixf(mm);
 
@@ -440,7 +440,7 @@ void renderwaterff()
     glEnable(GL_CULL_FACE);
 }
 
-VARFP(waterfade, 0, 1, 1, { cleanreflections(); allchanged(); });
+VARFP(waterfade, 0, 1, 1, cleanreflections());
 
 void renderwater()
 {
@@ -517,6 +517,7 @@ void renderwater()
             glActiveTexture_(GL_TEXTURE3_ARB);
             glBindTexture(GL_TEXTURE_2D, camera1->o.z>=ref.height+offset ? ref.refracttex : ref.tex);
             glActiveTexture_(GL_TEXTURE0_ARB);
+            if(waterfade) setlocalparamf("waterheight", SHPARAM_VERTEX, 7, ref.height+offset+2, ref.height+offset+2, ref.height+offset+2);
         }
         else if(waterreflect)
         {
@@ -557,7 +558,7 @@ void renderwater()
                 lastdepth = m.depth;
             }
 
-            if(!vertwater || (waterrefract && waterfade))
+            if(!vertwater)
             {
                 if(!begin) { glBegin(GL_QUADS); begin = true; }
                 renderflatwater(m.o.x, m.o.y, m.o.z, m.rsize, m.csize);
@@ -798,7 +799,7 @@ void queryreflections()
 
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || nowater || (!waterreflect && !waterrefract)) return;
 
-    float offset = !vertwater || (renderpath!=R_FIXEDFUNCTION && waterrefract && waterfade) ? WATER_OFFSET : 0.1f;
+    float offset = vertwater ? 0.1f : WATER_OFFSET;
     int refs = 0;
     loopi(MAXREFLECTIONS)
     {

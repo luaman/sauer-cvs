@@ -81,20 +81,18 @@ void renderwaterfall(materialsurface &m, Texture *tex, float scale, float offset
         csize = C[dim]==2 ? m.rsize : m.csize,
         rsize = R[dim]==2 ? m.rsize : m.csize;
     float t = lastmillis;
-    bool oscillate = vertwater!=0;
     switch(mat)
     {
         case MAT_WATER: 
             t /= renderpath!=R_FIXEDFUNCTION ? 600.0f : 300.0f; 
             d /= 1000.0f;
-            if(oscillate && renderpath!=R_FIXEDFUNCTION && waterrefract && waterfade) oscillate = false;
             break;
         case MAT_LAVA: 
             t /= 2000.0f; 
             d /= 3000.0f;
             break;
     }
-    float wave = m.ends&2 ? (oscillate ? WATER_AMPLITUDE*sinf(t)-WATER_OFFSET : -WATER_OFFSET) : 0;
+    float wave = m.ends&2 ? (vertwater ? WATER_AMPLITUDE*sinf(t)-WATER_OFFSET : -WATER_OFFSET) : 0;
     loopi(4)
     {
         vec v(m.o.tovec());
@@ -283,7 +281,7 @@ int optimizematsurfs(materialsurface *matbuf, int matsurfs)
                cur->orient == start->orient &&
                cur->o[dim] == start->o[dim])
             ++cur;
-         if(!isliquid(start->material) || start->orient != O_TOP || !vertwater || (renderpath==R_FIXEDFUNCTION && waterrefract && waterfade))
+         if(!isliquid(start->material) || start->orient != O_TOP || !vertwater)
          {
             if(start!=matbuf) memmove(matbuf, start, (cur-start)*sizeof(materialsurface));
             matbuf += mergemats(matbuf, cur-start);
