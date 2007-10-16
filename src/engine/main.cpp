@@ -590,18 +590,21 @@ int main(int argc, char **argv)
     SDL_ShowCursor(0);
 
     log("gl");
-    persistidents = false;
-    if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
     gl_init(scr_w, scr_h, hasbpp ? colorbits : 0, config&1 ? depthbits : 0, config&4 ? fsaa : 0);
     notexture = textureload("data/notexture.png");
     if(!notexture) fatal("could not find core textures");
 
     log("console");
+    persistidents = false;
+    if(!execfile("data/stdlib.cfg")) fatal("cannot find data files (you are running from the wrong folder, try .bat file in the main folder)");   // this is the first file we load.
     if(!execfile("data/font.cfg")) fatal("cannot find font definitions");
     if(!setfont("default")) fatal("no default font specified");
 
     computescreen("initializing...");
     inbetweenframes = true;
+
+    log("gl: effects");
+    loadshaders();
     particleinit();
 
     log("world");

@@ -13,6 +13,24 @@ static vector<ShaderParam> curparams;
 static ShaderParamState vertexparamstate[RESERVEDSHADERPARAMS + MAXSHADERPARAMS], pixelparamstate[RESERVEDSHADERPARAMS + MAXSHADERPARAMS];
 static int dirtyparams = 0;
 
+void loadshaders()
+{
+    exec("data/stdshader.cfg");
+    defaultshader = lookupshaderbyname("default");
+    notextureshader = lookupshaderbyname("notexture");
+    nocolorshader = lookupshaderbyname("nocolor");
+    foggedshader = lookupshaderbyname("fogged");
+    foggednotextureshader = lookupshaderbyname("foggednotexture");
+
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    }
+
+    defaultshader->set();
+}
+
 Shader *lookupshaderbyname(const char *name) 
 { 
     Shader *s = shaders.access(name);
@@ -784,7 +802,6 @@ static void genwatervariant(Shader &s, char *sname, char *vs, char *ps, int row 
 
     vector<char> psw;
     psw.put(ps, pspragma-ps);
-
     const char *fogtoalpha = s.type & SHADER_GLSLANG ? "gl_FragColor.a = gl_FogFragCoord*0.25 + 0.5;\n" : "MAD result.color.a, fragment.fogcoord.x, 0.25, 0.5;\n";
     psw.put(fogtoalpha, strlen(fogtoalpha));
     psw.put(pspragma, strlen(pspragma)+1);
@@ -802,6 +819,8 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(lookupshaderbyname(name)) return;
     if(renderpath!=R_FIXEDFUNCTION)
     {
+        s_sprintfd(info)("shader %s", name);
+        show_out_of_renderloop_progress(0.0, info);
         if((renderpath!=R_GLSLANG && *type & SHADER_GLSLANG) ||
            (!hasCM && strstr(ps, *type & SHADER_GLSLANG ? "textureCube" : "CUBE")) ||
            (!hasTR && strstr(ps, *type & SHADER_GLSLANG ? "texture2DRect" : "RECT")))
