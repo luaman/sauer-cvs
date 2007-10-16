@@ -440,7 +440,7 @@ void renderwaterff()
     glEnable(GL_CULL_FACE);
 }
 
-VARFP(waterfade, 0, 1, 1, cleanreflections());
+VARFP(waterfade, 0, 1, 1, { cleanreflections(); allchanged(); });
 
 void renderwater()
 {
@@ -557,7 +557,7 @@ void renderwater()
                 lastdepth = m.depth;
             }
 
-            if(!vertwater)
+            if(!vertwater || (waterrefract && waterfade))
             {
                 if(!begin) { glBegin(GL_QUADS); begin = true; }
                 renderflatwater(m.o.x, m.o.y, m.o.z, m.rsize, m.csize);
@@ -798,6 +798,7 @@ void queryreflections()
 
     if((editmode && showmat) || !hasOQ || !oqfrags || !oqwater || nowater || (!waterreflect && !waterrefract)) return;
 
+    float offset = !vertwater || (renderpath!=R_FIXEDFUNCTION && waterrefract && waterfade) ? WATER_OFFSET : 0.1f;
     int refs = 0;
     loopi(MAXREFLECTIONS)
     {
@@ -823,7 +824,7 @@ void queryreflections()
         loopvj(ref.matsurfs)
         {
             materialsurface &m = *ref.matsurfs[j];
-            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, renderpath==R_FIXEDFUNCTION || vertwater ? 0.1f : WATER_OFFSET);
+            drawmaterial(m.orient, m.o.x, m.o.y, m.o.z, m.csize, m.rsize, offset);
         }
         glEnd();
         endquery(ref.query);
