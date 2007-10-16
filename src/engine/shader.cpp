@@ -784,7 +784,8 @@ static void genwatervariant(Shader &s, char *sname, char *vs, char *ps, int row 
 
     vector<char> psw;
     psw.put(ps, pspragma-ps);
-    const char *fogtoalpha = s.type & SHADER_GLSLANG ? "gl_FragColor.a = gl_FogFragCoord;\n" : "MAD result.color.a, fragment.fogcoord.x, 0.25, 0.5;\n";
+
+    const char *fogtoalpha = s.type & SHADER_GLSLANG ? "gl_FragColor.a = gl_FogFragCoord*0.25 + 0.5;\n" : "MAD result.color.a, fragment.fogcoord.x, 0.25, 0.5;\n";
     psw.put(fogtoalpha, strlen(fogtoalpha));
     psw.put(pspragma, strlen(pspragma)+1);
 
