@@ -341,11 +341,11 @@ void playsound(int n, const vec *loc, extentity *ent)
 
     if(!slot.s->sound)
     {
-        s_sprintfd(buf)("packages/sounds/%s", slot.s->name);
-
-        loopi(2)
+        const char *exts[] = { "", ".wav", ".ogg" };
+        string buf;
+        loopi(sizeof(exts)/sizeof(exts[0]))
         {
-            if(i) s_strcat(buf, ".wav");
+            s_sprintf(buf)("packages/sounds/%s%s", slot.s->name, exts[i]);
             const char *file = findfile(path(buf), "rb");
             #ifdef USE_MIXER
                 slot.s->sound = Mix_LoadWAV(file);
