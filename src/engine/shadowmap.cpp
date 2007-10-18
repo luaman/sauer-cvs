@@ -438,8 +438,8 @@ void rendershadowmap()
     vec dirx, diry;
     vecfromyawpitch(camera1->yaw, 0, 0, 1, dirx);
     vecfromyawpitch(camera1->yaw, 0, 1, 0, diry);
-    shadowoffset.x = -fmod(dirx.dot(camera1->o), 2.0f*shadowmapradius/smsize);
-    shadowoffset.y = -fmod(diry.dot(camera1->o), 2.0f*shadowmapradius/smsize);
+    shadowoffset.x = -fmod(dirx.dot(camera1->o) - skewdir.x*camera1->o.z, 2.0f*shadowmapradius/smsize);
+    shadowoffset.y = -fmod(diry.dot(camera1->o) - skewdir.y*camera1->o.z, 2.0f*shadowmapradius/smsize);
 
     GLfloat skew[] =
     {
