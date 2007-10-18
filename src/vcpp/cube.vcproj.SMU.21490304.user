@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="C:\w\sauerbraten"
-				CommandArguments="-t -w1024 -h768 -gfps -lhjhdas"
+				CommandArguments="-t -w1280 -h1024 -gfps -lhjhdas"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
