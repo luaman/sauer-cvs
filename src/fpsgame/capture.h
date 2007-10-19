@@ -308,7 +308,7 @@ struct captureclient : capturestate
             glPushMatrix();
             glLoadIdentity();
             glOrtho(0, w*900/h, 900, 0, -1, 1);
-            int wait = max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastpain)/1000);
+            int gamemode = cl.gamemode, wait = max(0, (m_noitemsrail ? RESPAWNSECS/2 : RESPAWNSECS)-(cl.lastmillis-cl.player1->lastpain)/1000);
             draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
             glPopMatrix();
         }
@@ -520,7 +520,7 @@ struct captureservmode : capturestate, servmode
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if(b.occupy(b.enemy, OCCUPYPOINTS*b.enemies*t)==1) addscore(b.owner, CAPTURESCORE);
+                if(b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*b.enemies*t)==1) addscore(b.owner, CAPTURESCORE);
                 sendbaseinfo(i);
             }
             else if(b.owner[0])

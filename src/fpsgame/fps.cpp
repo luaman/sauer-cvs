@@ -223,11 +223,14 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         {
             player1->attacking = false;
-            if(m_capture && lastmillis-player1->lastpain<cpc.RESPAWNSECS*1000)
+            if(m_capture)
             {
-                int wait = cpc.RESPAWNSECS-(lastmillis-player1->lastpain)/1000;
-                conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
-                return;
+                int wait = (m_noitemsrail ? cpc.RESPAWNSECS/2 : cpc.RESPAWNSECS)-(lastmillis-player1->lastpain)/1000;
+                if(wait>0)
+                {
+                    conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
+                    return;
+                }
             }
             if(m_arena) { conoutf("\f2waiting for new round to start..."); return; }
             if(m_dmsp) { nextmode = gamemode; cc.changemap(clientmap); return; }    // if we die in SP we try the same map again
