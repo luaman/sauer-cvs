@@ -875,6 +875,14 @@
 				<File
 					RelativePath="..\engine\bih.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\bih.h"
@@ -1076,6 +1084,14 @@
 				<File
 					RelativePath="..\engine\shadowmap.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							PrecompiledHeaderThrough="pch.h"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\engine\texture.cpp"
