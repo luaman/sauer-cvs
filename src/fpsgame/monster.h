@@ -164,8 +164,15 @@ struct monsterset
                         }
                         else 
                         {
+                            bool melee = false, longrange = false;
+                            switch(monstertypes[mtype].gun)
+                            {
+                                case GUN_BITE:
+                                case GUN_FIST: melee = true; break;
+                                case GUN_RIFLE: longrange = true; break;
+                            }
                             // the closer the monster is the more likely he wants to shoot, 
-                            if(!rnd(monstertypes[mtype].gun==GUN_RIFLE?(int)dist/12+1:min((int)dist/12+1,6)) && enemy->state==CS_ALIVE)        // get ready to fire
+                            if((!melee || dist<20) && !rnd(longrange ? (int)dist/12+1 : min((int)dist/12+1,6)) && enemy->state==CS_ALIVE)      // get ready to fire
                             { 
                                 attacktarget = target;
                                 transition(M_AIMING, 0, monstertypes[mtype].lag, 10);
