@@ -550,16 +550,17 @@ struct fpsserver : igameserver
     void setupdemorecord()
     {
         if(haslocalclients() || !m_mp(gamemode) || gamemode==1) return;
+
 #ifdef WIN32
-        demorecord = gzopen("demorecord", "wb9");
-        if(!demorecord) return;
+        gzFile f = gzopen("demorecord", "wb9");
+        if(!f) return;
 #else
         demotmp = tmpfile();
         if(!demotmp) return;
         setvbuf(demotmp, NULL, _IONBF, 0);
 
-        demorecord = gzdopen(_dup(_fileno(demotmp)), "wb9");
-        if(!demorecord)
+        gzFile f = gzdopen(_dup(_fileno(demotmp)), "wb9");
+        if(!f)
         {
             fclose(demotmp);
             demotmp = NULL;
@@ -568,6 +569,8 @@ struct fpsserver : igameserver
 #endif
 
         sendservmsg("recording demo");
+
+        demorecord = f;
 
         demoheader hdr;
         memcpy(hdr.magic, DEMO_MAGIC, sizeof(hdr.magic));
