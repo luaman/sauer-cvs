@@ -413,7 +413,7 @@ void cleanupgrass()
     glEnable(GL_CULL_FACE);
 }
 
-VARP(grass, 0, 0, 1);
+VARP(grass, 0, 1, 1);
 
 void rendergrass()
 {
