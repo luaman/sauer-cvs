@@ -46,10 +46,10 @@ Section "Start Menu Shortcuts"
   
   SetOutPath "$INSTDIR"
   
-  CreateShortCut "$INSTDIR\Sauerbraten.lnk"                "$INSTDIR\bin\sauerbraten.exe" "-r" "$INSTDIR\bin\sauerbraten.exe" 0
-  CreateShortCut "$SMPROGRAMS\Sauerbraten\Sauerbraten.lnk" "$INSTDIR\bin\sauerbraten.exe" "-r" "$INSTDIR\bin\sauerbraten.exe" 0
-  CreateShortCut "$SMPROGRAMS\Sauerbraten\Uninstall.lnk"   "$INSTDIR\uninstall.exe"       ""             "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\Sauerbraten\README.lnk"      "$INSTDIR\README.html"         ""             "$INSTDIR\README.html" 0
+  CreateShortCut "$INSTDIR\Sauerbraten.lnk"                "$INSTDIR\sauerbraten.bat" "" "$INSTDIR\sauerbraten.bat" 0
+  CreateShortCut "$SMPROGRAMS\Sauerbraten\Sauerbraten.lnk" "$INSTDIR\sauerbraten.bat" "" "$INSTDIR\sauerbraten.bat" 0
+  CreateShortCut "$SMPROGRAMS\Sauerbraten\Uninstall.lnk"   "$INSTDIR\uninstall.exe"   "" "$INSTDIR\uninstall.exe" 0
+  CreateShortCut "$SMPROGRAMS\Sauerbraten\README.lnk"      "$INSTDIR\README.html"     "" "$INSTDIR\README.html" 0
   
 SectionEnd
 
