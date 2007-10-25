@@ -104,7 +104,7 @@ void createshadowmap()
 void setupblurkernel();
 
 VARFP(blurshadowmap, 0, 2, 3, setupblurkernel());
-VARFP(blursmsigma, 50, 100, 200, setupblurkernel());
+VARFP(blursmsigma, 1, 100, 200, setupblurkernel());
 VAR(blurtile, 0, 1, 1);
 
 float blurweights[4] = { 0, 0, 0, 0 }, bluroffsets[4] = { 0, 0, 0, 0 };

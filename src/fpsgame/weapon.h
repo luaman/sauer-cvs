@@ -84,6 +84,7 @@ struct weaponstate
         int bouncetype;
         vec offset;
         int offsetmillis;
+        int id;
     };
 
     vector<bouncent *> bouncers;
@@ -102,6 +103,7 @@ struct weaponstate
         bnc.local = local;
         bnc.owner = owner;
         bnc.bouncetype = type;
+        bnc.id = cl.lastmillis;
 
         vec dir(to);
         dir.sub(from).normalize();
@@ -140,7 +142,7 @@ struct weaponstate
                         hits.setsizenodelete(0);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
                         if(bnc.local)
-                            cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, GUN_GL,
+                            cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, GUN_GL, bnc.id-cl.maptime,
                                     hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                     }
                     delete &bnc;
@@ -159,7 +161,7 @@ struct weaponstate
         loopv(bouncers) if(bouncers[i]->owner==owner) { delete bouncers[i]; bouncers.remove(i--); }
     }
 
-    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; };
+    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; int id; };
     vector<projectile> projs;
 
     void projreset() { projs.setsize(0); bouncers.deletecontentsp(); bouncers.setsize(0); }
@@ -176,6 +178,7 @@ struct weaponstate
         p.owner = owner;
         p.gun = gun;
         p.offsetmillis = OFFSETMILLIS;
+        p.id = cl.lastmillis;
     }
    
     void removeprojectiles(fpsent *owner) 
@@ -380,7 +383,7 @@ struct weaponstate
             if(exploded) 
             {
                 if(p.local)
-                    cl.cc.addmsg(SV_EXPLODE, "ri2iv", cl.lastmillis-cl.maptime, p.gun,
+                    cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, p.gun, p.id-cl.maptime,
                             hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                 projs.remove(i--);
             }

@@ -22,7 +22,7 @@ struct fpsserver : igameserver
     struct shotevent
     {
         int type;
-        int millis;
+        int millis, id;
         int gun;
         float from[3], to[3];
     };
@@ -30,7 +30,7 @@ struct fpsserver : igameserver
     struct explodeevent
     {
         int type;
-        int millis;
+        int millis, id;
         int gun;
     };
 
@@ -68,13 +68,40 @@ struct fpsserver : igameserver
         pickupevent pickup;
     };
 
+    template <int N>
+    struct projectilestate
+    {
+        int projs[N];
+        int numprojs;
+
+        projectilestate() : numprojs(0) {}
+
+        void reset() { numprojs = 0; }
+
+        void add(int val)
+        {
+            if(numprojs>=N) numprojs = 0;
+            projs[numprojs++] = val;
+        }
+
+        bool remove(int val)
+        {
+            loopi(numprojs) if(projs[i]==val)
+            {
+                projs[i] = projs[--numprojs];
+                return true;
+            }
+            return false;
+        }
+    };
+
     struct gamestate : fpsstate
     {
         vec o;
         int state;
         int lastdeath, lastspawn, lifesequence;
         int lastshot;
-        int rockets, grenades;
+        projectilestate<8> rockets, grenades;
         int frags;
         int lasttimeplayed, timeplayed;
         float effectiveness;
@@ -96,7 +123,8 @@ struct fpsserver : igameserver
             if(state!=CS_SPECTATOR) state = CS_DEAD;
             lifesequence = 0;
             maxhealth = 100;
-            rockets = grenades = 0;
+            rockets.reset();
+            grenades.reset();
 
             timeplayed = 0;
             effectiveness = 0;
@@ -1055,7 +1083,8 @@ struct fpsserver : igameserver
                 if(val)
                 {
                     ci->events.setsizenodelete(0);
-                    ci->state.rockets = ci->state.grenades = 0;
+                    ci->state.rockets.reset();
+                    ci->state.grenades.reset();
                 }
                 QUEUE_MSG;
                 break;
@@ -1100,13 +1129,14 @@ struct fpsserver : igameserver
                 shot.type = GE_SHOT;
                 #define seteventmillis(event) \
                 { \
+                    event.id = getint(p); \
                     if(!ci->timesync || (ci->events.length()==1 && ci->state.waitexpired(gamemillis))) \
                     { \
                         ci->timesync = true; \
-                        ci->gameoffset = gamemillis - getint(p); \
+                        ci->gameoffset = gamemillis - event.id; \
                         event.millis = gamemillis; \
                     } \
-                    else event.millis = ci->gameoffset + getint(p); \
+                    else event.millis = ci->gameoffset + event.id; \
                 }
                 seteventmillis(shot.shot);
                 shot.shot.gun = getint(p);
@@ -1131,6 +1161,7 @@ struct fpsserver : igameserver
                 exp.type = GE_EXPLODE;
                 seteventmillis(exp.explode);
                 exp.explode.gun = getint(p);
+                exp.explode.id = getint(p);
                 int hits = getint(p);
                 loopk(hits)
                 {
@@ -1594,13 +1625,11 @@ struct fpsserver : igameserver
         switch(e.gun)
         {
             case GUN_RL:
-                if(gs.rockets<1) return;
-                gs.rockets--;
+                if(!gs.rockets.remove(e.id)) return;
                 break;
 
             case GUN_GL:
-                if(gs.grenades<1) return;
-                gs.grenades--;
+                if(!gs.grenades.remove(e.id)) return;
                 break;
 
             default:
@@ -1642,8 +1671,8 @@ struct fpsserver : igameserver
                 ci->clientnum);
         switch(e.gun)
         {
-            case GUN_RL: gs.rockets = min(gs.rockets+1, 8); break;
-            case GUN_GL: gs.grenades = min(gs.grenades+1, 8); break;
+            case GUN_RL: gs.rockets.add(e.id); break;
+            case GUN_GL: gs.grenades.add(e.id); break;
             default:
             {
                 int totalrays = 0, maxrays = e.gun==GUN_SG ? SGRAYS : 1;
