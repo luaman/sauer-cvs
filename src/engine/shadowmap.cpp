@@ -262,7 +262,7 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
     smx2 = max(smx2, min(x2, 1));
     smy2 = max(smy2, min(y2, 1));
 
-    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
+    float blurerror = 2.0f*float(2*blurshadowmap + 2) / shadowmaptexsize;
     int tx1 = max(0, min(BLURTILES - 1, int((x1-blurerror + 1)/2 * BLURTILES))),
         ty1 = max(0, min(BLURTILES - 1, int((y1-blurerror + 1)/2 * BLURTILES))),
         tx2 = max(0, min(BLURTILES - 1, int((x2+blurerror + 1)/2 * BLURTILES))),
@@ -290,7 +290,7 @@ bool isshadowmapreceiver(vtxarray *va)
     center.add(va->shadowmapmax.tovec()).mul(0.5f);
     calcshadowmapbb(center, xyrad, zrad, x1, y1, x2, y2);
 
-    float blurerror = 2.0f*float(blurshadowmap + 2) / shadowmaptexsize;
+    float blurerror = 2.0f*float(2*blurshadowmap + 2) / shadowmaptexsize;
     if(x2+blurerror < smx1 || y2+blurerror < smy1 || x1-blurerror > smx2 || y1-blurerror > smy2) return false;
 
     if(!blurtile) return true;
@@ -495,10 +495,10 @@ void rendershadowmap()
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
 
-        int blurx = smx - blurshadowmap,
-            blury = smy - blurshadowmap,
-            blurw = smw + 2*blurshadowmap,
-            blurh = smh + 2*blurshadowmap;
+        int blurx = smx - 2*blurshadowmap,
+            blury = smy - 2*blurshadowmap,
+            blurw = smw + 2*2*blurshadowmap,
+            blurh = smh + 2*2*blurshadowmap;
         if(blurx < 2) { blurw -= 2 - blurx; blurx = 2; }
         if(blury < 2) { blurh -= 2 - blury; blury = 2; }
         if(blurx + blurw > smsize - 2) blurw = (smsize - 2) - blurx; 
