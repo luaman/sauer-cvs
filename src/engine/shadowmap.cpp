@@ -103,7 +103,7 @@ void createshadowmap()
 
 void setupblurkernel();
 
-VARFP(blurshadowmap, 0, 2, 3, setupblurkernel());
+VARFP(blurshadowmap, 0, 1, 3, setupblurkernel());
 VARFP(blursmsigma, 1, 100, 200, setupblurkernel());
 VAR(blurtile, 0, 1, 1);
 
