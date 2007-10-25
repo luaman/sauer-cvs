@@ -43,7 +43,6 @@
 			<Add library="SDL"/>
 			<Add library="SDL_image"/>
 			<Add library="SDL_mixer"/>
-			<Add library="fmod"/>
 			<Add library="z"/>
 			<Add library="opengl32"/>
 			<Add library="glu32"/>
