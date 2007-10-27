@@ -1299,7 +1299,7 @@ dir(right,    strafe, -1, k_right, k_left);
 ICOMMAND(jump,   "D", (int *down), { if(cl->canjump()) player->jumpnext = *down!=0; });
 ICOMMAND(attack, "D", (int *down), { cl->doattack(*down!=0); });
 
-VARP(sensitivity, 0, 7, 1000);
+VARP(sensitivity, 0, 3, 1000);
 VARP(sensitivityscale, 1, 1, 100);
 VARP(invmouse, 0, 0, 1);
 
