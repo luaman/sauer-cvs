@@ -740,10 +740,10 @@ void brushvert(int *x, int *y, int *v)
     *y += MAXBRUSH2 - brushy + 1;
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
     brush[*x][*y] = clamp(*v, 0, 8);
-    brushmaxx = max(brushmaxx, *x+1);
-    brushmaxy = max(brushmaxy, *y+1);
-    brushminx = min(brushminx, *x-1);
-    brushminy = min(brushminy, *y-1);
+    brushmaxx = min(MAXBRUSH-1, max(brushmaxx, *x+1));
+    brushmaxy = min(MAXBRUSH-1, max(brushmaxy, *y+1));
+    brushminx = max(0,          min(brushminx, *x-1));
+    brushminy = max(0,          min(brushminy, *y-1));
 }
 
 #define HMAPTEXMAX  64
@@ -798,46 +798,15 @@ namespace hmap
     int    mapz[MAXBRUSHC][MAXBRUSHC];    
     int    map [MAXBRUSH][MAXBRUSH];
     
-    
-    void printmap()
-    {
-        printf("minx %d y %d maxx %d y %d\n", brushminx, brushminy, brushmaxx, brushmaxy);
-        printf("flags %d z %d map %d cmap %d\n", sizeof flags, sizeof mapz, sizeof map, sizeof cmap);
-        printf("     ");        
-        for(int j=20; j<50; j++)
-                printf("%3d ", j);
-        printf("\n");
-        for(int i=20; i<50; i++)
-        {
-            printf("%3d) ", i);
-            for(int j=20; j<50; j++)
-                printf("%3d ", map[j][i]);
-            printf("\n");
-        }
-        printf("     ");
-        for(int j=20; j<50; j++)
-                printf("%3d ", j);
-        printf("\n");
-        for(int i=20; i<50; i++)
-        {
-            printf("%3d) ", i);
-            for(int j=20; j<50; j++)
-                printf("%3x ", flags[j][i]);
-            printf("\n");
-        }
-    }
-
-    COMMAND(printmap, "");
-
     selinfo changes;    
-    int d, dc, dr, dcr, biasup, br, init;
+    int d, dc, dr, dcr, biasup, br, painting;
     int gx, gy, gz, mx, my, mz, nx, ny, nz, hws;
     uint fs;
     
     cube *getcube(ivec t, int f) 
     {
         t[d] += dcr*f*gridsize;    
-        printf("t[d] = %d\n", t[d]);
+        if(t[d] > nz || t[d] < mz) return NULL;
         cube *c = &lookupcube(t.x, t.y, t.z, -gridsize);
         if(!isheightmap(sel.orient, d, true, c)) return NULL;        
         if(lusize > gridsize)
@@ -865,26 +834,15 @@ namespace hmap
         setcubevector(c, d, x, y, z, a);
     }
 
-    void printtab(int tab) 
-    {
-        loopi(tab)
-            printf(" ");       
-    }
-
-    #define DPRINT fflush(stdout); printtab(tab); printf 
-
     void addpoint(int x, int y, int z, int v)
     {
         if(!(flags[x][y] & MAPPED))
           map[x][y] = v + (z*8) - (dr*brush[x][y]);
-
       flags[x][y] |= MAPPED;
     }
-
-    // get cubes and initialize
-    void hselect(int x, int y, int z, int tab)
-    {
-        DPRINT("%d %d %d [%x]\n", x, y, z, flags[x][y]);
+    
+    void paint(int x, int y, int z) // initialize cubes, apply brush
+    {        
         if((NOTHMAP & flags[x][y]) || (PAINTED & flags[x][y])) return;
         ivec t(d, x+gx, y+gy, dc ? z : hws-z);
         t.shl(gridpower);
@@ -898,20 +856,18 @@ namespace hmap
             c[1] = getcube(t, 1);
             if(!c[1] || isempty(*c[1])) {
                 c[0] = c[1], c[1] = c[2], c[2] = NULL;
-                DPRINT("up\n");
             }else
                 z++, t[d]+= dc ? gridsize : -gridsize;
         }
         else // drop down
         { 
-            DPRINT("down\n");
             z--; 
             t[d]-= dc ? gridsize : -gridsize; 
             c[0] = c[1];
             c[1] = getcube(t, 0);            
-        } 
+        }
         
-        if(!c[1] || isempty(*c[1])) { printf("NOTHMAP 1st\n"); flags[x][y] |= NOTHMAP; return; }
+        if(!c[1] || isempty(*c[1])) { flags[x][y] |= NOTHMAP; return; }
 
         flags[x][y] |= PAINTED;
         mapz [x][y]  = z;
@@ -921,36 +877,32 @@ namespace hmap
         c[3] = getcube(t, -2);
         c[2] = !c[2] || isempty(*c[2]) ? NULL : c[2];
         c[3] = !c[3] || isempty(*c[3]) ? NULL : c[3];
-
-        DPRINT("%p %p %p %p \n", c[0], c[1], c[2], c[3]);
         
         uint face = getface(c[1], d);          
-        if(face == 0x08080808 && (!c[0] || !isempty(*c[0]))) { printf("NOTHMAP 2nd\n"); flags[x][y] |= NOTHMAP; return; }              
+        if(face == 0x08080808 && (!c[0] || !isempty(*c[0]))) { flags[x][y] |= NOTHMAP; return; }              
         if(c[1]->faces[R[d]] == F_SOLID)   // was single
             face += 0x08080808;      
         else                               // was pair
             face += c[2] ? getface(c[2], d) : 0x08080808;
-        face += 0x08080808;                // c[3]
-        DPRINT("[%x]\n", face);
+        face += 0x08080808;                // c[3]        
         uchar *f = (uchar*)&face;
         addpoint(x,   y,   z, f[0]);
         addpoint(x+1, y,   z, f[1]);
         addpoint(x,   y+1, z, f[2]);
         addpoint(x+1, y+1, z, f[3]);
-        
-        // continue to adjacent cubes
-        if(init) 
+                
+        if(painting) // continue to adjacent cubes
         {        
-            if(x>mx) hselect(x-1, y, z, tab+1);
-            if(x<nx) hselect(x+1, y, z, tab+1);
-            if(y>my) hselect(x, y-1, z, tab+1);
-            if(y<ny) hselect(x, y+1, z, tab+1);
+            if(x>mx) paint(x-1, y, z);
+            if(x<nx) paint(x+1, y, z);
+            if(y>my) paint(x, y-1, z);
+            if(y<ny) paint(x, y+1, z);
         }
     }       
 
-   void rippleandset(int x, int y, int z, int ripple, int tab)
+   void rippleandset(int x, int y, int z, int ripple)
     {
-        if(ripple) hselect(x, y, z, tab);
+        if(ripple) paint(x, y, z);
         if((NOTHMAP & flags[x][y]) || !(PAINTED & flags[x][y])) return;
 
         bool changed = false;
@@ -1011,17 +963,16 @@ namespace hmap
         }
 
         if(!changed) return;
-        DPRINT("changed %d %d %d\n", x, y, z);
-        if(x>mx) rippleandset(x-1, y, mapz[x][y], 1, tab+1);
-        if(x<nx) rippleandset(x+1, y, mapz[x][y], 1, tab+1);
-        if(y>my) rippleandset(x, y-1, mapz[x][y], 1, tab+1);
-        if(y<ny) rippleandset(x, y+1, mapz[x][y], 1, tab+1);    
+        if(x>mx) rippleandset(x-1, y, mapz[x][y], 1);
+        if(x<nx) rippleandset(x+1, y, mapz[x][y], 1);
+        if(y>my) rippleandset(x, y-1, mapz[x][y], 1);
+        if(y<ny) rippleandset(x, y+1, mapz[x][y], 1);    
                
 #define DIAGONAL_RIPPLE(a,b,exp) if(exp) { \
             if(flags[x a][ y] & PAINTED) \
-                rippleandset(x a, y b, mapz[x a][y], 1, tab+1); \
+                rippleandset(x a, y b, mapz[x a][y], 1); \
             else if(flags[x][y b] & PAINTED) \
-                rippleandset(x a, y b, mapz[x][y b], 1, tab+1); \
+                rippleandset(x a, y b, mapz[x][y b], 1); \
         }
         
         DIAGONAL_RIPPLE(-1, -1, (x>mx && y>my)); // do diagonals because adjacents
@@ -1032,14 +983,15 @@ namespace hmap
 
    void ripple()
    {   
-        int mxx = max(brushminx, -gx);
-        int myy = max(brushminy, -gy);        
-        int nxx = min(brushmaxx, (hdr.worldsize>>gridpower)-gx) - 1;
-        int nyy = min(brushmaxy, (hdr.worldsize>>gridpower)-gy) - 1;
+       int mxx = mx, myy = my, nxx = nx, nyy = ny;
+        mx = max(0, -gx);                   // increase allowed range
+        my = max(0, -gy);        
+        nx = min(MAXBRUSH-1, hws-gx) - 1;
+        ny = min(MAXBRUSH-1, hws-gy) - 1;            
         for(int x=mxx; x<=nxx; x++) for(int y=myy; y<=nyy; y++)
         {
             if((NOTHMAP & flags[x][y]) || !(PAINTED & flags[x][y])) continue;
-            rippleandset(x, y, gz, 0, 0);
+            rippleandset(x, y, gz, 0);
         }       
    }
 
@@ -1059,53 +1011,34 @@ namespace hmap
         gy = (cur[C[d]] >> gridpower) + cy - MAXBRUSH2;
         gz = (cur[D[d]] >> gridpower);
         fs = dc ? 4 : 0;        
+        nz = hdr.worldsize-gridsize;
         mz = 0;
-        nz = hws - 1;
                     
-       printf("----------------\n%x %d g %d %d %d \n----------------\n", fs, dr, gx, gy, gz);
-       printf(" cur %d %d %d : %d\n", cur.x, cur.y, cur.z, gridsize);
-
         changes.grid = gridsize;
         changes.s = changes.o = cur;
+        memset(map, 0, sizeof map);
+        memset(flags, 0, sizeof flags);
 
-        init = 1;
-        mx = max(brushminx, -gx);
+        mx = max(brushminx, -gx);            // range limited to brush
         my = max(brushminy, -gy);        
         nx = min(brushmaxx, hws-gx) - 1;
         ny = min(brushmaxy, hws-gy) - 1;        
 
-        printf("m %d %d %d\n", mx, my, mz);
-        printf("n %d %d %d\n", nx, ny, nz);
+        painting = 1;
+        paint(clamp(MAXBRUSH2-cx, mx, nx),   // apply the brush
+              clamp(MAXBRUSH2-cy, my, ny),
+              dc ? gz : hws - gz);
 
-        memset(map, 0, sizeof map);
-        memset(flags, 0, sizeof flags);
-        int x = clamp(MAXBRUSH2-cx, mx, nx);
-        int y = clamp(MAXBRUSH2-cy, my, ny);
-        int z = dc ? gz : hws - gz;    
-
-        hselect(x, y, z, 0);
-        
-        init = 0;
-        mx = max(0, -gx);
-        my = max(0, -gy);        
-        nx = min(MAXBRUSH, hws-gx) - 1;
-        ny = min(MAXBRUSH, hws-gy) - 1;        
-        
-        printf("m %d %d %d\n", mx, my, mz);
-        printf("n %d %d %d\n", nx, ny, nz);
-
-        ripple();
+        painting = 0;            
+        ripple();                            // pull up points to cubify
         changes.s.sub(changes.o).shr(gridpower).add(1);
         changed(changes);
-        printmap();
     }
 }
 
 void edithmap(int dir, int mode) {    
-    if(multiplayer() || !hmapsel) return;
-    long time = SDL_GetTicks();
-    hmap::run(dir, mode);    
-    conoutf("-- edit time (%d) ms --", SDL_GetTicks()-time);
+    if(multiplayer() || !hmapsel || gridsize < 8) return;    
+    hmap::run(dir, mode);        
 }
 
 ///////////// main cube edit ////////////////
