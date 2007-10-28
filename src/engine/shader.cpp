@@ -816,29 +816,6 @@ void shader(int *type, char *name, char *vs, char *ps)
     
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        extern int apple_ff_bug; /* OPTION ARB_position_invariant is not reliable in leopard */
-        if(apple_ff_bug && ((*type & SHADER_GLSLANG) == 0) && strstr(vs, "OPTION ARB_position_invariant")) 
-        {
-            char *vsstart = strstr(vs, "OPTION ARB_position_invariant");
-            char *vsend = strstr(vsstart, "ATTRIB opos = vertex.position");
-            if(!vsend) vsend = vsstart;
-            vsend += strcspn(vsstart, "\n");
-            if(*vsend) vsend++;
-            vector<char> vsw;
-            vsw.put(vs, vsstart-vs);
-            const char *fixedfun =
-                "ATTRIB opos = vertex.position;\n"
-                "OUTPUT rpos = result.position;\n"
-                "DP4 rpos.x, state.matrix.mvp.row[0], opos;\n"
-                "DP4 rpos.y, state.matrix.mvp.row[1], opos;\n"
-                "DP4 rpos.z, state.matrix.mvp.row[2], opos;\n"
-                "DP4 rpos.w, state.matrix.mvp.row[3], opos;\n";
-            vsw.put(fixedfun, strlen(fixedfun));
-            vsw.put(vsend, strlen(vsend)+1);
-            shader(type, name, vsw.getbuf(), ps);
-            return;
-        }
-
         if((renderpath!=R_GLSLANG && *type & SHADER_GLSLANG) ||
            (!hasCM && strstr(ps, *type & SHADER_GLSLANG ? "textureCube" : "CUBE")) ||
            (!hasTR && strstr(ps, *type & SHADER_GLSLANG ? "texture2DRect" : "RECT")))
