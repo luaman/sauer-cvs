@@ -708,7 +708,8 @@ This resets the current brush that is used during heightmap mode editing.
 A brush is a 2D map that describes the depth that the editface commands should
 push into the cubes at various points. The first two parameters of brushvert are the X and Y
 coordinates, respectively, of a vert on this 2D map. The last parameter
-is used to set the depth.
+is used to set the depth. NOTE: if all of the brush verts are 0, then a smoothing filter will be 
+applied instead of the brush. This filter will affect the same square sized region as the brush.
 </p>
 
 <pre id="brushx">brushx</pre>
