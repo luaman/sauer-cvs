@@ -995,14 +995,18 @@ namespace hmap
 
     void smooth()
     {
-        int sum;
+        int sum, div;
         bnx-=2, bny-=2;
         loopbrush()        
         {
             sum = 0;
+            div = 9;
             loopi(3) loopj(3)
-                sum += map[x+i][y+j];
-            map[x+1][y+1] = sum / 9;
+                if(flags[x+i][y+j] & MAPPED)
+                    sum += map[x+i][y+j];
+                else div--;
+            if(div)
+                map[x+1][y+1] = sum / div;
         }
         bnx+=2, bny+=2;
     }
