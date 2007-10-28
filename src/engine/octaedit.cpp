@@ -724,6 +724,7 @@ COMMANDN(redo, editredo, "");
 int brush[MAXBRUSH][MAXBRUSH];
 VAR(brushx, 0, MAXBRUSH2, MAXBRUSH);
 VAR(brushy, 0, MAXBRUSH2, MAXBRUSH);
+bool paintbrush = 0;
 int brushmaxx = 0, brushminx = MAXBRUSH;
 int brushmaxy = 0, brushminy = MAXBRUSH;
 
@@ -732,6 +733,7 @@ void clearbrush()
     memset(brush, 0, sizeof brush);
     brushmaxx = brushmaxy = 0;
     brushminx = brushminy = MAXBRUSH;
+    paintbrush = false;
 }
 
 void brushvert(int *x, int *y, int *v)
@@ -740,6 +742,7 @@ void brushvert(int *x, int *y, int *v)
     *y += MAXBRUSH2 - brushy + 1;
     if(*x<0 || *y<0 || *x>=MAXBRUSH || *y>=MAXBRUSH) return;
     brush[*x][*y] = clamp(*v, 0, 8);
+    paintbrush = paintbrush || (brush[*x][*y] > 0);
     brushmaxx = min(MAXBRUSH-1, max(brushmaxx, *x+1));
     brushmaxy = min(MAXBRUSH-1, max(brushmaxy, *y+1));
     brushminx = max(0,          min(brushminx, *x-1));
@@ -799,8 +802,9 @@ namespace hmap
     int    map [MAXBRUSH][MAXBRUSH];
     
     selinfo changes;    
-    int d, dc, dr, dcr, biasup, br, painting;
-    int gx, gy, gz, mx, my, mz, nx, ny, nz, hws;
+    bool selecting;
+    int d, dc, dr, dcr, biasup, br, hws, fg;
+    int gx, gy, gz, mx, my, mz, nx, ny, nz, bmx, bmy, bnx, bny;
     uint fs;
     
     cube *getcube(ivec t, int f) 
@@ -837,11 +841,11 @@ namespace hmap
     void addpoint(int x, int y, int z, int v)
     {
         if(!(flags[x][y] & MAPPED))
-          map[x][y] = v + (z*8) - (dr*brush[x][y]);
+          map[x][y] = v + (z*8);
       flags[x][y] |= MAPPED;
     }
     
-    void paint(int x, int y, int z) // initialize cubes, apply brush
+    void select(int x, int y, int z)
     {        
         if((NOTHMAP & flags[x][y]) || (PAINTED & flags[x][y])) return;
         ivec t(d, x+gx, y+gy, dc ? z : hws-z);
@@ -857,12 +861,12 @@ namespace hmap
             if(!c[1] || isempty(*c[1])) {
                 c[0] = c[1], c[1] = c[2], c[2] = NULL;
             }else
-                z++, t[d]+= dc ? gridsize : -gridsize;
+                z++, t[d]+=fg;
         }
         else // drop down
         { 
             z--; 
-            t[d]-= dc ? gridsize : -gridsize; 
+            t[d]-= fg; 
             c[0] = c[1];
             c[1] = getcube(t, 0);            
         }
@@ -891,18 +895,18 @@ namespace hmap
         addpoint(x,   y+1, z, f[2]);
         addpoint(x+1, y+1, z, f[3]);
                 
-        if(painting) // continue to adjacent cubes
+        if(selecting) // continue to adjacent cubes
         {        
-            if(x>mx) paint(x-1, y, z);
-            if(x<nx) paint(x+1, y, z);
-            if(y>my) paint(x, y-1, z);
-            if(y<ny) paint(x, y+1, z);
+            if(x>bmx) select(x-1, y, z);
+            if(x<bnx) select(x+1, y, z);
+            if(y>bmy) select(x, y-1, z);
+            if(y<bny) select(x, y+1, z);
         }
     }       
 
-   void rippleandset(int x, int y, int z, int ripple)
+    void ripple(int x, int y, int z, bool force)
     {
-        if(ripple) paint(x, y, z);
+        if(force) select(x, y, z);
         if((NOTHMAP & flags[x][y]) || !(PAINTED & flags[x][y])) return;
 
         bool changed = false;
@@ -963,16 +967,16 @@ namespace hmap
         }
 
         if(!changed) return;
-        if(x>mx) rippleandset(x-1, y, mapz[x][y], 1);
-        if(x<nx) rippleandset(x+1, y, mapz[x][y], 1);
-        if(y>my) rippleandset(x, y-1, mapz[x][y], 1);
-        if(y<ny) rippleandset(x, y+1, mapz[x][y], 1);    
+        if(x>mx) ripple(x-1, y, mapz[x][y], true);
+        if(x<nx) ripple(x+1, y, mapz[x][y], true);
+        if(y>my) ripple(x, y-1, mapz[x][y], true);
+        if(y<ny) ripple(x, y+1, mapz[x][y], true);    
                
 #define DIAGONAL_RIPPLE(a,b,exp) if(exp) { \
             if(flags[x a][ y] & PAINTED) \
-                rippleandset(x a, y b, mapz[x a][y], 1); \
+                ripple(x a, y b, mapz[x a][y], true); \
             else if(flags[x][y b] & PAINTED) \
-                rippleandset(x a, y b, mapz[x][y b], 1); \
+                ripple(x a, y b, mapz[x][y b], true); \
         }
         
         DIAGONAL_RIPPLE(-1, -1, (x>mx && y>my)); // do diagonals because adjacents
@@ -981,19 +985,33 @@ namespace hmap
         DIAGONAL_RIPPLE(+1, -1, (x<nx && y>my));
     }
 
-   void ripple()
-   {   
-       int mxx = mx, myy = my, nxx = nx, nyy = ny;
-        mx = max(0, -gx);                   // increase allowed range
-        my = max(0, -gy);        
-        nx = min(MAXBRUSH-1, hws-gx) - 1;
-        ny = min(MAXBRUSH-1, hws-gy) - 1;            
-        for(int x=mxx; x<=nxx; x++) for(int y=myy; y<=nyy; y++)
+#define loopbrush() for(int x=bmx; x<=bnx; x++) for(int y=bmy; y<=bny; y++)
+
+    void paint()
+    {
+        loopbrush()
+            map[x][y] -= dr * brush[x][y];        
+    }
+
+    void smooth()
+    {
+        int sum;
+        bnx-=2, bny-=2;
+        loopbrush()        
         {
-            if((NOTHMAP & flags[x][y]) || !(PAINTED & flags[x][y])) continue;
-            rippleandset(x, y, gz, 0);
-        }       
-   }
+            sum = 0;
+            loopi(3) loopj(3)
+                sum += map[x+i][y+j];
+            map[x+1][y+1] = sum / 9;
+        }
+        bnx+=2, bny+=2;
+    }
+
+    void rippleandset()
+    {              
+        loopbrush()
+            ripple(x, y, gz, false);        
+    }
 
     void run(int dir, int mode) 
     {                 
@@ -1010,7 +1028,16 @@ namespace hmap
         gx = (cur[R[d]] >> gridpower) + cx - MAXBRUSH2;
         gy = (cur[C[d]] >> gridpower) + cy - MAXBRUSH2;
         gz = (cur[D[d]] >> gridpower);
-        fs = dc ? 4 : 0;        
+        fs = dc ? 4 : 0;  
+        fg = dc ? gridsize : -gridsize;
+        bmx = max(brushminx, -gx);          // brush range
+        bmy = max(brushminy, -gy);        
+        bnx = min(brushmaxx, hws-gx) - 1;
+        bny = min(brushmaxy, hws-gy) - 1;   
+        mx = max(0, -gx);                   // ripple range
+        my = max(0, -gy);        
+        nx = min(MAXBRUSH-1, hws-gx) - 1;
+        ny = min(MAXBRUSH-1, hws-gy) - 1;
         nz = hdr.worldsize-gridsize;
         mz = 0;
                     
@@ -1018,19 +1045,17 @@ namespace hmap
         changes.s = changes.o = cur;
         memset(map, 0, sizeof map);
         memset(flags, 0, sizeof flags);
-
-        mx = max(brushminx, -gx);            // range limited to brush
-        my = max(brushminy, -gy);        
-        nx = min(brushmaxx, hws-gx) - 1;
-        ny = min(brushmaxy, hws-gy) - 1;        
-
-        painting = 1;
-        paint(clamp(MAXBRUSH2-cx, mx, nx),   // apply the brush
-              clamp(MAXBRUSH2-cy, my, ny),
-              dc ? gz : hws - gz);
-
-        painting = 0;            
-        ripple();                            // pull up points to cubify
+        
+        selecting = true;
+        select(clamp(MAXBRUSH2-cx, bmx, bnx),
+               clamp(MAXBRUSH2-cy, bmy, bny),
+               dc ? gz : hws - gz);
+        selecting = false;
+        if(paintbrush)
+            paint();
+        else 
+            smooth();
+        rippleandset();                       // pull up points to cubify, and set
         changes.s.sub(changes.o).shr(gridpower).add(1);
         changed(changes);
     }
