@@ -14,3 +14,15 @@ void mac_pasteconsole(char *commandbuf)
 			s_strcat(commandbuf, [contents lossyCString]);
     }
 }
+
+/*
+ * 0x1030 = 10.3
+ * 0x1040 = 10.4
+ * 0x1050 = 10.5
+ */
+int mac_osversion() 
+{
+    SInt32 MacVersion;
+    Gestalt(gestaltSystemVersion, &MacVersion);
+    return MacVersion;
+}
