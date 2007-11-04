@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false, hasAF = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -343,6 +343,13 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         conoutf("WARNING: Using leopard OPTION ARB_position_invariant workaround (use \"/apple_ff_bug 0\" to disable if unnecessary)");
     }
 #endif
+
+    if(strstr(exts, "GL_EXT_texture_filter_anisotropic"))
+    {
+       hasAF = true;
+       glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *)&hwmaxaniso);
+       //conoutf("Using GL_EXT_texture_filter_anisotropic extension.");
+    }
 
     if(fsaa) glEnable(GL_MULTISAMPLE);
 

@@ -109,7 +109,7 @@ struct font
 extern font *curfont;
 
 // texture
-extern int hwtexsize, hwcubetexsize;
+extern int hwtexsize, hwcubetexsize, hwmaxaniso;
 
 extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, bool msg = true);
 extern void loadalphamask(Texture *t);
@@ -143,7 +143,7 @@ extern void rendershadowmapreceivers();
 extern void guessshadowdir();
 
 // rendergl
-extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF;
 
 extern bool envmapping;
 
