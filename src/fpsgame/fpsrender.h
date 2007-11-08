@@ -96,6 +96,7 @@ struct fpsrender
         if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? bluemdl : ffamdl);
 
         cl.ms.monsterrender();
+        cl.mo.render();
         cl.et.renderentities();
         cl.ws.renderprojectiles();
         if(m_capture) cl.cpc.renderbases();
