@@ -39,6 +39,7 @@ enum                            // cube empty-space materials
     MAT_GLASS,                  // behaves like clip but is blended blueish
     MAT_NOCLIP,                 // collisions always treat cube as empty
     MAT_LAVA,                   // fill with lava
+    MAT_AICLIP,                 // clip monsters only
     MAT_EDIT                    // basis for the edit volumes of the above materials
 };
 

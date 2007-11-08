@@ -593,7 +593,7 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
 
 bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
 {
-    if(isentirelysolid(c) || (c.ext && (d->type<ENT_CAMERA || c.ext->material != MAT_CLIP) && isclipped(c.ext->material)))
+    if(isentirelysolid(c) || (c.ext && ((d->type==ENT_AI && c.ext->material==MAT_AICLIP) || ((d->type<ENT_CAMERA || c.ext->material != MAT_CLIP) && isclipped(c.ext->material)))))
     {
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
@@ -669,7 +669,7 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
         {
             if(!octacollide(d, dir, cutoff, bo, bs, c[i].children, o, size>>1)) return false;
         }
-        else if(c[i].ext && c[i].ext->material!=MAT_NOCLIP && (!isempty(c[i]) || ((d->type<ENT_CAMERA || c[i].ext->material != MAT_CLIP) && isclipped(c[i].ext->material))))
+        else if(c[i].ext && c[i].ext->material!=MAT_NOCLIP && (!isempty(c[i]) || (d->type==ENT_AI && c[i].ext->material==MAT_AICLIP) || ((d->type<ENT_CAMERA || c[i].ext->material != MAT_CLIP) && isclipped(c[i].ext->material))))
         {
             if(!cubecollide(d, dir, cutoff, c[i], o.x, o.y, o.z, size)) return false;
         }
