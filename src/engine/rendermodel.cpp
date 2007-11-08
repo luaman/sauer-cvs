@@ -29,13 +29,13 @@ void mdlcollide(int *collide)
 
 COMMAND(mdlcollide, "i");
 
-void mdltricollide(int *tricollide)
+void mdlellipsecollide(int *collide)
 {
     checkmdl;
-    loadingmodel->tricollide = *tricollide!=0;
+    loadingmodel->ellipsecollide = *collide!=0;
 }   
     
-COMMAND(mdltricollide, "i");
+COMMAND(mdlellipsecollide, "i");
 
 void mdlspec(int *percent)
 {
@@ -191,6 +191,7 @@ void mapmodelcompat(int *rad, int *h, int *tex, char *name, char *shadow)
 void mapmodelreset() { mapmodels.setsize(0); }
 
 mapmodelinfo &getmminfo(int i) { return mapmodels.inrange(i) ? mapmodels[i] : *(mapmodelinfo *)0; }
+const char *mapmodelname(int i) { return mapmodels.inrange(i) ? mapmodels[i].name : NULL; }
 
 COMMAND(mmodel, "si");
 COMMANDN(mapmodel, mapmodelcompat, "iiiss");
@@ -871,15 +872,21 @@ void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int 
     rendermodel(color, dir, mdlname, anim, varseed, 0, o, testanims && d==player ? 0 : yaw+90, pitch, 0, basetime, d, flags, attachments);
 }
 
-void setbbfrommodel(dynent *d, char *mdl)
+void setbbfrommodel(dynent *d, const char *mdl)
 {
     model *m = loadmodel(mdl); 
     if(!m) return;
     vec center, radius;
     m->collisionbox(0, center, radius);
+    if(d->type==ENT_INANIMATE && !m->ellipsecollide)
+    {
+        d->collidetype = COLLIDE_AABB;
+        rotatebb(center, radius, int(d->yaw));
+    }
     d->xradius   = radius.x + fabs(center.x);
     d->yradius   = radius.y + fabs(center.y);
     d->radius    = max(d->xradius, d->yradius);
+    if(d->collidetype!=COLLIDE_ELLIPSE) d->xradius = d->yradius = d->radius;
     d->eyeheight = (center.z-radius.z) + radius.z*2*m->eyeheight;
     d->aboveeye  = radius.z*2*(1.0f-m->eyeheight);
 }

@@ -224,39 +224,49 @@ struct weaponstate
     };
     vector<hitmsg> hits;
 
-    void hit(int damage, fpsent *d, fpsent *at, const vec &vel, int gun, int info = 1)
+    void hit(int damage, dynent *d, fpsent *at, const vec &vel, int gun, int info = 1)
     {
-        d->lastpain = cl.lastmillis;
+        if(d->type==ENT_INANIMATE) 
+        {
+            movableset::movable *m = (movableset::movable *)d;
+            m->hitpush(damage, vel, at, gun);
+            m->damaged(damage, at, gun);
+            return;
+        }
+
+        fpsent *f = (fpsent *)d;
+
+        f->lastpain = cl.lastmillis;
         at->totaldamage += damage;
-        d->superdamage = 0;
+        f->superdamage = 0;
 
-        if(d->type==ENT_AI || !m_mp(cl.gamemode) || d==player1) d->hitpush(damage, vel, at, gun);
+        if(f->type==ENT_AI || !m_mp(cl.gamemode) || f==player1) f->hitpush(damage, vel, at, gun);
 
-        if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(damage, at); 
-        else if(!m_mp(cl.gamemode)) cl.damaged(damage, d, at);
+        if(f->type==ENT_AI) ((monsterset::monster *)f)->monsterpain(damage, at); 
+        else if(!m_mp(cl.gamemode)) cl.damaged(damage, f, at);
         else 
         { 
             hitmsg &h = hits.add();
-            h.target = d->clientnum;
-            h.lifesequence = d->lifesequence;
+            h.target = f->clientnum;
+            h.lifesequence = f->lifesequence;
             h.info = info;
-            damageeffect(damage, d);
-            if(d==player1)
+            damageeffect(damage, f);
+            if(f==player1)
             {
                 h.dir = ivec(0, 0, 0);
-                d->damageroll(damage);
+                f->damageroll(damage);
                 damageblend(damage);
                 playsound(S_PAIN6);
             }
             else 
             {
                 h.dir = ivec(int(vel.x*DNF), int(vel.y*DNF), int(vel.z*DNF));
-                playsound(S_PAIN1+rnd(5), &d->o); 
+                playsound(S_PAIN1+rnd(5), &f->o); 
             }
         }
     }
 
-    void hitpush(int damage, fpsent *d, fpsent *at, vec &from, vec &to, int gun, int rays)
+    void hitpush(int damage, dynent *d, fpsent *at, vec &from, vec &to, int gun, int rays)
     {
         vec v(to);
         v.sub(from);
@@ -264,7 +274,7 @@ struct weaponstate
         hit(damage, d, at, v, gun, rays);
     }
 
-    void radialeffect(fpsent *o, vec &v, int qdam, fpsent *at, int gun)
+    void radialeffect(dynent *o, vec &v, int qdam, fpsent *at, int gun)
     {
         if(o->state!=CS_ALIVE) return;
         vec dir;
@@ -277,7 +287,7 @@ struct weaponstate
         }
     }
 
-    float rocketdist(fpsent *o, vec &dir, const vec &v)
+    float rocketdist(dynent *o, vec &dir, const vec &v)
     {
         vec middle = o->o;
         middle.z += (o->aboveeye-o->eyeheight)/2;
@@ -300,7 +310,7 @@ struct weaponstate
         if(!local) return;
         loopi(cl.numdynents())
         {
-            fpsent *o = (fpsent *)cl.iterdynents(i);
+            dynent *o = cl.iterdynents(i);
             if(!o || o==notthis) continue;
             radialeffect(o, v, qdam, owner, gun);
         }
@@ -320,7 +330,7 @@ struct weaponstate
         }
     }
 
-    bool projdamage(fpsent *o, projectile &p, vec &v, int qdam)
+    bool projdamage(dynent *o, projectile &p, vec &v, int qdam)
     {
         if(o->state!=CS_ALIVE) return false;
         if(!intersect(o, p.o, v)) return false;
@@ -352,7 +362,7 @@ struct weaponstate
             {
                 loopj(cl.numdynents())
                 {
-                    fpsent *o = (fpsent *)cl.iterdynents(j);
+                    dynent *o = cl.iterdynents(j);
                     if(!o || p.owner==o || o->o.reject(v, 10.0f)) continue;
                     if(projdamage(o, p, v, qdam)) { exploded = true; break; }
                 }
@@ -470,13 +480,13 @@ struct weaponstate
         }
     }
 
-    fpsent *intersectclosest(vec &from, vec &to, fpsent *at)
+    dynent *intersectclosest(vec &from, vec &to, fpsent *at)
     {
-        fpsent *best = NULL;
+        dynent *best = NULL;
         float bestdist = 1e16f;
         loopi(cl.numdynents())
         {
-            fpsent *o = (fpsent *)cl.iterdynents(i);
+            dynent *o = cl.iterdynents(i);
             if(!o || o==at || o->state!=CS_ALIVE) continue;
             if(!intersect(o, from, to)) continue;
             float dist = at->o.dist(o->o);
@@ -499,7 +509,7 @@ struct weaponstate
         int qdam = guns[d->gunselect].damage;
         if(d->quadmillis) qdam *= 4;
         if(d->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
-        fpsent *o, *cl;
+        dynent *o, *cl;
         if(d->gunselect==GUN_SG)
         {
             bool done[SGRAYS];

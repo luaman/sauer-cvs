@@ -16,6 +16,7 @@ struct fpsclient : igameclient
     // these define classes local to fpsclient
     #include "weapon.h"
     #include "monster.h"
+    #include "movable.h"
     #include "scoreboard.h"
     #include "fpsrender.h"
     #include "entities.h"
@@ -42,6 +43,7 @@ struct fpsclient : igameclient
 
     weaponstate ws;
     monsterset  ms;
+    movableset  mo;
     scoreboard  sb;
     fpsrender   fr;
     entities    et;
@@ -55,7 +57,7 @@ struct fpsclient : igameclient
           suicided(-1), 
           following(-1),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
+          ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
     {
         CCOMMAND(mode, "i", (fpsclient *self, int *val), { self->setmode(*val); });
         CCOMMAND(kill, "",  (fpsclient *self), { self->suicide(self->player1); });
@@ -95,6 +97,7 @@ struct fpsclient : igameclient
     {
         if(m_classicsp) 
         {
+            mo.clear(gamemode);
             ms.monsterclear(gamemode);                 // all monsters back at their spawns for editing
             resettriggers();
         }
@@ -189,6 +192,7 @@ struct fpsclient : igameclient
         ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
         gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
+        mo.update(curtime);
         ms.monsterthink(curtime, gamemode);
         if(player1->state==CS_DEAD)
         {
@@ -290,10 +294,10 @@ struct fpsclient : igameclient
 
         string dname, aname;
         s_strcpy(dname, d==player1 ? "you" : colorname(d));
-        s_strcpy(aname, actor==player1 ? "you" : colorname(actor));
+        s_strcpy(aname, actor==player1 ? "you" : (actor->type!=ENT_INANIMATE ? colorname(actor) : ""));
         if(actor->type==ENT_AI)
             conoutf("\f2%s got killed by %s!", dname, aname);
-        else if(d==actor)
+        else if(d==actor || actor->type==ENT_INANIMATE)
             conoutf("\f2%s suicided%s", dname, d==player1 ? "!" : "");
         else if(isteam(d->team, actor->team))
         {
@@ -412,6 +416,7 @@ struct fpsclient : igameclient
         respawnent = -1;
         if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();
+        mo.clear(gamemode);
         ms.monsterclear(gamemode);
         ws.projreset();
 
@@ -448,6 +453,7 @@ struct fpsclient : igameclient
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)
     {
+        if(d->type==ENT_INANIMATE) return;
         if     (waterlevel>0) playsound(S_SPLASH1, d==player1 ? NULL : &d->o);
         else if(waterlevel<0) playsound(S_SPLASH2, d==player1 ? NULL : &d->o);
         if     (floorlevel>0) { if(local) playsoundc(S_JUMP, (fpsent *)d); else if(d->type==ENT_AI) playsound(S_JUMP, &d->o); }
@@ -464,7 +470,7 @@ struct fpsclient : igameclient
         else playsound(n, &d->o);
     }
 
-    int numdynents() { return 1+players.length()+ms.monsters.length(); }
+    int numdynents() { return 1+players.length()+ms.monsters.length()+mo.movables.length(); }
 
     dynent *iterdynents(int i)
     {
@@ -473,6 +479,8 @@ struct fpsclient : igameclient
         if(i<players.length()) return players[i];
         i -= players.length();
         if(i<ms.monsters.length()) return ms.monsters[i];
+        i -= ms.monsters.length(); 
+        if(i<mo.movables.length()) return mo.movables[i];
         return NULL;
     }
 
@@ -506,6 +514,7 @@ struct fpsclient : igameclient
             }
         }
         else if(d->type==ENT_AI) ((monsterset::monster *)d)->monsterpain(400, player1);
+        else if(d->type==ENT_INANIMATE) ((movableset::movable *)d)->suicide();
     }
 
     IVARP(hudgun, 0, 1, 1);

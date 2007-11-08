@@ -28,7 +28,9 @@ struct entities : icliententities
             NULL, NULL,
             "carrot",
             NULL, NULL,
-            "checkpoint"
+            "checkpoint",
+            NULL, NULL,
+            NULL, NULL
         };
         return entmdlnames[type];
     }
@@ -227,6 +229,12 @@ struct entities : icliententities
     {
         switch(e.type)
         {
+            case BOX:
+            case BARREL:
+            case PLATFORM:
+            case ELEVATOR:
+                e.attr4 = e.attr3;
+                e.attr3 = e.attr2;
             case MONSTER:
             case TELEDEST:
                 e.attr2 = e.attr1;
@@ -257,6 +265,10 @@ struct entities : icliententities
             case TELEDEST:
             case MAPMODEL:
             case RESPAWNPOINT:
+            case BOX:
+            case BARREL:
+            case PLATFORM:
+            case ELEVATOR:
                 radius = 4;
                 vecfromyawpitch(e.attr1, 0, 1, 0, dir);
                 break;
@@ -274,6 +286,8 @@ struct entities : icliententities
             "teleport", "teledest",
             "monster", "carrot", "jumppad",
             "base", "respawnpoint",
+            "box", "barrel",
+            "platform", "elevator",
             "", "", "", "",
         };
         return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";

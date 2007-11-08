@@ -25,6 +25,10 @@ enum                            // static entity types
     JUMPPAD,                    // attr1 = zpush, attr2 = ypush, attr3 = xpush
     BASE,
     RESPAWNPOINT,
+    BOX,                        // attr1 = angle, attr2 = idx, attr3 = weight
+    BARREL,                     // attr1 = angle, attr2 = idx, attr3 = weight, attr4 = health
+    PLATFORM,                   // attr1 = angle, attr2 = idx, attr3 = tag, attr4 = speed
+    ELEVATOR,                   // attr1 = angle, attr2 = idx, attr3 = tag, attr4 = speed
     MAXENTTYPES
 };
 
@@ -33,7 +37,7 @@ struct fpsentity : extentity
     // extend with additional fields if needed...
 };
 
-enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, NUMGUNS };
+enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_FIREBALL, GUN_ICEBALL, GUN_SLIMEBALL, GUN_BITE, GUN_BARREL, NUMGUNS };
 enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
@@ -177,6 +181,7 @@ static struct guninfo { short sound, attackdelay, damage, projspeed, part, kicka
     { S_ICEBALL,   200,  40, 30,  6,  1, "iceball"         },
     { S_SLIMEBALL, 200,  30, 160, 7,  1, "slimeball"       },
     { S_PIGR1,     250,  50, 0,   0,  1, "bite"            },
+    { -1,            0, 120, 0,   0,  0, "barrel"          }
 };
 
 // inherited by fpsent and server clients

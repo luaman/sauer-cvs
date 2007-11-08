@@ -187,7 +187,7 @@ struct monsterset
                     
             }
 
-            if(move || moving) 
+            if(move || moving || (onplayer && (onplayer->state!=CS_ALIVE || lastmoveattempt <= onplayer->lastmove)))
             {
                 vec pos(o);
                 pos.sub(eyeheight);

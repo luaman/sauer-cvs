@@ -136,7 +136,7 @@ extern void save_world(char *mname, bool nolms = false);
 // physics
 extern void moveplayer(physent *pl, int moveres, bool local);
 extern bool moveplayer(physent *pl, int moveres, bool local, int curtime);
-extern bool collide(physent *d, const vec &dir = vec(0, 0, 0), float cutoff = 0.0f);
+extern bool collide(physent *d, const vec &dir = vec(0, 0, 0), float cutoff = 0.0f, bool playercol = true);
 extern bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterfric = 3.0f);
 extern void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space);
 extern void physicsframe();
@@ -144,6 +144,7 @@ extern void dropenttofloor(entity *e);
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 extern bool intersect(physent *d, vec &from, vec &to);
+extern bool moveplatform(physent *p, const vec &dir);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
 extern bool entinmap(dynent *d, bool avoidplayers = false);
@@ -173,7 +174,9 @@ extern void abovemodel(vec &o, const char *mdl);
 extern void rendershadow(dynent *d);
 extern void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int attack, int attackdelay, int lastaction, int lastpain, float sink = 0);
 extern void interpolateorientation(dynent *d, float &interpyaw, float &interppitch);
-extern void setbbfrommodel(dynent *d, char *mdl);
+extern void setbbfrommodel(dynent *d, const char *mdl);
+extern const char *mapmodelname(int i);
+extern model *loadmodel(const char *name, int i = -1, bool msg = false);
 
 // server
 #define MAXCLIENTS 256                  // in a multiplayer game, can be arbitrarily changed
