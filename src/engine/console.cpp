@@ -52,13 +52,42 @@ void conoutf(const char *s, ...)
     puts(sp);
     s = sf;
     int n = 0, visible;
+
+    string cols;
+    s_strcpy(cols, "\f7");
+    int cpos = 1;
+     
     while((visible = curfont ? text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3) : strlen(s))) // cut strings to fit on screen
     {
         const char *newline = (const char *)memchr(s, '\n', visible);
         if(newline) visible = newline+1-s;
         string t;
-        s_strncpy(t, s, visible+1);
+        
+        s_strncpy(t, cols, cpos+2);  //add continued color info from previous lines
+        s_strncpy(t+cpos+1, s, visible+1);
         conline(t, n++!=0);
+    
+        for(int i = 0; s[i] && (i<=visible); i++) //process color change info
+            if(s[i]=='\f') 
+                switch(s[++i])
+                {
+                    case 's':
+                        if(cpos<4*8) //8 = stackdepth in textdraw
+                        { 
+                            cols[cpos+1] = '\f';
+                            cols[cpos+2] = 's';
+                            cols[cpos+3] = '\f';
+                            cols[cpos+4] = cols[cpos];
+                            cpos += 4;
+                        }
+                        break;
+                    case 'r': 
+                        if(cpos>4) cpos -= 4; 
+                        break;
+                    default:
+                        cols[cpos] = s[i];
+                }
+
         s += visible;
     }
 }
