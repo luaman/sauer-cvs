@@ -20,23 +20,13 @@ void setconskip(int *n)
 
 COMMANDN(conskip, setconskip, "i");
 
-void conline(const char *sf, bool highlight)        // add a line to the console buffer
+void conline(const char *sf)        // add a line to the console buffer
 {
     cline cl;
     cl.cref = conlines.length()>100 ? conlines.pop().cref : newstringbuf("");   // constrain the buffer size
     cl.outtime = totalmillis;                       // for how long to keep line on screen
-    conlines.insert(0,cl);
-    if(highlight)                                   // show line in a different colour, for chat etc.
-    {
-        cl.cref[0] = '\f';
-        cl.cref[1] = '0';
-        cl.cref[2] = 0;
-        s_strcat(cl.cref, sf);
-    }
-    else
-    {
-        s_strcpy(cl.cref, sf);
-    }
+    conlines.insert(0, cl);
+    s_strcpy(cl.cref, sf);
 }
 
 #define CONSPAD (FONTH/3)
@@ -51,7 +41,7 @@ void conoutf(const char *s, ...)
     filtertext(sp, sf);
     puts(sp);
     s = sf;
-    int n = 0, visible;
+    int visible;
 
     string cols;
     s_strcpy(cols, "\f7");
@@ -61,11 +51,9 @@ void conoutf(const char *s, ...)
     {
         const char *newline = (const char *)memchr(s, '\n', visible);
         if(newline) visible = newline+1-s;
-        string t;
         
-        s_strncpy(t, cols, cpos+2);  //add continued color info from previous lines
-        s_strncpy(t+cpos+1, s, visible+1);
-        conline(t, n++!=0);
+        s_strncpy(cols+cpos+1, s, visible+1);
+        conline(cols);
     
         for(int i = 0; s[i] && (i<=visible); i++) //process color change info
             if(s[i]=='\f') 
