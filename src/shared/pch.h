@@ -51,3 +51,8 @@
 #endif
 #include <zlib.h>
 
+#ifdef __sun__
+#undef sun
+#undef MAXNAMELEN
+#endif
+
