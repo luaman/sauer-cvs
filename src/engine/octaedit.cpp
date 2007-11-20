@@ -755,6 +755,7 @@ int htexsize = 0;
 
 COMMAND(clearbrush, "");
 COMMAND(brushvert, "iii");
+VAR(hmapselall, 0, 1, 1);
 ICOMMAND(hmapaddtex, "", (), htextures[htexsize++] = lookupcube(cur.x, cur.y, cur.z).texture[horient = orient]);
 ICOMMAND(hmapcancel, "", (), htexsize = 0; );
 
@@ -774,6 +775,7 @@ bool ischildless(cube &c)
 
 inline bool ishtexture(int t)
 {    
+    if(hmapselall==1) return true;
     loopi(htexsize) // TODO: optimize with special tex index region
         if(t == htextures[i])
             return true;
