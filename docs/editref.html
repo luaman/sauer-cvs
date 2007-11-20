@@ -105,6 +105,9 @@
 <a href="#hmapedit"><tt>hmapedit</tt></a>
 </li>
 <li>
+<a href="#hmapselall"><tt>hmapselall</tt></a>
+</li>
+<li>
 <a href="#hmapaddtex"><tt>hmapaddtex</tt></a>
 </li>
 <li>
@@ -683,9 +686,14 @@ you select a brush (B+wheel) and textures (H or LCTRL+LMB for new selection, LCT
 Set to 1 to turn on heightmap mode (default: hold LCTRL). In heightmap mode the cursor will turn green when hilighting heightmap cubes and the <a href="#editface">editface</a> command will now use brushes to edit heightmap cubes. In order to avoid accidental edits only heightmap cubes are editable in this mode.
 </p>
 
+<pre id="hmapselall">hmapselall 0/1</pre>
+<p>
+Set to 1 to select all textures. The only thing one needs to select is the orientation when this is turned on.
+</p>
+
 <pre id="hmapaddtex">hmapaddtex</pre>
 <p>
-Selects the texture and orientation of the hilighted cube (default: mouse buttons while in heightmap mode, or H key). All cubes, of equal or larger size, that match the selection will be considered part of the heightmap.
+Selects the texture and orientation of the hilighted cube (default: mouse buttons while in heightmap mode, or H key). If hmapselall is set to 1, then all textures are automatically selected, and this command will simply select the orientation. All cubes, of equal or larger size, that match the selection will be considered part of the heightmap.
 </p>
 
 <pre id="hmapcancel">hmapcancel</pre>
