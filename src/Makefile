@@ -49,7 +49,7 @@ SERVER_OBJS= \
 	fpsgame/fps-standalone.o
 
 DTRACE= /usr/sbin/dtrace -G -32
-DPROVIDER= $(if [test -x /usr/sbin/dtrace], shared/sbtrace.o, )
+DPROVIDER= $(if $(wildcard /usr/sbin/dtrace), shared/sbtrace.o, )
 
 default: all
 
@@ -68,7 +68,7 @@ clean: enet/Makefile
 %-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o $@ $(subst -standalone.o,.cpp,$@)
 
-$(DPROVIDER): shared/sbtrace.d $(CLIENT_OBJS)
+shared/sbtrace.o: shared/sbtrace.d $(CLIENT_OBJS)
 	$(DTRACE) -o $@ -s $< $(CLIENT_OBJS)
 
 client:	libenet $(CLIENT_OBJS) $(DPROVIDER)
