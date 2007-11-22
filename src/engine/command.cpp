@@ -388,7 +388,8 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
             {
                 case ID_CCOMMAND:
                 case ID_COMMAND:                     // game defined commands
-                {    
+                {   
+                    SAUERBRATEN_COMMAND_ENTRY(c, w[1], w[2], w[3]);
                     void *v[MAXWORDS];
                     union
                     {
@@ -423,10 +424,12 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     }
                     if(cargs) delete[] cargs;
                     setretval(commandret);
+                    SAUERBRATEN_COMMAND_RETURN(c);
                     break;
                 }
 
                 case ID_VAR:                        // game defined variables 
+                    SAUERBRATEN_VAR_ENTRY(c, w[1]);
                     if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
                     else if(id->_min>id->_max) conoutf("variable %s is read-only", id->_name);
                     else
@@ -450,10 +453,12 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                         *id->_storage = i1;
                         id->changed();                                             // call trigger function if available
                     }
+                    SAUERBRATEN_VAR_RETURN(c, *id->_storage);
                     break;
                     
                 case ID_ALIAS:                              // alias, also used as functions and (global) variables
                 {
+                    SAUERBRATEN_ALIAS_ENTRY(c, w[1], w[2], w[3]);
                     static vector<ident *> argids;
                     for(int i = 1; i<numargs; i++)
                     {
@@ -481,6 +486,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     id->_isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
                     for(int i = 1; i<numargs; i++) popident(*argids[i-1]);
+                    SAUERBRATEN_ALIAS_RETURN(c);
                     break;
                 }
             }
