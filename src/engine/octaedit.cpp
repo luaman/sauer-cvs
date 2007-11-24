@@ -1536,7 +1536,11 @@ void g3d_texturemenu()
     gui.show(); 
 }
 
-void showtexgui(int *n) { gui.showtextures(((*n==0) ? !gui.menuon : (*n==1)) && editmode); }
+void showtexgui(int *n) 
+{ 
+    if(!editmode) { conoutf("operation only allowed in edit mode"); return; }
+    gui.showtextures(*n==0 ? !gui.menuon : *n==1); 
+}
 
 // 0/noargs = toggle, 1 = on, other = off - will autoclose if too far away or exit editmode
 COMMAND(showtexgui, "i");
