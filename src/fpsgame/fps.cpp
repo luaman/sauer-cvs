@@ -522,7 +522,7 @@ struct fpsclient : igameclient
 
     void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
-        static char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
+        static const char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
         if(player1->gunselect>GUN_PISTOL) return;
 
         vec sway, color, dir;
@@ -547,7 +547,10 @@ struct fpsclient : igameclient
             color.y = color.y*(1-t) + t;
         }
 #endif
-        const char *gunname = hudgunnames[player1->gunselect];
+
+        string gunname;
+        s_strcpy(gunname, hudgunnames[player1->gunselect]);
+        if(m_teammode || fr.teamskins()) s_strcat(gunname, "/blue");
         rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
