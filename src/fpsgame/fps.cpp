@@ -76,7 +76,7 @@ struct fpsclient : igameclient
 
     void taunt()
     {
-        if(player1->state!=CS_ALIVE) return;
+        if(player1->state!=CS_ALIVE || player1->physstate<PHYS_SLOPE) return;
         if(lastmillis-player1->lasttaunt<1000) return;
         player1->lasttaunt = lastmillis;
         cc.addmsg(SV_TAUNT, "r");
