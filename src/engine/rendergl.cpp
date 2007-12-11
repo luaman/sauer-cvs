@@ -678,7 +678,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
     defaultshader->set();
 
     cube &c = lookupcube(int(o.x), int(o.y), int(o.z));
-    int fogmat = c.ext ? c.ext->material : MAT_AIR;
+    int fogmat = insideworld(o) && c.ext ? c.ext->material : MAT_AIR;
     if(fogmat!=MAT_WATER && fogmat!=MAT_LAVA) fogmat = MAT_AIR;
 
     setfog(fogmat);
@@ -738,7 +738,7 @@ void gl_drawframe(int w, int h)
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     cube &c = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*0.5f));
-    int fogmat = c.ext ? c.ext->material : MAT_AIR;
+    int fogmat = insideworld(vec(camera1->o.x, camera1->o.y, camera1->o.z + camera1->aboveeye*0.5f)) && c.ext ? c.ext->material : MAT_AIR;
     if(fogmat!=MAT_WATER && fogmat!=MAT_LAVA) fogmat = MAT_AIR;
 
     setfog(fogmat);
@@ -775,7 +775,7 @@ void gl_drawframe(int w, int h)
     if(caustics && fogmat==MAT_WATER)
     {
         cube &s = lookupcube((int)camera1->o.x, (int)camera1->o.y, int(camera1->o.z + camera1->aboveeye*1.25f));
-        if(s.ext && s.ext->material==MAT_WATER) causticspass = true;
+        if(insideworld(vec(camera1->o.x, camera1->o.y, camera1->o.z + camera1->aboveeye*1.25f)) && s.ext && s.ext->material==MAT_WATER) causticspass = true;
     }
     rendergeom(causticspass);
 
