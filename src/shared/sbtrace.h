@@ -5,7 +5,9 @@
 #ifndef	_SBTRACE_H
 #define	_SBTRACE_H
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
