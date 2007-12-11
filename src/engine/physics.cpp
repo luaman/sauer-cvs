@@ -941,8 +941,8 @@ bool move(physent *d, vec &dir)
 
 bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
-    cube &c = lookupcube(int(d->o.x), int(d->o.y), int(d->o.z));
-    bool water = insideworld(d->o) && c.ext && isliquid(c.ext->material);
+    int mat = lookupmaterial(d->o);
+    bool water = isliquid(mat);
     if(water)
     {
         if(d->vel.z > 0 && d->vel.z + d->gravity.z < 0) d->vel.z = 0.0f;
@@ -1180,8 +1180,7 @@ void modifygravity(physent *pl, bool water, float secs)
 
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
-    cube &c = lookupcube(int(pl->o.x), int(pl->o.y), int(pl->o.z));
-    int material = insideworld(pl->o) && c.ext ? c.ext->material : MAT_AIR;
+    int material = lookupmaterial(pl->o);
     bool water = isliquid(material);
     bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
     float secs = curtime/1000.f;
@@ -1248,8 +1247,8 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
     if(pl->type!=ENT_CAMERA)
     {
-        cube &c = lookupcube((int)pl->o.x, (int)pl->o.y, (int)pl->o.z+1);
-        bool inwater = insideworld(pl->o) && c.ext && isliquid(c.ext->material);
+        int mat = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z+1));
+        bool inwater = isliquid(mat);
         if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
