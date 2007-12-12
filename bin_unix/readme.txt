@@ -18,6 +18,8 @@ If native binaries for your platform are not included, then try the following:
 3) Re-run the "sauerbraten_unix" script from the root Sauerbraten directory if it succeeded.
 
 The servers (bin_unix/linux_server or bin_unix/native_server) should need no libs 
-other than  libstdc++, no external files, no sound or video - just run it. 
+other than libstdc++ and zlib, no external files, no sound or video - just run it. 
 Server ports are fixed at UDP 28785 and UDP 28786, currently.
 
+Note that the "sauerbraten_unix" script is set up to write any files (saved maps, configs, etc.)
+into the user's home directory at "~/.sauerbraten".
