@@ -158,6 +158,9 @@
 <a href="#trigger"><tt>trigger</tt></a>
 </li>
 <li>
+<a href="#platform"><tt>platform</tt></a>
+</li>
+<li>
 <a href="#entselect"><tt>entselect</tt></a>
 </li>
 <li>
@@ -448,6 +451,18 @@
 <a href="#_mapmodel_"><tt>"mapmodel"</tt></a>
 </li>
 <li>
+<a href="#_box_"><tt>"box"</tt></a>
+</li>
+<li>
+<a href="#_barrel_"><tt>"barrel"</tt></a>
+</li>
+<li>
+<a href="#_platform_"><tt>"platform"</tt></a>
+</li>
+<li>
+<a href="#_elevator_"><tt>"elevator"</tt></a>
+</li>
+<li>
 <a href="#_monster_"><tt>"monster"</tt></a>
 </li>
 <li>
@@ -640,7 +655,7 @@ sides as a waterfall if it isn't contained. Should be placed with a floor at the
 to contain it. Shows blue volume in edit mode.
 </li>
 <li>
-lava: renders the top as a glowing lava flow and the sides as lavafalls if it isn't contained.
+lava: renders the top as a glowing lava flow and the sides as lavafalls if it isn't contained. Shows orange volume in edit mode.
 </li>
 <li>
 clip: an invisible wall that blocks players movement but not bullets. Is
@@ -654,6 +669,9 @@ noclip: cubes are always treated as empty in physics. Shows green volume in edit
 glass: a clip-like material with a blended/reflective surface. Glass also stops bullets.
 Will reflect the closest envmap entity, or if none is in range, the skybox.
 Shows cyan volume in edit mode.
+</li>
+<li>
+aiclip: like clip, but only stops monsters. Shows yellow volume in edit mode.
 </li>
 </ul>
 
@@ -787,6 +805,13 @@ Positions the selected entity according to the entdrop variable.
 <pre id="trigger">trigger T N</pre>
 <p>
 Sets the state of all locked triggers with tag T to N.
+</p>
+
+<pre id="platform">platform T N</pre>
+<p>
+If N = 0, stops all platforms or elevators with tag T.
+If N = 1, causes all platforms or elevators with tag T to move forwards or up, respectively.
+If N = -1, causes all platforms or elevators with tag T to move backwards or down, respectively.
 </p>
 
 <pre id="entselect">entselect X</pre>
@@ -1856,6 +1881,18 @@ a message: <tt>alias level_trigger_1 "echo A door opened nearby"</tt>). The alia
 Be careful when using "switch many" for thing that affect gameplay, such as opening
 doors, as it can be confusing. Best is to reserve a particular model to mean "many"
 and others "once". All types &gt;0 are snapped to 15 degree angles for orientation.
+</p>
+
+<pre id="_box_">"box" [Y] N W</pre>
+<pre id="_barrel_">"barrel" [Y] N W H</pre>
+<p>
+Like a mapmodel, except that damage done to it will push the entity around. Y is the yaw of the model and is initially taken from the current camera yaw, it cannot be specified when creating the entity. N determines which mapmodel you want, this depends on "mapmodel" declarations in the maps cfg file. W is the weight of the box or barrel where the heavier it is the less it moves; if W is not specified or 0, it defaults to 25. Barrels, unlike boxes, will explode if more than H damage is done to them; if H is not specified or 0, it defaults to 50. 
+</p>
+
+<pre id="_platform_">"platform" [Y] N T S</pre>
+<pre id="_elevator_">"elevator" [Y] N T S</pre>
+<p>
+Like a mapmodel, except it moves around and carries players, monsters, or other dynamic entities. Y is the yaw of the model and is initially taken from the current camera yaw, it cannot be specified when creating the entity. N determines which mapmodel you want, this depends on "mapmodel" declarations in the maps cfg file. A platform will travel horizontally back and forth along the direction of its yaw, while an elevator will travel only up and down. When they hit an obstacle such as geometry, they will reverse their direction. T is a tag that may be used to start or stop the elevator with the "platform" command; if a non-zero tag is specified, then the platform or elevator will stop upon hitting an obstacle, rather than reversing direction. S is the speed at which the entity moves, in units per second; if S is not specified or 0, it defaults to to 8.
 </p>
 
 <pre id="_monster_">"monster" N</pre>
