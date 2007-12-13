@@ -35,7 +35,7 @@ struct rpgent : dynent
         if(!eo.s_ai || eo.s_ai==ro->s_ai) return;    // will need a more accurate way of denoting enemies & friends in the future
 
         rpgent &e = *eo.ent;
-        if(e.state==CS_DEAD) return;
+        if(e.state!=CS_ALIVE) return;
 
         vec d = e.o;
         d.sub(o);
@@ -171,6 +171,8 @@ struct rpgent : dynent
             //lastaction = lastmillis;
             if(cl.lastmillis-lastaction>5000)
             {
+                conoutf("\f2you were found unconscious, and have been carried back home");
+
                 findplayerspawn(this);
                 state = CS_ALIVE;
                 ro->st_respawn();

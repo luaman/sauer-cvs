@@ -98,7 +98,9 @@ struct rpgclient : igameclient, g3d_callback
     {
         glLoadIdentity();
         glOrtho(0, w*2, h*2, 0, -1, 1);
-        draw_textf("health: %d/%d", 0, h*2-64, os.playerobj->s_health, os.playerobj->eff_maxhp());       // temp     
+        if(os.playerobj->s_health>0) draw_textf(os.playerobj->s_health>0 ? "health: %d/%d - mana: %d/%d" : "DEAD", 0, h*2-64,
+                                                os.playerobj->s_health, os.playerobj->eff_maxhp(),
+                                                os.playerobj->s_mana, os.playerobj->eff_maxmana());       // temp     
     }
     
     void drawhudmodel(int anim, float speed = 0, int base = 0)
@@ -137,13 +139,13 @@ struct rpgclient : igameclient, g3d_callback
     void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); }
 
     void writegamedata(vector<char> &extras) {}
-    void readgamedata(vector<char> &extras) {}
+    void readgamedata (vector<char> &extras) {}
 
-    char *gameident() { return "rpg"; }
-    char *defaultmap() { return "rpg_01"; }
-    char *savedconfig() { return "rpg_config.cfg"; }
+    char *gameident()     { return "rpg"; }
+    char *defaultmap()    { return "rpg_01"; }
+    char *savedconfig()   { return "rpg_config.cfg"; }
     char *defaultconfig() { return "data/defaults.cfg"; }
-    char *autoexec() { return "rpg_autoexec.cfg"; }
+    char *autoexec()      { return "rpg_autoexec.cfg"; }
 };
 
 #define N(n) int rpgclient::stats::pointscale_##n, rpgclient::stats::percentscale_##n; 

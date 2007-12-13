@@ -785,15 +785,17 @@ inline bool ishtexture(int t)
     return true;
 }
 
+VARP(bypassheightmapcheck, 0, 0, 1);    // temp
+
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
 {
-    return ischildless(*c) && 
+    return bypassheightmapcheck || (ischildless(*c) && 
            ( (empty && isempty(*c)) ||
            (         
             (c->faces[R[d]] & 0x77777777) == 0 &&
             (c->faces[C[d]] & 0x77777777) == 0 &&
             ishtexture(c->texture[o])
-           ));
+           )));
 }
 
 namespace hmap 

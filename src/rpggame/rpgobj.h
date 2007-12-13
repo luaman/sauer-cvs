@@ -110,6 +110,8 @@ struct rpgobj : g3d_callback, stats
             ent->sink = ent->sink*0.8 + sink*0.2;
             //if(ent->blocked) particle_splash(0, 100, 100, ent->o);
             renderclient(ent, model, NULL, ANIM_PUNCH, 300, ent->lastaction, 0, ent->sink);
+            if(s_health<eff_maxhp() && ent->state==CS_ALIVE) particle_meter(ent->abovehead(), s_health/(float)eff_maxhp(), 17);
+
         }
         else
         {
@@ -124,7 +126,7 @@ struct rpgobj : g3d_callback, stats
         float dist = ent->o.dist(os.cl.player1.o);
         if(s_ai) { ent->update(curtime, dist); st_update(ent->cl.lastmillis); };
         moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
-        if(!menutime && dist<32 && ent->state==CS_ALIVE) menutime = starttime();
+        if(!menutime && dist<32 && ent->state==CS_ALIVE && s_ai<2) menutime = starttime();
         else if(dist>96) menutime = 0;
     }
 
@@ -240,8 +242,10 @@ struct rpgobj : g3d_callback, stats
                 g.tab("sell", 0xDDDDDD);
                 os.playerobj->invgui(g, this);
             }
+            /*
             g.tab("stats", 0xDDDDDD);
             st_gui(g, *os.playerobj);
+            */
         }
         
         g.end();
@@ -264,11 +268,18 @@ struct rpgobj : g3d_callback, stats
                     }
                     else
                     {
-                        conoutf("\f2you sold %s for %d gold", o->name, price);
-                        s_gold += price;
-                        seller->s_gold -= price;
-                        o->decontain();
-                        seller->add(o, IF_TRADE);                    
+                        if(price)
+                        {
+                            conoutf("\f2you sold %s for %d gold", o->name, price);
+                            s_gold += price;
+                            seller->s_gold -= price;
+                            o->decontain();
+                            seller->add(o, IF_TRADE);                                            
+                        }
+                        else
+                        {
+                            conoutf("\f2you cannot sell %s", o->name);
+                        }
                     }
                 }
                 else    // player wants to use this item

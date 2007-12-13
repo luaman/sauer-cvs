@@ -14,53 +14,6 @@
 
 <h1>Sauerbraten RPG gameplay scripting</h1>
 
-<div class="contents">
-<ul class="contents">
-<li>
-<a href="#gameplay_scripting"><b>Gameplay Scripting</b></a>
-<ul class="contents2">
-<li>
-<a href="#spawn_apple"><tt>spawn_apple</tt></a>
-</li>
-<li>
-<a href="#newrpgspawn"><tt>newrpgspawn</tt></a>
-</li>
-</ul>
-</li>
-<li>
-<a href="#rpg_object_commands"><b>RPG object commands</b></a>
-<ul class="contents2">
-<li>
-<a href="#r_pop"><tt>r_pop</tt></a>
-</li>
-<li>
-<a href="#r_spawn"><tt>r_spawn</tt></a>
-</li>
-<li>
-<a href="#r_contain"><tt>r_contain</tt></a>
-</li>
-<li>
-<a href="#r_model"><tt>r_model</tt></a>
-</li>
-<li>
-<a href="#r_ai"><tt>r_ai</tt></a>
-</li>
-<li>
-<a href="#r_action"><tt>r_action</tt></a>
-</li>
-<li>
-<a href="#r_say"><tt>r_say</tt></a>
-</li>
-<li>
-<a href="#r_take"><tt>r_take</tt></a>
-</li>
-<li>
-<a href="#r_give"><tt>r_give</tt></a>
-</li>
-</ul>
-</li>
-</ul>
-</div>
 
 <h2 id="gameplay_scripting">Gameplay Scripting</h2>
 
@@ -125,11 +78,6 @@ T is the type of inventory object, see the convenient scripts r_inventory, r_loo
 Specify model M to represent this object visually when placed in the world
 </p>
 
-<pre id="r_ai">r_ai</pre>
-<p>
-Signifies that this object should run AI code when placed in the world, used for NPCs/monsters, not items.
-</p>
-
 <pre id="r_action">r_action N A</pre>
 <p>
 defines a custom action the player can take on this object. N is the tag word that describes the action, visible in
@@ -185,7 +133,7 @@ i.e. the "melee" stat affects your melee combat effectiveness. Stats are things 
 			regen</td>
 		<td style="width: 802px; height: 44px;">
 			amount of hp regenerated per second. regen is the only defense stat, it replaces
-			the tradition armour or resistence stats. regen is more flexible in the sense that
+			the traditional armour or resistence stats. regen is more flexible in the sense that
 			it is time based, so your effectiveness depends on being able to give or take sustained
 			damage, and deals better with the effects of running away mid-fight etc.</td>
 	</tr>
@@ -331,13 +279,13 @@ initialized object.
 		<td style="width: 100px">
 			health</td>
 		<td style="width: 800px">
-			set to maxhp when an AI object spawns in the world, and regens to maxhp</td>
+			set to maxhp when an AI object spawns in the world, and regens using regen</td>
 	</tr>
 	<tr>
 		<td style="width: 100px; height: 16px">
 			mana</td>
 		<td style="width: 800px; height: 16px">
-			set to maxmana upon spawn, and regens to focus</td>
+			set to maxmana upon spawn, and regens using focus</td>
 	</tr>
 	<tr>
 		<td style="width: 100px">

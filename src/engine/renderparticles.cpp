@@ -1346,6 +1346,7 @@ void regularshape(int type, int radius, int color, int dir, int num, int fade, c
     }
 }
 
+
 static void makeparticles(entity &e) 
 {
     switch(e.attr1)
