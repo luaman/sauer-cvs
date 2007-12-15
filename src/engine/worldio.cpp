@@ -500,6 +500,8 @@ void load_world(const char *mname, const char *cname)        // still supports a
         }
     }
 
+    cl->preload();
+
     initlights();
     allchanged(true);
 

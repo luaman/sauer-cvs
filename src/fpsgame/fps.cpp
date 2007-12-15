@@ -422,6 +422,36 @@ struct fpsclient : igameclient
         cc.initclientnet();
     }
 
+    void preloadcharacters()
+    {
+        loadmodel(fr.ogro() ? "monster/ogro" : "ironsnout", -1, true);
+        loadmodel(fr.ogro() ? "monster/ogro/blue" : "ironsnout/blue", -1, true);
+        loadmodel(fr.ogro() ? "monster/ogro/red" : "ironsnout/red", -1, true);
+    }
+
+    void preloadweapons()
+    {
+        loopi(NUMGUNS)
+        {
+            const char *file = guns[i].file;
+            if(!file) continue;
+            s_sprintfd(mdl)("hudguns/%s", file);
+            loadmodel(mdl, -1, true);
+            s_sprintf(mdl)("hudguns/%s/blue", file);
+            loadmodel(mdl, -1, true);
+            s_sprintf(mdl)("vwep/%s", file);
+            loadmodel(mdl, -1, true);
+        }
+    }
+
+    void preload()
+    {
+        preloadweapons();
+        preloadcharacters();
+        et.preloadentities();
+        if(m_sp) ms.preloadmonsters();
+    }
+
     void startmap(const char *name)   // called just after a map load
     {
         suicided = -1;
@@ -532,10 +562,9 @@ struct fpsclient : igameclient
     IVARP(hudgun, 0, 1, 1);
     IVARP(hudgunsway, 0, 1, 1);
     IVARP(teamhudguns, 0, 1, 1);
-    
+   
     void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
-        static const char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle", "hudguns/gl", "hudguns/pistol" };
         if(player1->gunselect>GUN_PISTOL) return;
 
         vec sway, color, dir;
@@ -561,8 +590,7 @@ struct fpsclient : igameclient
         }
 #endif
 
-        string gunname;
-        s_strcpy(gunname, hudgunnames[player1->gunselect]);
+        s_sprintfd(gunname)("hudguns/%s", guns[player1->gunselect].file);
         if((m_teamskins || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
         rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }

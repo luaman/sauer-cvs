@@ -306,12 +306,13 @@ struct captureclient : capturestate
         drawblips(x, y, s, 0, showenemies);
         drawblips(x, y, s, -1, showenemies);
         if(showenemies) drawblips(x, y, s, -2);
-        if(cl.player1->state == CS_DEAD)
+        int gamemode = cl.gamemode;
+        if(cl.player1->state == CS_DEAD && (!m_noitems || m_noitemsrail))
         {
             glPushMatrix();
             glLoadIdentity();
             glOrtho(0, w*900/h, 900, 0, -1, 1);
-            int gamemode = cl.gamemode, wait = max(0, (m_noitemsrail ? RESPAWNSECS/2 : RESPAWNSECS)-(cl.lastmillis-cl.player1->lastpain)/1000);
+            int wait = max(0, (m_noitemsrail ? RESPAWNSECS/2 : RESPAWNSECS)-(cl.lastmillis-cl.player1->lastpain)/1000);
             draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
             glPopMatrix();
         }

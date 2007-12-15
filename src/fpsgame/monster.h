@@ -255,7 +255,12 @@ struct monsterset
         };
         monstertypes = _monstertypes;
     }
-    
+   
+    void preloadmonsters()
+    {
+        loopi(NUMMONSTERTYPES) loadmodel(monstertypes[i].mdlname, -1, true);
+    }
+
     vector<monster *> monsters;
     
     int nextmonster, spawnremain, numkilled, monstertotal, mtimestart, remain;

@@ -35,6 +35,16 @@ struct entities : icliententities
         return entmdlnames[type];
     }
 
+    void preloadentities()
+    {
+        loopi(MAXENTTYPES)
+        {
+            char *mdl = entmdlname(i);
+            if(!mdl) continue;
+            loadmodel(mdl, -1, true);
+        }
+    }
+
     void renderent(extentity &e, int type, float z, float yaw, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
     {
         char *mdlname = entmdlname(type);
