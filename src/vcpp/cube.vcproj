@@ -1523,6 +1523,10 @@
 			Name="FPS"
 			>
 			<File
+				RelativePath="..\fpsgame\assassin.h"
+				>
+			</File>
+			<File
 				RelativePath="..\fpsgame\capture.h"
 				>
 			</File>
