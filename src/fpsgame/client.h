@@ -894,6 +894,58 @@ struct clientcom : iclientcom
                 break;
             }
 
+            case SV_CLEARTARGETS:
+                if(m_assassin) cl.asc.targets.setsize(0);
+                break;
+
+            case SV_CLEARHUNTERS:
+                if(m_assassin) cl.asc.hunters.setsize(0);
+                break;
+
+            case SV_ADDTARGET:
+            {
+                int tcn = getint(p);
+                if(m_assassin) 
+                {
+                    fpsent *t = cl.newclient(tcn);
+                    if(cl.asc.targets.find(t)<0) cl.asc.targets.add(t);
+                }
+                break;
+            }
+
+            case SV_REMOVETARGET:
+            {
+                int tcn = getint(p);
+                if(m_assassin)
+                {
+                    fpsent *t = cl.getclient(tcn);
+                    if(t) cl.asc.targets.removeobj(t);
+                }
+                break;
+            }
+
+            case SV_ADDHUNTER:
+            {
+                int hcn = getint(p);
+                if(m_assassin)
+                {
+                    fpsent *h = cl.newclient(hcn);
+                    if(cl.asc.hunters.find(h)<0) cl.asc.hunters.add(h);
+                }
+                break;
+            }
+
+            case SV_REMOVEHUNTER:
+            {
+                int hcn = getint(p);
+                if(m_assassin)
+                {
+                    fpsent *h = cl.getclient(hcn);
+                    if(h) cl.asc.hunters.removeobj(h);
+                }
+                break;
+            }    
+
             case SV_NEWMAP:
             {
                 int size = getint(p);
@@ -925,6 +977,7 @@ struct clientcom : iclientcom
         if(gamemode==1 && !name[0]) emptymap(0, true);
         else load_world(name);
         if(m_capture) cl.cpc.setupbases();
+        else if(m_assassin) cl.asc.reset();
         if(editmode) edittoggled(editmode);
     }
 

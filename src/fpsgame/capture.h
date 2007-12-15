@@ -258,14 +258,12 @@ struct captureclient : capturestate
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
    
-    IVARP(maxradarscale, 0, 1024, 10000);
-
     void drawblips(int x, int y, int s, int type, bool skipenemy = false)
     {
         const char *textures[3] = {"data/blip_red.png", "data/blip_grey.png", "data/blip_blue.png"};
         settexture(textures[max(type+1, 0)]);
         glBegin(GL_QUADS);
-        float scale = radarscale<=0 || radarscale>maxradarscale() ? maxradarscale() : radarscale;
+        float scale = radarscale<=0 || radarscale>cl.maxradarscale() ? cl.maxradarscale() : radarscale;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -603,7 +601,7 @@ struct captureservmode : capturestate, servmode
 
     void entergame(clientinfo *ci) 
     {
-        if(notgotbases) return;
+        if(notgotbases || ci->state.state!=CS_ALIVE) return;
         enterbases(ci->team, ci->state.o);
     }        
 
@@ -613,9 +611,9 @@ struct captureservmode : capturestate, servmode
         enterbases(ci->team, ci->state.o);
     }
 
-    void leavegame(clientinfo *ci)
+    void leavegame(clientinfo *ci, bool disconnecting = false)
     {
-        if(notgotbases) return;
+        if(notgotbases || ci->state.state!=CS_ALIVE) return;
         leavebases(ci->team, ci->state.o);
     }
 

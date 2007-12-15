@@ -80,20 +80,25 @@ struct fpsrender
 
         startmodelbatches();
 
-        const char *ffamdl = ogro() ? "monster/ogro" : "ironsnout",
-                   *bluemdl = ogro() ? "monster/ogro/blue" : "ironsnout/blue",
-                   *redmdl = ogro() ? "monster/ogro/red" : "ironsnout/red";
+        const char *mdlnames[3] = 
+        { 
+            ogro() ? "monster/ogro" : "ironsnout",
+            ogro() ? "monster/ogro/blue" : "ironsnout/blue",
+            ogro() ? "monster/ogro/red" : "ironsnout/red"
+        };
 
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && d->state!=CS_SPAWNING)
         {
-            const char *mdlname = teamskins() || m_teammode ? (isteam(cl.player1->team, d->team) ? bluemdl : redmdl) : ffamdl;
-            if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlname);
+            int mdl = 0;
+            if(m_assassin) mdl = cl.asc.targets.find(d)>=0 ? 2 : (cl.asc.hunters.find(d)>=0 ? 0 : 1);
+            else if(teamskins() || m_teammode) mdl = isteam(cl.player1->team, d->team) ? 1 : 2;
+            if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlnames[mdl]);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
-            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, m_teammode ? (isteam(cl.player1->team, d->team) ? 16 : 13) : 11, 1);
+            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, mdl ? (mdl==1 ? 16 : 13) : 11, 1);
         }
-        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teammode ? bluemdl : ffamdl);
+        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teamskins ? mdlnames[1] : mdlnames[0]);
 
         cl.ms.monsterrender();
         cl.mo.render();

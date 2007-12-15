@@ -41,19 +41,21 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_
 enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
-#define m_noitems     ((gamemode>=4 && gamemode<=11) || gamemode==13)
-#define m_noitemsrail ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9) || gamemode==13)
+#define m_noitems     ((gamemode>=4 && gamemode<=11) || gamemode==13 || gamemode==14 || gamemode==16)
+#define m_noitemsrail ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9) || gamemode==13 || gamemode==16)
 #define m_arena       (gamemode>=8 && gamemode<=11)
 #define m_tarena      (gamemode>=10 && gamemode<=11)
-#define m_capture     (gamemode>=12 && gamemode<=13)
-#define m_teammode    ((gamemode>2 && gamemode&1) || m_capture)
+#define m_capture     (gamemode>=12 && gamemode<=14)
+#define m_assassin    (gamemode>=15 && gamemode<=16)
+#define m_teammode    ((gamemode>2 && gamemode<12 && gamemode&1) || m_capture)
+#define m_teamskins   (m_teammode || m_assassin)
 #define m_sp          (gamemode>=-2 && gamemode<0)
 #define m_dmsp        (gamemode==-1)
 #define m_classicsp   (gamemode==-2)
 #define m_demo        (gamemode==-3)
 #define isteam(a,b)   (m_teammode && strcmp(a, b)==0)
 
-#define m_mp(mode)    (mode>=0 && mode<=13)
+#define m_mp(mode)    (mode>=0 && mode<=16)
 
 // hardcoded sounds, defined in sounds.cfg
 enum
@@ -102,6 +104,7 @@ enum
     SV_EDITMODE, SV_EDITENT, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE, SV_DELCUBE, SV_REMIP, SV_NEWMAP, SV_GETMAP, SV_SENDMAP,
     SV_MASTERMODE, SV_KICK, SV_CLEARBANS, SV_CURRENTMASTER, SV_SPECTATOR, SV_SETMASTER, SV_SETTEAM, SV_APPROVEMASTER,
     SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_FORCEINTERMISSION, SV_ANNOUNCE,
+    SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER,
     SV_LISTDEMOS, SV_SENDDEMOLIST, SV_GETDEMO, SV_SENDDEMO,
     SV_DEMOPLAYBACK, SV_RECORDDEMO, SV_STOPDEMO, SV_CLEARDEMOS,
     SV_CLIENT,
@@ -123,6 +126,7 @@ static char msgsizelookup(int msg)
         SV_EDITMODE, 2, SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_REMIP, 1, SV_NEWMAP, 2, SV_GETMAP, 1, SV_SENDMAP, 0,
         SV_MASTERMODE, 2, SV_KICK, 2, SV_CLEARBANS, 1, SV_CURRENTMASTER, 3, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0, SV_APPROVEMASTER, 2,
         SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
+        SV_CLEARTARGETS, 1, SV_CLEARHUNTERS, 1, SV_ADDTARGET, 2, SV_REMOVETARGET, 2, SV_ADDHUNTER, 2, SV_REMOVEHUNTER, 2,
         SV_LISTDEMOS, 1, SV_SENDDEMOLIST, 0, SV_GETDEMO, 2, SV_SENDDEMO, 0,
         SV_DEMOPLAYBACK, 2, SV_RECORDDEMO, 2, SV_STOPDEMO, 1, SV_CLEARDEMOS, 2,
         SV_CLIENT, 0,

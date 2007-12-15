@@ -22,6 +22,7 @@ struct fpsclient : igameclient
     #include "entities.h"
     #include "client.h"
     #include "capture.h"
+    #include "assassin.h"
 
     int nextmode, gamemode;         // nextmode becomes gamemode after next map load
     bool intermission;
@@ -48,7 +49,11 @@ struct fpsclient : igameclient
     fpsrender   fr;
     entities    et;
     clientcom   cc;
+
+    IVARP(maxradarscale, 0, 1024, 10000);
+
     captureclient cpc;
+    assassinclient asc;
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
@@ -57,7 +62,7 @@ struct fpsclient : igameclient
           suicided(-1), 
           following(-1),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this)
+          ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this), asc(*this)
     {
         CCOMMAND(mode, "i", (fpsclient *self, int *val), { self->setmode(*val); });
         CCOMMAND(kill, "",  (fpsclient *self), { self->suicide(self->player1); });
@@ -292,6 +297,12 @@ struct fpsclient : igameclient
     {
         if(d->state!=CS_ALIVE || intermission) return;
 
+        if(m_assassin)
+        {
+            if(d==player1 && asc.hunters.find(actor)>=0) asc.hunters.removeobj(actor);
+            else if(actor==player1 && asc.targets.find(d)>=0) asc.targets.removeobj(d);
+        }
+
         string dname, aname;
         s_strcpy(dname, d==player1 ? "you" : colorname(d));
         s_strcpy(aname, actor==player1 ? "you" : (actor->type!=ENT_INANIMATE ? colorname(actor) : ""));
@@ -400,6 +411,7 @@ struct fpsclient : igameclient
         ws.removebouncers(d);
         ws.removeprojectiles(d);
         removetrackedparticles(d);
+        if(m_assassin) asc.removeplayer(d);
         DELETEP(players[cn]);
         cleardynentcache();
     }
@@ -551,7 +563,7 @@ struct fpsclient : igameclient
 
         string gunname;
         s_strcpy(gunname, hudgunnames[player1->gunselect]);
-        if((m_teammode || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
+        if((m_teamskins || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
         rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
     }
 
@@ -621,6 +633,7 @@ struct fpsclient : igameclient
             drawicon((float)(g*64), (float)r, 1220, 1650);
         }
         if(m_capture) cpc.capturehud(w, h);
+        else if(m_assassin) asc.drawhud(w, h);
     }
 
     void crosshaircolor(float &r, float &g, float &b)

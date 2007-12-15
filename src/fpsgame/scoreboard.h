@@ -206,7 +206,14 @@ struct scoreboard : g3d_callback
                     g.pushlist();
                     g.background(0x808080, numgroups>1 ? 3 : 5);
                 }
-                g.text("", 0, icon);
+                const char *oicon = icon;
+                if(!cl.fr.ogro() && m_assassin)
+                {
+                    if(cl.asc.targets.find(o)>=0) oicon = "player_red";
+                    else if(cl.asc.hunters.find(o)>=0) oicon = "player";
+                    else oicon = "player_blue";
+                }
+                g.text("", 0, oicon);
                 if(o==cl.player1 && highlightscore() && (multiplayer(false) || cl.cc.demoplayback)) g.poplist();
             });
             g.poplist();
