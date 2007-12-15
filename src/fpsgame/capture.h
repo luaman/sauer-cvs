@@ -9,6 +9,10 @@ struct capturestate
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
     static const int AMMOSECS = 15;
+    static const int REGENSECS = 1;
+    static const int REGENHEALTH = 10;
+    static const int REGENARMOUR = 5;
+    static const int REGENAMMO = 20;
     static const int MAXAMMO = 5;
     static const int REPAMMODIST = 32;
     static const int RESPAWNSECS = 10;        
@@ -188,7 +192,7 @@ struct captureclient : capturestate
     void replenishammo()
     {
         int gamemode = cl.gamemode;
-        if(m_noitemsrail) return;
+        if(m_noitems) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -206,12 +210,13 @@ struct captureclient : capturestate
 
     void renderbases()
     {
+        int gamemode = cl.gamemode;
         loopv(bases)
         {
             baseinfo &b = bases[i];
             const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
             rendermodel(b.ent->color, b.ent->dir, flagname, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, b.o, 0, 0, 0, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) loopi(b.ammo)
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) loopi(m_noitemsrail ? 0 : (m_noitems ? 1 : b.ammo))
             {
                 float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
                 vec p(b.o);
@@ -460,7 +465,7 @@ struct captureservmode : capturestate, servmode
     void replenishammo(clientinfo *ci)
     {
         int gamemode = sv.gamemode;
-        if(m_noitemsrail || notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        if(m_noitems || notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -506,6 +511,39 @@ struct captureservmode : capturestate, servmode
         sendf(-1, 1, "risi", SV_TEAMSCORE, team, cs.total);
     }
 
+    void regenowners(baseinfo &b, int ticks)
+    {
+        loopv(sv.clients)
+        {
+            fpsserver::clientinfo *ci = sv.clients[i];
+            if(!ci->spectator && ci->state.state==CS_ALIVE && ci->team[0] && !strcmp(ci->team, b.owner) && insidebase(b, ci->state.o))
+            {
+                bool notify = false;
+                if(ci->state.health < ci->state.maxhealth) 
+                {
+                    ci->state.health = min(ci->state.health + ticks*REGENHEALTH, ci->state.maxhealth);
+                    notify = true;
+                }
+                if(ci->state.armour < itemstats[I_GREENARMOUR-I_SHELLS].max) 
+                {
+                    ci->state.armour = min(ci->state.armour + ticks*REGENARMOUR, itemstats[I_GREENARMOUR-I_SHELLS].max);
+                    notify = true;
+                }
+                if(b.ammotype>0)
+                {
+                    int ammotype = b.ammotype-1+I_SHELLS;
+                    if(ammotype<=I_CARTRIDGES && !ci->state.hasmaxammo(ammotype)) 
+                    {
+                        ci->state.addammo(b.ammotype, ticks*REGENAMMO, 100);
+                        notify = true;
+                    }
+                }
+                if(notify)
+                    sendf(ci->clientnum, 1, "ri5", SV_BASEREGEN, ci->state.health, ci->state.armour, b.ammotype, b.ammotype>0 ? ci->state.ammo[b.ammotype] : 0);
+            }
+        }
+    }
+
     void update()
     {
         if(sv.minremain<0) return;
@@ -524,10 +562,21 @@ struct captureservmode : capturestate, servmode
             else if(b.owner[0])
             {
                 b.capturetime += t;
-                int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS,
-                    ammo = b.capturetime/AMMOSECS - (b.capturetime-t)/AMMOSECS;
+                int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS;
                 if(score) addscore(b.owner, score);
-                if(!m_noitemsrail && b.addammo(ammo)) sendbaseinfo(i);
+                if(m_noitems)
+                {
+                    if(!m_noitemsrail)
+                    {
+                        int regen = b.capturetime/REGENSECS - (b.capturetime-t)/REGENSECS;
+                        if(regen) regenowners(b, regen);
+                    }
+                }
+                else 
+                {
+                    int ammo = b.capturetime/AMMOSECS - (b.capturetime-t)/AMMOSECS;
+                    if(ammo && b.addammo(ammo)) sendbaseinfo(i);
+                }
             }
         }
     }
@@ -645,7 +694,7 @@ struct captureservmode : capturestate, servmode
             o.x = getint(p)/DMF;
             o.y = getint(p)/DMF;
             o.z = getint(p)/DMF;
-            if(notgotbases) addbase(ammotype, o);
+            if(notgotbases) addbase(ammotype>=GUN_SG && ammotype<=GUN_PISTOL ? ammotype : 0, o);
         }
         if(notgotbases)
         {

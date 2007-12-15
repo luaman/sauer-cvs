@@ -46,6 +46,7 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 #define m_arena       (gamemode>=8 && gamemode<=11)
 #define m_tarena      (gamemode>=10 && gamemode<=11)
 #define m_capture     (gamemode>=12 && gamemode<=14)
+#define m_regencapture (gamemode==14)
 #define m_assassin    (gamemode>=15 && gamemode<=16)
 #define m_teammode    ((gamemode>2 && gamemode<12 && gamemode&1) || m_capture)
 #define m_teamskins   (m_teammode || m_assassin)
@@ -103,7 +104,7 @@ enum
     SV_SERVMSG, SV_ITEMLIST, SV_RESUME,
     SV_EDITMODE, SV_EDITENT, SV_EDITF, SV_EDITT, SV_EDITM, SV_FLIP, SV_COPY, SV_PASTE, SV_ROTATE, SV_REPLACE, SV_DELCUBE, SV_REMIP, SV_NEWMAP, SV_GETMAP, SV_SENDMAP,
     SV_MASTERMODE, SV_KICK, SV_CLEARBANS, SV_CURRENTMASTER, SV_SPECTATOR, SV_SETMASTER, SV_SETTEAM, SV_APPROVEMASTER,
-    SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_FORCEINTERMISSION, SV_ANNOUNCE,
+    SV_BASES, SV_BASEINFO, SV_TEAMSCORE, SV_REPAMMO, SV_BASEREGEN, SV_FORCEINTERMISSION, SV_ANNOUNCE,
     SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER,
     SV_LISTDEMOS, SV_SENDDEMOLIST, SV_GETDEMO, SV_SENDDEMO,
     SV_DEMOPLAYBACK, SV_RECORDDEMO, SV_STOPDEMO, SV_CLEARDEMOS,
@@ -125,7 +126,7 @@ static char msgsizelookup(int msg)
         SV_SERVMSG, 0, SV_ITEMLIST, 0, SV_RESUME, 0,
         SV_EDITMODE, 2, SV_EDITENT, 10, SV_EDITF, 16, SV_EDITT, 16, SV_EDITM, 15, SV_FLIP, 14, SV_COPY, 14, SV_PASTE, 14, SV_ROTATE, 15, SV_REPLACE, 16, SV_DELCUBE, 14, SV_REMIP, 1, SV_NEWMAP, 2, SV_GETMAP, 1, SV_SENDMAP, 0,
         SV_MASTERMODE, 2, SV_KICK, 2, SV_CLEARBANS, 1, SV_CURRENTMASTER, 3, SV_SPECTATOR, 3, SV_SETMASTER, 0, SV_SETTEAM, 0, SV_APPROVEMASTER, 2,
-        SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
+        SV_BASES, 0, SV_BASEINFO, 0, SV_TEAMSCORE, 0, SV_REPAMMO, 1, SV_BASEREGEN, 5, SV_FORCEINTERMISSION, 1,  SV_ANNOUNCE, 2,
         SV_CLEARTARGETS, 1, SV_CLEARHUNTERS, 1, SV_ADDTARGET, 2, SV_REMOVETARGET, 2, SV_ADDHUNTER, 2, SV_REMOVEHUNTER, 2,
         SV_LISTDEMOS, 1, SV_SENDDEMOLIST, 0, SV_GETDEMO, 2, SV_SENDDEMO, 0,
         SV_DEMOPLAYBACK, 2, SV_RECORDDEMO, 2, SV_STOPDEMO, 1, SV_CLEARDEMOS, 2,
@@ -199,14 +200,15 @@ struct fpsstate
 
     fpsstate() : maxhealth(100) {}
 
-    void baseammo(int gun, int k = 2)
+    void baseammo(int gun, int k = 2, int scale = 1)
     {
-        ammo[gun] = itemstats[gun-GUN_SG].add*k;
+        ammo[gun] = (itemstats[gun-GUN_SG].add*k)/scale;
     }
 
-    void addammo(int gun, int k = 1)
+    void addammo(int gun, int k = 1, int scale = 1)
     {
-        ammo[gun] += itemstats[gun-GUN_SG].add*k;
+        itemstat &is = itemstats[gun-GUN_SG];
+        ammo[gun] = min(ammo[gun] + (is.add*k)/scale, is.max);
     }
 
     bool hasmaxammo(int type)
@@ -282,8 +284,15 @@ struct fpsstate
             }
             else
             {
-                armour = 100;
                 armourtype = A_GREEN;
+                if(m_regencapture)
+                {
+                    health = 1;
+                }
+                else
+                {
+                    armour = 100;
+                }
                 if(m_tarena || m_capture)
                 {
                     ammo[GUN_PISTOL] = 80;

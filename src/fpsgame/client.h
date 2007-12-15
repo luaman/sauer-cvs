@@ -854,6 +854,18 @@ struct clientcom : iclientcom
                 break;
             }
 
+            case SV_BASEREGEN:
+            {
+                int health = getint(p), armour = getint(p), ammotype = getint(p), ammo = getint(p);
+                if(m_capture)
+                {
+                    player1->health = health;
+                    player1->armour = armour;
+                    if(ammotype>=GUN_SG && ammotype<=GUN_PISTOL) player1->ammo[ammotype] = ammo;
+                }
+                break;
+            }
+
             case SV_BASES:
             {
                 int base = 0, ammotype;

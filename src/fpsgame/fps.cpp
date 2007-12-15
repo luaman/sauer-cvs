@@ -232,7 +232,7 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         {
             player1->attacking = false;
-            if(m_capture)
+            if(m_capture && !m_regencapture)
             {
                 int wait = (m_noitemsrail ? cpc.RESPAWNSECS/2 : cpc.RESPAWNSECS)-(lastmillis-player1->lastpain)/1000;
                 if(wait>0)
