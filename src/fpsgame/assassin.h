@@ -157,22 +157,12 @@ struct assassinclient
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
 
-    void drawhud(int w, int h)
+    void drawblips(vector<fpsent *> &blips, float x, float y, float s, float scale)
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        int x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
-        glColor3f(1, 1, 1);
-        settexture("data/radar.png");
         glBegin(GL_QUADS);
-        drawradar(float(x), float(y), float(s));
-        glEnd();
-        settexture("data/blip_red.png");
-        glBegin(GL_QUADS);
-        float scale = radarscale<=0 || radarscale>cl.maxradarscale() ? cl.maxradarscale() : radarscale;
-        loopv(targets)
+        loopv(blips)
         {
-            fpsent *d = targets[i];
+            fpsent *d = blips[i];
             vec dir(d->o);
             dir.sub(cl.player1->o);
             dir.z = 0.0f;
@@ -182,6 +172,29 @@ struct assassinclient
             drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/scale), y + s*0.5f*0.95f*(1.0f+dir.y/scale), 0.05f*s);
         }
         glEnd();
+    }
+
+    void drawhud(int w, int h)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        float x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
+        glColor3f(1, 1, 1);
+        settexture("data/radar.png");
+        glBegin(GL_QUADS);
+        drawradar(x, y, s);
+        glEnd();
+        float scale = radarscale<=0 || radarscale>cl.maxradarscale() ? cl.maxradarscale() : radarscale;
+        if(hunters.length())
+        {
+            settexture("data/blip_grey.png");
+            drawblips(hunters, x, y, s, scale);
+        }
+        if(targets.length())
+        {
+            settexture("data/blip_red.png");
+            drawblips(targets, x, y, s, scale);
+        }
         glDisable(GL_BLEND);
     }
 };
