@@ -101,7 +101,7 @@ struct assassinservmode : servmode
             actor->targets.removeobj(victim);
             checkneedstarget(actor, victim);
         }
-        if(victim->targets.find(actor)<0)
+        else if(victim->targets.find(actor)<0)
         {
             victim->targets.add(actor);
             sendf(victim->clientnum, 1, "ri2", SV_ADDTARGET, actor->clientnum);

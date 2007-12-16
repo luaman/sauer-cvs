@@ -10,8 +10,8 @@ struct capturestate
     static const int SCORESECS = 10;
     static const int AMMOSECS = 15;
     static const int REGENSECS = 1;
-    static const int REGENHEALTH = 10;
-    static const int REGENARMOUR = 5;
+    static const int REGENHEALTH = 20;
+    static const int REGENARMOUR = 10;
     static const int REGENAMMO = 20;
     static const int MAXAMMO = 5;
     static const int REPAMMODIST = 32;
@@ -396,7 +396,7 @@ struct captureclient : capturestate
             if(!b.owner[0] || strcmp(b.owner, team)) continue;
             if(noattacked && b.enemy[0]) continue;
             float dist = disttoenemy(b);
-            if(dist < bestdist)
+            if(m_regencapture ? dist > bestdist : dist < bestdist)
             {
                 best = i;
                 bestdist = dist;

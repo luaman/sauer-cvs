@@ -284,6 +284,7 @@ struct fpsstate
             }
             else if(m_regencapture)
             {
+                health = 50;
                 armourtype = A_GREEN;
                 gunselect = GUN_PISTOL;
                 ammo[GUN_PISTOL] = 40;
