@@ -50,7 +50,7 @@ struct assassinservmode : servmode
             if(hunter->targets.find(ci)<0) continue;
             hunter->targets.removeobj(ci);
             sendf(hunter->clientnum, 1, "ri2", SV_REMOVETARGET, ci->clientnum);
-            checkneedstarget(hunter);
+            checkneedstarget(hunter, ci);
         }
         if(!disconnecting) sendf(ci->clientnum, 1, "ri2", SV_CLEARTARGETS, SV_CLEARHUNTERS);
         
