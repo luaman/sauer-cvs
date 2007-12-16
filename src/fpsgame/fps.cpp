@@ -32,7 +32,7 @@ struct fpsclient : igameclient
     int respawnent;
     int swaymillis;
     vec swaydir;
-    int suicided;
+    int respawned, suicided;
 
     int following;
     IVARP(followdist, 10, 50, 1000);
@@ -59,7 +59,7 @@ struct fpsclient : igameclient
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
-          suicided(-1), 
+          respawned(-1), suicided(-1), 
           following(-1),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this), asc(*this)
@@ -118,7 +118,14 @@ struct fpsclient : igameclient
 
     void respawnself()
     {
-        if(m_mp(gamemode)) cc.addmsg(SV_TRYSPAWN, "r");
+        if(m_mp(gamemode)) 
+        {
+            if(respawned!=player1->lifesequence)
+            {
+                cc.addmsg(SV_TRYSPAWN, "r");
+                respawned = player1->lifesequence;
+            }
+        }
         else
         {
             spawnplayer(player1);
@@ -206,6 +213,7 @@ struct fpsclient : igameclient
                 player1->move = player1->strafe = 0;
                 moveplayer(player1, 10, false);
             }
+            if(m_assassin && asc.respawnwait()<=0) respawnself();
         }
         else if(!intermission)
         {
@@ -232,9 +240,9 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         {
             player1->attacking = false;
-            if(m_capture && !m_regencapture)
+            if(m_capture)
             {
-                int wait = (m_noitemsrail ? cpc.RESPAWNSECS/2 : cpc.RESPAWNSECS)-(lastmillis-player1->lastpain)/1000;
+                int wait = cpc.respawnwait();
                 if(wait>0)
                 {
                     conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
@@ -454,7 +462,7 @@ struct fpsclient : igameclient
 
     void startmap(const char *name)   // called just after a map load
     {
-        suicided = -1;
+        respawned = suicided = -1;
         respawnent = -1;
         if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();

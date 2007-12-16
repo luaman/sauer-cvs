@@ -113,6 +113,8 @@ struct assassinservmode : servmode
 #else
 struct assassinclient
 {
+    static const int RESPAWNSECS = 10;
+
     fpsclient &cl;
     vector<fpsent *> targets, hunters;
     float radarscale;
@@ -174,6 +176,11 @@ struct assassinclient
         glEnd();
     }
 
+    int respawnwait()
+    {
+        return max(0, RESPAWNSECS - (cl.lastmillis - cl.player1->lastpain)/1000);
+    }
+
     void drawhud(int w, int h)
     {
         glEnable(GL_BLEND);
@@ -194,6 +201,15 @@ struct assassinclient
         {
             settexture("data/blip_red.png");
             drawblips(targets, x, y, s, scale);
+        }
+        if(cl.player1->state == CS_DEAD)
+        {
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, w*900/h, 900, 0, -1, 1);
+            int wait = respawnwait();
+            draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
+            glPopMatrix();
         }
         glDisable(GL_BLEND);
     }
