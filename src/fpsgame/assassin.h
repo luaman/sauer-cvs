@@ -95,7 +95,7 @@ struct assassinservmode : servmode
 
     void died(clientinfo *victim, clientinfo *actor)
     {
-        if(!actor) return;
+        if(!actor || actor==victim) return;
         if(actor->targets.find(victim)>=0)
         {
             actor->targets.removeobj(victim);

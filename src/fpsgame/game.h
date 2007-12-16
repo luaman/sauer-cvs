@@ -275,24 +275,23 @@ struct fpsstate
     {
         if(m_noitems || m_capture)
         {
-            gunselect = GUN_RIFLE;
             armour = 0;
             if(m_noitemsrail)
             {
                 health = 1;
+                gunselect = GUN_RIFLE;
                 ammo[GUN_RIFLE] = 100;
+            }
+            else if(m_regencapture)
+            {
+                armourtype = A_GREEN;
+                gunselect = GUN_PISTOL;
+                ammo[GUN_PISTOL] = 40;
+                ammo[GUN_GL] = 1;
             }
             else
             {
                 armourtype = A_GREEN;
-                if(m_regencapture)
-                {
-                    health = 1;
-                }
-                else
-                {
-                    armour = 100;
-                }
                 if(m_tarena || m_capture)
                 {
                     ammo[GUN_PISTOL] = 80;
