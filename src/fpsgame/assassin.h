@@ -43,6 +43,8 @@ struct assassinservmode : servmode
             sendf(target->clientnum, 1, "ri2", SV_REMOVEHUNTER, ci->clientnum);
         }
         ci->targets.setsizenodelete(0);
+        findvalidtargets();
+        targets.removeobj(ci);
         loopv(sv.clients)
         {
             clientinfo *hunter = sv.clients[i];
@@ -50,7 +52,7 @@ struct assassinservmode : servmode
             if(hunter->targets.find(ci)<0) continue;
             hunter->targets.removeobj(ci);
             sendf(hunter->clientnum, 1, "ri2", SV_REMOVETARGET, ci->clientnum);
-            checkneedstarget(hunter, ci);
+            if(hunter->targets.empty()) sendnewtarget(hunter);
         }
         if(!disconnecting) sendf(ci->clientnum, 1, "ri2", SV_CLEARTARGETS, SV_CLEARHUNTERS);
         
