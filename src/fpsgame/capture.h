@@ -385,9 +385,9 @@ struct captureclient : capturestate
         if(total>=10000) conoutf("team %s captured all bases", team);
     }
 
-    int closesttoenemy(const char *team, bool noattacked = false)
+    int closesttoenemy(const char *team, bool noattacked = false, bool farthest = false)
     {
-        float bestdist = 1e10f;
+        float bestdist = farthest ? -1e10f : 1e10f;
         int best = -1;
         int attackers = INT_MAX, attacked = -1;
         loopv(bases)
@@ -396,7 +396,7 @@ struct captureclient : capturestate
             if(!b.owner[0] || strcmp(b.owner, team)) continue;
             if(noattacked && b.enemy[0]) continue;
             float dist = disttoenemy(b);
-            if(m_regencapture ? dist > bestdist : dist < bestdist)
+            if(farthest ? dist > bestdist : dist < bestdist)
             {
                 best = i;
                 bestdist = dist;
@@ -413,8 +413,8 @@ struct captureclient : capturestate
 
     int pickspawn(const char *team)
     {
-        int closest = closesttoenemy(team, true);
-        if(closest < 0) closest = closesttoenemy(team, false);
+        int gamemode = cl.gamemode, closest = closesttoenemy(team, true, m_regencapture);
+        if(!m_regencapture && closest < 0) closest = closesttoenemy(team, false);
         if(closest < 0) return -1;
         baseinfo &b = bases[closest];
 
