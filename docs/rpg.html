@@ -81,8 +81,16 @@ Specify model M to represent this object visually when placed in the world
 <pre id="r_action">r_action N A</pre>
 <p>
 defines a custom action the player can take on this object. N is the tag word that describes the action, visible in
-the objects menu in the game world, and A is the script that gets executed when the player selects it.
-</p>
+the objects menu in the game world, and A is the script that gets executed when the player selects it.</p>
+    <p>
+        When A gets executed, the top of the stack will be object on which the action is
+        defined, below that target of the action, and below that the user of the action.
+        For example, the player (user) casts a fireball (object) onto a monster (target).
+        Or, the player (user/target) interacts with an npc (object).</p>
+    <p>
+        A special tag is "use", this is the default action for items to be executed when
+        the user clicks on them in the inventory, or, it is the action that gets executed
+        when the player casts the currently selected spell (also see usetype below).</p>
 
 <pre id="r_say">r_say T</pre>
 <p>
@@ -317,8 +325,10 @@ initialized object.
 		<td style="width: 100px; height: 30px;">
 			usetype</td>
 		<td style="width: 800px; height: 30px;">
-			if this item is used, what happens:
-			0: nothing, 1: melee weapon, 2: ranged weapon, 3: magic (projectile)</td>
+    how this object is used: 0: not a weapon, 1: melee weapon, 2: ranged weapon, 3: magic (projectile).<br />
+    When you "use" an object, an it is not a weapon, its associated action will be executed
+    immediately. When it is a weapon, it is merely selected (see selected below), and
+    it is then available for repeated execution through the fire button (see attackrate).</td>
 	</tr>
 	<tr>
 		<td style="width: 100px">
@@ -338,6 +348,18 @@ initialized object.
 		<td style="width: 800px">
 			max angle from "forward" that objects can be targeted</td>
 	</tr>
+    <tr>
+        <td style="width: 100px">
+            attackrate</td>
+        <td style="width: 800px">
+            minimum time between two uses of this object</td>
+    </tr>
+    <tr>
+        <td style="width: 100px">
+            manacost</td>
+        <td style="width: 800px">
+            amount of mana used up for one use of this object</td>
+    </tr>
 	<tr>
 		<td style="width: 100px">
 			selected</td>
