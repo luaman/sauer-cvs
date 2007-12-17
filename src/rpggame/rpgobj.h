@@ -18,6 +18,12 @@ struct rpgobj : g3d_callback, stats
         IF_TRADE     = 4,   // parent has this item available for trade, for player, all currently unused weapons etc are of this type
     };
 
+    enum
+    {
+        MENU_BUY,
+        MENU_SELL
+    };
+
     int itemflags;
     
     struct rpgaction
@@ -232,8 +238,8 @@ struct rpgobj : g3d_callback, stats
                     loopinventorytype(IF_TRADE) trader = true;
                     if(trader)
                     {
-                        if(g.button("buy",  0xFFFFFF, "coins")&G3D_UP) menuwhich = 'BUY';
-                        if(g.button("sell", 0xFFFFFF, "coins")&G3D_UP) menuwhich = 'SELL';                    
+                        if(g.button("buy",  0xFFFFFF, "coins")&G3D_UP) menuwhich = MENU_BUY;
+                        if(g.button("sell", 0xFFFFFF, "coins")&G3D_UP) menuwhich = MENU_SELL;                    
                     }
                 }
                 else
@@ -249,7 +255,7 @@ struct rpgobj : g3d_callback, stats
                 break;
             }
                
-            case 'BUY':
+            case MENU_BUY:
             {
                 string info = "                         "; // accounting for layout space of rollover text, make better solution later
                 g.text("buy", 0xDDDDDD);
@@ -281,7 +287,7 @@ struct rpgobj : g3d_callback, stats
                 break;
             }
                
-            case 'SELL':
+            case MENU_SELL:
             {
                 g.text("sell", 0xDDDDDD);
                 os.playerobj->invgui(g, this);

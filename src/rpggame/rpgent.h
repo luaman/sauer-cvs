@@ -22,7 +22,7 @@ struct rpgent : dynent
         
     enum { ROTSPEED = 200 };
 
-    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0), magicprojectile(false)
+    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), magicprojectile(false), npcstate(R_STARE), trigger(0), sink(0)
     {
         o = _pos;
         home = _pos;
