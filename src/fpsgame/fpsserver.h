@@ -15,7 +15,7 @@ struct fpsserver : igameserver
         char spawned;
     };
 
-    static const int DEATHMILLIS = 250;
+    static const int DEATHMILLIS = 300;
 
     enum { GE_NONE = 0, GE_SHOT, GE_EXPLODE, GE_HIT, GE_SUICIDE, GE_PICKUP };
 
