@@ -210,7 +210,7 @@ struct assassinclient
             glLoadIdentity();
             glOrtho(0, w*900/h, 900, 0, -1, 1);
             int wait = respawnwait();
-            draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
+            draw_textf("%d", int((x+s/2)/2-(wait>=10 ? 28 : 16)), int((y+s/2)/2-32), wait);
             glPopMatrix();
         }
         glDisable(GL_BLEND);

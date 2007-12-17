@@ -1601,7 +1601,7 @@ struct fpsserver : igameserver
         }
         if(ts.health<=0)
         {
-            int fragvalue = smode ? smode->fragvalue(target, actor) : (target==actor || isteam(target->team, actor->team) ? 1 : -1);
+            int fragvalue = smode ? smode->fragvalue(target, actor) : (target==actor || isteam(target->team, actor->team) ? -1 : 1);
             actor->state.frags += fragvalue;
             if(fragvalue>0)
             {

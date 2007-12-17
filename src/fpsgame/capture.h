@@ -10,7 +10,7 @@ struct capturestate
     static const int SCORESECS = 10;
     static const int AMMOSECS = 15;
     static const int REGENSECS = 1;
-    static const int REGENHEALTH = 20;
+    static const int REGENHEALTH = 10;
     static const int REGENARMOUR = 10;
     static const int REGENAMMO = 20;
     static const int MAXAMMO = 5;
@@ -25,7 +25,7 @@ struct capturestate
         string name, info;
         extentity *ent;
 #endif
-        int ammotype, ammo, enemies, converted, capturetime;
+        int ammotype, ammo, owners, enemies, converted, capturetime;
 
         baseinfo() { reset(); }
 
@@ -43,14 +43,23 @@ struct capturestate
             capturetime = -1;
             ammotype = 0;
             ammo = 0;
+            owners = 0;
         }
 
         bool enter(const char *team)
         {
-            if(!enemy[0])
+            if(!strcmp(owner, team))
             {
-                if(!strcmp(owner, team)) return false;
-                s_strcpy(enemy, team);
+                owners++;
+                return false;
+            }
+            if(!enemies)
+            {
+                if(strcmp(enemy, team))
+                {
+                    converted = 0;
+                    s_strcpy(enemy, team);
+                }
                 enemies++;
                 return true;
             }
@@ -61,14 +70,18 @@ struct capturestate
 
         bool steal(const char *team)
         {
-            return !enemy[0] && strcmp(owner, team);
+            return !enemies && strcmp(owner, team);
         }
             
         bool leave(const char *team)
         {
+            if(!strcmp(owner, team))
+            {
+                owners--;
+                return false;
+            }
             if(strcmp(enemy, team)) return false;
             enemies--;
-            if(!enemies) noenemy();
             return !enemies;
         }
 
@@ -76,9 +89,14 @@ struct capturestate
         {
             if(strcmp(enemy, team)) return -1;
             converted += units;
-            if(converted<(owner[0] ? 2 : 1)*OCCUPYLIMIT) return -1;
+            if(units<0)
+            {
+                if(converted<=0) noenemy();
+                return -1;
+            }
+            else if(converted<(owner[0] ? 2 : 1)*OCCUPYLIMIT) return -1;
             if(owner[0]) { owner[0] = '\0'; converted = 0; s_strcpy(enemy, team); return 0; }
-            else { s_strcpy(owner, team); ammo = 0; capturetime = 0; noenemy(); return 1; }
+            else { s_strcpy(owner, team); ammo = 0; capturetime = 0; owners = enemies; noenemy(); return 1; }
         }
 
         bool addammo(int i)
@@ -566,7 +584,7 @@ struct captureservmode : capturestate, servmode
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if(b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*b.enemies*t)==1) addscore(b.owner, CAPTURESCORE);
+                if((!b.owners || !b.enemies) && b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*(b.enemies ? b.enemies : -max(1, b.owners))*t)==1) addscore(b.owner, CAPTURESCORE);
                 sendbaseinfo(i);
             }
             else if(b.owner[0])
