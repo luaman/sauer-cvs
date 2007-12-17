@@ -12,16 +12,21 @@
     N(melee) \
     N(ranged) \
     N(magic) \
-    N(regen) \
+    \
+    N(hpregen) \
+    N(manaregen) \
+    \
+    N(maxhp) \
+    N(maxmana) \
+    \
     N(attackspeed) \
     N(movespeed) \
     N(jumpheight) \
-    N(maxhp) \
-    N(maxmana) \
     N(tradeskill) \
     N(feared) \
     N(stealth) \
     N(hostility) \
+    \
     N(stata) \
     N(statb) \
     N(statc) \
@@ -29,7 +34,7 @@
 
 #define RPGATTRNAMES \
     N(ai) \
-    N(health) \
+    N(hp) \
     N(mana) \
     N(gold) \
     N(worth) \
@@ -39,6 +44,7 @@
     N(maxrange) \
     N(maxangle) \
     N(attackrate) \
+    N(manacost) \
     N(selected) \
     N(attra) \
     N(attrb) \
@@ -93,23 +99,24 @@ struct stats
         RPGATTRNAMES 
         #undef N
     }
-    
+    /*
     void st_gui(g3d_gui &g, rpgobj &o)
     {
         st_show(g);
-        g.separator();
-        o.st_show(g); // TEMP
+        //g.separator();
+        //o.st_show(g); // TEMP
     }
+    */
     
     void st_init()
     {
-        s_health = eff_maxhp();
+        s_hp   = eff_maxhp();
         s_mana = eff_maxmana();
     }
     
     void st_respawn()   // player only
     {
-        s_health = 10;
+        s_hp = 10;
     }
     
     void st_update(int lastmillis)
@@ -117,9 +124,11 @@ struct stats
         if(lastmillis-statupdatetime>1000)
         {
             statupdatetime += 1000;
-            const int regenrate = 2;
-            s_health += eff_regen()*regenrate/100;
-            if(s_health>eff_maxhp()) s_health = eff_maxhp();
+            const int base_hp_regen_rate = 2, base_mana_regen_rate = 3;     // in script?
+            s_hp   += eff_hpregen()  *base_hp_regen_rate  /100;
+            s_mana += eff_manaregen()*base_mana_regen_rate/100;
+            if(s_hp  >eff_maxhp())   s_hp   = eff_maxhp();
+            if(s_mana>eff_maxmana()) s_mana = eff_maxmana();
         }
     }
 };

@@ -25,13 +25,13 @@ struct rpgclient : igameclient, g3d_callback
     int lastmillis;
     string mapname;
       
-    int menutime, menutab;
+    int menutime, menutab, menuwhich;
     vec menupos;
 
-    rpgclient() : et(*this), os(*this), player1(os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1)
+    rpgclient() : et(*this), os(*this), player1(os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1), menuwhich(0)
     {
         CCOMMAND(map, "s", (rpgclient *self, char *s), load_world(s));    
-        CCOMMAND(showinventory, "", (rpgclient *self), self->showinventory());    
+        CCOMMAND(showplayergui, "i", (rpgclient *self, int *which), self->showplayergui(*which));    
     }
     ~rpgclient() {}
 
@@ -44,13 +44,13 @@ struct rpgclient : igameclient, g3d_callback
         if(!curtime) return;
         physicsframe();
         os.update(curtime);
-        player1.updateplayer();
+        player1.updateplayer(curtime);
         checktriggers();
     }
     
-    void showinventory()
+    void showplayergui(int which)
     {
-        if(menutime)
+        if((menutime && which==menuwhich) || !which)
         {
             menutime = 0;
         }
@@ -58,14 +58,26 @@ struct rpgclient : igameclient, g3d_callback
         {
             menutime = starttime();
             menupos  = menuinfrontofplayer();        
+            menuwhich = which;
         }
     }
 
     void gui(g3d_gui &g, bool firstpass)
     {
         g.start(menutime, 0.03f, &menutab);
-        g.tab("inventory", 0xFFFFF);
-        os.playerobj->invgui(g);
+        switch(menuwhich)
+        {
+            default:
+            case 1:
+                g.tab("inventory", 0xFFFFF);
+                os.playerobj->invgui(g);
+                break;
+            
+            case 2:
+                g.tab("stats", 0xFFFFF);
+                os.playerobj->st_show(g);
+                break;
+        }
         g.end();
     }
     
@@ -98,9 +110,9 @@ struct rpgclient : igameclient, g3d_callback
     {
         glLoadIdentity();
         glOrtho(0, w*2, h*2, 0, -1, 1);
-        if(os.playerobj->s_health>0) draw_textf(os.playerobj->s_health>0 ? "health: %d/%d - mana: %d/%d" : "DEAD", 0, h*2-64,
-                                                os.playerobj->s_health, os.playerobj->eff_maxhp(),
-                                                os.playerobj->s_mana, os.playerobj->eff_maxmana());       // temp     
+        if(os.playerobj->s_hp>0) draw_textf(os.playerobj->s_hp>0 ? "health: %d/%d - mana: %d/%d" : "DEAD", 0, h*2-64,
+                                            os.playerobj->s_hp, os.playerobj->eff_maxhp(),
+                                            os.playerobj->s_mana, os.playerobj->eff_maxmana());       // temp     
     }
     
     void drawhudmodel(int anim, float speed = 0, int base = 0)

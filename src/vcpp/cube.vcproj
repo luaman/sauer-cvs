@@ -1599,10 +1599,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\data\game_rpg.cfg"
-				>
-			</File>
-			<File
 				RelativePath="..\rpggame\rpg.cpp"
 				>
 				<FileConfiguration
@@ -1631,10 +1627,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\docs\rpg.html"
-				>
-			</File>
-			<File
 				RelativePath="..\rpggame\rpgent.h"
 				>
 			</File>
@@ -1654,6 +1646,22 @@
 				RelativePath="..\rpggame\stubs.h"
 				>
 			</File>
+			<Filter
+				Name="text"
+				>
+				<File
+					RelativePath="..\..\data\game_rpg.cfg"
+					>
+				</File>
+				<File
+					RelativePath="..\..\docs\rpg.html"
+					>
+				</File>
+				<File
+					RelativePath="..\rpggame\rpg_plan.txt"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

@@ -1,0 +1,39 @@
+implementation plan (roughly in order of importance to make the game playable):
+
+- no spawn sometimes?
+- crash when pointing at dropped item that at first didn't appear?
+
+- add spells (fireball at the very least, healing spell maybe)
+- make consistent that using a weapon selects it, fire actually does the use, whereas other items use directly, both execute "use" action. This means you can use items in the field without picking them up first... allows for switches etc
+  also use from gui, r_take etc same as spells
+- FIXME's in code, fix rollover text outside of buy gui, particles etc
+- projectiles need to colide with the world
+- add a ranged weapon (crossbow)
+- monsters are hardcoded to attack only player... hurt npcs when they happen to be in line with player
+- allow npcs to be attacked. make them hostile, bust this will wear off
+- simple way of tracking quests, both log and progress variables
+- do world pickups differently (not with gui window), show worth stat while hovering over
+  maybe generally do system with different crosshairs depending on what you point at (take, attack)
+- implement npcs getting hostile if you pick up anything in the world within N range, or M sightrange
+  the more worth the item, the longer they will be hostile. if they knock you out, they'll take the item back.
+- move more stuff from c++ to script
+- implement attackspeed/movespeed/jumpheight and other stats
+- game loading/saving
+- work on animations (attack etc)
+- make generic box that can take icons to replace generic bag
+- add many more standard items, maybe some temp more monsters from the fps
+- tweak all stats
+- improved grid layout inventory screens
+- horse riding (maybe at first as teleport, later as fast transport)
+
+art list:
+- hud with health mana stat bars
+  * health and mana
+  * current weapon icon
+  * 12 slots for quick use items
+  * small radar
+  * info line for mouse over?
+- icons:
+  * buy
+  * sell
+- hud weapons: fist / sword (maybe axe and others) / bow or crossbow / shotgun? / spell casting hands

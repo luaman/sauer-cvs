@@ -6,6 +6,11 @@ struct rpgent : dynent
     int lastaction, lastpain;
     bool attacking;
     
+    bool magicprojectile;
+    vec mppos, mpdir;
+    rpgobj *mpweapon;
+    float mpdist;
+    
     enum { R_STARE, R_ROAM, R_SEEK, R_ATTACK, R_BLOCKED, R_BACKHOME };
     int npcstate;
     
@@ -17,7 +22,7 @@ struct rpgent : dynent
         
     enum { ROTSPEED = 200 };
 
-    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0)
+    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), npcstate(R_STARE), trigger(0), sink(0), magicprojectile(false)
     {
         o = _pos;
         home = _pos;
@@ -72,15 +77,68 @@ struct rpgent : dynent
         if(!attacking) return;
         
         rpgobj &weapon = ro->selectedweapon();
-        if(!weapon.s_damage) return;
         
         if(cl.lastmillis-lastaction<weapon.s_attackrate) return;
         
         lastaction = cl.lastmillis;
+
+        switch(weapon.s_usetype)
+        {
+            case 1:
+                if(!weapon.s_damage) return;
+                loopv(cl.os.set) if(cl.os.set[i]!=ro) tryattackobj(*cl.os.set[i], weapon);
+                if(cl.os.playerobj!=ro) tryattackobj(*cl.os.playerobj, weapon);    
+                break;
+            
+            case 2:
+                break;
+                
+            case 3:                
+                if(weapon.s_maxrange)   // projectile, cast on target
+                {
+                    if(magicprojectile) return;     // only one in the air at once
+                    if(!ro->usemana(weapon)) return;
+                                       
+                    magicprojectile = true;
+                    mpweapon = &weapon;
+                    mppos = o;
+                    mpdir = vec(yaw*RAD, pitch*RAD);
+                    mpdist = weapon.s_maxrange;
+                }
+                else
+                {
+                    weapon.use(*ro, *this, true);   // cast on self
+                }                
+                break;
+        }
         
-        loopv(cl.os.set) if(cl.os.set[i]!=ro) tryattackobj(*cl.os.set[i], weapon);  
+    }
+
+    void tryprojobj(rpgobj &eo, vec &mpto)
+    {
+        if(eo.ent->o.dist(mppos)>32) return;  // quick reject, for now
+        if(!intersect(eo.ent, mppos, mpto)) return;
         
-        if(cl.os.playerobj!=ro) tryattackobj(*cl.os.playerobj, weapon);    
+        magicprojectile = false;
+        mpweapon->use(eo, *this, false);    // cast on target
+    }
+
+    void updateprojectile(int curtime)
+    {
+        if(!magicprojectile) return;
+        
+        regular_particle_splash(1, 2, 300, mppos);
+        particle_splash(4, 1, 1, mppos);    // FIXME must make particle configurable
+
+        float dist = curtime/5.0f;
+        if((mpdist -= dist)<0) { magicprojectile = false; return; };
+        
+        vec mpto = vec(mpdir).mul(dist).add(mppos);
+
+        loopv(cl.os.set) if(cl.os.set[i]!=ro) tryprojobj(*cl.os.set[i], mpto);  // FIXME: make fast "give me all rpgobs in range R that are not X" function
+        if(cl.os.playerobj!=ro) tryprojobj(*cl.os.playerobj, mpto);  
+        
+        mppos = mpto;  
     }
 
     void transition(int _state, int _moving, int n) 
@@ -113,6 +171,8 @@ struct rpgent : dynent
     
     void update(int curtime, float playerdist)
     {
+        updateprojectile(curtime);
+
         if(state==CS_DEAD) { stopmoving(); return; };
 
         if(blocked && npcstate!=R_BLOCKED && npcstate!=R_SEEK)                                                             
@@ -136,7 +196,7 @@ struct rpgent : dynent
                 ifplayerclose
                 {
                     if(ro->s_ai==2) gotopos(cl.player1.o, R_SEEK,  1, 200);
-                    else           gotopos(cl.player1.o, R_STARE, 0, 500);
+                    else            gotopos(cl.player1.o, R_STARE, 0, 500);
                 }
                 else ifnextstate stareorroam();
                 break;
@@ -151,7 +211,7 @@ struct rpgent : dynent
                 {
                     vec target;
                     attacking = true;
-                    if(raycubelos(o, cl.player1.o, target)) tryattack();
+                    if(raycubelos(o, cl.player1.o, target)) tryattack();    // FIXME: allow for any enemy
                     attacking = false;
                     ifplayerfar goroam();
                     else gotopos(cl.player1.o, R_SEEK, 1, 100);
@@ -164,8 +224,10 @@ struct rpgent : dynent
         #undef ifplayerfar
     }
 
-    void updateplayer()     // alternative version of update() if this ent is the main player
+    void updateplayer(int curtime)     // alternative version of update() if this ent is the main player
     {
+        updateprojectile(curtime);
+
         if(state==CS_DEAD)
         {
             //lastaction = lastmillis;

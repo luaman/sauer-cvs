@@ -18,14 +18,14 @@ struct rpgobjset
         RPGSTATNAMES 
         #undef N
         
-        CCOMMAND(r_model,   "s", (rpgobjset *self, char *s), { self->stack[0]->model = self->stringpool(s); });    
-        CCOMMAND(r_spawn,   "s", (rpgobjset *self, char *s), { self->spawn(self->stringpool(s)); });    
-        CCOMMAND(r_contain, "s", (rpgobjset *self, char *s), { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(s)); });    
-        CCOMMAND(r_pop,     "", (rpgobjset *self), { self->popobj(); });    
-        CCOMMAND(r_say,     "s", (rpgobjset *self, char *s), { self->stack[0]->abovetext = self->stringpool(s); });    
-        CCOMMAND(r_action,  "ss", (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a)); });    
+        CCOMMAND(r_model,   "s",   (rpgobjset *self, char *s), { self->stack[0]->model = self->stringpool(s); });    
+        CCOMMAND(r_spawn,   "s",   (rpgobjset *self, char *s), { self->spawn(self->stringpool(s)); });    
+        CCOMMAND(r_contain, "s",   (rpgobjset *self, char *s), { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(s)); });    
+        CCOMMAND(r_pop,     "",    (rpgobjset *self), { self->popobj(); });    
+        CCOMMAND(r_say,     "s",   (rpgobjset *self, char *s), { self->stack[0]->abovetext = self->stringpool(s); });    
+        CCOMMAND(r_action,  "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a)); });    
         CCOMMAND(r_take,    "sss", (rpgobjset *self, char *name, char *ok, char *notok), { self->takefromplayer(name, ok, notok); });    
-        CCOMMAND(r_give,    "s", (rpgobjset *self, char *s), { self->givetoplayer(s); });    
+        CCOMMAND(r_give,    "s",   (rpgobjset *self, char *s), { self->givetoplayer(s); });    
         
         clearworld();
     }
