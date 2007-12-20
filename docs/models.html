@@ -232,13 +232,13 @@ after scaled into this range, is then multiplied by the chrome map.
 <pre id="md3bumpmap">md3bumpmap H S N</pre>
 <p>
 This command enables bumpmapping for a given mesh in the last loaded model (md3load). H is the name
-of the mesh you want to assign bumpmappign textures to. S is the path to a diffuse skin texture which is
-used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports bumpmapping, 
-otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
+of the mesh you want to assign normal map textures to. S is the path to a diffuse skin texture which is
+used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports normal
+mapping, otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
 two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
 little to no directional shading baked into it, whereas flat diffuse skins (no bumpmapping) generally should,
-and this command allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is 
-used to shade the supplied diffuse skin texture.
+and this allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is 
+used to shade the supplied iffuse skin texture.
 </p>
 
 <pre id="md3anim">md3anim A F N [S [P]]</pre>
