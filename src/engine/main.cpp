@@ -59,7 +59,7 @@ bool initwarning()
 }
 
 VARF(scr_w, 320, 1024, 10000, initwarning());
-VARF(scr_h, 240, 768, 10000, initwarning());
+VARF(scr_h, 200, 768, 10000, initwarning());
 VARF(colorbits, 0, 0, 32, initwarning());
 VARF(depthbits, 0, 0, 32, initwarning());
 VARF(stencilbits, 0, 1, 32, initwarning());
