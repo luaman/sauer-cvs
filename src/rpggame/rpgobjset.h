@@ -26,10 +26,17 @@ struct rpgobjset
         CCOMMAND(r_swap,        "",    (rpgobjset *self), { swap(rpgobj *, self->stack[0], self->stack[1]) });    
         CCOMMAND(r_say,         "s",   (rpgobjset *self, char *s), { self->stack[0]->abovetext = self->stringpool(s); });    
         CCOMMAND(r_action,      "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a)); });    
+        CCOMMAND(r_action_use,  "s",   (rpgobjset *self, char *s), { self->stack[0]->action_use.script = self->stringpool(s); });    
         CCOMMAND(r_take,        "sss", (rpgobjset *self, char *name, char *ok, char *notok), { self->takefromplayer(name, ok, notok); });    
         CCOMMAND(r_give,        "s",   (rpgobjset *self, char *s), { self->givetoplayer(s); });    
         CCOMMAND(r_applydamage, "i",   (rpgobjset *self, int *d), { self->stack[0]->takedamage(*d, *self->stack[1]); });    
         clearworld();
+    }
+    
+    void resetstack()
+    {
+        stack.setsize(0);
+        loopi(10) stack.add(playerobj);     // determines the stack depth    
     }
     
     void clearworld()
@@ -41,10 +48,18 @@ struct rpgobjset
 
         pointingat = NULL;
         set.deletecontentsp();
-        stack.setsize(0);
-        loopi(10) stack.add(playerobj);     // determines the stack depth
+        resetstack();
         
         playerobj->scriptinit();            // will fail when this is called from emptymap(), which is ok
+    }
+    
+    void removefromsystem(rpgobj *o)
+    {
+        removefromworld(o);
+        o->decontain();
+        if(pointingat==o) pointingat = NULL;
+        resetstack();
+        DELETEP(o);
     }
     
     void update(int curtime)
@@ -79,10 +94,15 @@ struct rpgobjset
     void pushobj(rpgobj *o) { stack.pop(); stack.insert(0, o); }       // never overflows, just removes bottom
     void popobj()           { stack.add(stack.remove(0)); }            // never underflows, just puts it at the bottom
     
-    void take(rpgobj *worldobj, rpgobj *newowner)
+    void removefromworld(rpgobj *worldobj)
     {
         set.removeobj(worldobj);
-        DELETEP(worldobj->ent);
+        DELETEP(worldobj->ent);    
+    }
+    
+    void take(rpgobj *worldobj, rpgobj *newowner)
+    {
+        removefromworld(worldobj);
         newowner->add(worldobj, false);
     }
     

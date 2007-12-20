@@ -1,9 +1,6 @@
 implementation plan (roughly in order of importance to make the game playable):
 
-- bug: no spawn sometimes?
 
-- make consistent that using a weapon selects it, fire actually does the use, whereas other items use directly, both execute "use" action. This means you can use items in the field without picking them up first... allows for switches etc
-  also use from gui, r_take etc same as spells
 - FIXME's in code, fix rollover text outside of buy gui, particles etc
 - show current item & quick bar on hud
 - projectiles need to colide with the world

@@ -20,6 +20,7 @@ struct rpgobj : g3d_callback, stats
 
     enum
     {
+        MENU_DEFAULT,
         MENU_BUY,
         MENU_SELL
     };
@@ -31,6 +32,8 @@ struct rpgobj : g3d_callback, stats
         rpgaction *next;
         char *initiate, *script;
         bool used;
+        
+        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : initiate(_i), script(_i), used(false), next(_n) {}
         
         ~rpgaction() { DELETEP(next); }
         
@@ -45,7 +48,7 @@ struct rpgobj : g3d_callback, stats
         }
     };
 
-    rpgaction *actions;
+    rpgaction *actions, action_use;
     char *abovetext;    
 
     int menutime, menutab, menuwhich;
@@ -56,9 +59,15 @@ struct rpgobj : g3d_callback, stats
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
     rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
-        actions(NULL), abovetext(NULL), menutime(0), menutab(1), menuwhich(0), os(_os) {}
+        actions(NULL), abovetext(NULL), menutime(0), menutab(1), menuwhich(MENU_DEFAULT), os(_os) {}
 
-    ~rpgobj() { DELETEP(inventory); DELETEP(sibling); DELETEP(ent); DELETEP(actions); }
+    ~rpgobj()
+    {
+        DELETEP(inventory);
+        DELETEP(sibling);
+        DELETEP(ent);
+        DELETEP(actions);
+    }
 
     void scriptinit()
     {
@@ -141,11 +150,9 @@ struct rpgobj : g3d_callback, stats
     void update(int curtime)
     {
         float dist = ent->o.dist(os.cl.player1.o);
-        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         if(s_ai) { ent->update(curtime, dist); st_update(ent->cl.lastmillis); };
-        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
-        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
+        //ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         if(!menutime && dist<(s_ai ? 40 : 24) && ent->state==CS_ALIVE && s_ai<2) { menutime = starttime(); menuwhich = 0; }
         else if(dist>(s_ai ? 96 : 48)) menutime = 0;
     }
@@ -153,12 +160,7 @@ struct rpgobj : g3d_callback, stats
     void addaction(char *initiate, char *script)
     {
         for(rpgaction *a = actions; a; a = a->next) if(strcmp(a->initiate, initiate)==0) return;
-        rpgaction *na = new rpgaction;
-        na->next = actions;
-        na->initiate = initiate;
-        na->script = script;
-        na->used = false;
-        actions = na;
+        actions = new rpgaction(initiate, script, actions);
     }
 
     void droploot()
@@ -213,18 +215,11 @@ struct rpgobj : g3d_callback, stats
         
     void useaction(rpgobj &target, rpgent &initiator, bool chargemana)
     {
-        for(rpgaction *ra = actions; ra; ra = ra->next) if(strcmp(ra->initiate, "use")==0)
+        if(action_use.script && (!chargemana || initiator.ro->usemana(*this)))
         {
-            if(!chargemana || initiator.ro->usemana(*this))
-            {
-                ra->exec(this, &target, initiator.ro, os);
-                if(s_useamount && !--s_useamount)
-                {
-                    initiator.ro->remove(this);
-                }
-            } 
-            return;
-        }
+            action_use.exec(this, &target, initiator.ro, os);
+            if(s_useamount && !--s_useamount) os.removefromsystem(this);
+        } 
     }
     
     void selectuse()
@@ -279,12 +274,10 @@ struct rpgobj : g3d_callback, stats
                         conoutf("\f2you take a %s (worth %d gold)", name, s_worth);
                         os.take(this, os.playerobj);
                     }
-                    /*
-                    if(g.button("use", 0xFFFFFF, "hand")&G3D_UP)
+                    if(!s_usetype && g.button("use", 0xFFFFFF, "hand")&G3D_UP)
                     {
                         selectuse();
                     }
-                    */
                 }
                 break;
             }
