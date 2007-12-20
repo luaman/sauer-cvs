@@ -10,6 +10,7 @@ struct weaponstate
     vec sg[SGRAYS];
 
     IVARP(maxdebris, 10, 25, 1000);
+    IVARP(maxbarreldebris, 5, 10, 1000);
 
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
@@ -73,7 +74,7 @@ struct weaponstate
         loopi(SGRAYS) offsetray(from, to, SGSPREAD, sg[i]);
     }
 
-    enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS };
+    enum { BNC_GRENADE, BNC_GIBS, BNC_DEBRIS, BNC_BARRELDEBRIS };
 
     struct bouncent : physent
     {
@@ -303,10 +304,11 @@ struct weaponstate
         playsound(S_RLHIT, &v);
         particle_fireball(v, RL_DAMRAD, gun==GUN_RL || gun==GUN_BARREL ? 22 : 23);
         adddynlight(v, 1.15f*RL_DAMRAD, vec(1, 0.75f, 0.5f), 600, 400);
-        int numdebris = rnd(maxdebris()-5)+5;
+        int numdebris = gun==GUN_BARREL ? rnd(max(maxbarreldebris()-5, 1))+5 : rnd(maxdebris()-5)+5;
         vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
-        loopi(numdebris) spawnbouncer(debrisorigin, debrisvel, owner, BNC_DEBRIS);
+        loopi(numdebris)
+            spawnbouncer(debrisorigin, debrisvel, owner, gun==GUN_BARREL ? BNC_BARRELDEBRIS : BNC_DEBRIS);
         if(!local) return;
         loopi(cl.numdynents())
         {
@@ -634,6 +636,7 @@ struct weaponstate
             int cull = MDL_CULL_VFC|MDL_CULL_DIST;
             if(bnc.bouncetype==BNC_GIBS) { mdl = ((int)(size_t)&bnc)&0x40 ? "gibc" : "gibh"; cull |= MDL_DYNSHADOW; }
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; }
+            else if(bnc.bouncetype==BNC_BARRELDEBRIS) { s_sprintf(debrisname)("barreldebris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; }
             else cull = MDL_CULL_VFC|MDL_DYNSHADOW;
                 
             rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos, yaw, pitch, 0, 0, NULL, cull);

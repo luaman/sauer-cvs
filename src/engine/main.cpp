@@ -464,7 +464,7 @@ int main(int argc, char **argv)
             case 'r': execfile(argv[i][2] ? &argv[i][2] : (char *)"init.cfg"); restoredinits = true; break;
             case 'd': dedicated = true; break;
             case 'w': scr_w = atoi(&argv[i][2]); if(scr_w<320) scr_w = 320; if(!findarg(argc, argv, "-h")) scr_h = (scr_w*3)/4; break;
-            case 'h': scr_h = atoi(&argv[i][2]); if(scr_h<240) scr_h = 240; if(!findarg(argc, argv, "-w")) scr_w = (scr_h*4)/3; break;
+            case 'h': scr_h = atoi(&argv[i][2]); if(scr_h<200) scr_h = 200; if(!findarg(argc, argv, "-w")) scr_w = (scr_h*4)/3; break;
             case 'z': depthbits = atoi(&argv[i][2]); break;
             case 'b': colorbits = atoi(&argv[i][2]); break;
             case 'a': fsaa = atoi(&argv[i][2]); break;

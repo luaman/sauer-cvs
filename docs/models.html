@@ -43,6 +43,9 @@
 <a href="#md3skin"><tt>md3skin</tt></a>
 </li>
 <li>
+<a href="#md3bumpmap"><tt>md3bumpmap</tt></a>
+</li>
+<li>
 <a href="#md3anim"><tt>md3anim</tt></a>
 </li>
 <li>
@@ -224,6 +227,18 @@ interpreted as a chrome map. E (maximum envmap intensity) and F (minimum envmap 
 values in the range of 0 to 1, and specify the range in which the envmapping intensity will vary based on a viewing angle
 (a Fresnel term that is maximal at glancing angles, minimal when viewed dead-on). The intensity, 
 after scaled into this range, is then multiplied by the chrome map.
+</p>
+
+<pre id="md3bumpmap">md3bumpmap H S N</pre>
+<p>
+This command enables bumpmapping for a given mesh in the last loaded model (md3load). H is the name
+of the mesh you want to assign bumpmappign textures to. S is the path to a diffuse skin texture which is
+used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports bumpmapping, 
+otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
+two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
+little to no directional shading baked into it, whereas flat diffuse skins (no bumpmapping) generally should,
+and this command allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is 
+used to shade the supplied diffuse skin texture.
 </p>
 
 <pre id="md3anim">md3anim A F N [S [P]]</pre>
