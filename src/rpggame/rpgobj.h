@@ -33,7 +33,7 @@ struct rpgobj : g3d_callback, stats
         char *initiate, *script;
         bool used;
         
-        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : initiate(_i), script(_s), used(false), next(_n) {}
+        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : next(_n), initiate(_i), script(_s), used(false) {}
         
         ~rpgaction() { DELETEP(next); }
         
