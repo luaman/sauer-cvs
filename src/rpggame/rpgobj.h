@@ -141,8 +141,11 @@ struct rpgobj : g3d_callback, stats
     void update(int curtime)
     {
         float dist = ent->o.dist(os.cl.player1.o);
+        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         if(s_ai) { ent->update(curtime, dist); st_update(ent->cl.lastmillis); };
+        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
+        ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
         if(!menutime && dist<(s_ai ? 40 : 24) && ent->state==CS_ALIVE && s_ai<2) { menutime = starttime(); menuwhich = 0; }
         else if(dist>(s_ai ? 96 : 48)) menutime = 0;
     }
@@ -180,9 +183,8 @@ struct rpgobj : g3d_callback, stats
         return NULL;
     }
     
-    void attacked(rpgobj &attacker, rpgobj &weapon)
+    void takedamage(int damage, rpgobj &attacker)
     {
-        int damage = weapon.s_damage*attacker.eff_melee()/100;
         particle_splash(3, damage*5, 1000, ent->o);
         s_sprintfd(ds)("@%d", damage);
         particle_text(ent->o, ds, 8);
@@ -194,7 +196,12 @@ struct rpgobj : g3d_callback, stats
             menutime = 0;
             conoutf("%s killed: %s", attacker.name, name);
             droploot();
-        }
+        }    
+    }
+    
+    void attacked(rpgobj &attacker, rpgobj &weapon)
+    {
+        takedamage(weapon.s_damage*attacker.eff_melee()/100, attacker);
     }
     
     bool usemana(rpgobj &o)
@@ -204,12 +211,33 @@ struct rpgobj : g3d_callback, stats
         return true;
     }
         
-    void use(rpgobj &target, rpgent &initiator, bool chargemana)
+    void useaction(rpgobj &target, rpgent &initiator, bool chargemana)
     {
         for(rpgaction *ra = actions; ra; ra = ra->next) if(strcmp(ra->initiate, "use")==0)
         {
-            if(!chargemana || initiator.ro->usemana(*this)) ra->exec(this, &target, initiator.ro, os);
+            if(!chargemana || initiator.ro->usemana(*this))
+            {
+                ra->exec(this, &target, initiator.ro, os);
+                if(s_useamount && !--s_useamount)
+                {
+                    initiator.ro->remove(this);
+                }
+            } 
             return;
+        }
+    }
+    
+    void selectuse()
+    {
+        if(s_usetype)
+        {
+            conoutf("\f2using: %s", name);
+            loopinventory() o->s_selected = 0;
+            s_selected = 1;                    
+        }
+        else
+        {
+            useaction(*os.playerobj, *os.playerobj->ent, true);
         }
     }
     
@@ -251,6 +279,12 @@ struct rpgobj : g3d_callback, stats
                         conoutf("\f2you take a %s (worth %d gold)", name, s_worth);
                         os.take(this, os.playerobj);
                     }
+                    /*
+                    if(g.button("use", 0xFFFFFF, "hand")&G3D_UP)
+                    {
+                        selectuse();
+                    }
+                    */
                 }
                 break;
             }
@@ -330,12 +364,7 @@ struct rpgobj : g3d_callback, stats
                 }
                 else    // player wants to use this item
                 {
-                    if(o->s_usetype)
-                    {
-                        conoutf("\f2using: %s", o->name);
-                        { loopinventory() o->s_selected = 0; }
-                        o->s_selected = 1;                    
-                    }
+                    o->selectuse();
                 }
             }
             else if(ret&G3D_ROLLOVER)

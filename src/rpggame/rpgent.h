@@ -107,7 +107,7 @@ struct rpgent : dynent
                 }
                 else
                 {
-                    weapon.use(*ro, *this, true);   // cast on self
+                    weapon.useaction(*ro, *this, true);   // cast on self
                 }                
                 break;
         }
@@ -120,7 +120,7 @@ struct rpgent : dynent
         if(!intersect(eo.ent, mppos, mpto)) return;
         
         magicprojectile = false;
-        mpweapon->use(eo, *this, false);    // cast on target
+        mpweapon->useaction(eo, *this, false);    // cast on target
     }
 
     void updateprojectile(int curtime)

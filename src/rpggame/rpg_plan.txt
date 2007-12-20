@@ -1,12 +1,11 @@
 implementation plan (roughly in order of importance to make the game playable):
 
-- no spawn sometimes?
-- crash when pointing at dropped item that at first didn't appear?
+- bug: no spawn sometimes?
 
-- add spells (fireball at the very least, healing spell maybe)
 - make consistent that using a weapon selects it, fire actually does the use, whereas other items use directly, both execute "use" action. This means you can use items in the field without picking them up first... allows for switches etc
   also use from gui, r_take etc same as spells
 - FIXME's in code, fix rollover text outside of buy gui, particles etc
+- show current item & quick bar on hud
 - projectiles need to colide with the world
 - add a ranged weapon (crossbow)
 - monsters are hardcoded to attack only player... hurt npcs when they happen to be in line with player
