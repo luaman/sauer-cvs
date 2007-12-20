@@ -372,12 +372,12 @@ struct fpsserver : igameserver
     {
         static const char *modenames[] =
         {
-            "slowmo DMSP", "demo", "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
+            "slowmo SP", "slowmo DMSP", "demo", "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
             "capture", "insta capture", "regen capture", "assassin", "insta assassin"
         };
-        return (n>=-4 && size_t(n+4)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+3] : "unknown";
+        return (n>=-5 && size_t(n+5)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+5] : "unknown";
     }
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); }

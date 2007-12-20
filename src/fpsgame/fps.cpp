@@ -630,7 +630,7 @@ struct fpsclient : igameclient
         if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
 
         int rtime = ws.reloadtime(player1->gunselect);
-        if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+        if(player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
         {
             drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1->lastaction);
         }
