@@ -22,13 +22,13 @@ struct rpgclient : igameclient, g3d_callback
     
     rpgent player1;
 
-    int lastmillis;
+    int lastmillis, maptime;
     string mapname;
       
     int menutime, menutab, menuwhich;
     vec menupos;
 
-    rpgclient() : et(*this), os(*this), player1(os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), menutime(0), menutab(1), menuwhich(0)
+    rpgclient() : et(*this), os(*this), player1(os.playerobj, *this, vec(0, 0, 0), 0, 100, ENT_PLAYER), lastmillis(0), maptime(0), menutime(0), menutab(1), menuwhich(0)
     {
         CCOMMAND(map, "s", (rpgclient *self, char *s), load_world(s));    
         CCOMMAND(showplayergui, "i", (rpgclient *self, int *which), self->showplayergui(*which));    
@@ -40,6 +40,7 @@ struct rpgclient : igameclient, g3d_callback
 
     void updateworld(vec &pos, int curtime, int lm)
     {
+        if(!maptime) { maptime = lm + curtime; return; }
         lastmillis = lm;
         if(!curtime) return;
         physicsframe();
@@ -101,6 +102,7 @@ struct rpgclient : igameclient, g3d_callback
     {
         os.clearworld();
         s_strcpy(mapname, name);
+        maptime = 0;
         findplayerspawn(&player1);
         if(*name) os.playerobj->st_init();
         et.startmap();
