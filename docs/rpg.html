@@ -114,6 +114,11 @@ give the player an item with name N
 does D damage to the object on top of the stack. object one below the top of the stack must be the one doing the damage.
 </p>
 
+<pre id="Pre2">r_use</pre>
+<p>
+select or use the object for the player (see usetype below).
+</p>
+
 
 <h2 id="H2_1">RPG stats &amp; attributes</h2>
 <p>
@@ -332,7 +337,7 @@ initialized object.
 		<td style="width: 800px; height: 30px;">
     how this object is used: 0: not a weapon, 1: melee weapon, 2: ranged weapon, 3: magic (projectile).<br />
     When you "use" an object, an it is not a weapon, its associated action will be executed
-    immediately. When it is a weapon, it is merely selected (see selected below), and
+    immediately. When it is a weapon, it is merely selected, and
     it is then available for repeated execution through the fire button (see attackrate).</td>
 	</tr>
 	<tr>
@@ -365,15 +370,13 @@ initialized object.
         <td style="width: 800px">
             amount of mana used up for one use of this object</td>
     </tr>
-	<tr>
-		<td style="width: 100px">
-			selected</td>
-		<td style="width: 800px">
-			0/1: a selected object indicates a preferred object to be used in an action when
-			many alternatives are available in the inventory. for example, it indicates which
-			weapon is to be used in an attack. More than one item can be selected at once, this
-			simply means the items will be used in sequence, if necessary.</td>
-	</tr>
+            <tr>
+                <td style="width: 100px">
+                    effect</td>
+                <td style="width: 800px">
+                    the effect associated with this item when it is used... for spells it is the particle
+                    number</td>
+            </tr>
 	<tr style="font-family: verdana,'trebuchet ms','zurich bt',tahoma,arial,helvetica,sans-serif">
 		<td style="width: 100px">
 			attra, attrb, attrc</td>
@@ -381,6 +384,12 @@ initialized object.
 			generic attributes, can be set by the script code to implement gameplay features
 			not foreseen by the system</td>
 	</tr>
+            <tr style="font-family: verdana,'trebuchet ms','zurich bt',tahoma,arial,helvetica,sans-serif">
+                <td style="width: 100px">
+                    usesound</td>
+                <td style="width: 800px">
+                    sound played when this item is used. value must be from a call to "registersound"</td>
+            </tr>
 </table>
 
 <p>
