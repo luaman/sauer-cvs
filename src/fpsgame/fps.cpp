@@ -33,6 +33,7 @@ struct fpsclient : igameclient
     int swaymillis;
     vec swaydir;
     int respawned, suicided;
+    int lastslowmohealth, slowmorealtimestart;
 
     int following;
     IVARP(followdist, 10, 50, 1000);
@@ -194,10 +195,27 @@ struct fpsclient : igameclient
 
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
-        if(!maptime) { maptime = lm + curtime; return; }
+        if(!maptime)
+        {
+            maptime = lm + curtime;
+            extern int totalmillis;
+            slowmorealtimestart = totalmillis;
+            return;
+        }
         lastmillis = lm;
+
+        if(m_slowmo)
+        {
+            setvar("gamespeed", intermission ? 100 : player1->health);
+            if(player1->health<player1->maxhealth && lastmillis-lastslowmohealth>player1->health*player1->health/2)
+            {
+                lastslowmohealth = lastmillis;
+                player1->health++;
+            }
+        }
+
         if(!curtime) return;
-        if(m_slowmo) setvar("gamespeed", player1->health);
+
         physicsframe();
         et.checkquad(curtime, player1);
         ws.moveprojectiles(curtime);
@@ -294,7 +312,7 @@ struct fpsclient : igameclient
         {
             damageblend(damage);
             d->damageroll(damage);
-            if(m_slowmo && player1->health<10) player1->health = 10;
+            if(m_slowmo && player1->health<1) player1->health = 1;
         }
         ws.damageeffect(damage, d);
 
@@ -368,7 +386,8 @@ struct fpsclient : igameclient
             {
                 conoutf("\f2--- single player time score: ---");
                 int pen, score = 0;
-                pen = (lastmillis-maptime)/1000; score += pen; if(pen) conoutf("\f2time taken: %d seconds", pen); 
+                extern int totalmillis;
+                pen = (totalmillis-slowmorealtimestart)/1000; score += pen; if(pen) conoutf("\f2time taken: %d seconds (%d simulated seconds)", pen, (lastmillis-maptime)/1000); 
                 pen = player1->deaths*60; score += pen; if(pen) conoutf("\f2time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
                 pen = ms.remain*10;       score += pen; if(pen) conoutf("\f2time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
                 pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("\f2time penalty for lower skill level (20 seconds each): %d seconds", pen);
@@ -500,6 +519,7 @@ struct fpsclient : igameclient
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             const char *best = getalias(aname);
             if(*best) conoutf("\f2try to beat your best score so far: %s", best);
+            lastslowmohealth = lastmillis;
         }
     }
 
@@ -610,7 +630,7 @@ struct fpsclient : igameclient
         if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
 
         int rtime = ws.reloadtime(player1->gunselect);
-        if(player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+        if(player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
         {
             drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1->lastaction);
         }

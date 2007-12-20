@@ -52,8 +52,8 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 #define m_teamskins    (m_teammode || m_assassin)
 #define m_sp           (m_dmsp || m_classicsp)
 #define m_dmsp         (gamemode==-1 || gamemode==-4)
-#define m_classicsp    (gamemode==-2)
-#define m_slowmo       (gamemode==-4)
+#define m_classicsp    (gamemode==-2 || gamemode==-5)
+#define m_slowmo       (gamemode==-4 || gamemode==-5)
 #define m_demo         (gamemode==-3)
 #define isteam(a,b)    (m_teammode && strcmp(a, b)==0)
 
