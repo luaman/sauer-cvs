@@ -33,7 +33,7 @@ struct rpgobj : g3d_callback, stats
         char *initiate, *script;
         bool used;
         
-        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : initiate(_i), script(_i), used(false), next(_n) {}
+        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : initiate(_i), script(_s), used(false), next(_n) {}
         
         ~rpgaction() { DELETEP(next); }
         
@@ -112,7 +112,8 @@ struct rpgobj : g3d_callback, stats
     
     rpgobj &selectedweapon()
     {
-        loopinventorytype(IF_INVENTORY) if(o->s_selected && o->s_usetype) return *o;
+        if(this==os.playerobj) return os.selected ? *os.selected : *this;
+        else { loopinventorytype(IF_INVENTORY) if(o->s_usetype) return *o; };
         return *this;
     }
     
@@ -153,7 +154,7 @@ struct rpgobj : g3d_callback, stats
         if(s_ai) { ent->update(curtime, dist); st_update(ent->cl.lastmillis); };
         moveplayer(ent, 10, false, curtime);    // 10 or above gets blocked less, because physics accuracy doesn't need extra tests
         //ASSERT(!(ent->o.x<0 || ent->o.y<0 || ent->o.z<0 || ent->o.x>4096 || ent->o.y>4096 || ent->o.z>4096));
-        if(!menutime && dist<(s_ai ? 40 : 24) && ent->state==CS_ALIVE && s_ai<2) { menutime = starttime(); menuwhich = 0; }
+        if(!menutime && dist<(s_ai ? 40 : 24) && ent->state==CS_ALIVE && s_ai<2) { menutime = starttime(); menuwhich = MENU_DEFAULT; }
         else if(dist>(s_ai ? 96 : 48)) menutime = 0;
     }
 
@@ -187,9 +188,12 @@ struct rpgobj : g3d_callback, stats
     
     void takedamage(int damage, rpgobj &attacker)
     {
+        ent->enemy = attacker.ent;
+        
         particle_splash(3, damage*5, 1000, ent->o);
         s_sprintfd(ds)("@%d", damage);
         particle_text(ent->o, ds, 8);
+        
         if((s_hp -= damage)<=0)
         {
             ent->state = CS_DEAD;
@@ -201,15 +205,16 @@ struct rpgobj : g3d_callback, stats
         }    
     }
     
-    void attacked(rpgobj &attacker, rpgobj &weapon)
+    void usesound(rpgent *user)
     {
-        takedamage(weapon.s_damage*attacker.eff_melee()/100, attacker);
+        if(s_usesound) playsound(s_usesound, &user->o);    
     }
     
     bool usemana(rpgobj &o)
     {
-        if(o.s_manacost>s_mana) { conoutf("\f2not enough mana"); return false; };
+        if(o.s_manacost>s_mana) { if(this==os.playerobj) conoutf("\f2not enough mana"); return false; };
         s_mana -= o.s_manacost;
+        o.usesound(ent);
         return true;
     }
         
@@ -227,8 +232,7 @@ struct rpgobj : g3d_callback, stats
         if(s_usetype)
         {
             conoutf("\f2using: %s", name);
-            loopinventory() o->s_selected = 0;
-            s_selected = 1;                    
+            os.selected = this;                    
         }
         else
         {
@@ -246,11 +250,11 @@ struct rpgobj : g3d_callback, stats
     void gui(g3d_gui &g, bool firstpass)
     {
         g.start(menutime, 0.015f, &menutab);
-        g.tab(name, 0xFFFFFF);
         switch(menuwhich)
         {
-            default:
+            case MENU_DEFAULT:
             {
+                g.tab(name, 0xFFFFFF);
                 if(abovetext) g.text(abovetext, 0xDDFFDD);
 
                 guiaction(g, actions);
@@ -284,12 +288,13 @@ struct rpgobj : g3d_callback, stats
                
             case MENU_BUY:
             {
-                string info = "                         "; // accounting for layout space of rollover text, make better solution later
-                g.text("buy", 0xDDDDDD);
+                s_sprintfd(info)("buying from: %s", name);
+                g.tab(info, 0xFFFFFF);
                 loopinventorytype(IF_TRADE)
                 {
-                    int ret = g.button(o->name, 0xFFFFFF, "coins");
                     int price = o->s_worth;
+                    s_sprintfd(info)("%s (%d)", o->name, price);
+                    int ret = g.button(info, 0xFFFFFF, "coins");
                     if(ret&G3D_UP)
                     {
                         if(os.playerobj->s_gold>=price)
@@ -305,39 +310,39 @@ struct rpgobj : g3d_callback, stats
                             conoutf("\f2you cannot afford this item!");
                         }
                     }
-                    else if(ret&G3D_ROLLOVER)
-                    {
-                        s_sprintf(info)("buy for %d gold (you have %d)", price, os.playerobj->s_gold);
-                    }
                 }
+                s_sprintf(info)("you have %d gold", os.playerobj->s_gold);
                 g.text(info, 0xAAAAAA, "info");   
+                if(g.button("done buying", 0xFFFFFF, "coins")&G3D_UP) menuwhich = MENU_DEFAULT;
                 break;
             }
                
             case MENU_SELL:
             {
-                g.text("sell", 0xDDDDDD);
+                s_sprintfd(info)("selling to: %s", name);
+                g.tab(info, 0xFFFFFF);
                 os.playerobj->invgui(g, this);
+                if(g.button("done selling", 0xFFFFFF, "coins")&G3D_UP) menuwhich = MENU_DEFAULT;
                 break;
             }
         }
         g.end();
     }
     
-    void invgui(g3d_gui &g, rpgobj *seller = NULL)
+    void invgui(g3d_gui &g, rpgobj *buyer = NULL)
     {
-        string info = "                             ";  // FIXME
         loopinventory()
         {
-            int ret = g.button(o->name, 0xFFFFFF, "coins");
             int price = o->s_worth/2;
+            s_sprintfd(info)("%s (%d)", o->name, price);
+            int ret = g.button(info, 0xFFFFFF, "coins");
             if(ret&G3D_UP)
             {
-                if(seller)
+                if(buyer)
                 {
-                    if(price>seller->s_gold)
+                    if(price>buyer->s_gold)
                     {
-                        conoutf("\f2%s cannot afford to buy %s from you!", seller->name, o->name);                    
+                        conoutf("\f2%s cannot afford to buy %s from you!", buyer->name, o->name);                    
                     }
                     else
                     {
@@ -345,9 +350,9 @@ struct rpgobj : g3d_callback, stats
                         {
                             conoutf("\f2you sold %s for %d gold", o->name, price);
                             s_gold += price;
-                            seller->s_gold -= price;
+                            buyer->s_gold -= price;
                             o->decontain();
-                            seller->add(o, IF_TRADE);                                            
+                            buyer->add(o, IF_TRADE);                                            
                         }
                         else
                         {
@@ -360,13 +365,9 @@ struct rpgobj : g3d_callback, stats
                     o->selectuse();
                 }
             }
-            else if(ret&G3D_ROLLOVER)
-            {
-                if(seller) s_sprintf(info)("sell for %d gold (you have %d)",      price, s_gold);
-                else       s_sprintf(info)("item is worth %d gold (you have %d)", price, s_gold);
-            }
         }
-        g.text(info, 0xAAAAAA);   
+        s_sprintfd(info)("you have %d gold", os.playerobj->s_gold);
+        g.text(info, 0xAAAAAA, "info");   
     }
 
     void g3d_menu()

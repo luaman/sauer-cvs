@@ -45,10 +45,13 @@
     N(maxangle) \
     N(attackrate) \
     N(manacost) \
-    N(selected) \
+    N(effect) \
+    \
     N(attra) \
     N(attrb) \
     N(attrc) \
+    \
+    N(usesound)
    
    
 #define RPGNAMES RPGSTATNAMES RPGATTRNAMES
@@ -99,14 +102,6 @@ struct stats
         RPGATTRNAMES 
         #undef N
     }
-    /*
-    void st_gui(g3d_gui &g, rpgobj &o)
-    {
-        st_show(g);
-        //g.separator();
-        //o.st_show(g); // TEMP
-    }
-    */
     
     void st_init()
     {

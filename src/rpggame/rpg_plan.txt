@@ -1,18 +1,13 @@
 implementation plan (roughly in order of importance to make the game playable):
 
-
-- FIXME's in code, fix rollover text outside of buy gui, particles etc
-- show current item & quick bar on hud
-- projectiles need to colide with the world
-- add a ranged weapon (crossbow)
-- monsters are hardcoded to attack only player... hurt npcs when they happen to be in line with player
-- allow npcs to be attacked. make them hostile, bust this will wear off
+- pain & attack sounds
+- add icons for most items - show current item & quick bar on hud
 - simple way of tracking quests, both log and progress variables
-- do world pickups differently (not with gui window), show worth stat while hovering over
-  maybe generally do system with different crosshairs depending on what you point at (take, attack)
 - implement npcs getting hostile if you pick up anything in the world within N range, or M sightrange
   the more worth the item, the longer they will be hostile. if they knock you out, they'll take the item back.
 - move more stuff from c++ to script
+- hud weapons?
+- make some game messages into centerprints?
 - implement attackspeed/movespeed/jumpheight and other stats
 - game loading/saving
 - work on animations (attack etc)
@@ -21,6 +16,9 @@ implementation plan (roughly in order of importance to make the game playable):
 - tweak all stats
 - improved grid layout inventory screens
 - horse riding (maybe at first as teleport, later as fast transport)
+- FIXME's in code
+- do world pickups differently (not with gui window), show worth stat while hovering over
+  maybe generally do system with different crosshairs depending on what you point at (take, attack)
 
 art list:
 - hud with health mana stat bars

@@ -11,6 +11,8 @@ struct rpgent : dynent
     rpgobj *mpweapon;
     float mpdist;
     
+    rpgent *enemy;
+    
     enum { R_STARE, R_ROAM, R_SEEK, R_ATTACK, R_BLOCKED, R_BACKHOME };
     int npcstate;
     
@@ -22,13 +24,14 @@ struct rpgent : dynent
         
     enum { ROTSPEED = 200 };
 
-    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), magicprojectile(false), npcstate(R_STARE), trigger(0), sink(0)
+    rpgent(rpgobj *_ro, rpgclient &_cl, const vec &_pos, float _yaw, int _maxspeed = 40, int _type = ENT_AI) : ro(_ro), cl(_cl), lastaction(0), lastpain(0), attacking(false), magicprojectile(false), npcstate(R_STARE), trigger(0), sink(0), enemy(NULL)
     {
         o = _pos;
         home = _pos;
         yaw = _yaw;
         maxspeed = _maxspeed;
         type = _type;
+        enemy = &cl.player1;
     }
 
     float vecyaw(vec &t) { return -(float)atan2(t.x-o.x, t.y-o.y)/RAD+180; }
@@ -37,8 +40,8 @@ struct rpgent : dynent
 
     void tryattackobj(rpgobj &eo, rpgobj &weapon)
     {
-        if(!eo.s_ai || eo.s_ai==ro->s_ai) return;    // will need a more accurate way of denoting enemies & friends in the future
-
+        if(!eo.s_ai || (eo.s_ai==ro->s_ai && eo.ent!=enemy)) return;    
+        
         rpgent &e = *eo.ent;
         if(e.state!=CS_ALIVE) return;
 
@@ -69,15 +72,13 @@ struct rpgent : dynent
 
         if(closedist>weapon.s_maxrange*weapon.s_maxrange) return;
 
-        eo.attacked(*ro, weapon);
+        weapon.useaction(eo, *this, true);   
     }
+    
+    #define loopallrpgobjsexcept(ro) loop(i, cl.os.set.length()+1) for(rpgobj *eo = i ? cl.os.set[i-1] : cl.os.playerobj; eo; eo = NULL) if((ro)!=eo) 
 
-    void tryattack()
-    {
-        if(!attacking) return;
-        
-        rpgobj &weapon = ro->selectedweapon();
-        
+    void tryattack(vec &lookatpos, rpgobj &weapon)
+    {                
         if(cl.lastmillis-lastaction<weapon.s_attackrate) return;
         
         lastaction = cl.lastmillis;
@@ -86,13 +87,34 @@ struct rpgent : dynent
         {
             case 1:
                 if(!weapon.s_damage) return;
-                loopv(cl.os.set) if(cl.os.set[i]!=ro) tryattackobj(*cl.os.set[i], weapon);
-                if(cl.os.playerobj!=ro) tryattackobj(*cl.os.playerobj, weapon);    
+                weapon.usesound(this);
+                loopallrpgobjsexcept(ro) tryattackobj(*eo, weapon);
                 break;
             
             case 2:
+            {
+                if(!weapon.s_damage) return;
+                weapon.usesound(this);
+                particle_splash(0, 200, 250, lookatpos);
+                vec flarestart = o;
+                flarestart.z -= 2;
+                particle_flare(flarestart, lookatpos, 600, 10);  // FIXME hudgunorigin(), and shorten to maxrange
+                float bestdist = 1e16f;
+                rpgobj *best = NULL;
+                loopallrpgobjsexcept(ro)
+                {
+                    if(eo->ent->state!=CS_ALIVE) continue;
+                    if(!intersect(eo->ent, o, lookatpos)) continue;
+                    float dist = o.dist(eo->ent->o);
+                    if(dist<weapon.s_maxrange && dist<bestdist)
+                    {
+                        best = eo;
+                        bestdist = dist;
+                    }
+                }
+                if(best) weapon.useaction(*best, *this, true);  
                 break;
-                
+            }   
             case 3:                
                 if(weapon.s_maxrange)   // projectile, cast on target
                 {
@@ -102,8 +124,10 @@ struct rpgent : dynent
                     magicprojectile = true;
                     mpweapon = &weapon;
                     mppos = o;
-                    mpdir = vec(yaw*RAD, pitch*RAD);
-                    mpdist = weapon.s_maxrange;
+                    //mpdir = vec(yaw*RAD, pitch*RAD);
+                    float worlddist = lookatpos.dist(o, mpdir);
+                    mpdir.normalize();
+                    mpdist = min(weapon.s_maxrange, worlddist);
                 }
                 else
                 {
@@ -114,29 +138,26 @@ struct rpgent : dynent
         
     }
 
-    void tryprojobj(rpgobj &eo, vec &mpto)
-    {
-        if(eo.ent->o.dist(mppos)>32) return;  // quick reject, for now
-        if(!intersect(eo.ent, mppos, mpto)) return;
-        
-        magicprojectile = false;
-        mpweapon->useaction(eo, *this, false);    // cast on target
-    }
-
     void updateprojectile(int curtime)
     {
         if(!magicprojectile) return;
         
         regular_particle_splash(1, 2, 300, mppos);
-        particle_splash(4, 1, 1, mppos);    // FIXME must make particle configurable
+        particle_splash(mpweapon->s_effect, 1, 1, mppos);    
 
         float dist = curtime/5.0f;
         if((mpdist -= dist)<0) { magicprojectile = false; return; };
         
         vec mpto = vec(mpdir).mul(dist).add(mppos);
 
-        loopv(cl.os.set) if(cl.os.set[i]!=ro) tryprojobj(*cl.os.set[i], mpto);  // FIXME: make fast "give me all rpgobs in range R that are not X" function
-        if(cl.os.playerobj!=ro) tryprojobj(*cl.os.playerobj, mpto);  
+        loopallrpgobjsexcept(ro)     // FIXME: make fast "give me all rpgobs in range R that are not X" function
+        {
+            if(eo->ent->o.dist(mppos)<32 && intersect(eo->ent, mppos, mpto))  // quick reject, for now
+            {
+                magicprojectile = false;
+                mpweapon->useaction(*eo, *this, false);    // cast on target
+            }
+        }
         
         mppos = mpto;  
     }
@@ -180,10 +201,11 @@ struct rpgent : dynent
             blocked = false;
             gotoyaw(targetyaw+90+rnd(180), R_BLOCKED, 1, 1000);                           
         }
+                
+        if(ro->s_hp<ro->eff_maxhp() && npcstate!=R_SEEK) gotopos(enemy->o, R_SEEK,  1, 200);   
         
         #define ifnextstate   if(trigger<cl.lastmillis)
         #define ifplayerclose if(playerdist<64)
-        #define ifplayerfar   if(playerdist>256)
 
         switch(npcstate)
         {
@@ -195,8 +217,8 @@ struct rpgent : dynent
             case R_STARE:
                 ifplayerclose
                 {
-                    if(ro->s_ai==2) gotopos(cl.player1.o, R_SEEK,  1, 200);
-                    else            gotopos(cl.player1.o, R_STARE, 0, 500);
+                    if(ro->s_ai==2) { gotopos(cl.player1.o, R_SEEK,  1, 200); enemy = &cl.player1; }
+                    else            { gotopos(cl.player1.o, R_STARE, 0, 500); }
                 }
                 else ifnextstate stareorroam();
                 break;
@@ -210,21 +232,21 @@ struct rpgent : dynent
                 ifnextstate
                 {
                     vec target;
-                    attacking = true;
-                    if(raycubelos(o, cl.player1.o, target)) tryattack();    // FIXME: allow for any enemy
-                    attacking = false;
-                    ifplayerfar goroam();
-                    else gotopos(cl.player1.o, R_SEEK, 1, 100);
+                    if(raycubelos(o, enemy->o, target))
+                    {
+                        rpgobj &weapon = ro->selectedweapon();
+                        if(target.dist(o)<weapon.s_maxrange) tryattack(target, weapon);
+                    }
+                    if(enemy->o.dist(o)>256) goroam();
+                    else gotopos(enemy->o, R_SEEK, 1, 100);
                 }
-                
         }
         
         #undef ifnextstate
         #undef ifplayerclose
-        #undef ifplayerfar
     }
 
-    void updateplayer(int curtime)     // alternative version of update() if this ent is the main player
+    void updateplayer(int curtime, vec &lookatpos)     // alternative version of update() if this ent is the main player
     {
         updateprojectile(curtime);
 
@@ -246,7 +268,7 @@ struct rpgent : dynent
         {
             moveplayer(this, 20, true);
             ro->st_update(cl.lastmillis);
-            tryattack();
+            if(attacking) tryattack(lookatpos, ro->selectedweapon());
         }            
     }
 };

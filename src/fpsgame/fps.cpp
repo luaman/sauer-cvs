@@ -197,6 +197,7 @@ struct fpsclient : igameclient
         if(!maptime) { maptime = lm + curtime; return; }
         lastmillis = lm;
         if(!curtime) return;
+        if(m_slowmo) setvar("gamespeed", player1->health);
         physicsframe();
         et.checkquad(curtime, player1);
         ws.moveprojectiles(curtime);
@@ -293,6 +294,7 @@ struct fpsclient : igameclient
         {
             damageblend(damage);
             d->damageroll(damage);
+            if(m_slowmo && player1->health<10) player1->health = 10;
         }
         ws.damageeffect(damage, d);
 

@@ -45,7 +45,7 @@ struct rpgclient : igameclient, g3d_callback
         if(!curtime) return;
         physicsframe();
         os.update(curtime);
-        player1.updateplayer(curtime);
+        player1.updateplayer(curtime, pos);
         checktriggers();
     }
     

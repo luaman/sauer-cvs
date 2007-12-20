@@ -6,8 +6,9 @@ struct rpgobjset
     hashtable<char *, char *> names;
     rpgobj *pointingat;
     rpgobj *playerobj;
+    rpgobj *selected;
     
-    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL)
+    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL), selected(NULL)
     {
         #define N(n) CCOMMAND(r_##n,     "i", (rpgobjset *self, int *val), { self->stack[0]->s_##n = *val; }); \
                      CCOMMAND(r_get_##n, "",  (rpgobjset *self), { intret(self->stack[0]->s_##n); }); 
@@ -29,6 +30,7 @@ struct rpgobjset
         CCOMMAND(r_action_use,  "s",   (rpgobjset *self, char *s), { self->stack[0]->action_use.script = self->stringpool(s); });    
         CCOMMAND(r_take,        "sss", (rpgobjset *self, char *name, char *ok, char *notok), { self->takefromplayer(name, ok, notok); });    
         CCOMMAND(r_give,        "s",   (rpgobjset *self, char *s), { self->givetoplayer(s); });    
+        CCOMMAND(r_use,         "",    (rpgobjset *self), { self->stack[0]->selectuse(); });    
         CCOMMAND(r_applydamage, "i",   (rpgobjset *self, int *d), { self->stack[0]->takedamage(*d, *self->stack[1]); });    
         clearworld();
     }
@@ -58,6 +60,7 @@ struct rpgobjset
         removefromworld(o);
         o->decontain();
         if(pointingat==o) pointingat = NULL;
+        if(selected==o) selected = NULL;
         resetstack();
         DELETEP(o);
     }
