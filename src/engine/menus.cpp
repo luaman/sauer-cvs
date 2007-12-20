@@ -60,7 +60,7 @@ void guibutton(char *name, char *action, char *icon)
     if(ret&G3D_UP) 
     {
         executelater.add(newstring(*action ? action : name));
-        clearlater = shouldclearmenu;
+        if(shouldclearmenu) clearlater = true;
     }
     else if(ret&G3D_ROLLOVER)
     {
@@ -78,7 +78,7 @@ void guiimage(char *path, char *action, float *scale, int *overlaid)
         if(*action)
         {
             executelater.add(newstring(action));
-            clearlater = shouldclearmenu;
+            if(shouldclearmenu) clearlater = true;
         }
     }
     else if(ret&G3D_ROLLOVER)
@@ -242,7 +242,7 @@ void guiservers()
         {
             s_sprintfd(connect)("connect %s", name);
             executelater.add(newstring(connect));
-            clearlater = shouldclearmenu;
+            if(shouldclearmenu) clearlater = true;
         }
     }
 }
