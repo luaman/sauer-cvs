@@ -660,9 +660,12 @@ int main(int argc, char **argv)
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
         curtime = (elapsed*gamespeed)/100;
-        //if(curtime>200) curtime = 200;
-        //else if(curtime<1) curtime = 1;
-        if(paused) curtime = 0;
+        if(!multiplayer(false))
+        {
+            if(curtime>200) curtime = 200;
+            else if(curtime<1) curtime = 1;
+            if(paused) curtime = 0;
+        }
 
         if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
        
