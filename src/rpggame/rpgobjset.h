@@ -4,11 +4,15 @@ struct rpgobjset
 
     vector<rpgobj *> set, stack;
     hashtable<char *, char *> names;
+    
     rpgobj *pointingat;
     rpgobj *playerobj;
     rpgobj *selected;
     
-    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL), selected(NULL)
+    rpgquest *quests;
+    rpgquest *currentquest;
+    
+    rpgobjset(rpgclient &_cl) : cl(_cl), pointingat(NULL), playerobj(NULL), selected(NULL), quests(NULL), currentquest(NULL)
     {
         #define N(n) CCOMMAND(r_##n,     "i", (rpgobjset *self, int *val), { self->stack[0]->s_##n = *val; }); \
                      CCOMMAND(r_get_##n, "",  (rpgobjset *self), { intret(self->stack[0]->s_##n); }); 
@@ -26,7 +30,8 @@ struct rpgobjset
         CCOMMAND(r_pop,         "",    (rpgobjset *self), { self->popobj(); });    
         CCOMMAND(r_swap,        "",    (rpgobjset *self), { swap(rpgobj *, self->stack[0], self->stack[1]) });    
         CCOMMAND(r_say,         "s",   (rpgobjset *self, char *s), { self->stack[0]->abovetext = self->stringpool(s); });    
-        CCOMMAND(r_action,      "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a)); });    
+        CCOMMAND(r_quest,       "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a), true); });    
+        CCOMMAND(r_action,      "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a), false); });    
         CCOMMAND(r_action_use,  "s",   (rpgobjset *self, char *s), { self->stack[0]->action_use.script = self->stringpool(s); });    
         CCOMMAND(r_take,        "sss", (rpgobjset *self, char *name, char *ok, char *notok), { self->takefromplayer(name, ok, notok); });    
         CCOMMAND(r_give,        "s",   (rpgobjset *self, char *s), { self->givetoplayer(s); });    
@@ -116,6 +121,11 @@ struct rpgobjset
         {
             stack[0]->add(o, false);
             conoutf("\f2you hand over a %s", o->name);
+            if(currentquest)
+            {
+                conoutf("\f2you finish a quest for %s", currentquest->npc); 
+                currentquest->completed = true;           
+            }
         }
         execute(o ? ok : notok);
     }
@@ -127,6 +137,21 @@ struct rpgobjset
         {
             conoutf("\f2you receive a %s", o->name);
             playerobj->add(o, false);
+        }
+    }
+    
+    void addquest(rpgaction *a, char *questline, char *npc)
+    {
+        a->q = quests = new rpgquest(quests, npc, questline);
+        conoutf("\f2you have accepted a quest for %s", npc);
+    }
+    
+    void listquests(bool completed, g3d_gui &g)
+    {
+        for(rpgquest *q = quests; q; q = q->next) if(q->completed==completed)
+        {
+            s_sprintfd(info)("%s: %s", q->npc, q->questline);
+            g.text(info, 0xAAAAAA, "info");
         }
     }
     

@@ -78,6 +78,12 @@ struct rpgclient : igameclient, g3d_callback
                 g.tab("stats", 0xFFFFF);
                 os.playerobj->st_show(g);
                 break;
+            
+            case 3:
+                g.tab("active quests", 0xFFFFF);
+                os.listquests(false, g);
+                g.tab("completed quests", 0xFFFFF);
+                os.listquests(true, g);
         }
         g.end();
     }
@@ -108,13 +114,35 @@ struct rpgclient : igameclient, g3d_callback
         et.startmap();
     }
     
+    void quad(int x, int y, int xs, int ys)
+    {
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2i(x,    y);
+        glTexCoord2f(1, 0); glVertex2i(x+xs, y);
+        glTexCoord2f(1, 1); glVertex2i(x+xs, y+ys);
+        glTexCoord2f(0, 1); glVertex2i(x,    y+ys);
+        glEnd();
+    }
+    
     void gameplayhud(int w, int h)
     {
         glLoadIdentity();
         glOrtho(0, w*2, h*2, 0, -1, 1);
-        if(os.playerobj->s_hp>0) draw_textf(os.playerobj->s_hp>0 ? "health: %d/%d - mana: %d/%d" : "DEAD", 0, h*2-64,
-                                            os.playerobj->s_hp, os.playerobj->eff_maxhp(),
-                                            os.playerobj->s_mana, os.playerobj->eff_maxmana());       // temp     
+        draw_textf("using: %s", 636*2, h*2-256+149, os.selected ? os.selected->name : "(none)");       // temp     
+                                            
+        glLoadIdentity();
+        glOrtho(0, w, h, 0, -1, 1);
+        settexture("data/hud_rpg.png", true);
+        
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        quad(0, h-128, 768, 128);        
+        settexture("data/hbar.png", true);
+        glColor4f(1, 0, 0, 0.5f);
+        quad(130, h-128+57, 193*os.playerobj->s_hp/os.playerobj->eff_maxhp(), 17);        
+        glColor4f(0, 0, 1, 0.5f);
+        quad(130, h-128+87, 193*os.playerobj->s_mana/os.playerobj->eff_maxmana(), 17);        
+        glDisable(GL_BLEND);
     }
     
     void drawhudmodel(int anim, float speed = 0, int base = 0)

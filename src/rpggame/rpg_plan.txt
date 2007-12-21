@@ -1,24 +1,30 @@
 implementation plan (roughly in order of importance to make the game playable):
 
+- wolves sometimes don't do damage when attacking?
 - pain & attack sounds
 - add icons for most items - show current item & quick bar on hud
-- simple way of tracking quests, both log and progress variables
+- make mousewheel select between weapons in inventory
 - implement npcs getting hostile if you pick up anything in the world within N range, or M sightrange
   the more worth the item, the longer they will be hostile. if they knock you out, they'll take the item back.
 - move more stuff from c++ to script
 - hud weapons?
 - make some game messages into centerprints?
 - implement attackspeed/movespeed/jumpheight and other stats
+- enemies can sometimes just run in circles around you
 - game loading/saving
 - work on animations (attack etc)
 - make generic box that can take icons to replace generic bag
 - add many more standard items, maybe some temp more monsters from the fps
+- show body when dead
 - tweak all stats
 - improved grid layout inventory screens
 - horse riding (maybe at first as teleport, later as fast transport)
 - FIXME's in code
+- utilize all hud items (radar etc)
 - do world pickups differently (not with gui window), show worth stat while hovering over
   maybe generally do system with different crosshairs depending on what you point at (take, attack)
+- need a confirmation of wether you want to take on a quest or not?
+- r_take should take a list of items
 
 art list:
 - hud with health mana stat bars

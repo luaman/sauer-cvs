@@ -1,5 +1,37 @@
 struct rpgobjset;
 
+struct rpgquest
+{
+    rpgquest *next;
+    char *npc;
+    char *questline;
+    bool completed;
+    
+    rpgquest(rpgquest *_n, char *_npc, char *_ql) : next(_n), npc(_npc), questline(_ql), completed(false) {}
+};
+
+struct rpgaction
+{
+    rpgaction *next;
+    char *initiate, *script;
+    rpgquest *q;
+    bool used;
+
+    rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : next(_n), initiate(_i), script(_s), used(false), q(NULL) {}
+
+    ~rpgaction() { DELETEP(next); }
+
+    void exec(rpgobj *obj, rpgobj *target, rpgobj *user, rpgobjset &os)
+    {
+        if(!*script) return;
+        os.pushobj(user);
+        os.pushobj(target);
+        os.pushobj(obj);
+        execute(script);
+        used = true;
+    }
+};
+
 struct rpgobj : g3d_callback, stats
 {
     rpgobj *parent;     // container object, if not top level
@@ -27,27 +59,6 @@ struct rpgobj : g3d_callback, stats
 
     int itemflags;
     
-    struct rpgaction
-    {
-        rpgaction *next;
-        char *initiate, *script;
-        bool used;
-        
-        rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : next(_n), initiate(_i), script(_s), used(false) {}
-        
-        ~rpgaction() { DELETEP(next); }
-        
-        void exec(rpgobj *obj, rpgobj *target, rpgobj *user, rpgobjset &os)
-        {
-            if(!*script) return;
-            os.pushobj(user);
-            os.pushobj(target);
-            os.pushobj(obj);
-            execute(script);
-            used = true;
-        }
-    };
-
     rpgaction *actions, action_use;
     char *abovetext;    
 
@@ -158,10 +169,11 @@ struct rpgobj : g3d_callback, stats
         else if(dist>(s_ai ? 96 : 48)) menutime = 0;
     }
 
-    void addaction(char *initiate, char *script)
+    void addaction(char *initiate, char *script, bool startquest)
     {
         for(rpgaction *a = actions; a; a = a->next) if(strcmp(a->initiate, initiate)==0) return;
         actions = new rpgaction(initiate, script, actions);
+        if(startquest) os.addquest(actions, abovetext, name);
     }
 
     void droploot()
@@ -196,6 +208,7 @@ struct rpgobj : g3d_callback, stats
         
         if((s_hp -= damage)<=0)
         {
+            s_hp = 0;
             ent->state = CS_DEAD;
             ent->attacking = false;
             ent->lastaction = os.cl.lastmillis;
@@ -244,7 +257,12 @@ struct rpgobj : g3d_callback, stats
     {
         if(!a) return;
         guiaction(g, a->next);
-        if(g.button(a->initiate, a->used ? 0xAAAAAA : 0xFFFFFF, "chat")&G3D_UP) if(os.playerobj->usemana(*this)) a->exec(this, os.playerobj, os.playerobj, os);
+        if(g.button(a->initiate, a->used ? 0xAAAAAA : 0xFFFFFF, "chat")&G3D_UP)
+        {
+            os.currentquest = a->q;
+            a->exec(this, os.playerobj, os.playerobj, os);
+            os.currentquest = NULL;
+        } 
     }
     
     void gui(g3d_gui &g, bool firstpass)

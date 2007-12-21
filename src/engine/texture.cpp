@@ -391,9 +391,9 @@ void cleangl()
     textures.clear();
 }
 
-void settexture(const char *name)
+void settexture(const char *name, bool clamp)
 {
-    glBindTexture(GL_TEXTURE_2D, textureload(name, 0, true, false)->gl);
+    glBindTexture(GL_TEXTURE_2D, textureload(name, clamp, true, false)->gl);
 }
 
 vector<Slot> slots;
