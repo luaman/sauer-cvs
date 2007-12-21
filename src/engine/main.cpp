@@ -671,11 +671,14 @@ int main(int argc, char **argv)
         if(millis<totalmillis) millis = totalmillis;
         limitfps(millis, totalmillis);
         int elapsed = millis-totalmillis;
-        curtime = (elapsed*gamespeed)/100;
-        if(!multiplayer(false))
+        if(multiplayer(false)) curtime = elapsed;
+        else
         {
+            static int timeerr = 0;
+            int scaledtime = elapsed*gamespeed + timeerr;
+            curtime = scaledtime/100;
+            timeerr = scaledtime%100;
             if(curtime>200) curtime = 200;
-            else if(curtime<1) curtime = 1;
             if(paused) curtime = 0;
         }
 
