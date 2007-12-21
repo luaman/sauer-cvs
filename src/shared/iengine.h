@@ -13,7 +13,7 @@ extern bool  raycubelos(vec &o, vec &dest, vec &hitpos);
 
 extern bool isthirdperson();
 
-extern void settexture(const char *name, bool clamp = 0);
+extern void settexture(const char *name, bool clamp = false);
 
 // octaedit
 

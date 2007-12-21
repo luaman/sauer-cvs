@@ -17,7 +17,7 @@ struct rpgaction
     rpgquest *q;
     bool used;
 
-    rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : next(_n), initiate(_i), script(_s), used(false), q(NULL) {}
+    rpgaction(char *_i = NULL, char *_s = NULL, rpgaction *_n = NULL) : next(_n), initiate(_i), script(_s), q(NULL), used(false) {}
 
     ~rpgaction() { DELETEP(next); }
 
