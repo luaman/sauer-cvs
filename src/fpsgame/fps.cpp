@@ -325,12 +325,6 @@ struct fpsclient : igameclient
     {
         if(d->state!=CS_ALIVE || intermission) return;
 
-        if(m_assassin)
-        {
-            if(d==player1 && asc.hunters.find(actor)>=0) asc.hunters.removeobj(actor);
-            else if(actor==player1 && asc.targets.find(d)>=0) asc.targets.removeobj(d);
-        }
-
         string dname, aname;
         s_strcpy(dname, d==player1 ? "you" : colorname(d));
         s_strcpy(aname, actor==player1 ? "you" : (actor->type!=ENT_INANIMATE ? colorname(actor) : ""));
@@ -343,7 +337,20 @@ struct fpsclient : igameclient
             if(d==player1) conoutf("\f2you got fragged by a teammate (%s)", aname);
             else conoutf("\f2%s fragged a teammate (%s)", aname, dname);
         }
-        else 
+        else if(m_assassin && (d==player1 || actor==player1))
+        {
+            if(d==player1) 
+            {   
+                conoutf("\f2you got fragged by %s (%s)", aname, asc.hunters.find(actor)>=0 ? "assassin" : (asc.targets.find(actor)>=0 ? "target" : "friend"));
+                if(asc.hunters.find(actor)>=0) asc.hunters.removeobj(actor);
+            }
+            else 
+            {
+                conoutf("\f2you fragged %s (%s)", dname, asc.targets.find(d)>=0 ? "target +1" : (asc.hunters.find(d)>=0 ? "assassin +0" : "friend -1")); 
+                if(asc.targets.find(d)>=0) asc.targets.removeobj(d);
+            }
+        }
+        else
         {
             if(d==player1) conoutf("\f2you got fragged by %s", aname);
             else conoutf("\f2%s fragged %s", aname, dname);
