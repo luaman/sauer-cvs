@@ -298,7 +298,7 @@ struct fpsclient : igameclient
     bool allowmove(physent *d)
     {
         if(d->type!=ENT_PLAYER) return true;
-        return lastmillis-((fpsent *)d)->lasttaunt>=1000;
+        return !((fpsent *)d)->lasttaunt || lastmillis-((fpsent *)d)->lasttaunt>=1000;
     }
 
     void damaged(int damage, fpsent *d, fpsent *actor, bool local = true)
