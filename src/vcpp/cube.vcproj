@@ -164,6 +164,7 @@
 				ExceptionHandling="2"
 				BasicRuntimeChecks="1"
 				RuntimeLibrary="3"
+				FloatingPointModel="2"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="cube.h"
 				PrecompiledHeaderFile=".\Debug/cube.pch"
