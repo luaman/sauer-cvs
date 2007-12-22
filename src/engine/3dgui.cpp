@@ -277,10 +277,8 @@ struct gui : g3d_gui
         return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
     }
 
-    int image(const char *path, float scale, bool overlaid)
+    int image(Texture *t, float scale, bool overlaid)
     {
-        Texture *t = textureload(path, 0, true, false);
-        if(t==notexture) return 0;
         autotab();
         if(scale==0) scale = 1;
         int size = (int)(scale*2*FONTH)-SHADOW;

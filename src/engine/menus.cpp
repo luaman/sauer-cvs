@@ -69,10 +69,16 @@ void guibutton(char *name, char *action, char *icon)
     }
 }
 
-void guiimage(char *path, char *action, float *scale, int *overlaid)
+void guiimage(char *path, char *action, float *scale, int *overlaid, char *alt)
 {
     if(!cgui) return;
-    int ret = cgui->image(path, *scale, *overlaid!=0);
+    Texture *t = textureload(path, 0, true, false);
+    if(t==notexture)
+    {
+        if(alt[0]) t = textureload(alt, 0, true, false);
+        if(t==notexture) return;
+    }
+    int ret = cgui->image(t, *scale, *overlaid!=0);
     if(ret&G3D_UP)
     {
         if(*action)
@@ -258,7 +264,7 @@ COMMAND(guistayopen, "s");
 COMMAND(guilist, "s");
 COMMAND(guititle, "s");
 COMMAND(guibar,"");
-COMMAND(guiimage,"ssfi");
+COMMAND(guiimage,"ssfis");
 COMMAND(guislider,"siis");
 COMMAND(guilistslider, "sss");
 COMMAND(guiradio,"ssis");
