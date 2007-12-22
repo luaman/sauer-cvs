@@ -445,8 +445,8 @@ struct captureclient : capturestate
         if(closest < 0) return -1;
         baseinfo &b = bases[closest];
 
-        float bestdist = 1e10f;
-        int best = -1;
+        float bestdist = 1e10f, altdist = 1e10f;
+        int best = -1, alt = -1;
         loopv(cl.et.ents)
         {
             extentity *e = cl.et.ents[i];
@@ -454,11 +454,18 @@ struct captureclient : capturestate
             float dist = e->o.dist(b.o);
             if(dist < bestdist)
             {
+                alt = best;
+                altdist = bestdist;
                 best = i;
                 bestdist = dist;
             }
+            else if(dist < altdist)
+            {
+                alt = i;
+                altdist = dist;
+            }
         }
-        return best;
+        return rnd(2) ? best : alt;
     }
 };
 
