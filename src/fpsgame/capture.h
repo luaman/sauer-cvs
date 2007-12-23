@@ -591,7 +591,7 @@ struct captureservmode : capturestate, servmode
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if((!b.owners || !b.enemies) && b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*(b.enemies ? b.enemies : -max(1, b.owners))*t)==1) addscore(b.owner, CAPTURESCORE);
+                if((!b.owners || !b.enemies) && b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*(b.enemies ? b.enemies : -(1+b.owners))*t)==1) addscore(b.owner, CAPTURESCORE);
                 sendbaseinfo(i);
             }
             else if(b.owner[0])

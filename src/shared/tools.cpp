@@ -230,15 +230,14 @@ int listfiles(const char *dir, const char *ext, vector<char *> &files)
 
 void endianswap(void *memory, int stride, int length)   // little endian as storage format
 {
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    loop(w, length) loop(i, stride/2)
+    static const int littleendian = 1;
+    if(!*(const char *)&littleendian) loop(w, length) loop(i, stride/2)
     {
         uchar *p = (uchar *)memory+w*stride;
         uchar t = p[i];
         p[i] = p[stride-i-1];
         p[stride-i-1] = t;
     }
-#endif
 }
 
 
