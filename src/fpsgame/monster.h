@@ -213,7 +213,7 @@ struct monsterset
                     if(_anger>=monstertypes[mtype].loyalty) enemy = d;     // monster infight if very angry
                 }
             }
-            else                    // player hit us
+            else if(d->type==ENT_PLAYER) // player hit us
             {
                 anger = 0;
                 enemy = d;

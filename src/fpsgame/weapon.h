@@ -238,7 +238,7 @@ struct weaponstate
         fpsent *f = (fpsent *)d;
 
         f->lastpain = cl.lastmillis;
-        at->totaldamage += damage;
+        if(at->type==ENT_PLAYER) at->totaldamage += damage;
         f->superdamage = 0;
 
         if(f->type==ENT_AI || !m_mp(cl.gamemode) || f==player1) f->hitpush(damage, vel, at, gun);

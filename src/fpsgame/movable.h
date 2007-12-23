@@ -144,7 +144,7 @@ struct movableset
             {
                 m->state = CS_DEAD;
                 m->explode = 0;
-                cl.ws.explode(true, (fpsent *)m, m->o, (fpsent *)m, guns[GUN_BARREL].damage, GUN_BARREL);
+                cl.ws.explode(true, (fpsent *)m, m->o, m, guns[GUN_BARREL].damage, GUN_BARREL);
             }
             else if(m->moving || (m->onplayer && (m->onplayer->state!=CS_ALIVE || m->lastmoveattempt <= m->onplayer->lastmove))) moveplayer(m, 2, false);
         }
