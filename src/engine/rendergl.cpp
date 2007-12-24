@@ -169,6 +169,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         hasDRE = true;
     }
 
+    bool avoidshaders = false;
     if(strstr(vendor, "ATI"))
     {
         floatvtx = 1;
@@ -182,18 +183,27 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     }
     else if(strstr(vendor, "Tungsten"))
     {
+        avoidshaders = true;
         floatvtx = 1;
+
+        extern int maxtexsize;
+        maxtexsize = 256;
     }
     else if(strstr(vendor, "Intel"))
     {
+        avoidshaders = true;
         intel_quadric_bug = 1;
+
+        extern int maxtexsize;
+        maxtexsize = 256;
     } 
     //if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     extern int useshaders;
-    if(!useshaders || !hasMT || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
+    if(!useshaders || (useshaders<0 && avoidshaders) && !hasMT || !strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program"))
     {
-        conoutf("WARNING: No shader support! Using fixed function fallback. (no fancy visuals for you)");
+        if(!strstr(exts, "GL_ARB_vertex_program") || !strstr(exts, "GL_ARB_fragment_program")) conoutf("WARNING: No shader support! Using fixed function fallback. (no fancy visuals for you)");
+        else if(useshaders<0 && !hasTF) conoutf("WARNING: Disabling shaders for extra performance. (use \"/shaders 1\" to enable shaders if desired)");
         renderpath = R_FIXEDFUNCTION;
         if(strstr(vendor, "ATI") && !useshaders) ati_texgen_bug = 1;
         else if(strstr(vendor, "NVIDIA")) nvidia_texgen_bug = 1;
