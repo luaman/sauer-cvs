@@ -409,12 +409,13 @@ struct lodcollect
                 ushort *startbuf = curbuf;
                 loopl(6) 
                 {
+                    e.minvert[l] = USHRT_MAX;
+                    e.maxvert[l] = 0;
+
                     if(t.dims[l].length())
                     {
                         memcpy(curbuf, t.dims[l].getbuf(), t.dims[l].length() * sizeof(ushort));
 
-                        e.minvert[l] = USHRT_MAX;
-                        e.maxvert[l] = 0;
                         loopvj(t.dims[l])
                         {
                             curbuf[j] += offsetindices;
