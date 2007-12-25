@@ -87,6 +87,7 @@ VAR(apple_glsldepth_bug, 0, 0, 1);
 VAR(apple_minmax_bug, 0, 0, 1);
 VAR(apple_ff_bug, 0, 0, 1);
 VAR(intel_quadric_bug, 0, 0, 1);
+VAR(mesa_dre_bug, 0, 0, 1);
 VAR(minimizetcusage, 1, 0, 0);
 VAR(emulatefog, 1, 0, 0);
 
@@ -217,6 +218,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         maxtexsize = 256;
 
         if(!hasOQ) waterreflect = waterrefract = 0;
+        if(hasDRE) mesa_dre_bug = 1;
     }
     else if(strstr(vendor, "Intel"))
     {
