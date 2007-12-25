@@ -431,7 +431,7 @@ void Shader::bindprograms()
     lastshader = this;
 }
 
-VARFN(shaders, useshaders, 0, 1, 1, initwarning());
+VARFN(shaders, useshaders, -1, -1, 1, initwarning());
 VARF(shaderprecision, 0, 0, 2, initwarning());
 VARP(shaderdetail, 0, MAXSHADERDETAIL, MAXSHADERDETAIL);
 
