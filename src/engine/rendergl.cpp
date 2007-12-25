@@ -326,6 +326,9 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
 #ifdef __APPLE__
         if(osversion<0x1050) apple_minmax_bug = 1;
 #endif
+#ifndef WIN32
+        if(strstr(vendor, "ATI")) apple_minmax_bug = 1;
+#endif
         //conoutf("Using GL_EXT_blend_minmax extension.");
     }
 
