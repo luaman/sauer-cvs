@@ -571,7 +571,7 @@ struct fpsclient : igameclient
         return false;
     }
 
-    char *colorname(fpsent *d, char *name = NULL, char *prefix = "")
+    char *colorname(fpsent *d, char *name = NULL, const char *prefix = "")
     {
         if(!name) name = d->name;
         if(name[0] && !duplicatename(d, name)) return name;
@@ -786,12 +786,12 @@ struct fpsclient : igameclient
     void writegamedata(vector<char> &extras) {}
     void readgamedata(vector<char> &extras) {}
 
-    char *gameident() { return "fps"; }
-    char *defaultmap() { return "metl4"; }
-    char *savedconfig() { return "config.cfg"; }
-    char *defaultconfig() { return "data/defaults.cfg"; }
-    char *autoexec() { return "autoexec.cfg"; }
-    char *savedservers() { return "servers.cfg"; }
+    const char *gameident() { return "fps"; }
+    const char *defaultmap() { return "metl4"; }
+    const char *savedconfig() { return "config.cfg"; }
+    const char *defaultconfig() { return "data/defaults.cfg"; }
+    const char *autoexec() { return "autoexec.cfg"; }
+    const char *savedservers() { return "servers.cfg"; }
 };
 
 REGISTERGAME(fpsgame, "fps", new fpsclient(), new fpsserver());

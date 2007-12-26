@@ -220,8 +220,7 @@ void saycommand(char *init)                         // turns input to the comman
 {
     SDL_EnableUNICODE(saycommandon = (init!=NULL));
     if(!editmode) keyrepeat(saycommandon);
-    if(!init) init = "";
-    s_strcpy(commandbuf, init);
+    s_strcpy(commandbuf, init ? init : "");
     commandpos = -1;
     player->stopmoving(); // prevent situations where player presses direction key, open command line, then releases key
 }
@@ -593,7 +592,7 @@ void complete(char *s)
         }
     }
 
-    char *nextcomplete = NULL;
+    const char *nextcomplete = NULL;
     string prefix;
     s_strcpy(prefix, "/");
     if(f) // complete using filenames

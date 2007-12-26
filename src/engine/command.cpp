@@ -7,7 +7,7 @@
 void itoa(char *s, int i) { s_sprintf(s)("%d", i); }
 char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); }
 
-typedef hashtable<char *, ident> identtable;
+typedef hashtable<const char *, ident> identtable;
 
 identtable *idents = NULL;        // contains ALL vars/commands/aliases
 
@@ -97,15 +97,14 @@ void pop(char *name)
 COMMAND(push, "ss");
 COMMAND(pop, "s");
 
-void aliasa(char *name, char *action)
+void aliasa(const char *name, char *action)
 {
     ident *b = idents->access(name);
     if(!b) 
     {
-        name = newstring(name);
-        ident b(ID_ALIAS, name, action, persistidents);
+        ident b(ID_ALIAS, newstring(name), action, persistidents);
         if(overrideidents) b._override = OVERRIDDEN;
-        idents->access(name, &b);
+        idents->access(b._name, &b);
     }
     else if(b->_type != ID_ALIAS)
     {
@@ -125,13 +124,13 @@ void aliasa(char *name, char *action)
     }
 }
 
-void alias(char *name, char *action) { aliasa(name, newstring(action)); }
+void alias(const char *name, const char *action) { aliasa(name, newstring(action)); }
 
 COMMAND(alias, "ss");
 
 // variable's and commands are registered through globals, see cube.h
 
-int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
+int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
     ident v(ID_VAR, name, min, cur, max, storage, (void *)fun, persist);
@@ -142,37 +141,37 @@ int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(),
 #define GETVAR(id, name, retval) \
     ident *id = idents->access(name); \
     if(!id || id->_type!=ID_VAR) return retval;
-void setvar(char *name, int i, bool dofunc) 
+void setvar(const char *name, int i, bool dofunc) 
 { 
     GETVAR(id, name, );
     *id->_storage = i; 
     if(dofunc) id->changed();
 } 
-int getvar(char *name) 
+int getvar(const char *name) 
 { 
     GETVAR(id, name, 0);
     return *id->_storage;
 }
-int getvarmin(char *name) 
+int getvarmin(const char *name) 
 { 
     GETVAR(id, name, 0);
     return id->_min;
 }
-int getvarmax(char *name) 
+int getvarmax(const char *name) 
 { 
     GETVAR(id, name, 0);
     return id->_max;
 }
-bool identexists(char *name) { return idents->access(name)!=NULL; }
-ident *getident(char *name) { return idents->access(name); }
+bool identexists(const char *name) { return idents->access(name)!=NULL; }
+ident *getident(const char *name) { return idents->access(name); }
 
-const char *getalias(char *name)
+const char *getalias(const char *name)
 {
     ident *i = idents->access(name);
     return i && i->_type==ID_ALIAS ? i->_action : "";
 }
 
-bool addcommand(char *name, void (*fun)(), char *narg)
+bool addcommand(const char *name, void (*fun)(), const char *narg)
 {
     if(!idents) idents = new identtable;
     ident c(ID_COMMAND, name, narg, (void *)fun);
@@ -180,7 +179,7 @@ bool addcommand(char *name, void (*fun)(), char *narg)
     return false;
 }
 
-void addident(char *name, ident *id)
+void addident(const char *name, ident *id)
 {
     if(!idents) idents = new identtable;
     idents->access(name, id);
@@ -189,9 +188,9 @@ void addident(char *name, ident *id)
 static vector<vector<char> *> wordbufs;
 static int bufnest = 0;
 
-char *parseexp(char *&p, int right);
+char *parseexp(const char *&p, int right);
 
-void parsemacro(char *&p, int level, vector<char> &wordbuf)
+void parsemacro(const char *&p, int level, vector<char> &wordbuf)
 {
     int escape = 1;
     while(*p=='@') p++, escape++;
@@ -210,16 +209,15 @@ void parsemacro(char *&p, int level, vector<char> &wordbuf)
         }
         return;
     }
-    char *ident = p;
-    while(isalnum(*p) || *p=='_') p++;
-    int c = *p;
-    *p = 0;
-    const char *alias = getalias(ident);
-    *p = c;
+    static vector<char> ident;
+    ident.setsizenodelete(0);
+    while(isalnum(*p) || *p=='_') ident.add(*p++);
+    ident.add(0);
+    const char *alias = getalias(ident.getbuf());
     while(*alias) wordbuf.add(*alias++);
 }
 
-char *parseexp(char *&p, int right)          // parse any nested set of () or []
+char *parseexp(const char *&p, int right)          // parse any nested set of () or []
 {
     if(bufnest++>=wordbufs.length()) wordbufs.add(new vector<char>);
     vector<char> &wordbuf = *wordbufs[bufnest-1];
@@ -236,7 +234,7 @@ char *parseexp(char *&p, int right)          // parse any nested set of () or []
         if(c=='\"')
         {
             wordbuf.add(c);
-            char *end = p+strcspn(p, "\"\r\n\0");
+            const char *end = p+strcspn(p, "\"\r\n\0");
             while(p < end) wordbuf.add(*p++);
             if(*p=='\"') wordbuf.add(*p++);
             continue;
@@ -289,7 +287,7 @@ char *lookup(char *n)                           // find value of ident reference
     return n;
 }
 
-char *parseword(char *&p)                       // parse single argument, including expressions
+char *parseword(const char *&p)                       // parse single argument, including expressions
 {
     for(;;)
     {
@@ -300,7 +298,7 @@ char *parseword(char *&p)                       // parse single argument, includ
     if(*p=='\"')
     {
         p++;
-        char *word = p;
+        const char *word = p;
         p += strcspn(p, "\"\r\n\0");
         char *s = newstring(word, p-word);
         if(*p=='\"') p++;
@@ -308,7 +306,7 @@ char *parseword(char *&p)                       // parse single argument, includ
     }
     if(*p=='(') return parseexp(p, ')');
     if(*p=='[') return parseexp(p, ']');
-    char *word = p;
+    const char *word = p;
     for(;;)
     {
         p += strcspn(p, "/; \t\r\n\0");
@@ -344,7 +342,7 @@ char *commandret = NULL;
 
 extern const char *addreleaseaction(const char *s);
 
-char *executeret(char *p)               // all evaluation happens here, recursively
+char *executeret(const char *p)               // all evaluation happens here, recursively
 {
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
@@ -355,7 +353,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
         int numargs = MAXWORDS;
         loopi(MAXWORDS)                         // collect all argument values
         {
-            w[i] = "";
+            w[i] = (char *)"";
             if(i>numargs) continue;
             char *s = parseword(p);             // parse and evaluate exps
             if(s) w[i] = s;
@@ -399,7 +397,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
                     int n = 0, wn = 0;
                     char *cargs = NULL;
                     if(id->_type==ID_CCOMMAND) v[n++] = id->self;
-                    for(char *a = id->_narg; *a; a++) switch(*a)
+                    for(const char *a = id->_narg; *a; a++) switch(*a)
                     {
                         case 's':                                 v[n] = w[++wn];     n++; break;
                         case 'i': nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
@@ -496,7 +494,7 @@ char *executeret(char *p)               // all evaluation happens here, recursiv
     return retval;
 }
 
-int execute(char *p)
+int execute(const char *p)
 {
     char *ret = executeret(p);
     int i = 0; 
@@ -504,7 +502,7 @@ int execute(char *p)
     return i;
 }
 
-bool execfile(char *cfgfile)
+bool execfile(const char *cfgfile)
 {
     string s;
     s_strcpy(s, cfgfile);
@@ -515,7 +513,7 @@ bool execfile(char *cfgfile)
     return true;
 }
 
-void exec(char *cfgfile)
+void exec(const char *cfgfile)
 {
     if(!execfile(cfgfile)) conoutf("could not read \"%s\"", cfgfile);
 }

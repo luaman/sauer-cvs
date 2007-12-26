@@ -183,7 +183,7 @@ void guiradio(char *name, char *var, int *n, char *onchange)
 void guifield(char *var, int *maxlength, char *onchange, char *updateval)
 {   
     if(!cgui) return;
-    char *initval = "";
+    const char *initval = "";
     if(!cguifirstpass && strcmp(g3d_fieldname(), var)) 
     {
         if(updateval[0]) execute(updateval);

@@ -41,12 +41,12 @@ struct igameclient
 {
     virtual ~igameclient() {}
 
-    virtual char *gameident() = 0;
-    virtual char *defaultmap() = 0;
-    virtual char *savedconfig() = 0;
-    virtual char *defaultconfig() = 0;
-    virtual char *autoexec() = 0;
-    virtual char *savedservers() { return NULL; }
+    virtual const char *gameident() = 0;
+    virtual const char *defaultmap() = 0;
+    virtual const char *savedconfig() = 0;
+    virtual const char *defaultconfig() = 0;
+    virtual const char *autoexec() = 0;
+    virtual const char *savedservers() { return NULL; }
 
     virtual icliententities *getents() = 0;
     virtual iclientcom *getcom() = 0;
@@ -92,7 +92,7 @@ struct igameserver
     virtual int clientconnect(int n, uint ip) = 0;
     virtual void localdisconnect(int n) = 0;
     virtual void localconnect(int n) = 0;
-    virtual char *servername() = 0;
+    virtual const char *servername() = 0;
     virtual void recordpacket(int chan, void *data, int len) {}
     virtual void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) = 0;
     virtual bool sendpackets() = 0;
@@ -103,7 +103,7 @@ struct igameserver
     virtual void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) = 0;
     virtual int serverinfoport() = 0;
     virtual int serverport() = 0;
-    virtual char *getdefaultmaster() = 0;
+    virtual const char *getdefaultmaster() = 0;
     virtual void sendservmsg(const char *s) = 0;
 };
 

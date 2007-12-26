@@ -28,11 +28,11 @@ void quit()                     // normal exit
     exit(EXIT_SUCCESS);
 }
 
-void fatal(char *s, char *o)    // failure exit
+void fatal(const char *s, ...)    // failure exit
 {
     SDL_ShowCursor(1);
-    s_sprintfd(msg)("%s%s\n", s, o);
-    printf(msg);
+    s_sprintfdlv(msg,s,s);
+    puts(msg);
     #ifdef WIN32
         MessageBox(NULL, msg, "sauerbraten fatal error", MB_OK|MB_SYSTEMMODAL);
     #endif
@@ -438,7 +438,7 @@ void getfps(int &fps, int &bestdiff, int &worstdiff)
 
 bool inbetweenframes = false;
 
-static bool findarg(int argc, char **argv, char *str)
+static bool findarg(int argc, char **argv, const char *str)
 {
     for(int i = 1; i<argc; i++) if(strstr(argv[i], str)==argv[i]) return true;
     return false;

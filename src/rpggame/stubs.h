@@ -23,7 +23,7 @@ struct rpgdummyserver : igameserver
     int clientconnect(int n, uint ip) { return DISC_NONE; }
     void localdisconnect(int n) {}
     void localconnect(int n) {}
-    char *servername() { return "foo"; }
+    const char *servername() { return "foo"; }
     void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) {}
     bool sendpackets() { return false; }
     int welcomepacket(ucharbuf &p, int n) { return -1; }
@@ -33,6 +33,6 @@ struct rpgdummyserver : igameserver
     void serverinfostr(char *buf, const char *name, const char *desc, const char *map, int ping, const vector<int> &attr, int np) {}
     int serverinfoport() { return 0; }
     int serverport() { return 0; }
-    char *getdefaultmaster() { return "localhost"; }
+    const char *getdefaultmaster() { return "localhost"; }
     void sendservmsg(const char *s) {}
 };

@@ -8,7 +8,14 @@
 #include "iengine.h"
 #include "igame.h"
 void localservertoclient(int chan, uchar *buf, int len) {}
-void fatal(char *s, char *o) { void cleanupserver(); cleanupserver(); printf("servererror: %s\n", s); exit(EXIT_FAILURE); }
+void fatal(const char *s, ...) 
+{ 
+    void cleanupserver(); 
+    cleanupserver(); 
+    s_sprintfdlv(msg,s,s);
+    printf("servererror: %s\n", msg); 
+    exit(EXIT_FAILURE); 
+}
 #else
 #include "engine.h"
 #endif
@@ -18,17 +25,17 @@ igameserver     *sv = NULL;
 iclientcom      *cc = NULL;
 icliententities *et = NULL;
 
-hashtable<char *, igame *> *gamereg = NULL;
+hashtable<const char *, igame *> *gamereg = NULL;
 
 vector<char *> gameargs;
 
-void registergame(char *name, igame *ig)
+void registergame(const char *name, igame *ig)
 {
-    if(!gamereg) gamereg = new hashtable<char *, igame *>;
+    if(!gamereg) gamereg = new hashtable<const char *, igame *>;
     (*gamereg)[name] = ig;
 }
 
-void initgame(char *game)
+void initgame(const char *game)
 {
     igame **ig = gamereg->access(game);
     if(!ig) fatal("cannot start game module: ", game);
@@ -291,7 +298,7 @@ void sendf(int cn, int chan, const char *format, ...)
     if(packet->referenceCount==0) enet_packet_destroy(packet);
 }
 
-char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxclients)" };
+const char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL (maxclients)" };
 
 void disconnect_client(int n, int reason)
 {
@@ -375,7 +382,7 @@ bool resolverwait(const char *name, ENetAddress *address)
     return enet_address_set_host(address, name) >= 0;
 }
 
-int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &remoteaddress)
+int connectwithtimeout(ENetSocket sock, const char *hostname, ENetAddress &remoteaddress)
 {
     int result = enet_socket_connect(sock, &remoteaddress);
     if(result<0) enet_socket_destroy(sock);
@@ -383,7 +390,7 @@ int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &remoteaddre
 }
 #endif
 
-ENetSocket httpgetsend(ENetAddress &remoteaddress, char *hostname, char *req, char *ref, char *agent, ENetAddress *localaddress = NULL)
+ENetSocket httpgetsend(ENetAddress &remoteaddress, const char *hostname, const char *req, const char *ref, const char *agent, ENetAddress *localaddress = NULL)
 {
     if(remoteaddress.host==ENET_HOST_ANY)
     {
@@ -512,8 +519,8 @@ uchar *retrieveservers(uchar *buf, int buflen)
 #define DEFAULTCLIENTS 6
 
 int uprate = 0, maxclients = DEFAULTCLIENTS;
-char *ip = "", *master = NULL;
-char *game = "fps";
+const char *ip = "", *master = NULL;
+const char *game = "fps";
 
 #ifdef STANDALONE
 int lastmillis = 0, totalmillis = 0;
@@ -640,7 +647,7 @@ void initserver(bool dedicated)
     initgame(game);
 
     if(!master) master = sv->getdefaultmaster();
-    char *mid = strstr(master, "/");
+    const char *mid = strstr(master, "/");
     if(!mid) mid = master;
     s_strcpy(masterpath, mid);
     s_strncpy(masterbase, master, mid-master+1);

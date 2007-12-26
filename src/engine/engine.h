@@ -291,7 +291,7 @@ extern bool serveroption(char *opt);
 
 // serverbrowser
 extern bool resolverwait(const char *name, ENetAddress *address);
-extern int connectwithtimeout(ENetSocket sock, char *hostname, ENetAddress &address);
+extern int connectwithtimeout(ENetSocket sock, const char *hostname, ENetAddress &address);
 extern void addserver(char *servername);
 extern char *getservername(int n);
 extern void writeservercfg();

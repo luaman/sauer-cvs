@@ -14,7 +14,7 @@ struct identstack
 struct ident
 {
     int _type;           // one of ID_* above
-    char *_name;
+    const char *_name;
     int _min, _max;      // ID_VAR
     int _override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     union
@@ -24,7 +24,7 @@ struct ident
     };
     union
     {
-        char *_narg;     // ID_COMMAND, ID_CCOMMAND
+        const char *_narg;     // ID_COMMAND, ID_CCOMMAND
         int _val;        // ID_VAR
         char *_action;   // ID_ALIAS
     };
@@ -38,13 +38,13 @@ struct ident
     
     ident() {}
     // ID_VAR
-    ident(int t, char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
+    ident(int t, const char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
         : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)(void))f), _val(c), _persist(p), _storage(s) {}
     // ID_ALIAS
-    ident(int t, char *n, char *a, bool p)
+    ident(int t, const char *n, char *a, bool p)
         : _type(t), _name(n), _override(NO_OVERRIDE), _stack(NULL), _action(a), _persist(p) {}
     // ID_COMMAND, ID_CCOMMAND
-    ident(int t, char *n, char *narg, void *f = NULL, void *_s = NULL)
+    ident(int t, const char *n, const char *narg, void *f = NULL, void *_s = NULL)
         : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {}
 
     virtual ~ident() {}        
@@ -56,7 +56,7 @@ struct ident
     virtual void changed() { if(_fun) _fun(); }
 };
 
-extern void addident(char *name, ident *id);
+extern void addident(const char *name, ident *id);
 extern void intret(int v);
 extern void result(const char *s);
 

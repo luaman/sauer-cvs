@@ -13,7 +13,7 @@ struct monsterset
     {
         short gun, speed, health, freq, lag, rate, pain, loyalty, bscale, weight; 
         short painsound, diesound;
-        char *name, *mdlname, *vwepname;
+        const char *name, *mdlname, *vwepname;
     };
     
     struct monster : fpsent

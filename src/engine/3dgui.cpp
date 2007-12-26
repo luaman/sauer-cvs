@@ -339,7 +339,7 @@ struct gui : g3d_gui
         }
     }
 
-    char *field(char *name, int color, int length, char *initval)
+    char *field(const char *name, int color, int length, const char *initval)
 	{	
         length = min(length, (int)sizeof(string)-1);
         int w = char_width('%')*length + FONTW;

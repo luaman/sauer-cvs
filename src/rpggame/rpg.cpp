@@ -183,11 +183,11 @@ struct rpgclient : igameclient, g3d_callback
     void writegamedata(vector<char> &extras) {}
     void readgamedata (vector<char> &extras) {}
 
-    char *gameident()     { return "rpg"; }
-    char *defaultmap()    { return "rpg_01"; }
-    char *savedconfig()   { return "rpg_config.cfg"; }
-    char *defaultconfig() { return "data/defaults.cfg"; }
-    char *autoexec()      { return "rpg_autoexec.cfg"; }
+    const char *gameident()     { return "rpg"; }
+    const char *defaultmap()    { return "rpg_01"; }
+    const char *savedconfig()   { return "rpg_config.cfg"; }
+    const char *defaultconfig() { return "data/defaults.cfg"; }
+    const char *autoexec()      { return "rpg_autoexec.cfg"; }
 };
 
 #define N(n) int rpgclient::stats::pointscale_##n, rpgclient::stats::percentscale_##n; 

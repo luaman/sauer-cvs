@@ -140,7 +140,7 @@ struct rpgobjset
         }
     }
     
-    void addquest(rpgaction *a, char *questline, char *npc)
+    void addquest(rpgaction *a, const char *questline, const char *npc)
     {
         a->q = quests = new rpgquest(quests, npc, questline);
         conoutf("\f2you have accepted a quest for %s", npc);

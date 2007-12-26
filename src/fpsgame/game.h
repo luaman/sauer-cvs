@@ -153,7 +153,7 @@ struct demoheader
 #define MAXNAMELEN 15
 #define MAXTEAMLEN 4
 
-static struct itemstat { int add, max, sound; char *name; int info; } itemstats[] =
+static struct itemstat { int add, max, sound; const char *name; int info; } itemstats[] =
 {
     {10,    30,    S_ITEMAMMO,   "SG", GUN_SG},
     {20,    60,    S_ITEMAMMO,   "CG", GUN_CG},

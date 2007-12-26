@@ -51,20 +51,20 @@ extern void mpdelcube(selinfo &sel, bool local);
 extern void mpremip(bool local);
 
 // command
-extern int variable(char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
-extern void setvar(char *name, int i, bool dofunc = false);
-extern int getvar(char *name);
-extern int getvarmin(char *name);
-extern int getvarmax(char *name);
-extern bool identexists(char *name);
-extern ident *getident(char *name);
-extern bool addcommand(char *name, void (*fun)(), char *narg);
-extern int execute(char *p);
-extern char *executeret(char *p);
-extern void exec(char *cfgfile);
-extern bool execfile(char *cfgfile);
-extern void alias(char *name, char *action);
-extern const char *getalias(char *name);
+extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
+extern void setvar(const char *name, int i, bool dofunc = false);
+extern int getvar(const char *name);
+extern int getvarmin(const char *name);
+extern int getvarmax(const char *name);
+extern bool identexists(const char *name);
+extern ident *getident(const char *name);
+extern bool addcommand(const char *name, void (*fun)(), const char *narg);
+extern int execute(const char *p);
+extern char *executeret(const char *p);
+extern void exec(const char *cfgfile);
+extern bool execfile(const char *cfgfile);
+extern void alias(const char *name, const char *action);
+extern const char *getalias(const char *name);
 
 // console
 extern void keypress(int code, bool isdown, int cooked);
@@ -94,14 +94,14 @@ extern void checktriggers();
 // main
 struct igame;
 
-extern void fatal(char *s, char *o = "");
+extern void fatal(const char *s, ...);
 extern void keyrepeat(bool on);
-extern void registergame(char *name, igame *ig);
+extern void registergame(const char *name, igame *ig);
 
 #define REGISTERGAME(t, n, c, s) struct t : igame { t() { registergame(n, this); } igameclient *newclient() { return c; } igameserver *newserver() { return s; } } reg_##t
 
 // rendertext
-extern bool setfont(char *name);
+extern bool setfont(const char *name);
 extern void gettextres(int &w, int &h);
 extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
 extern void draw_textf(const char *fstr, int left, int top, ...);
@@ -123,7 +123,7 @@ extern void render_particles(int time);
 extern void regular_particle_splash(int type, int num, int fade, const vec &p, int delay = 0);
 extern void particle_splash(int type, int num, int fade, const vec &p);
 extern void particle_trail(int type, int fade, const vec &from, const vec &to);
-extern void particle_text(const vec &s, char *t, int type, int fade = 2000);
+extern void particle_text(const vec &s, const char *t, int type, int fade = 2000);
 extern void particle_meter(const vec &s, float val, int type, int fade = 1);
 extern void particle_flare(const vec &p, const vec &dest, int fade, int type = 10, physent *owner = NULL);
 extern void particle_fireball(const vec &dest, float max, int type);
@@ -151,7 +151,7 @@ extern bool entinmap(dynent *d, bool avoidplayers = false);
 extern void findplayerspawn(dynent *d, int forceent = -1);
 // sound
 extern void playsound    (int n,   const vec *loc = NULL, extentity *ent = NULL);
-extern void playsoundname(char *s, const vec *loc = NULL, int vol = 0);
+extern void playsoundname(const char *s, const vec *loc = NULL, int vol = 0);
 extern void initsound();
 
 
@@ -209,7 +209,7 @@ extern void sendpackettoserv(ENetPacket *packet, int chan);
 extern void disconnect(int onlyclean = 0, int async = 0);
 extern bool isconnected();
 extern bool multiplayer(bool msg = true);
-extern void neterr(char *s);
+extern void neterr(const char *s);
 extern void gets2c();
 
 // 3dgui
@@ -245,7 +245,7 @@ struct g3d_gui
 	virtual void progress(float percent) = 0;
 	virtual void strut(int size) = 0;
     virtual void space(int size) = 0;
-    virtual char *field(char *name, int color, int length, char *initval = "") = 0;
+    virtual char *field(const char *name, int color, int length, const char *initval = "") = 0;
 };
 
 struct g3d_callback

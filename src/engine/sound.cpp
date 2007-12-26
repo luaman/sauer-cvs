@@ -163,10 +163,10 @@ void music(char *name, char *cmd)
 
 COMMAND(music, "ss");
 
-hashtable<char *, sample> samples;
+hashtable<const char *, sample> samples;
 vector<soundslot> gamesounds, mapsounds;
 
-int findsound(char *name, int vol, vector<soundslot> &sounds)
+int findsound(const char *name, int vol, vector<soundslot> &sounds)
 {
     loopv(sounds)
     {
@@ -175,7 +175,7 @@ int findsound(char *name, int vol, vector<soundslot> &sounds)
     return -1;
 }
 
-int addsound(char *name, int vol, int maxuses, vector<soundslot> &sounds)
+int addsound(const char *name, int vol, int maxuses, vector<soundslot> &sounds)
 {
     sample *s = samples.access(name);
     if(!s)
@@ -378,7 +378,7 @@ void playsound(int n, const vec *loc, extentity *ent)
     #endif
 }
 
-void playsoundname(char *s, const vec *loc, int vol) 
+void playsoundname(const char *s, const vec *loc, int vol) 
 { 
     if(!vol) vol = 100;
     int id = findsound(s, vol, gamesounds);

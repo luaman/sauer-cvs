@@ -167,7 +167,7 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
     if(clienthost) enet_host_flush(clienthost);
 }
 
-void neterr(char *s)
+void neterr(const char *s)
 {
     conoutf("\f3illegal network message (%s)", s);
     disconnect();
@@ -217,7 +217,7 @@ void gets2c()           // get updates from the server
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
-            extern char *disc_reasons[];
+            extern const char *disc_reasons[];
             if(event.data>=DISC_NUM) event.data = DISC_NONE;
             if(event.peer==connpeer)
             {

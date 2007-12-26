@@ -3,11 +3,11 @@ struct rpgobjset;
 struct rpgquest
 {
     rpgquest *next;
-    char *npc;
-    char *questline;
+    const char *npc;
+    const char *questline;
     bool completed;
     
-    rpgquest(rpgquest *_n, char *_npc, char *_ql) : next(_n), npc(_npc), questline(_ql), completed(false) {}
+    rpgquest(rpgquest *_n, const char *_npc, const char *_ql) : next(_n), npc(_npc), questline(_ql), completed(false) {}
 };
 
 struct rpgaction
@@ -40,8 +40,8 @@ struct rpgobj : g3d_callback, stats
 
     rpgent *ent;        // representation in the world, if top level
 
-    char *name;         // name it was spawned as
-    char *model;        // what to display it as
+    const char *name;   // name it was spawned as
+    const char *model;  // what to display it as
 
     enum
     {
@@ -69,7 +69,7 @@ struct rpgobj : g3d_callback, stats
     #define loopinventory() for(rpgobj *o = inventory; o; o = o->sibling)
     #define loopinventorytype(T) loopinventory() if(o->itemflags&(T))
 
-    rpgobj(char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
+    rpgobj(const char *_name, rpgobjset &_os) : parent(NULL), inventory(NULL), sibling(NULL), ent(NULL), name(_name), model(NULL), itemflags(IF_INVENTORY),
         actions(NULL), abovetext(NULL), menutime(0), menutab(1), menuwhich(MENU_DEFAULT), os(_os) {}
 
     ~rpgobj()

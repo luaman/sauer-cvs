@@ -1897,10 +1897,10 @@ struct fpsserver : igameserver
         else checkvotes();
     }
 
-    char *servername() { return "sauerbratenserver"; }
+    const char *servername() { return "sauerbratenserver"; }
     int serverinfoport() { return SAUERBRATEN_SERVINFO_PORT; }
     int serverport() { return SAUERBRATEN_SERVER_PORT; }
-    char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; } 
+    const char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; } 
 
     void serverinforeply(ucharbuf &p)
     {

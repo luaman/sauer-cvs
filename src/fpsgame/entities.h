@@ -11,16 +11,16 @@ struct entities : icliententities
 
     vector<extentity *> &getents() { return ents; }
     
-    char *itemname(int i)
+    const char *itemname(int i)
     {
         int t = ents[i]->type;
         if(t<I_SHELLS || t>I_QUAD) return NULL;
         return itemstats[t-I_SHELLS].name;
     }
    
-    char *entmdlname(int type)
+    const char *entmdlname(int type)
     {
-        static char *entmdlnames[] =
+        static const char *entmdlnames[] =
         {
             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             "ammo/shells", "ammo/bullets", "ammo/rockets", "ammo/rrounds", "ammo/grenades", "ammo/cartridges",
@@ -39,7 +39,7 @@ struct entities : icliententities
     {
         loopi(MAXENTTYPES)
         {
-            char *mdl = entmdlname(i);
+            const char *mdl = entmdlname(i);
             if(!mdl) continue;
             loadmodel(mdl, -1, true);
         }
@@ -47,7 +47,7 @@ struct entities : icliententities
 
     void renderent(extentity &e, int type, float z, float yaw, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
     {
-        char *mdlname = entmdlname(type);
+        const char *mdlname = entmdlname(type);
         if(!mdlname) return;
         rendermodel(e.color, e.dir, mdlname, anim, 0, 0, vec(e.o).add(vec(0, 0, z)), yaw, 0, speed, basetime, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
     }
