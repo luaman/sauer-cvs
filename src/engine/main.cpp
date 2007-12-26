@@ -520,7 +520,7 @@ int main(int argc, char **argv)
     //SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     //#endif
 
-    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO|par)<0) fatal("Unable to initialize SDL: ", SDL_GetError());
+    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_AUDIO|par)<0) fatal("Unable to initialize SDL: %s", SDL_GetError());
 
     log("enet");
     if(enet_initialize()<0) fatal("Unable to initialise network module");
@@ -578,7 +578,7 @@ int main(int argc, char **argv)
         screen = SDL_SetVideoMode(scr_w, scr_h, hasbpp ? colorbits : 0, SDL_OPENGL|resize|fs);
         if(screen) break;
     }
-    if(!screen) fatal("Unable to create OpenGL screen: ", SDL_GetError());
+    if(!screen) fatal("Unable to create OpenGL screen: %s", SDL_GetError());
     else
     {
         if(!hasbpp) conoutf("%d bit color buffer not supported - disabling", colorbits);
