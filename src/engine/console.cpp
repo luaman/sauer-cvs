@@ -609,7 +609,7 @@ void complete(char *s)
     }
     else // complete using command names
     {
-        extern hashtable<char *, ident> *idents;
+        extern hashtable<const char *, ident> *idents;
         enumerate(*idents, ident, id,
             if(strncmp(id._name, s+1, completesize)==0 &&
                strcmp(id._name, lastcomplete) > 0 && (!nextcomplete || strcmp(id._name, nextcomplete) < 0))
