@@ -38,7 +38,7 @@ struct weaponstate
     void nextweapon(int dir)
     {
         if(player1->state!=CS_ALIVE) return;
-        dir = dir < 0 ? NUMGUNS-1 : 1;
+        dir = (dir < 0 ? NUMGUNS-1 : 1);
         int gun = player1->gunselect;
         loopi(NUMGUNS)
         {
