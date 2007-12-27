@@ -14,6 +14,8 @@ struct weaponstate
 
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
+        CCOMMAND(nextweapon, "i", (weaponstate *self, int *dir), self->nextweapon(*dir));
+        CCOMMAND(setweapon, "i", (weaponstate *self, int *gun), self->setweapon(*gun));
         CCOMMAND(weapon, "sss", (weaponstate *self, char *w1, char *w2, char *w3),
         {
             self->weaponswitch(w1[0] ? atoi(w1) : -1,
@@ -21,6 +23,35 @@ struct weaponstate
                                w3[0] ? atoi(w3) : -1);
 
         });
+    }
+
+    void gunselect(int gun)
+    {
+        if(gun!=player1->gunselect)
+        {
+            cl.cc.addmsg(SV_GUNSELECT, "ri", gun);
+            playsound(S_WEAPLOAD, &player1->o);
+        }
+        player1->gunselect = gun;
+    }
+
+    void nextweapon(int dir)
+    {
+        if(player1->state!=CS_ALIVE) return;
+        dir = dir < 0 ? NUMGUNS-1 : 1;
+        int gun = player1->gunselect;
+        loopi(NUMGUNS)
+        {
+            gun = (gun + dir)%NUMGUNS;
+            if(player1->ammo[gun]) break;
+        }
+        gunselect(gun);
+    }
+
+    void setweapon(int gun)
+    {
+        if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
+        gunselect(gun);
     }
 
     void weaponswitch(int a = -1, int b = -1, int c = -1)
@@ -40,12 +71,7 @@ struct weaponstate
         else if(s!=GUN_PISTOL && ammo[GUN_PISTOL]) s = GUN_PISTOL;
         else                                       s = GUN_FIST;
 
-        if(s!=player1->gunselect) 
-        {
-            cl.cc.addmsg(SV_GUNSELECT, "ri", s);
-            playsound(S_WEAPLOAD, &player1->o);
-        }
-        player1->gunselect = s;
+        gunselect(s);
     }
     
     int reloadtime(int gun) { return guns[gun].attackdelay; }
