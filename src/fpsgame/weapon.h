@@ -399,8 +399,12 @@ struct weaponstate
             {
                 if(dist<4)
                 {
-                    if(p.o!=p.to && raycubepos(p.o, vec(p.to).sub(p.o), p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) 
-                        continue; // if original target was moving, reevaluate endpoint
+                    if(p.o!=p.to) // if original target was moving, reevaluate endpoint
+                    {
+                        vec ray(p.to);
+                        ray.sub(p.o);
+                        if(raycubepos(p.o, ray, p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;
+                    }
                     splash(p, v, NULL, qdam);
                     exploded = true;
                 }
