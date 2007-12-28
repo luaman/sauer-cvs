@@ -293,6 +293,7 @@ struct fpsstate
             else
             {
                 armourtype = A_GREEN;
+                armour = 100;
                 if(m_tarena || m_capture)
                 {
                     ammo[GUN_PISTOL] = 80;
