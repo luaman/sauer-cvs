@@ -38,7 +38,7 @@ void registergame(const char *name, igame *ig)
 void initgame(const char *game)
 {
     igame **ig = gamereg->access(game);
-    if(!ig) fatal("cannot start game module: ", game);
+    if(!ig) fatal("cannot start game module: %s", game);
     sv = (*ig)->newserver();
     cl = (*ig)->newclient();
     if(cl)
