@@ -354,7 +354,7 @@ VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
 
 VARF(paused, 0, 0, 1, if(multiplayer()) paused = 0);
 
-VAR(maxfps, 5, 200, 500);
+VARP(maxfps, 5, 200, 500);
 
 void limitfps(int &millis, int curmillis)
 {
