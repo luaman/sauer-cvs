@@ -2,14 +2,9 @@
 #include "engine.h"
 
 Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
-float spinsky = 0;
 
-void loadsky(char *basename, float *spin)
+void loadsky(const char *basename)
 {
-    spinsky = *spin;
-
-    static string lastsky = "";
-    if(strcmp(lastsky, basename)==0) return;
     static const char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     loopi(6)
     {
@@ -20,10 +15,10 @@ void loadsky(char *basename, float *spin)
             if((sky[i] = textureload(name, 3, true, false))==notexture) conoutf("could not load sky texture packages/%s_%s", basename, side[i]);
         }
     }
-    s_strcpy(lastsky, basename);
 }
 
-COMMAND(loadsky, "sf");
+SVARF(skybox, "", { if(skybox[0]) loadsky(skybox); }); 
+FVAR(spinsky, 0);
 
 void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
                       float s1, float t1, int x1, int y1, int z1,

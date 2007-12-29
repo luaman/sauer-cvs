@@ -119,9 +119,19 @@ static void updateval(char *var, int val, char *onchange)
     ident *id = getident(var);
     string assign;
     if(!id) return;
-    else if(id->_type==ID_VAR) s_sprintf(assign)("%s %d", var, val);
-    else if(id->_type==ID_ALIAS) s_sprintf(assign)("%s = %d", var, val);
-    else return;
+    switch(id->_type)
+    {
+        case ID_VAR:
+        case ID_FVAR:
+        case ID_STRVAR:
+            s_sprintf(assign)("%s %d", var, val);
+            break;
+        case ID_ALIAS: 
+            s_sprintf(assign)("%s = %d", var, val);
+            break;
+        default:
+            return;
+    }
     executelater.add(newstring(assign));
     if(onchange[0]) executelater.add(newstring(onchange)); 
 }
@@ -130,9 +140,14 @@ static int getval(char *var)
 {
     ident *id = getident(var);
     if(!id) return 0;
-    else if(id->_type==ID_VAR) return *id->_storage;
-    else if(id->_type==ID_ALIAS) return atoi(id->_action);
-    else return 0;
+    switch(id->_type)
+    {
+        case ID_VAR: return *id->_storage;
+        case ID_FVAR: return int(*id->_fstorage);
+        case ID_STRVAR: return atoi(*id->_strstorage);
+        case ID_ALIAS: return atoi(id->_action);
+        default: return 0;
+    }
 }
 
 void guislider(char *var, int *min, int *max, char *onchange)

@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "engine.h"
 
-void itoa(char *s, int i) { s_sprintf(s)("%d", i); }
 char *exchangestr(char *o, const char *n) { delete[] o; return newstring(n); }
 
 typedef hashtable<const char *, ident> identtable;
@@ -44,6 +43,15 @@ void clearoverrides()
                     break;
                 case ID_VAR: 
                     *i._storage = i._override;
+                    i.changed();
+                    break;
+                case ID_FVAR:
+                    *i._fstorage = i._foverride;
+                    i.changed();
+                    break;
+                case ID_STRVAR:
+                    delete[] *i._strstorage;
+                    *i._strstorage = i._stroverride;
                     i.changed();
                     break;
             }
@@ -136,6 +144,22 @@ int variable(const char *name, int min, int cur, int max, int *storage, void (*f
     ident v(ID_VAR, name, min, cur, max, storage, (void *)fun, persist);
     idents->access(name, &v);
     return cur;
+}
+
+float fvariable(const char *name, float cur, float *storage, void (*fun)(), bool persist)
+{
+    if(!idents) idents = new identtable;
+    ident v(ID_FVAR, name, cur, storage, (void *)fun, persist);
+    idents->access(name, &v);
+    return cur;
+}
+
+char *strvariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist)
+{
+    if(!idents) idents = new identtable;
+    ident v(ID_STRVAR, name, newstring(cur), storage, (void *)fun, persist);
+    idents->access(name, &v);
+    return v._strval;
 }
 
 #define GETVAR(id, name, retval) \
@@ -280,7 +304,9 @@ char *lookup(char *n)                           // find value of ident reference
     ident *id = idents->access(n+1);
     if(id) switch(id->_type)
     {
-        case ID_VAR: { string t; itoa(t, *(id->_storage)); return exchangestr(n, t); }
+        case ID_VAR: { s_sprintfd(t)("%d", *id->_storage); return exchangestr(n, t); }
+        case ID_FVAR: { s_sprintfd(t)("%f", *id->_fstorage); return exchangestr(n, t); }
+        case ID_STRVAR: return exchangestr(n, *id->_strstorage);
         case ID_ALIAS: return exchangestr(n, id->_action);
     }
     conoutf("unknown alias lookup: %s", n+1);
@@ -432,16 +458,18 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     else if(id->_min>id->_max) conoutf("variable %s is read-only", id->_name);
                     else
                     {
-                        if(overrideidents)
-                        {
-                            if(id->_persist)
-                            {
-                                conoutf("cannot override persistent variable %s", id->_name);
-                                break;
-                            }
-                            if(id->_override==NO_OVERRIDE) id->_override = *id->_storage;
-                        }
-                        else if(id->_override!=NO_OVERRIDE) id->_override = NO_OVERRIDE;
+                        #define OVERRIDEVAR(overridden, saveval, resetval) \
+                            if(overrideidents) \
+                            { \
+                                if(id->_persist) \
+                                { \
+                                    conoutf("cannot override persistent variable %s", id->_name); \
+                                    break; \
+                                } \
+                                if(id->_override==NO_OVERRIDE) { saveval; id->_override = overridden; } \
+                            } \
+                            else if(id->_override!=NO_OVERRIDE) { resetval; id->_override = NO_OVERRIDE; }
+                        OVERRIDEVAR(*id->_storage, , )
                         int i1 = parseint(w[1]);
                         if(i1<id->_min || i1>id->_max)
                         {
@@ -453,7 +481,31 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     }
                     SAUERBRATEN_VAR_RETURN(c, *id->_storage);
                     break;
-                    
+                  
+                case ID_FVAR:
+                    SAUERBRATEN_VAR_ENTRY(c, w[1]);
+                    if(!w[1][0]) conoutf("%s = %f", c, *id->_fstorage);
+                    else
+                    {
+                        OVERRIDEVAR(OVERRIDDEN, id->_foverride = *id->_fstorage, );
+                        *id->_fstorage = atof(w[1]);
+                        id->changed();
+                    }
+                    SAUERBRATEN_VAR_RETURN(c, -1);
+                    break;
+ 
+                case ID_STRVAR:
+                    SAUERBRATEN_VAR_ENTRY(c, w[1]);
+                    if(!w[1][0]) conoutf(strchr(*id->_strstorage, '"') ? "%s = [%s]" : "%s = \"%s\"", c, *id->_strstorage);
+                    else
+                    {
+                        OVERRIDEVAR(OVERRIDDEN, id->_stroverride = *id->_strstorage, delete[] id->_stroverride);
+                        *id->_strstorage = newstring(w[1]);
+                        id->changed();
+                    }
+                    SAUERBRATEN_VAR_RETURN(c, -1);
+                    break;
+                        
                 case ID_ALIAS:                              // alias, also used as functions and (global) variables
                 {
                     SAUERBRATEN_ALIAS_ENTRY(c, w[1], w[2], w[3]);
@@ -527,9 +579,12 @@ void writecfg()
     fprintf(f, "\n");
     writecrosshairs(f);
     enumerate(*idents, ident, id,
-        if(id._type==ID_VAR && id._persist)
+        if(!id._persist) continue;
+        switch(id._type)
         {
-            fprintf(f, "%s %d\n", id._name, *id._storage);
+            case ID_VAR: fprintf(f, "%s %d\n", id._name, *id._storage); break;
+            case ID_FVAR: fprintf(f, "%s %f\n", id._name, *id._fstorage); break;
+            case ID_STRVAR: fprintf(f, "%s [%s]\n", id._name, *id._strstorage); break;
         }
     );
     fprintf(f, "\n");
@@ -551,8 +606,8 @@ COMMAND(writecfg, "");
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
-void intset(char *name, int v) { string b; itoa(b, v); alias(name, b); }
-void intret            (int v) { string b; itoa(b, v); commandret = newstring(b); }
+void intset(char *name, int v) { s_sprintfd(b)("%d", v); alias(name, b); }
+void intret            (int v) { s_sprintfd(b)("%d", v); commandret = newstring(b); }
 
 ICOMMAND(if, "sss", (char *cond, char *t, char *f), commandret = executeret(cond[0]!='0' ? t : f));
 

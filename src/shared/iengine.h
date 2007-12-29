@@ -52,6 +52,8 @@ extern void mpremip(bool local);
 
 // command
 extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
+extern float fvariable(const char *name, float cur, float *storage, void (*fun)(), bool persist);
+extern char *strvariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist);
 extern void setvar(const char *name, int i, bool dofunc = false);
 extern int getvar(const char *name);
 extern int getvarmin(const char *name);
