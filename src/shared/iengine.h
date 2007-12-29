@@ -55,6 +55,8 @@ extern int variable(const char *name, int min, int cur, int max, int *storage, v
 extern float fvariable(const char *name, float cur, float *storage, void (*fun)(), bool persist);
 extern char *strvariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist);
 extern void setvar(const char *name, int i, bool dofunc = false);
+extern void setfvar(const char *name, float f, bool dofunc = false);
+extern void setstrvar(const char *name, const char *str, bool dofunc = false);
 extern int getvar(const char *name);
 extern int getvarmin(const char *name);
 extern int getvarmax(const char *name);

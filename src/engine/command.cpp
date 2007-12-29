@@ -162,15 +162,28 @@ char *strvariable(const char *name, const char *cur, char **storage, void (*fun)
     return v._strval;
 }
 
-#define GETVAR(id, name, retval) \
+#define _GETVAR(id, type, name, retval) \
     ident *id = idents->access(name); \
-    if(!id || id->_type!=ID_VAR) return retval;
+    if(!id || id->_type!=type) return retval;
+#define GETVAR(id, name, retval) _GETVAR(id, ID_VAR, name, retval)
 void setvar(const char *name, int i, bool dofunc) 
 { 
     GETVAR(id, name, );
     *id->_storage = i; 
     if(dofunc) id->changed();
 } 
+void setfvar(const char *name, float f, bool dofunc)
+{
+    GETVAR(id, name, );
+    *id->_fstorage = f;
+    if(dofunc) id->changed();
+}
+void setstrvar(const char *name, const char *str, bool dofunc)
+{
+    GETVAR(id, name, );
+    *id->_strstorage = exchangestr(*id->_strstorage, str);
+    if(dofunc) id->changed();
+}
 int getvar(const char *name) 
 { 
     GETVAR(id, name, 0);
