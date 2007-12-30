@@ -420,7 +420,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
             ident *id = idents->access(c);
             if(!id)
             {
-                if(!isdigit(*c)) conoutf("unknown command: %s", c);
+                if(!isdigit(*c) && ((*c!='+' && *c!='-') || !isdigit(c[1]))) conoutf("unknown command: %s", c);
                 setretval(newstring(c));
             }
             else switch(id->type)
