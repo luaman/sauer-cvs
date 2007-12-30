@@ -102,7 +102,7 @@ struct capturestate
         bool addammo(int i)
         {
             if(ammo>=MAXAMMO) return false;
-            ammo = min(ammo+i, MAXAMMO);
+            ammo = min(ammo+i, int(MAXAMMO));
             return true;
         }
 

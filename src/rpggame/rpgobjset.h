@@ -28,7 +28,7 @@ struct rpgobjset
         CCOMMAND(r_spawn,       "s",   (rpgobjset *self, char *s), { self->spawn(self->stringpool(s)); });    
         CCOMMAND(r_contain,     "s",   (rpgobjset *self, char *s), { self->stack[0]->decontain(); self->stack[1]->add(self->stack[0], atoi(s)); });    
         CCOMMAND(r_pop,         "",    (rpgobjset *self), { self->popobj(); });    
-        CCOMMAND(r_swap,        "",    (rpgobjset *self), { swap(rpgobj *, self->stack[0], self->stack[1]) });    
+        CCOMMAND(r_swap,        "",    (rpgobjset *self), { swap(self->stack[0], self->stack[1]); });    
         CCOMMAND(r_say,         "s",   (rpgobjset *self, char *s), { self->stack[0]->abovetext = self->stringpool(s); });    
         CCOMMAND(r_quest,       "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a), true); });    
         CCOMMAND(r_action,      "ss",  (rpgobjset *self, char *s, char *a), { self->stack[0]->addaction(self->stringpool(s), self->stringpool(a), false); });    

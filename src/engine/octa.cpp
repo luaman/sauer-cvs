@@ -542,9 +542,9 @@ void genedgespanvert(ivec &p, cube &c, vec &v)
     //ASSERT(v.x>=0 && v.x<=8);
     //ASSERT(v.y>=0 && v.y<=8);
     //ASSERT(v.z>=0 && v.z<=8);
-    v.x = max(0, min(8, v.x));
-    v.y = max(0, min(8, v.y));
-    v.z = max(0, min(8, v.z));
+    v.x = max(0.0f, min(8.0f, v.x));
+    v.y = max(0.0f, min(8.0f, v.y));
+    v.z = max(0.0f, min(8.0f, v.z));
 }
 
 void edgespan2vectorcube(cube &c)
@@ -1299,7 +1299,7 @@ void genmergedverts(cube &cu, int orient, const ivec &co, int size, const mergei
 int calcmergedsize(int orient, const ivec &co, int size, const mergeinfo &m, const vvec *vv)
 {
     int dim = dimension(orient), c = C[dim], r = R[dim];
-    int d1 = vv[3][dim], d2 = d1;
+    short d1 = vv[3][dim], d2 = d1;
     loopi(3)
     {
         d1 = min(d1, vv[i][dim]);

@@ -146,7 +146,7 @@ struct vertmodel : model
             }
             if(lightmodels && !fullbright)
             {
-                float ambientk = min(ambient*0.75f, 1), 
+                float ambientk = min(ambient*0.75f, 1.0f), 
                       diffusek = 1-ambientk;
                 GLfloat ambientcol[4] = { lightcolor.x*ambientk, lightcolor.y*ambientk, lightcolor.z*ambientk, 1 },
                         diffusecol[4] = { lightcolor.x*diffusek, lightcolor.y*diffusek, lightcolor.z*diffusek, 1 };
@@ -534,8 +534,8 @@ struct vertmodel : model
                     found:;
                 }
             }
-            minvert = min(minvert, vverts.length()-1);
-            maxvert = max(minvert, vverts.length()-1);
+            minvert = min(minvert, ushort(vverts.length()-1));
+            maxvert = max(minvert, ushort(vverts.length()-1));
             elen = idxs.length()-eoffset;
             return vverts.length()-voffset;
         }

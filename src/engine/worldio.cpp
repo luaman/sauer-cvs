@@ -306,13 +306,13 @@ void swapXZ(cube *c)
 {	
 	loopi(8) 
 	{
-		swap(uint,   c[i].faces[0],   c[i].faces[2]);
-		swap(ushort, c[i].texture[0], c[i].texture[4]);
-		swap(ushort, c[i].texture[1], c[i].texture[5]);
+		swap(c[i].faces[0],   c[i].faces[2]);
+		swap(c[i].texture[0], c[i].texture[4]);
+		swap(c[i].texture[1], c[i].texture[5]);
 		if(c[i].ext && c[i].ext->surfaces)
 		{
-			swap(surfaceinfo, c[i].ext->surfaces[0], c[i].ext->surfaces[4]);
-			swap(surfaceinfo, c[i].ext->surfaces[1], c[i].ext->surfaces[5]);
+			swap(c[i].ext->surfaces[0], c[i].ext->surfaces[4]);
+			swap(c[i].ext->surfaces[1], c[i].ext->surfaces[5]);
 		}
 		if(c[i].children) swapXZ(c[i].children);
 	}

@@ -127,7 +127,7 @@ struct rpgent : dynent
                     //mpdir = vec(yaw*RAD, pitch*RAD);
                     float worlddist = lookatpos.dist(o, mpdir);
                     mpdir.normalize();
-                    mpdist = min(weapon.s_maxrange, worlddist);
+                    mpdist = min(float(weapon.s_maxrange), worlddist);
                 }
                 else
                 {

@@ -947,7 +947,7 @@ void gl_drawhud(int w, int h, int fogmat)
             else getlavacolour(col);
             float maxc = max(col[0], max(col[1], col[2]));
             float blend[3];
-            loopi(3) blend[i] = col[i] / min(32 + maxc*7/8, 255);
+            loopi(3) blend[i] = col[i] / min(32.0f + maxc*7.0f/8.0f, 255.0f);
             glColor3fv(blend);
             //glColor3f(0.1f, 0.5f, 1.0f);
         }

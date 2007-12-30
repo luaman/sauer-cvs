@@ -257,7 +257,7 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
                 rad -= ent->attr3;
                 dist -= ent->attr3;
             }
-            vol -= (int)(min(max(dist/rad, 0), 1)*soundvol);
+            vol -= (int)(min(max(dist/rad, 0.0f), 1.0f)*soundvol);
         }
         else
         {

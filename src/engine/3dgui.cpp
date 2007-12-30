@@ -103,8 +103,8 @@ bool g3d_movecursor(int dx, int dy)
 {
     if(!gui2d || !hascursor) return false;
     const float CURSORSCALE = 500.0f;
-    cursorx = max(0, min(1, cursorx+dx/CURSORSCALE));
-    cursory = max(0, min(1, cursory+dy/CURSORSCALE));
+    cursorx = max(0.0f, min(1.0f, cursorx+dx/CURSORSCALE));
+    cursory = max(0.0f, min(1.0f, cursory+dy/CURSORSCALE));
     return true;
 }
 
@@ -721,7 +721,7 @@ struct gui : g3d_gui
                 vec dir;
                 lightreaching(origin, light, dir, 0, 0.5f); 
                 float intensity = vec(yaw, 0.0f).dot(dir);
-                light.mul(1.0f + max(intensity, 0));
+                light.mul(1.0f + max(intensity, 0.0f));
             }
 
             skin_(curx-skinx[2]*SKIN_SCALE, cury-skiny[5]*SKIN_SCALE, xsize, ysize, 0, 9);

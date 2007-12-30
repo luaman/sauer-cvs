@@ -16,14 +16,14 @@ SDL_Surface *texrotate(SDL_Surface *s, int numrots, int type)
         int dx = x, dy = y;
         if(numrots>=2 && numrots<=4) dx = (s->w-1)-x;
         if(numrots<=2 || numrots==5) dy = (s->h-1)-y;
-        if((numrots&5)==1) swap(int, dx, dy);
+        if((numrots&5)==1) swap(dx, dy);
         uchar *dst = (uchar *)d->pixels+(dy*d->w+dx)*depth;
         loopi(depth) dst[i]=src[i];
         if(type==TEX_NORMAL)
         {
             if(numrots>=2 && numrots<=4) dst[0] = 255-dst[0];      // flip X   on normal when 180/270 degrees
             if(numrots<=2 || numrots==5) dst[1] = 255-dst[1];      // flip Y   on normal when  90/180 degrees
-            if((numrots&5)==1) swap(uchar, dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
+            if((numrots&5)==1) swap(dst[0], dst[1]);       // swap X/Y on normal when  90/270 degrees
         }
     }
     SDL_FreeSurface(s);
@@ -54,14 +54,14 @@ SDL_Surface *texoffset(SDL_Surface *s, int xoffset, int yoffset)
 
 void texmad(SDL_Surface *s, const vec &mul, const vec &add)
 {
-    int maxk = min(s->format->BytesPerPixel, 3);
+    int maxk = min(int(s->format->BytesPerPixel), 3);
     uchar *src = (uchar *)s->pixels;
     loopi(s->h*s->w) 
     {
         loopk(maxk)
         {
             float val = src[k]*mul[k] + 255*add[k];
-            src[k] = uchar(min(max(val, 0), 255));
+            src[k] = uchar(min(max(val, 0.0f), 255.0f));
         }
         src += s->format->BytesPerPixel;
     }
@@ -450,7 +450,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     st.rotation = max(*rot, 0);
     st.xoffset = max(*xoffset, 0);
     st.yoffset = max(*yoffset, 0);
-    st.scale = max(*scale, 0);
+    st.scale = max(*scale, 0.0f);
     st.t = NULL;
     s_strcpy(st.name, name);
     path(st.name);
@@ -937,8 +937,8 @@ void initenvmaps()
         const extentity &ent = *ents[i];
         if(ent.type != ET_ENVMAP) continue;
         envmap &em = envmaps.add();
-        em.radius = ent.attr1 ? max(0, min(10000, ent.attr1)) : envmapradius;
-        em.size = ent.attr2 ? max(4, min(9, ent.attr2)) : 0;
+        em.radius = ent.attr1 ? max(0, min(10000, int(ent.attr1))) : envmapradius;
+        em.size = ent.attr2 ? max(4, min(9, int(ent.attr2))) : 0;
         em.o = ent.o;
         em.tex = 0;
     }

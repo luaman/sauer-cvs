@@ -164,11 +164,11 @@ void pushshadowmap()
 	{
 		if(hdr.skylight[0] || hdr.skylight[1] || hdr.skylight[2])
 		{
-			r = max(25, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[0]));
-			g = max(25, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[1]));
-			b = max(25, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[2]));
+			r = max(25.0f, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[0]));
+			g = max(25.0f, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[1]));
+			b = max(25.0f, 0.4f*hdr.ambient + 0.6f*max(hdr.ambient, hdr.skylight[2]));
 		}
-		else r = g = b = max(25, 2.0f*hdr.ambient);
+		else r = g = b = max(25.0f, 2.0f*hdr.ambient);
 	}
     else if(shadowmapambient<=255) r = g = b = shadowmapambient;
     else { r = (shadowmapambient>>16)&0xFF; g = (shadowmapambient>>8)&0xFF; b = shadowmapambient&0xFF; }
@@ -257,10 +257,10 @@ bool addshadowmapcaster(const vec &o, float xyrad, float zrad)
     calcshadowmapbb(o, xyrad, zrad, x1, y1, x2, y2);
     if(x1 >= 1 || y1 >= 1 || x2 <= -1 || y2 <= -1) return false;
 
-    smx1 = min(smx1, max(x1, -1));
-    smy1 = min(smy1, max(y1, -1));
-    smx2 = max(smx2, min(x2, 1));
-    smy2 = max(smy2, min(y2, 1));
+    smx1 = min(smx1, max(x1, -1.0f));
+    smy1 = min(smy1, max(y1, -1.0f));
+    smx2 = max(smx2, min(x2, 1.0f));
+    smy2 = max(smy2, min(y2, 1.0f));
 
     float blurerror = 2.0f*float(2*blurshadowmap + 2) / shadowmaptexsize;
     int tx1 = max(0, min(BLURTILES - 1, int((x1-blurerror + 1)/2 * BLURTILES))),
@@ -412,8 +412,8 @@ void rendershadowmap()
     {
         if(blurfb)
         {
-            swap(GLuint, shadowmapfb, blurfb);
-            swap(GLuint, shadowmaptex, blurtex);
+            swap(shadowmapfb, blurfb);
+            swap(shadowmaptex, blurtex);
         }
         glBindFramebuffer_(GL_FRAMEBUFFER_EXT, shadowmapfb);
         glViewport(0, 0, shadowmaptexsize, shadowmaptexsize);

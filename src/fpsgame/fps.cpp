@@ -610,7 +610,7 @@ struct fpsclient : igameclient
         sway.mul(swayspeed);
         float swayxy = sinf(swaymillis/115.0f)/100.0f,
               swayz = cosf(swaymillis/115.0f)/100.0f;
-        swap(float, sway.x, sway.y);
+        swap(sway.x, sway.y);
         sway.x *= -swayxy;
         sway.y *= swayxy;
         sway.z = -fabs(swayspeed*swayz);

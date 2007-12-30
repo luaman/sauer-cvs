@@ -355,7 +355,7 @@ void entrotate(int *cw)
     groupeditundo(
         e.o[dd] -= (e.o[dd]-mid)*2;
         e.o.sub(s);
-        swap(float, e.o[R[d]], e.o[C[d]]);
+        swap(e.o[R[d]], e.o[C[d]]);
         e.o.add(s);
     );
 }
@@ -443,7 +443,7 @@ void renderentradius(extentity &e)
                 radius = e.attached->attr1;
                 if(!radius) radius = 2*e.o.dist(e.attached->o);
                 dir = vec(e.o).sub(e.attached->o).normalize();
-                angle = max(1, min(90, e.attr1));
+                angle = max(1, min(90, int(e.attr1)));
             }
             break;
 
@@ -454,7 +454,7 @@ void renderentradius(extentity &e)
         case ET_ENVMAP:
         {
             extern int envmapradius;
-            radius = e.attr1 ? max(0, min(10000, e.attr1)) : envmapradius;
+            radius = e.attr1 ? max(0, min(10000, int(e.attr1))) : envmapradius;
             break;
         }
 

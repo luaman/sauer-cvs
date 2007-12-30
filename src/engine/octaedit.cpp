@@ -287,7 +287,7 @@ void cursorupdate()
 
     vec target(worldpos);
     if(!insideworld(target)) loopi(3) 
-        target[i] = max(min(target[i], hdr.worldsize), 0);
+        target[i] = max(min(target[i], float(hdr.worldsize)), 0.0f);
     vec ray(target);
     ray.sub(player->o).normalize();
     int d   = dimension(sel.orient),
@@ -442,7 +442,7 @@ void cursorupdate()
         glColor3ub(50,50,50);   // grid
         boxsgrid(sel.orient, sel.o.tovec(), sel.s.tovec(), sel.grid);
         glColor3ub(200,0,0);    // 0 reference
-        boxs3D(sel.o.tovec().sub(0.5f*min(gridsize*0.25f, 2)), vec(min(gridsize*0.25f, 2)), 1);
+        boxs3D(sel.o.tovec().sub(0.5f*min(gridsize*0.25f, 2.0f)), vec(min(gridsize*0.25f, 2.0f)), 1);
         glColor3ub(200,200,200);// 2D selection box
         vec co(sel.o.v), cs(sel.s.v);
         co[R[d]] += 0.5f*(sel.cx*gridsize);
@@ -1356,13 +1356,13 @@ uint mflip(uint face) { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((fa
 
 void flipcube(cube &c, int d)
 {
-    swap(ushort, c.texture[d*2], c.texture[d*2+1]);
+    swap(c.texture[d*2], c.texture[d*2+1]);
     c.faces[D[d]] = dflip(c.faces[D[d]]);
     c.faces[C[d]] = cflip(c.faces[C[d]]);
     c.faces[R[d]] = rflip(c.faces[R[d]]);
-    if (c.children)
+    if(c.children)
     {
-        loopi(8) if (i&octadim(d)) swap(cube, c.children[i], c.children[i-octadim(d)]);
+        loopi(8) if(i&octadim(d)) swap(c.children[i], c.children[i-octadim(d)]);
         loopi(8) flipcube(c.children[i], d);
     }
 }
@@ -1377,11 +1377,11 @@ void rotatecube(cube &c, int d)   // rotates cube clockwise. see pics in cvs for
     c.faces[D[d]] = cflip (mflip(c.faces[D[d]]));
     c.faces[C[d]] = dflip (mflip(c.faces[C[d]]));
     c.faces[R[d]] = rflip (mflip(c.faces[R[d]]));
-    swap(uint, c.faces[R[d]], c.faces[C[d]]);
+    swap(c.faces[R[d]], c.faces[C[d]]);
 
-    swap(uint, c.texture[2*R[d]], c.texture[2*C[d]+1]);
-    swap(uint, c.texture[2*C[d]], c.texture[2*R[d]+1]);
-    swap(uint, c.texture[2*C[d]], c.texture[2*C[d]+1]);
+    swap(c.texture[2*R[d]], c.texture[2*C[d]+1]);
+    swap(c.texture[2*C[d]], c.texture[2*R[d]+1]);
+    swap(c.texture[2*C[d]], c.texture[2*C[d]+1]);
 
     if(c.children)
     {
@@ -1410,7 +1410,7 @@ void mpflip(selinfo &sel, bool local)
         {
             cube &a = selcube(x, y, z);
             cube &b = selcube(x, y, zs-z-1);
-            swap(cube, a, b);
+            swap(a, b);
         }
     }
     changed(sel);
@@ -1427,8 +1427,8 @@ void mprotate(int cw, selinfo &sel, bool local)
     if(local) cl->edittrigger(sel, EDIT_ROTATE, cw);
     int d = dimension(sel.orient);
     if(!dimcoord(sel.orient)) cw = -cw;
-    int &m = min(sel.s[C[d]], sel.s[R[d]]);
-    int ss = m = max(sel.s[R[d]], sel.s[C[d]]);
+    int m = sel.s[C[d]] < sel.s[R[d]] ? C[d] : R[d];
+    int ss = sel.s[m] = max(sel.s[R[d]], sel.s[C[d]]);
     makeundo();
     loop(z,sel.s[D[d]]) loopi(cw>0 ? 1 : 3)
     {
@@ -1578,7 +1578,7 @@ void render_texture_panel(int w, int h)
             if(ti>=0 && ti<curtexnum)
             {
                 Texture *tex = lookuptexture(texmru[ti]).sts[0].t;
-                float sx = min(1, tex->xs/(float)tex->ys), sy = min(1, tex->ys/(float)tex->xs);
+                float sx = min(1.0f, tex->xs/(float)tex->ys), sy = min(1.0f, tex->ys/(float)tex->xs);
                 glBindTexture(GL_TEXTURE_2D, tex->gl);
                 glColor4f(0, 0, 0, texpaneltimer/1000.0f);
                 int x = width-s-50, r = s;

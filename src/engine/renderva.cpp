@@ -1550,7 +1550,7 @@ void rendergeom(bool causticspass, bool fogpass)
         else if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
         {
             if(!zpass && va->query && va->query->owner == va) 
-                va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
+                va->occluded = checkquery(va->query) ? min(va->occluded+1, int(OCCLUDE_BB)) : OCCLUDE_NOTHING;
             if(zpass && va->parent && 
                (va->parent->occluded == OCCLUDE_PARENT || 
                 (va->parent->occluded >= OCCLUDE_BB && 
@@ -1627,7 +1627,7 @@ void rendergeom(bool causticspass, bool fogpass)
             }
             else if(va->query)
             {
-                va->occluded = checkquery(va->query) ? min(va->occluded+1, OCCLUDE_BB) : OCCLUDE_NOTHING;
+                va->occluded = checkquery(va->query) ? min(va->occluded+1, int(OCCLUDE_BB)) : OCCLUDE_NOTHING;
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             else if(va->occluded == OCCLUDE_PARENT) va->occluded = OCCLUDE_NOTHING;

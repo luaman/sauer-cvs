@@ -22,13 +22,33 @@ typedef unsigned int uint;
 #define ASSERT(c) if(c) {}
 #endif
 
-#define swap(t,a,b) { t m=a; a=b; b=m; }
-#ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+#ifdef swap
+#undef swap
 #endif
-#ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+template<class T>
+void swap(T &a, T &b)
+{
+    T t = a;
+    a = b;
+    b = t;
+}
+#ifdef max
+#undef max
 #endif
+#ifdef min
+#undef min
+#endif
+template<class T>
+const T &max(const T &a, const T &b)
+{
+    return a > b ? a : b;
+}
+template<class T>
+const T &min(const T &a, const T &b)
+{
+    return a < b ? a : b;
+}
+
 #define clamp(a,b,c) (max(b, min(a, c)))
 #define rnd(x) ((int)(randomMT()&0xFFFFFF)%(x))
 #define detrnd(s, x) ((int)(((((uint)(s))*1103515245+12345)>>16)%(x)))
@@ -99,8 +119,6 @@ struct s_sprintf_f
 #define s_sprintfd(d) string d; s_sprintf(d)
 #define s_sprintfdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
 #define s_sprintfdv(d,fmt) s_sprintfdlv(d,fmt,fmt)
-
-template <class T> void _swap(T &a, T &b) { T t = a; a = b; b = t; }
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
 #define loopvj(v)   if(false) {} else for(int j = 0; j<(v).length(); j++)
@@ -229,9 +247,9 @@ template <class T> struct vector
     {
         if(!ulen)
         {
-            swap(T *, buf, v.buf);
-            swap(int, ulen, v.ulen);
-            swap(int, alen, v.alen);
+            swap(buf, v.buf);
+            swap(ulen, v.ulen);
+            swap(alen, v.alen);
         }
         else
         {
@@ -351,7 +369,7 @@ template <class T> struct vector
 
     void reverse()
     {
-        loopi(ulen/2) swap(T, buf[i], buf[ulen-1-i]);
+        loopi(ulen/2) swap(buf[i], buf[ulen-1-i]);
     }
 };
 
