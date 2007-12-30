@@ -1471,7 +1471,7 @@ struct fpsserver : igameserver
                 int mn = getint(p);
                 if(mastermask&MM_AUTOAPPROVE || ci->state.state==CS_SPECTATOR) break;
                 clientinfo *candidate = (clientinfo *)getinfo(mn);
-                if(!candidate || !candidate->wantsmaster || mn==sender) break;// || getclientip(mn)==getclientip(sender)) break;
+                if(!candidate || !candidate->wantsmaster || mn==sender || getclientip(mn)==getclientip(sender)) break;
                 setmaster(candidate, true, "", true);
                 break;
             }
