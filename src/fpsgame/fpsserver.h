@@ -186,7 +186,7 @@ struct fpsserver : igameserver
         gameevent &addevent()
         {
             static gameevent dummy;
-            if(events.length()>100) return dummy;
+            if(state.state==CS_SPECTATOR || events.length()>100) return dummy;
             return events.add();
         }
 
@@ -426,7 +426,7 @@ struct fpsserver : igameserver
     void vote(char *map, int reqmode, int sender)
     {
         clientinfo *ci = (clientinfo *)getinfo(sender);
-        if(!ci || ci->state.state==CS_SPECTATOR && !ci->privilege) return;
+        if(!ci || (ci->state.state==CS_SPECTATOR && !ci->privilege)) return;
         s_strcpy(ci->mapvote, map);
         ci->modevote = reqmode;
         if(!ci->mapvote[0]) return;
@@ -909,6 +909,8 @@ struct fpsserver : igameserver
     int checktype(int type, clientinfo *ci)
     {
         if(ci && ci->local) return type;
+#if 0
+        // other message types can get sent by accident if a master forces spectator on someone, so disabling this case for now and checking for spectator state in message handlers
         // spectators can only connect and talk
         static int spectypes[] = { SV_INITC2S, SV_POS, SV_TEXT, SV_PING, SV_CLIENTPING, SV_GETMAP, SV_SETMASTER };
         if(ci && ci->state.state==CS_SPECTATOR && !ci->privilege)
@@ -916,6 +918,7 @@ struct fpsserver : igameserver
             loopi(sizeof(spectypes)/sizeof(int)) if(type == spectypes[i]) return type;
             return -1;
         }
+#endif
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
@@ -1113,6 +1116,7 @@ struct fpsserver : igameserver
             case SV_GUNSELECT:
             {
                 int gunselect = getint(p);
+                if(ci->state.state!=CS_ALIVE) break;
                 ci->state.gunselect = gunselect;
                 QUEUE_MSG;
                 break;
@@ -1287,15 +1291,20 @@ struct fpsserver : igameserver
                 break;
 
             case SV_BASES:
-                if(smode==&capturemode) capturemode.parsebases(p);
+                if(ci->state.state!=CS_SPECTATOR && smode==&capturemode) capturemode.parsebases(p);
                 break;
 
             case SV_REPAMMO:
-                if(smode==&capturemode) capturemode.replenishammo(ci);
+                if(ci->state.state!=CS_SPECTATOR && smode==&capturemode) capturemode.replenishammo(ci);
                 break;
 
             case SV_PING:
                 sendf(sender, 1, "i2", SV_PONG, getint(p));
+                break;
+
+            case SV_CLIENTPING:
+                getint(p);
+                QUEUE_MSG;
                 break;
 
             case SV_MASTERMODE:
@@ -1431,6 +1440,7 @@ struct fpsserver : igameserver
             case SV_NEWMAP:
             {
                 int size = getint(p);
+                if(ci->state.state==CS_SPECTATOR) break;
                 if(size>=0)
                 {
                     smapname[0] = '\0';
@@ -1454,7 +1464,7 @@ struct fpsserver : igameserver
             case SV_APPROVEMASTER:
             {
                 int mn = getint(p);
-                if(mastermask&MM_AUTOAPPROVE) break;
+                if(ci->state.state==CS_SPECTATOR || mastermask&MM_AUTOAPPROVE) break;
                 clientinfo *candidate = (clientinfo *)getinfo(mn);
                 if(!candidate || !candidate->wantsmaster || mn==sender) break;// || getclientip(mn)==getclientip(sender)) break;
                 setmaster(candidate, true, "", true);
@@ -1466,7 +1476,7 @@ struct fpsserver : igameserver
                 int size = msgsizelookup(type);
                 if(size==-1) { disconnect_client(sender, DISC_TAGT); return; }
                 if(size>0) loopi(size-1) getint(p);
-                if(ci) QUEUE_MSG;
+                if(ci && ci->state.state!=CS_SPECTATOR) QUEUE_MSG;
                 break;
             }
         }
