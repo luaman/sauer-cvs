@@ -611,9 +611,9 @@ void complete(char *s)
     {
         extern hashtable<const char *, ident> *idents;
         enumerate(*idents, ident, id,
-            if(strncmp(id._name, s+1, completesize)==0 &&
-               strcmp(id._name, lastcomplete) > 0 && (!nextcomplete || strcmp(id._name, nextcomplete) < 0))
-                nextcomplete = id._name;
+            if(strncmp(id.name, s+1, completesize)==0 &&
+               strcmp(id.name, lastcomplete) > 0 && (!nextcomplete || strcmp(id.name, nextcomplete) < 0))
+                nextcomplete = id.name;
         );
     }
     if(nextcomplete)

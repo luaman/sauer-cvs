@@ -14,7 +14,7 @@ bool overrideidents = false, persistidents = true;
 
 void clearstack(ident &id)
 {
-    identstack *stack = id._stack;
+    identstack *stack = id.stack;
     while(stack)
     {
         delete[] stack->action;
@@ -22,60 +22,60 @@ void clearstack(ident &id)
         stack = stack->next;
         delete tmp;
     }
-    id._stack = NULL;
+    id.stack = NULL;
 }
 
 void clear_command()
 {
-    enumerate(*idents, ident, i, if(i._type==ID_ALIAS) { DELETEA(i._name); DELETEA(i._action); if(i._stack) clearstack(i); });
+    enumerate(*idents, ident, i, if(i.type==ID_ALIAS) { DELETEA(i.name); DELETEA(i.action); if(i.stack) clearstack(i); });
     if(idents) idents->clear();
 }
 
 void clearoverrides()
 {
     enumerate(*idents, ident, i,
-        if(i._override!=NO_OVERRIDE)
+        if(i.override!=NO_OVERRIDE)
         {
-            switch(i._type)
+            switch(i.type)
             {
                 case ID_ALIAS: 
-                    if(i._action[0]) i._action = exchangestr(i._action, ""); 
+                    if(i.action[0]) i.action = exchangestr(i.action, ""); 
                     break;
                 case ID_VAR: 
-                    *i._storage = i._override;
+                    *i.storage.i = i.overrideval.i;
                     i.changed();
                     break;
                 case ID_FVAR:
-                    *i._fstorage = i._foverride;
+                    *i.storage.f = i.overrideval.f;
                     i.changed();
                     break;
-                case ID_STRVAR:
-                    delete[] *i._strstorage;
-                    *i._strstorage = i._stroverride;
+                case ID_SVAR:
+                    delete[] *i.storage.s;
+                    *i.storage.s = i.overrideval.s;
                     i.changed();
                     break;
             }
-            i._override = NO_OVERRIDE;
+            i.override = NO_OVERRIDE;
         });
 }
 
 void pushident(ident &id, char *val)
 {
-    if(id._type != ID_ALIAS) return;
+    if(id.type != ID_ALIAS) return;
     identstack *stack = new identstack;
-    stack->action = id._isexecuting==id._action ? newstring(id._action) : id._action;
-    stack->next = id._stack;
-    id._stack = stack;
-    id._action = val;
+    stack->action = id.isexecuting==id.action ? newstring(id.action) : id.action;
+    stack->next = id.stack;
+    id.stack = stack;
+    id.action = val;
 }
 
 void popident(ident &id)
 {
-    if(id._type != ID_ALIAS || !id._stack) return;
-    if(id._action != id._isexecuting) delete[] id._action;
-    identstack *stack = id._stack;
-    id._action = stack->action;
-    id._stack = stack->next;
+    if(id.type != ID_ALIAS || !id.stack) return;
+    if(id.action != id.isexecuting) delete[] id.action;
+    identstack *stack = id.stack;
+    id.action = stack->action;
+    id.stack = stack->next;
     delete stack;
 }
 
@@ -111,23 +111,23 @@ void aliasa(const char *name, char *action)
     if(!b) 
     {
         ident b(ID_ALIAS, newstring(name), action, persistidents);
-        if(overrideidents) b._override = OVERRIDDEN;
-        idents->access(b._name, &b);
+        if(overrideidents) b.override = OVERRIDDEN;
+        idents->access(b.name, &b);
     }
-    else if(b->_type != ID_ALIAS)
+    else if(b->type != ID_ALIAS)
     {
         conoutf("cannot redefine builtin %s with an alias", name);
         delete[] action;
     }
     else 
     {
-        if(b->_action != b->_isexecuting) delete[] b->_action;
-        b->_action = action;
-        if(overrideidents) b->_override = OVERRIDDEN;
+        if(b->action != b->isexecuting) delete[] b->action;
+        b->action = action;
+        if(overrideidents) b->override = OVERRIDDEN;
         else 
         {
-            if(b->_override != NO_OVERRIDE) b->_override = NO_OVERRIDE;
-            if(b->_persist != persistidents) b->_persist = persistidents;
+            if(b->override != NO_OVERRIDE) b->override = NO_OVERRIDE;
+            if(b->persist != persistidents) b->persist = persistidents;
         }
     }
 }
@@ -154,50 +154,50 @@ float fvariable(const char *name, float cur, float *storage, void (*fun)(), bool
     return cur;
 }
 
-char *strvariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist)
+char *svariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist)
 {
     if(!idents) idents = new identtable;
-    ident v(ID_STRVAR, name, newstring(cur), storage, (void *)fun, persist);
+    ident v(ID_SVAR, name, newstring(cur), storage, (void *)fun, persist);
     idents->access(name, &v);
-    return v._strval;
+    return v.val.s;
 }
 
-#define _GETVAR(id, type, name, retval) \
+#define _GETVAR(id, vartype, name, retval) \
     ident *id = idents->access(name); \
-    if(!id || id->_type!=type) return retval;
+    if(!id || id->type!=vartype) return retval;
 #define GETVAR(id, name, retval) _GETVAR(id, ID_VAR, name, retval)
 void setvar(const char *name, int i, bool dofunc) 
 { 
     GETVAR(id, name, );
-    *id->_storage = i; 
+    *id->storage.i = i; 
     if(dofunc) id->changed();
 } 
 void setfvar(const char *name, float f, bool dofunc)
 {
     GETVAR(id, name, );
-    *id->_fstorage = f;
+    *id->storage.f = f;
     if(dofunc) id->changed();
 }
-void setstrvar(const char *name, const char *str, bool dofunc)
+void setsvar(const char *name, const char *str, bool dofunc)
 {
     GETVAR(id, name, );
-    *id->_strstorage = exchangestr(*id->_strstorage, str);
+    *id->storage.s = exchangestr(*id->storage.s, str);
     if(dofunc) id->changed();
 }
 int getvar(const char *name) 
 { 
     GETVAR(id, name, 0);
-    return *id->_storage;
+    return *id->storage.i;
 }
 int getvarmin(const char *name) 
 { 
     GETVAR(id, name, 0);
-    return id->_min;
+    return id->min;
 }
 int getvarmax(const char *name) 
 { 
     GETVAR(id, name, 0);
-    return id->_max;
+    return id->max;
 }
 bool identexists(const char *name) { return idents->access(name)!=NULL; }
 ident *getident(const char *name) { return idents->access(name); }
@@ -205,7 +205,7 @@ ident *getident(const char *name) { return idents->access(name); }
 const char *getalias(const char *name)
 {
     ident *i = idents->access(name);
-    return i && i->_type==ID_ALIAS ? i->_action : "";
+    return i && i->type==ID_ALIAS ? i->action : "";
 }
 
 bool addcommand(const char *name, void (*fun)(), const char *narg)
@@ -315,12 +315,12 @@ char *parseexp(const char *&p, int right)          // parse any nested set of ()
 char *lookup(char *n)                           // find value of ident referenced with $ in exp
 {
     ident *id = idents->access(n+1);
-    if(id) switch(id->_type)
+    if(id) switch(id->type)
     {
-        case ID_VAR: { s_sprintfd(t)("%d", *id->_storage); return exchangestr(n, t); }
-        case ID_FVAR: { s_sprintfd(t)("%f", *id->_fstorage); return exchangestr(n, t); }
-        case ID_STRVAR: return exchangestr(n, *id->_strstorage);
-        case ID_ALIAS: return exchangestr(n, id->_action);
+        case ID_VAR: { s_sprintfd(t)("%d", *id->storage.i); return exchangestr(n, t); }
+        case ID_FVAR: { s_sprintfd(t)("%f", *id->storage.f); return exchangestr(n, t); }
+        case ID_SVAR: return exchangestr(n, *id->storage.s);
+        case ID_ALIAS: return exchangestr(n, id->action);
     }
     conoutf("unknown alias lookup: %s", n+1);
     return n;
@@ -421,7 +421,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     conoutf("unknown command: %s", c);
                 setretval(newstring(c));
             }
-            else switch(id->_type)
+            else switch(id->type)
             {
                 case ID_CCOMMAND:
                 case ID_COMMAND:                     // game defined commands
@@ -435,28 +435,28 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     } nstor[MAXWORDS];
                     int n = 0, wn = 0;
                     char *cargs = NULL;
-                    if(id->_type==ID_CCOMMAND) v[n++] = id->self;
-                    for(const char *a = id->_narg; *a; a++) switch(*a)
+                    if(id->type==ID_CCOMMAND) v[n++] = id->self;
+                    for(const char *a = id->narg; *a; a++) switch(*a)
                     {
                         case 's':                                 v[n] = w[++wn];     n++; break;
                         case 'i': nstor[n].i = parseint(w[++wn]); v[n] = &nstor[n].i; n++; break;
                         case 'f': nstor[n].f = atof(w[++wn]);     v[n] = &nstor[n].f; n++; break;
-                        case 'D': nstor[n].i = addreleaseaction(id->_name) ? 1 : 0; v[n] = &nstor[n].i; n++; break;
+                        case 'D': nstor[n].i = addreleaseaction(id->name) ? 1 : 0; v[n] = &nstor[n].i; n++; break;
                         case 'V': v[n++] = w+1; nstor[n].i = numargs-1; v[n] = &nstor[n].i; n++; break;
                         case 'C': if(!cargs) cargs = conc(w+1, numargs-1, true); v[n++] = cargs; break;
                         default: fatal("builtin declared with illegal type");
                     }
                     switch(n)
                     {
-                        case 0: ((void (__cdecl *)()                                      )id->_fun)();                             break;
-                        case 1: ((void (__cdecl *)(void *)                                )id->_fun)(v[0]);                         break;
-                        case 2: ((void (__cdecl *)(void *, void *)                        )id->_fun)(v[0], v[1]);                   break;
-                        case 3: ((void (__cdecl *)(void *, void *, void *)                )id->_fun)(v[0], v[1], v[2]);             break;
-                        case 4: ((void (__cdecl *)(void *, void *, void *, void *)        )id->_fun)(v[0], v[1], v[2], v[3]);       break;
-                        case 5: ((void (__cdecl *)(void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4]); break;
-                        case 6: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4], v[5]); break;
-                        case 7: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
-                        case 8: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *, void *, void *))id->_fun)(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]); break;
+                        case 0: ((void (__cdecl *)()                                      )id->fun)();                             break;
+                        case 1: ((void (__cdecl *)(void *)                                )id->fun)(v[0]);                         break;
+                        case 2: ((void (__cdecl *)(void *, void *)                        )id->fun)(v[0], v[1]);                   break;
+                        case 3: ((void (__cdecl *)(void *, void *, void *)                )id->fun)(v[0], v[1], v[2]);             break;
+                        case 4: ((void (__cdecl *)(void *, void *, void *, void *)        )id->fun)(v[0], v[1], v[2], v[3]);       break;
+                        case 5: ((void (__cdecl *)(void *, void *, void *, void *, void *))id->fun)(v[0], v[1], v[2], v[3], v[4]); break;
+                        case 6: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *))id->fun)(v[0], v[1], v[2], v[3], v[4], v[5]); break;
+                        case 7: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *, void *))id->fun)(v[0], v[1], v[2], v[3], v[4], v[5], v[6]); break;
+                        case 8: ((void (__cdecl *)(void *, void *, void *, void *, void *, void *, void *, void *))id->fun)(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]); break;
                         default: fatal("builtin declared with too many args (use V?)");
                     }
                     if(cargs) delete[] cargs;
@@ -467,53 +467,53 @@ char *executeret(const char *p)               // all evaluation happens here, re
 
                 case ID_VAR:                        // game defined variables 
                     SAUERBRATEN_VAR_ENTRY(c, w[1]);
-                    if(!w[1][0]) conoutf("%s = %d", c, *id->_storage);      // var with no value just prints its current value
-                    else if(id->_min>id->_max) conoutf("variable %s is read-only", id->_name);
+                    if(!w[1][0]) conoutf("%s = %d", c, *id->storage.i);      // var with no value just prints its current value
+                    else if(id->min>id->max) conoutf("variable %s is read-only", id->name);
                     else
                     {
-                        #define OVERRIDEVAR(overridden, saveval, resetval) \
+                        #define OVERRIDEVAR(saveval, resetval) \
                             if(overrideidents) \
                             { \
-                                if(id->_persist) \
+                                if(id->persist) \
                                 { \
-                                    conoutf("cannot override persistent variable %s", id->_name); \
+                                    conoutf("cannot override persistent variable %s", id->name); \
                                     break; \
                                 } \
-                                if(id->_override==NO_OVERRIDE) { saveval; id->_override = overridden; } \
+                                if(id->override==NO_OVERRIDE) { saveval; id->override = OVERRIDDEN; } \
                             } \
-                            else if(id->_override!=NO_OVERRIDE) { resetval; id->_override = NO_OVERRIDE; }
-                        OVERRIDEVAR(*id->_storage, , )
+                            else if(id->override!=NO_OVERRIDE) { resetval; id->override = NO_OVERRIDE; }
+                        OVERRIDEVAR(id->overrideval.i = *id->storage.i, )
                         int i1 = parseint(w[1]);
-                        if(i1<id->_min || i1>id->_max)
+                        if(i1<id->min || i1>id->max)
                         {
-                            i1 = i1<id->_min ? id->_min : id->_max;                // clamp to valid range
-                            conoutf("valid range for %s is %d..%d", id->_name, id->_min, id->_max);
+                            i1 = i1<id->min ? id->min : id->max;                // clamp to valid range
+                            conoutf("valid range for %s is %d..%d", id->name, id->min, id->max);
                         }
-                        *id->_storage = i1;
+                        *id->storage.i = i1;
                         id->changed();                                             // call trigger function if available
                     }
-                    SAUERBRATEN_VAR_RETURN(c, *id->_storage);
+                    SAUERBRATEN_VAR_RETURN(c, *id->storage.i);
                     break;
                   
                 case ID_FVAR:
                     SAUERBRATEN_VAR_ENTRY(c, w[1]);
-                    if(!w[1][0]) conoutf("%s = %f", c, *id->_fstorage);
+                    if(!w[1][0]) conoutf("%s = %f", c, *id->storage.f);
                     else
                     {
-                        OVERRIDEVAR(OVERRIDDEN, id->_foverride = *id->_fstorage, );
-                        *id->_fstorage = atof(w[1]);
+                        OVERRIDEVAR(id->overrideval.f = *id->storage.f, );
+                        *id->storage.f = atof(w[1]);
                         id->changed();
                     }
                     SAUERBRATEN_VAR_RETURN(c, -1);
                     break;
  
-                case ID_STRVAR:
+                case ID_SVAR:
                     SAUERBRATEN_VAR_ENTRY(c, w[1]);
-                    if(!w[1][0]) conoutf(strchr(*id->_strstorage, '"') ? "%s = [%s]" : "%s = \"%s\"", c, *id->_strstorage);
+                    if(!w[1][0]) conoutf(strchr(*id->storage.s, '"') ? "%s = [%s]" : "%s = \"%s\"", c, *id->storage.s);
                     else
                     {
-                        OVERRIDEVAR(OVERRIDDEN, id->_stroverride = *id->_strstorage, delete[] id->_stroverride);
-                        *id->_strstorage = newstring(w[1]);
+                        OVERRIDEVAR(id->overrideval.s = *id->storage.s, delete[] id->overrideval.s);
+                        *id->storage.s = newstring(w[1]);
                         id->changed();
                     }
                     SAUERBRATEN_VAR_RETURN(c, -1);
@@ -532,7 +532,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                             if(!id)
                             {
                                 ident init(ID_ALIAS, newstring(argname), newstring(""), persistidents);
-                                id = idents->access(init._name, &init);
+                                id = idents->access(init.name, &init);
                             }
                             argids.add(id);
                         }
@@ -541,12 +541,12 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     }
                     _numargs = numargs-1;
                     bool wasoverriding = overrideidents;
-                    if(id->_override!=NO_OVERRIDE) overrideidents = true;
-                    char *wasexecuting = id->_isexecuting;
-                    id->_isexecuting = id->_action;
-                    setretval(executeret(id->_action));
-                    if(id->_isexecuting != id->_action && id->_isexecuting != wasexecuting) delete[] id->_isexecuting;
-                    id->_isexecuting = wasexecuting;
+                    if(id->override!=NO_OVERRIDE) overrideidents = true;
+                    char *wasexecuting = id->isexecuting;
+                    id->isexecuting = id->action;
+                    setretval(executeret(id->action));
+                    if(id->isexecuting != id->action && id->isexecuting != wasexecuting) delete[] id->isexecuting;
+                    id->isexecuting = wasexecuting;
                     overrideidents = wasoverriding;
                     for(int i = 1; i<numargs; i++) popident(*argids[i-1]);
                     SAUERBRATEN_ALIAS_RETURN(c);
@@ -592,21 +592,21 @@ void writecfg()
     fprintf(f, "\n");
     writecrosshairs(f);
     enumerate(*idents, ident, id,
-        if(!id._persist) continue;
-        switch(id._type)
+        if(!id.persist) continue;
+        switch(id.type)
         {
-            case ID_VAR: fprintf(f, "%s %d\n", id._name, *id._storage); break;
-            case ID_FVAR: fprintf(f, "%s %f\n", id._name, *id._fstorage); break;
-            case ID_STRVAR: fprintf(f, "%s [%s]\n", id._name, *id._strstorage); break;
+            case ID_VAR: fprintf(f, "%s %d\n", id.name, *id.storage.i); break;
+            case ID_FVAR: fprintf(f, "%s %f\n", id.name, *id.storage.f); break;
+            case ID_SVAR: fprintf(f, "%s [%s]\n", id.name, *id.storage.s); break;
         }
     );
     fprintf(f, "\n");
     writebinds(f);
     fprintf(f, "\n");
     enumerate(*idents, ident, id,
-        if(id._type==ID_ALIAS && id._persist && id._override==NO_OVERRIDE && !strstr(id._name, "nextmap_") && id._action[0])
+        if(id.type==ID_ALIAS && id.persist && id.override==NO_OVERRIDE && !strstr(id.name, "nextmap_") && id.action[0])
         {
-            fprintf(f, "\"%s\" = [%s]\n", id._name, id._action);
+            fprintf(f, "\"%s\" = [%s]\n", id.name, id.action);
         }
     );
     fprintf(f, "\n");

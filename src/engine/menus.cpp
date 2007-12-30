@@ -119,11 +119,11 @@ static void updateval(char *var, int val, char *onchange)
     ident *id = getident(var);
     string assign;
     if(!id) return;
-    switch(id->_type)
+    switch(id->type)
     {
         case ID_VAR:
         case ID_FVAR:
-        case ID_STRVAR:
+        case ID_SVAR:
             s_sprintf(assign)("%s %d", var, val);
             break;
         case ID_ALIAS: 
@@ -140,12 +140,12 @@ static int getval(char *var)
 {
     ident *id = getident(var);
     if(!id) return 0;
-    switch(id->_type)
+    switch(id->type)
     {
-        case ID_VAR: return *id->_storage;
-        case ID_FVAR: return int(*id->_fstorage);
-        case ID_STRVAR: return atoi(*id->_strstorage);
-        case ID_ALIAS: return atoi(id->_action);
+        case ID_VAR: return *id->storage.i;
+        case ID_FVAR: return int(*id->storage.f);
+        case ID_SVAR: return atoi(*id->storage.s);
+        case ID_ALIAS: return atoi(id->action);
         default: return 0;
     }
 }
@@ -203,7 +203,7 @@ void guifield(char *var, int *maxlength, char *onchange, char *updateval)
     {
         if(updateval[0]) execute(updateval);
         ident *id = getident(var);
-        if(id && id->_type==ID_ALIAS) initval = id->_action;
+        if(id && id->type==ID_ALIAS) initval = id->action;
     }
 	char *result = cgui->field(var, GUI_BUTTON_COLOR, *maxlength>0 ? *maxlength : 12, initval);
     if(result) 

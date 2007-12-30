@@ -1,7 +1,7 @@
 // script binding functionality
 
 
-enum { ID_VAR, ID_FVAR, ID_STRVAR, ID_COMMAND, ID_CCOMMAND, ID_ALIAS };
+enum { ID_VAR, ID_FVAR, ID_SVAR, ID_COMMAND, ID_CCOMMAND, ID_ALIAS };
 
 enum { NO_OVERRIDE = INT_MAX, OVERRIDDEN = 0 };
 
@@ -13,63 +13,64 @@ struct identstack
 
 struct ident
 {
-    int _type;           // one of ID_* above
-    const char *_name;
+    int type;           // one of ID_* above
+    const char *name;
+    int min, max; // ID_VAR
+    int override; // either NO_OVERRIDE, OVERRIDDEN, or value
     union
     {
-        int _min;           // ID_VAR
-        float _foverride;   // ID_FVAR
-        char *_stroverride; // ID_STRVAR
-    };
-    int _max;      // ID_VAR
-    int _override; // either NO_OVERRIDE, OVERRIDDEN, or value
-    union
-    {
-        void (__cdecl *_fun)(); // ID_VAR, ID_COMMAND, ID_CCOMMAND
-        identstack *_stack;     // ID_ALIAS
+        void (__cdecl *fun)(); // ID_VAR, ID_COMMAND, ID_CCOMMAND
+        identstack *stack;     // ID_ALIAS
     };
     union
     {
-        const char *_narg;  // ID_COMMAND, ID_CCOMMAND
-        int _val;           // ID_VAR
-        float _fval;        // ID_FVAR
-        char *_strval;      // ID_STRVAR
-        char *_action;      // ID_ALIAS
-    };
-    bool _persist;       // ID_VAR, ID_ALIAS
+        int i;      // ID_VAR
+        float f;    // ID_FVAR
+        char *s;    // ID_SVAR
+    } val, overrideval;    
     union
     {
-        char *_isexecuting;  // ID_ALIAS
-        int *_storage;       // ID_VAR
-        float *_fstorage;    // ID_FVAR
-        char **_strstorage;  // ID_STRVAR
+        int *i;   // ID_VAR
+        float *f; // ID_FVAR
+        char **s; // ID_SVAR
+    } storage;
+    union
+    {
+        const char *narg; // ID_COMMAND, ID_CCOMMAND
+        char *action;     // ID_ALIAS
     };
-    void *self;
+    union
+    {
+        void *self;        // ID_COMMAND, ID_CCOMMAND 
+        char *isexecuting; // ID_ALIAS
+    };
+    bool persist;       // ID_VAR, ID_ALIAS
     
     ident() {}
     // ID_VAR
     ident(int t, const char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
-        : _type(t), _name(n), _min(m), _max(x), _override(NO_OVERRIDE), _fun((void (__cdecl *)())f), _val(c), _persist(p), _storage(s) {}
+        : type(t), name(n), min(m), max(x), override(NO_OVERRIDE), fun((void (__cdecl *)())f), persist(p)
+    { val.i = c; storage.i = s; }
     // ID_FVAR
     ident(int t, const char *n, float c, float *s, void *f = NULL, bool p = false)
-        : _type(t), _name(n), _override(NO_OVERRIDE), _fun((void (__cdecl *)())f), _fval(c), _persist(p), _fstorage(s) {}
-    // ID_STRVAR
+        : type(t), name(n), override(NO_OVERRIDE), fun((void (__cdecl *)())f), persist(p)
+    { val.f = c; storage.f = s; }
+    // ID_SVAR
     ident(int t, const char *n, char *c, char **s, void *f = NULL, bool p = false)
-        : _type(t), _name(n), _override(NO_OVERRIDE), _fun((void (__cdecl *)())f), _strval(c), _persist(p), _strstorage(s) {}
+        : type(t), name(n), override(NO_OVERRIDE), fun((void (__cdecl *)())f), persist(p)
+    { val.s = c; storage.s = s; }
     // ID_ALIAS
     ident(int t, const char *n, char *a, bool p)
-        : _type(t), _name(n), _override(NO_OVERRIDE), _stack(NULL), _action(a), _persist(p) {}
+        : type(t), name(n), override(NO_OVERRIDE), stack(NULL), action(a), persist(p) {}
     // ID_COMMAND, ID_CCOMMAND
-    ident(int t, const char *n, const char *narg, void *f = NULL, void *_s = NULL)
-        : _type(t), _name(n), _fun((void (__cdecl *)(void))f), _narg(narg), self(_s) {}
+    ident(int t, const char *n, const char *narg, void *f = NULL, void *s = NULL)
+        : type(t), name(n), fun((void (__cdecl *)(void))f), narg(narg), self(s) {}
 
     virtual ~ident() {}        
 
     ident &operator=(const ident &o) { memcpy(this, &o, sizeof(ident)); return *this; }        // force vtable copy, ugh
     
-    int operator()() { return _val; }
-    
-    virtual void changed() { if(_fun) _fun(); }
+    virtual void changed() { if(fun) fun(); }
 };
 
 extern void addident(const char *name, ident *id);
@@ -100,12 +101,12 @@ extern void result(const char *s);
 #define FVARF(name, cur, body) _FVARF(name, name, cur, body, false)
 #define FVARFP(name, cur, body) _FVARF(name, name, cur, body, true)
 
-#define _SVAR(name, global, cur, persist) char *global = strvariable(#name, cur, &global, NULL, persist)
+#define _SVAR(name, global, cur, persist) char *global = svariable(#name, cur, &global, NULL, persist)
 #define SVARN(name, global, cur) _SVAR(name, global, cur, false)
 #define SVARNP(name, global, cur) _SVAR(name, global, cur, true)
 #define SVAR(name, cur) _SVAR(name, name, cur, false)
 #define SVARP(name, cur) _SVAR(name, name, cur, true)
-#define _SVARF(name, global, cur, body, persist) void var_##name(); char *global = strvariable(#name, cur, &global, var_##name, persist); void var_##name() { body; }
+#define _SVARF(name, global, cur, body, persist) void var_##name(); char *global = svariable(#name, cur, &global, var_##name, persist); void var_##name() { body; }
 #define SVARFN(name, global, cur, body) _SVARF(name, global, cur, body, false)
 #define SVARF(name, cur, body) _SVARF(name, name, cur, body, false)
 #define SVARFP(name, cur, body) _SVARF(name, name, cur, body, true)
@@ -116,14 +117,23 @@ extern void result(const char *s);
     { \
         cmd_##n(void *self = NULL) : ident(idtype, #n, g, (void *)run, self) \
         { \
-            addident(_name, this); \
+            addident(name, this); \
         } \
         static void run proto { b; } \
     } icom_##n tv
 #define ICOMMAND(n, g, proto, b) _COMMAND(ID_COMMAND, , n, g, proto, b)
 #define CCOMMAND(n, g, proto, b) _COMMAND(ID_CCOMMAND, (this), n, g, proto, b)
  
-#define _IVAR(n, m, c, x, b, p) struct var_##n : ident { var_##n() : ident(ID_VAR, #n, m, c, x, &_val, NULL, p) { addident(_name, this); } b } n
+#define _IVAR(n, m, c, x, b, p) \
+    struct var_##n : ident \
+    { \
+        var_##n() : ident(ID_VAR, #n, m, c, x, &val.i, NULL, p) \
+        { \
+            addident(name, this); \
+        } \
+        int operator()() { return val.i; } \
+        b \
+    } n
 #define IVAR(n, m, c, x)  _IVAR(n, m, c, x, , false)
 #define IVARF(n, m, c, x, b) _IVAR(n, m, c, x, void changed() { b; }, false)
 #define IVARP(n, m, c, x)  _IVAR(n, m, c, x, , true)
