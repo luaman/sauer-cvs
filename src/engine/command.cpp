@@ -417,8 +417,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
             ident *id = idents->access(c);
             if(!id)
             {
-                if(!parseint(c) && *c!='0')
-                    conoutf("unknown command: %s", c);
+                if(!isdigit(*c)) conoutf("unknown command: %s", c);
                 setretval(newstring(c));
             }
             else switch(id->type)
@@ -537,7 +536,6 @@ char *executeret(const char *p)               // all evaluation happens here, re
                             argids.add(id);
                         }
                         pushident(*argids[i-1], w[i]); // set any arguments as (global) arg values so functions can access them
-                        w[i] = NULL;
                     }
                     _numargs = numargs-1;
                     bool wasoverriding = overrideidents;
@@ -550,7 +548,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     overrideidents = wasoverriding;
                     for(int i = 1; i<numargs; i++) popident(*argids[i-1]);
                     SAUERBRATEN_ALIAS_RETURN(c);
-                    break;
+                    continue;
                 }
             }
         }
@@ -662,16 +660,30 @@ void format(char **args, int *numargs)
 #define whitespaceskip s += strspn(s, "\n\t ")
 #define elementskip *s=='"' ? (++s, s += strcspn(s, "\"\n\0"), s += *s=='"') : s += strcspn(s, "\n\t \0")
 
-void explodelist(char *s, vector<char *> &elems)
+void explodelist(const char *s, vector<char *> &elems)
 {
     whitespaceskip;
     while(*s)
     {
-        char *elem = s;
+        const char *elem = s;
         elementskip;
         elems.add(*elem=='"' ? newstring(elem+1, s-elem-(s[-1]=='"' ? 2 : 1)) : newstring(elem, s-elem));
         whitespaceskip;
     }
+}
+
+char *indexlist(const char *s, int pos)
+{
+    whitespaceskip;
+    loopi(pos) elementskip, whitespaceskip;
+    const char *e = s;
+    elementskip;
+    if(*e=='"')
+    {
+        e++;
+        if(s[-1]=='"') --s;
+    }
+    return newstring(e, s-e);
 }
 
 void listlen(char *s)
@@ -684,17 +696,7 @@ void listlen(char *s)
 
 void at(char *s, int *pos)
 {
-    whitespaceskip;
-    loopi(*pos) elementskip, whitespaceskip;
-    char *e = s;
-    elementskip;
-    if(*e=='"') 
-    {
-        e++;
-        if(s[-1]=='"') --s;
-    }
-    *s = '\0';
-    result(e);
+    commandret = indexlist(s, *pos);
 }
 
 void getalias_(char *s)
