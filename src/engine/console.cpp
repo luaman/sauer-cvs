@@ -277,12 +277,11 @@ int histpos = 0;
 
 void history(int *n)
 {
-    static bool rec = false;
-    if(!rec && vhistory.inrange(*n))
+    if(vhistory.inrange(*n))
     {
-        rec = true;
-        execute(vhistory[vhistory.length()-*n-1]);
-        rec = false;
+        char *buf = vhistory[vhistory.length()-*n-1];
+        if(buf[0]=='/') execute(buf+1);
+        else cc->toserver(buf);
     }
 }
 
@@ -416,7 +415,7 @@ void keypress(int code, bool isdown, int cooked)
                         vhistory.add(newstring(commandbuf));  // cap this?
                     }
                     histpos = vhistory.length();
-                    if(commandbuf[0]=='/') execute(commandbuf);
+                    if(commandbuf[0]=='/') execute(commandbuf+1);
                     else cc->toserver(commandbuf);
                 }
                 saycommand(NULL);
