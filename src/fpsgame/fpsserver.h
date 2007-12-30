@@ -1261,16 +1261,14 @@ struct fpsserver : igameserver
 
             case SV_ITEMLIST:
             {
+                if(ci->state.state==CS_SPECTATOR || !notgotitems) { while(getint(p)!=-1) getint(p); break; }
                 int n;
                 while((n = getint(p))!=-1)
                 {
                     server_entity se = { getint(p), false, 0 };
-                    if(ci->state.state!=CS_SPECTATOR && notgotitems)
-                    {
-                        while(sents.length()<=n) sents.add(se);
-                        if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawntime = spawntime(sents[n].type);
-                        else sents[n].spawned = true;
-                    }
+                    while(sents.length()<=n) sents.add(se);
+                    if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawntime = spawntime(sents[n].type);
+                    else sents[n].spawned = true;
                 }
                 notgotitems = false;
                 break;
