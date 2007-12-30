@@ -1265,7 +1265,7 @@ struct fpsserver : igameserver
                 while((n = getint(p))!=-1)
                 {
                     server_entity se = { getint(p), false, 0 };
-                    if(notgotitems)
+                    if(ci->state.state!=CS_SPECTATOR && notgotitems)
                     {
                         while(sents.length()<=n) sents.add(se);
                         if(gamemode>=0 && (sents[n].type==I_QUAD || sents[n].type==I_BOOST)) sents[n].spawntime = spawntime(sents[n].type);
@@ -1353,7 +1353,7 @@ struct fpsserver : igameserver
             case SV_SPECTATOR:
             {
                 int spectator = getint(p), val = getint(p);
-                if(!ci->privilege && spectator!=sender) break;
+                if(!ci->privilege && (ci->state.state==CS_SPECTATOR || spectator!=sender)) break;
                 clientinfo *spinfo = (clientinfo *)getinfo(spectator);
                 if(!spinfo) break;
 
@@ -1421,12 +1421,17 @@ struct fpsserver : igameserver
             }
 
             case SV_LISTDEMOS:
+                if(ci->state.state==CS_SPECTATOR) break;
                 listdemos(sender);
                 break;
 
             case SV_GETDEMO:
-                senddemo(sender, getint(p));
+            {
+                int n = getint(p);
+                if(ci->state.state==CS_SPECTATOR) break;
+                senddemo(sender, n);
                 break;
+            }
 
             case SV_GETMAP:
                 if(mapdata)
@@ -1464,7 +1469,7 @@ struct fpsserver : igameserver
             case SV_APPROVEMASTER:
             {
                 int mn = getint(p);
-                if(ci->state.state==CS_SPECTATOR || mastermask&MM_AUTOAPPROVE) break;
+                if(mastermask&MM_AUTOAPPROVE || ci->state.state==CS_SPECTATOR) break;
                 clientinfo *candidate = (clientinfo *)getinfo(mn);
                 if(!candidate || !candidate->wantsmaster || mn==sender) break;// || getclientip(mn)==getclientip(sender)) break;
                 setmaster(candidate, true, "", true);
