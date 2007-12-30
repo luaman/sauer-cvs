@@ -79,16 +79,20 @@ void popident(ident &id)
     delete stack;
 }
 
-void pusha(char *name, char *action)
+ident *newident(const char *name)
 {
     ident *id = idents->access(name);
     if(!id)
     {
-        name = newstring(name);
-        ident init(ID_ALIAS, name, newstring(""), persistidents);
-        id = idents->access(name, &init);
+        ident init(ID_ALIAS, newstring(name), newstring(""), persistidents);
+        id = idents->access(init.name, &init);
     }
-    pushident(*id, action);
+    return id;
+}
+
+void pusha(const char *name, char *action)
+{
+    pushident(*newident(name), action);
 }
 
 void push(char *name, char *action)
@@ -526,13 +530,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                         if(i > argids.length())
                         {
                             s_sprintfd(argname)("arg%d", i);
-                            ident *id = idents->access(argname);
-                            if(!id)
-                            {
-                                ident init(ID_ALIAS, newstring(argname), newstring(""), persistidents);
-                                id = idents->access(init.name, &init);
-                            }
-                            argids.add(id);
+                            argids.add(newident(argname));
                         }
                         pushident(*argids[i-1], w[i]); // set any arguments as (global) arg values so functions can access them
                     }
@@ -616,12 +614,22 @@ COMMAND(writecfg, "");
 // below the commands that implement a small imperative language. thanks to the semantics of
 // () and [] expressions, any control construct can be defined trivially.
 
-void intset(char *name, int v) { s_sprintfd(b)("%d", v); alias(name, b); }
-void intret            (int v) { s_sprintfd(b)("%d", v); commandret = newstring(b); }
+void intret(int v) { s_sprintfd(b)("%d", v); commandret = newstring(b); }
 
 ICOMMAND(if, "sss", (char *cond, char *t, char *f), commandret = executeret(cond[0]!='0' ? t : f));
-
-ICOMMAND(loop, "sis", (char *var, int *n, char *body), loopi(*n) { intset(var, i); execute(body); });
+ICOMMAND(loop, "sis", (char *var, int *n, char *body), 
+{
+    if(*n<=0) return;
+    ident *id = newident(var);
+    if(id->type!=ID_ALIAS) return;
+    loopi(*n)
+    {
+        if(i) sprintf(id->action, "%d", i);
+        else pushident(*id, newstring("0", 16));
+        execute(body); 
+    } 
+    popident(*id);
+});
 ICOMMAND(while, "ss", (char *cond, char *body), while(execute(cond)) execute(body));    // can't get any simpler than this :)
 
 void concat(const char *s) { commandret = newstring(s); }
@@ -721,8 +729,8 @@ void equal(int *a, int *b) { intret((int)(*a == *b)); }  COMMANDN(=, equal, "ii"
 void nequal(int *a, int *b) { intret((int)(*a != *b)); } COMMANDN(!=, nequal, "ii");
 void lt   (int *a, int *b) { intret((int)(*a < *b)); }   COMMANDN(<, lt, "ii");
 void gt   (int *a, int *b) { intret((int)(*a > *b)); }   COMMANDN(>, gt, "ii");
-void lte   (int *a, int *b) { intret((int)(*a <= *b)); } COMMANDN(<=, lte, "ii");
-void gte   (int *a, int *b) { intret((int)(*a >= *b)); } COMMANDN(>=, gte, "ii");
+void lte  (int *a, int *b) { intret((int)(*a <= *b)); } COMMANDN(<=, lte, "ii");
+void gte  (int *a, int *b) { intret((int)(*a >= *b)); } COMMANDN(>=, gte, "ii");
 void xora (int *a, int *b) { intret(*a ^ *b); }          COMMANDN(^, xora, "ii");
 void nota (int *a)         { intret(*a == 0); }          COMMANDN(!, nota, "i");
 void mina (int *a, int *b) { intret(min(*a, *b)); }      COMMANDN(min, mina, "ii");
