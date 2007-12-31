@@ -82,7 +82,7 @@ extern void complete(char *s);
 // menus
 extern vec menuinfrontofplayer();
 extern void newgui(char *name, char *contents);
-extern void showgui(char *name);
+extern void showgui(const char *name);
 
 // world
 extern bool emptymap(int factor, bool force);

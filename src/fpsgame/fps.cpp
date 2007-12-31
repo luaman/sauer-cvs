@@ -39,6 +39,8 @@ struct fpsclient : igameclient
     IVARP(followdist, 10, 50, 1000);
     IVARP(followorient, 0, 1, 1);
 
+    bool openmainmenu;
+
     fpsent *player1;                // our client
     vector<fpsent *> players;       // other clients
     fpsent lastplayerstate;
@@ -61,7 +63,7 @@ struct fpsclient : igameclient
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
           respawned(-1), suicided(-1), 
-          following(-1),
+          following(-1), openmainmenu(true),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this), asc(*this)
     {
@@ -527,6 +529,12 @@ struct fpsclient : igameclient
             const char *best = getalias(aname);
             if(*best) conoutf("\f2try to beat your best score so far: %s", best);
             lastslowmohealth = lastmillis;
+        }
+
+        if(*name && openmainmenu)
+        {
+            showgui("main");
+            openmainmenu = false;
         }
     }
 

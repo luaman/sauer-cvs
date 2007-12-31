@@ -330,7 +330,8 @@ template <class T> struct vector
         return e;
     }
 
-    int find(const T &o)
+    template<class U>
+    int find(const U &o)
     {
         loopi(ulen) if(buf[i]==o) return i;
         return -1;

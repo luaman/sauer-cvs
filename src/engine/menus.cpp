@@ -9,7 +9,7 @@ static int menutab = 1;
 static g3d_gui *cgui = NULL;
 static bool cguifirstpass;
 
-static hashtable<char *, char *> guis;
+static hashtable<const char *, char *> guis;
 static vector<char *> guistack;
 static vector<char *> executelater;
 static bool shouldclearmenu = true, clearlater = false;
@@ -231,7 +231,7 @@ void newgui(char *name, char *contents)
     else guis[newstring(name)] = newstring(contents); 
 }
 
-void showgui(char *name)
+void showgui(const char *name)
 {
     int pos = guistack.find(name);
     if(pos<0) 
