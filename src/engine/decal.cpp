@@ -299,6 +299,7 @@ struct decalrenderer
         decalradius = radius;
         decalnormal = dir;
         decaltangent.orthogonal(dir);
+        decaltangent.rotate(rnd(360)*RAD, dir);
         decaltangent.normalize();
         decalbitangent.cross(decaltangent, dir);
         if(flags&DF_RND4)
