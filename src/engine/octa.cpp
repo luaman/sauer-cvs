@@ -895,11 +895,12 @@ void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid
     v.add(vvec(x, y, z));
 }
 
-void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube)
+int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, bool lodcube)
 {
-    loopi(8) vertused[i] = 0;
-    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, MAT_AIR, lodcube)) loopk(4) vertused[faceverts(c,i,k)]++;
-    loopi(8) if(vertused[i]) calcvert(c, x, y, z, size, verts[i], i);
+    int vertused = 0;
+    loopi(6) if(usefaces[i] = visibleface(c, i, x, y, z, size, MAT_AIR, MAT_AIR, lodcube)) loopk(4) vertused |= 1<<faceverts(c,i,k);
+    loopi(8) if(vertused&(1<<i)) calcvert(c, x, y, z, size, verts[i], i);
+    return vertused;
 }
 
 int genclipplane(cube &c, int orient, vec *v, plane *clip)
@@ -916,16 +917,15 @@ int genclipplane(cube &c, int orient, vec *v, plane *clip)
 
 void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p)
 {
-    int vertused[8];
     bool usefaces[6];
     vvec sv[8];
     vec v[8];
     vec mx(x, y, z), mn(x+size, y+size, z+size);
-    calcverts(c, x, y, z, size, sv, usefaces, vertused, false);
+    int vertused = calcverts(c, x, y, z, size, sv, usefaces, false);
 
     loopi(8)
     {
-        if(!vertused[i]) // need all verts for proper box
+        if(!(vertused&(1<<i))) // need all verts for proper box
             calcvert(c, x, y, z, size, sv[i], i);
 
         v[i] = sv[i].tovec(x, y, z);

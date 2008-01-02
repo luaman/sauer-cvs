@@ -916,10 +916,9 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     }
     vvec vvecs[8];
     bool usefaces[6];
-    int vertused[8];
-    calcverts(c, cx, cy, cz, size, vvecs, usefaces, vertused, lodcube);
+    int vertused = calcverts(c, cx, cy, cz, size, vvecs, usefaces, lodcube);
     vec verts[8];
-    loopi(8) if(vertused[i]) verts[i] = vvecs[i].tovec(cx, cy, cz);
+    loopi(8) if(vertused&(1<<i)) verts[i] = vvecs[i].tovec(cx, cy, cz);
     int mergeindex = 0;
     loopi(6) if(usefaces[i])
     {

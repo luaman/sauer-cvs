@@ -618,6 +618,7 @@ int main(int argc, char **argv)
     log("gl: effects");
     loadshaders();
     particleinit();
+    initdecals();
 
     log("world");
     camera1 = player = cl->iterdynents(0);

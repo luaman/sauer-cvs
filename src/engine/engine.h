@@ -179,8 +179,9 @@ extern void forcemip(cube &c);
 extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void converttovectorworld();
 extern int faceverts(cube &c, int orient, int vert);
+extern int faceconvexity(cube &c, int orient);
 extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
-extern void calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, int *vertused, bool lodcube);
+extern int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, bool lodcube);
 extern uint faceedges(cube &c, int orient);
 extern bool collapsedface(uint cfe);
 extern bool touchingface(cube &c, int orient);
@@ -374,6 +375,10 @@ extern void endmodelquery();
 extern void particleinit();
 extern void clearparticles();
 extern void entity_particles();
+
+// decal
+extern void initdecals();
+extern void renderdecals(int time);
 
 // rendersky
 extern void drawskybox(int farplane, bool limited, float zreflect = 0);

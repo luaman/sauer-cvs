@@ -133,6 +133,15 @@ extern void particle_flare(const vec &p, const vec &dest, int fade, int type = 1
 extern void particle_fireball(const vec &dest, float max, int type);
 extern void removetrackedparticles(physent *owner = NULL);
 
+// decal
+enum
+{
+    DECAL_SCORCH = 0,
+    DECAL_BLOOD,
+};
+
+extern void adddecal(int type, const vec &center, const vec &surface, float radius, int color = 0xFFFFFF, int info = 0);
+
 // worldio
 extern void load_world(const char *mname, const char *cname = NULL);
 extern void save_world(char *mname, bool nolms = false);

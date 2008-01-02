@@ -686,7 +686,7 @@ VARP(outlinemeters, 0, 0, 1);
 #define COLLIDERADIUS 8.0f
 #define COLLIDEERROR 1.0f
 
-VARP(decalfade, 1, 10000, 60000);
+//VARP(decalfade, 1, 10000, 60000);
 
 #define MAXLIGHTNINGSTEPS 64
 #define LIGHTNINGSTEP 8
@@ -1033,7 +1033,9 @@ void render_particles(int time)
                 float floorz = rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS), 
                       collidez = floorz<0 ? o.z-COLLIDERADIUS : p->val - rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
                 if(o.z >= collidez+COLLIDEERROR) p->val = collidez+COLLIDEERROR;
-                else
+                else adddecal(pt.collide, vec(o.x, o.y, collidez), vec(p->o).sub(o).normalize(), 2*sz, p->color, pt.type&PT_RND4 ? detrnd((size_t)p, 4) : 0);
+                remove = true;
+#if 0
                 {
                     *pp = p->next;
                     p->o = vec(o.x, o.y, collidez+0.25f);
@@ -1044,6 +1046,7 @@ void render_particles(int time)
                     parlist[pt.collide] = p;
                     continue;
                 }
+#endif
             }
 
             if(remove)

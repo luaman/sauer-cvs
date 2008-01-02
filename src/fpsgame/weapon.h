@@ -169,6 +169,7 @@ struct weaponstate
                         if(bnc.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
                         hits.setsizenodelete(0);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
+                        adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), 10);
                         if(bnc.local)
                             cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, GUN_GL, bnc.id-cl.maptime,
                                     hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
@@ -189,7 +190,7 @@ struct weaponstate
         loopv(bouncers) if(bouncers[i]->owner==owner) { delete bouncers[i]; bouncers.remove(i--); }
     }
 
-    struct projectile { vec o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; int id; };
+    struct projectile { vec dir, o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; int id; };
     vector<projectile> projs;
 
     void projreset() { projs.setsize(0); bouncers.deletecontentsp(); bouncers.setsize(0); }
@@ -197,6 +198,7 @@ struct weaponstate
     void newprojectile(const vec &from, const vec &to, float speed, bool local, fpsent *owner, int gun)
     {
         projectile &p = projs.add();
+        p.dir = vec(to).sub(from).normalize();
         p.o = from;
         p.to = to;
         p.offset = hudgunorigin(gun, from, to, owner);
@@ -355,6 +357,7 @@ struct weaponstate
         else
         {
             explode(p.local, p.owner, v, notthis, qdam, GUN_RL);
+            adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), 10);
         }
     }
 
@@ -401,9 +404,7 @@ struct weaponstate
                 {
                     if(p.o!=p.to) // if original target was moving, reevaluate endpoint
                     {
-                        vec ray(p.to);
-                        ray.sub(p.o);
-                        if(raycubepos(p.o, ray, p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;
+                        if(raycubepos(p.o, p.dir, p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;
                     }
                     splash(p, v, NULL, qdam);
                     exploded = true;
