@@ -287,29 +287,44 @@ struct decalrenderer
         d.endvert = endvert;
     }
 
-    void gendecaltris(cube *c, const ivec &o, int size)
+    void gendecaltris(cube *cu, const ivec &o, int size)
     {
         loopoctabox(o, size, bborigin, bbsize)
         {
             ivec co(i, o.x, o.y, o.z, size);
-            if(c[i].children) gendecaltris(c[i].children, co, size>>1);
-            else if(!isempty(c[i]))
+            if(cu[i].children) gendecaltris(cu[i].children, co, size>>1);
+            else if(!isempty(cu[i]))
             {
                 vec v[8];
                 vvec vv[8];
                 bool usefaces[6];
-                int vertused = calcverts(c[i], co.x, co.y, co.z, size, vv, usefaces, false);
+                int vertused = calcverts(cu[i], co.x, co.y, co.z, size, vv, usefaces, false);
                 loopj(8) if(vertused&(1<<j)) v[j] = vv[j].tovec(co.x, co.y, co.z);
                 loopj(6) if(usefaces[j])
                 {
-                    int faces = faceconvexity(c[i], j) ? 2 : 1, fv[4];
-                    loopk(4) fv[k] = faceverts(c[i], j, k);
-                    loopl(faces) if(fv[0]!=fv[1+l] && fv[0]!=fv[2+l] && fv[l+1]!=fv[l+2])
+                    int fv[4];
+                    loopk(4) fv[k] = faceverts(cu[i], j, k);
+                    if(fv[0]==fv[2]) continue;
+                    int faces = 0;
+                    vec p(v[fv[0]]), e(v[fv[2]]), surfaces[2];
+                    e.sub(p);
+                    surfaces[0].cross(vec(v[fv[1]]).sub(p), e);
+                    float mag1 = surfaces[0].squaredlen();
+                    if(mag1) { surfaces[0].div(sqrtf(mag1)); faces |= 1; }
+                    surfaces[1].cross(e, vec(v[fv[3]]).sub(p));
+                    float mag2 = surfaces[1].squaredlen();
+                    if(mag2)
                     {
-                        vec a = v[fv[0]], b = v[fv[l+1]], c = v[fv[l+2]];
-                        plane n;
-                        if(!n.toplane(a, b, c) || n.dot(decalnormal)<=0) continue;
-                        vec pcenter = vec(decalnormal).mul(n.dot(vec(a).sub(decalcenter)) / n.dot(decalnormal)).add(decalcenter);
+                        surfaces[1].div(sqrtf(mag2));
+                        faces |= (!faces || faceconvexity(cu[i], j) ? 2 : 4);
+                    }
+                    p.sub(decalcenter);
+                    loopl(2) if(faces&(1<<l))
+                    {
+                        const vec &n = surfaces[l];
+                        float facing = n.dot(decalnormal);
+                        if(facing<=0) continue;
+                        vec pcenter = vec(decalnormal).mul(n.dot(p) / facing).add(decalcenter);
                         if(pcenter.dist(decalcenter) > decalradius) continue;
                         vec ft, fb;
                         ft.orthogonal(n);
@@ -318,9 +333,10 @@ struct decalrenderer
                         vec pt = vec(ft).mul(ft.dot(decaltangent)).add(vec(fb).mul(fb.dot(decaltangent))).normalize(),
                             pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).normalize();
                         pb.sub(vec(pt).mul(pt.dot(pb))).normalize();
-                        vec v1[8] = { a, b, c }, v2[8];
-                        if(faces<2) v1[3] = v[fv[3]];
-                        int numv = decalclip(v1, 3 + (2 - faces), plane(pt, decalradius - pt.dot(pcenter)), v2);
+                        vec v1[8] = { v[fv[0]], v[fv[l+1]], v[fv[l+2]] }, v2[8];
+                        int numv = 3;
+                        if(faces&4) { v1[3] = v[fv[3]]; numv = 4; }
+                        numv = decalclip(v1, numv, plane(pt, decalradius - pt.dot(pcenter)), v2);
                         numv = decalclip(v2, numv, plane(vec(pt).neg(), decalradius + pt.dot(pcenter)), v1);
                         numv = decalclip(v1, numv, plane(pb, decalradius - pb.dot(pcenter)), v2);
                         numv = decalclip(v2, numv, plane(vec(pb).neg(), decalradius + pb.dot(pcenter)), v1);
