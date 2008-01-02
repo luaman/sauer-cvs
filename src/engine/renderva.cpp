@@ -1490,7 +1490,6 @@ void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
         else if(reflecting)
         {
             if(va->max.z <= reflecting || (va->rquery && checkquery(va->rquery))) continue;
-            if(va->rquery && checkquery(va->rquery)) continue;
         }
         if(fogpass ? va->z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
         renderva(cur, va, lod, pass, fogpass);
