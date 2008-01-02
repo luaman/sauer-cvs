@@ -169,7 +169,7 @@ struct weaponstate
                         if(bnc.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
                         hits.setsizenodelete(0);
                         explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
-                        adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), 10);
+                        adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), RL_DAMRAD/2);
                         if(bnc.local)
                             cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, GUN_GL, bnc.id-cl.maptime,
                                     hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
@@ -357,7 +357,7 @@ struct weaponstate
         else
         {
             explode(p.local, p.owner, v, notthis, qdam, GUN_RL);
-            adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), 10);
+            adddecal(DECAL_SCORCH, v, vec(p.dir).neg(), RL_DAMRAD/2);
         }
     }
 
