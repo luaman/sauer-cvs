@@ -21,7 +21,7 @@ enum
     DF_INVMOD = 1<<1
 };
 
-VARP(decalfade, 1000, 10000, 60000);
+VARP(decalfade, 1000, 5000, 60000);
 
 struct decalrenderer
 {
