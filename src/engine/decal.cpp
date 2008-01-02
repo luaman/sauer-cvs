@@ -317,6 +317,7 @@ struct decalrenderer
                         fb.cross(ft, n);
                         vec pt = vec(ft).mul(ft.dot(decaltangent)).add(vec(fb).mul(fb.dot(decaltangent))).normalize(),
                             pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).normalize();
+                        pb.sub(vec(pt).mul(pt.dot(pb))).normalize();
                         vec v1[8] = { a, b, c }, v2[8];
                         if(faces<2) v1[3] = v[fv[3]];
                         int numv = decalclip(v1, 3 + (2 - faces), plane(pt, decalradius - pt.dot(pcenter)), v2);
