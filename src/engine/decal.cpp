@@ -356,7 +356,13 @@ struct decalrenderer
                         const vec &n = surfaces[l];
                         float facing = n.dot(decalnormal);
                         if(facing<=0) continue;
+#if 0
+                        // intersect ray along decal normal with plane
                         vec pcenter = vec(decalnormal).mul(n.dot(p) / facing).add(decalcenter);
+#else
+                        // travel back along plane normal from the decal center
+                        vec pcenter = vec(n).mul(n.dot(p)).add(decalcenter); 
+#endif
                         if(pcenter.dist(decalcenter) > decalradius) continue;
                         vec ft, fb;
                         ft.orthogonal(n);
