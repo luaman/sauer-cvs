@@ -309,13 +309,14 @@ struct decalrenderer
                         vec a = v[fv[0]], b = v[fv[l+1]], c = v[fv[l+2]];
                         plane n;
                         if(!n.toplane(a, b, c) || n.dot(decalnormal)<=0) continue;
+                        vec pcenter = vec(decalnormal).mul(n.dot(vec(a).sub(decalcenter)) / n.dot(decalnormal)).add(decalcenter);
+                        if(pcenter.dist(decalcenter) > decalradius) continue;
                         vec ft, fb;
                         ft.orthogonal(n);
                         ft.normalize();
                         fb.cross(ft, n);
                         vec pt = vec(ft).mul(ft.dot(decaltangent)).add(vec(fb).mul(fb.dot(decaltangent))).normalize(),
-                            pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).normalize(),
-                            pcenter = vec(decalnormal).mul(n.dot(vec(a).sub(decalcenter)) / n.dot(decalnormal)).add(decalcenter);
+                            pb = vec(ft).mul(ft.dot(decalbitangent)).add(vec(fb).mul(fb.dot(decalbitangent))).normalize();
                         vec v1[8] = { a, b, c }, v2[8];
                         if(faces<2) v1[3] = v[fv[3]];
                         int numv = decalclip(v1, 3 + (2 - faces), plane(pt, decalradius - pt.dot(pcenter)), v2);
