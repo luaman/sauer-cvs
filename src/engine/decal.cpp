@@ -163,8 +163,6 @@ struct decalrenderer
         }
     }
 
-    static float oldfogc[4];
-
     static void setuprenderstate()
     {
         glEnable(GL_POLYGON_OFFSET_FILL);
@@ -172,14 +170,11 @@ struct decalrenderer
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
 
-        foggedshader->set();
-        glGetFloatv(GL_FOG_COLOR, oldfogc);
-        static float zerofog[4] = { 0, 0, 0, 1 };
-        glFogfv(GL_FOG_COLOR, zerofog);
-
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
+
+        foggedshader->set();
     }
 
     static void cleanuprenderstate()
@@ -190,7 +185,6 @@ struct decalrenderer
 
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
-        glFogfv(GL_FOG_COLOR, oldfogc);
 
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
@@ -198,6 +192,14 @@ struct decalrenderer
     void render()
     {
         if(startvert==endvert) return;
+
+        float oldfogc[4];
+        if(flags&DF_INVMOD)
+        {
+            glGetFloatv(GL_FOG_COLOR, oldfogc);
+            static float zerofog[4] = { 0, 0, 0, 1 };
+            glFogfv(GL_FOG_COLOR, zerofog);
+        }
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -223,6 +225,8 @@ struct decalrenderer
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
+
+        if(flags&DF_INVMOD) glFogfv(GL_FOG_COLOR, oldfogc);
     }
 
     decalinfo &newdecal()
@@ -364,8 +368,6 @@ struct decalrenderer
         }
     }
 };
-
-float decalrenderer::oldfogc[4];
 
 decalrenderer decals[2] =
 {
