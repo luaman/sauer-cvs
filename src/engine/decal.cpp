@@ -25,16 +25,17 @@ VARP(decalfade, 1000, 10000, 60000);
 
 struct decalrenderer
 {
-    int flags;
     const char *texname;
+    int flags, fadeintime;
     Texture *tex;
     decalinfo *decals;
     int maxdecals, startdecal, enddecal;
     decalvert *verts;
     int maxverts, startvert, endvert, availverts;
 
-    decalrenderer(int flags, const char *texname) 
-        : flags(flags), texname(texname), tex(NULL),
+    decalrenderer(const char *texname, int flags = 0, int fadeintime = 0) 
+        : texname(texname), flags(flags), fadeintime(fadeintime),
+          tex(NULL),
           decals(NULL), maxdecals(0), startdecal(0), enddecal(0),
           verts(NULL), maxverts(0), startvert(0), endvert(0), availverts(0),
           decalu(0), decalv(0)
@@ -138,7 +139,33 @@ struct decalrenderer
         availverts = endvert < startvert ? startvert - endvert - 3 : maxverts - 3 - (endvert - startvert);
     }
  
-    void fadedecals()
+    void fadeindecals()
+    {
+        if(!fadeintime) return;
+        decalinfo *d = &decals[enddecal],
+                  *end = &decals[enddecal < startdecal ? 0 : startdecal];
+        while(d > end)
+        {
+            d--;
+            int fade = lastmillis - d->millis;
+            if(fade >= fadeintime) return;
+            fadedecal(*d, fade / float(fadeintime));
+        }
+        if(enddecal < startdecal)
+        {
+            d = &decals[maxverts];
+            end = &decals[startdecal];
+            while(d > end)
+            {
+                d--;
+                int fade = lastmillis - d->millis;
+                if(fade >= fadeintime) return;
+                fadedecal(*d, fade / float(fadeintime));
+            }
+        }
+    }
+
+    void fadeoutdecals()
     {
         decalinfo *d = &decals[startdecal],
                   *end = &decals[enddecal < startdecal ? maxdecals : enddecal];
@@ -162,7 +189,7 @@ struct decalrenderer
             }
         }
     }
-
+         
     static void setuprenderstate()
     {
         glEnable(GL_POLYGON_OFFSET_FILL);
@@ -371,8 +398,8 @@ struct decalrenderer
 
 decalrenderer decals[2] =
 {
-    decalrenderer(0, "data/scorch.png"),
-    decalrenderer(DF_RND4|DF_INVMOD, "data/blood.png")
+    decalrenderer("data/scorch.png", 0, 500),
+    decalrenderer("data/blood.png", DF_RND4|DF_INVMOD)
 };
 
 VARFP(maxdecaltris, 0, 1024, 16384, initdecals());
@@ -396,7 +423,8 @@ void renderdecals(int time)
         if(time)
         {
             d.clearfadeddecals();
-            d.fadedecals();
+            d.fadeindecals();
+            d.fadeoutdecals();
         }
         if(!d.hasdecals()) continue;
         if(!rendered)
