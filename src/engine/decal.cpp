@@ -363,6 +363,11 @@ void initdecals()
     loopi(sizeof(decals)/sizeof(decals[0])) decals[i].init(maxdecaltris);
 }
 
+void cleardecals()
+{
+    loopi(sizeof(decals)/sizeof(decals[0])) decals[i].cleardecals();
+}
+
 void renderdecals(int time)
 {
     bool rendered = false;

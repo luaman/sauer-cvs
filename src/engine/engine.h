@@ -378,6 +378,7 @@ extern void entity_particles();
 
 // decal
 extern void initdecals();
+extern void cleardecals();
 extern void renderdecals(int time);
 
 // rendersky

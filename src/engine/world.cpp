@@ -918,6 +918,7 @@ void resetmap()
     cleanreflections();
     resetlightmaps();
     clearparticles();
+    cleardecals();
     clearsleep();
     cancelsel();
     pruneundos();
