@@ -576,7 +576,7 @@ struct weaponstate
             hitpush(qdam, o, d, from, to, d->gunselect, 1);
             shorten(from, o->o, to);
         }
-        else adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f); 
+        else if(d->gunselect!=GUN_FIST && d->gunselect!=GUN_BITE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f); 
     }
 
     void shoot(fpsent *d, vec &targ)
