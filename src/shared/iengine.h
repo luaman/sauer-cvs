@@ -138,6 +138,7 @@ enum
 {
     DECAL_SCORCH = 0,
     DECAL_BLOOD,
+    DECAL_BULLET
 };
 
 extern void adddecal(int type, const vec &center, const vec &surface, float radius, int color = 0xFFFFFF, int info = 0);

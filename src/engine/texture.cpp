@@ -104,6 +104,21 @@ void texdup(SDL_Surface *s, int srcchan, int dstchan)
     }
 }
 
+SDL_Surface *texdecal(SDL_Surface *s)
+{
+    SDL_Surface *m = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 16, 0, 0, 0, 0);
+    if(!m) fatal("create surface");
+    uchar *dst = (uchar *)m->pixels, *src = (uchar *)s->pixels;
+    loopi(s->h*s->w)
+    {
+        *dst++ = *src;
+        *dst++ = 255 - *src;
+        src += s->format->BytesPerPixel;
+    }
+    SDL_FreeSurface(s);
+    return m;
+}
+
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwcubetexsize, 1, 0, 0);
 VAR(hwmaxaniso, 1, 0, 0);
@@ -348,6 +363,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
         else if(!strncmp(cmd, "ffmask", arg1-cmd)) s = texffmask(s, atoi(arg1+1));
         else if(!strncmp(cmd, "dup", arg1-cmd)) texdup(s, atoi(arg1+1), atoi(arg2+1));
+        else if(!strncmp(cmd, "decal", arg1-cmd)) s = texdecal(s);
     }
     return s;
 }

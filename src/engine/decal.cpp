@@ -18,8 +18,9 @@ struct decalinfo
 enum
 {
     DF_RND4       = 1<<0,
-    DF_INVMOD     = 1<<1,
-    DF_OVERBRIGHT = 1<<2
+    DF_ROTATE     = 1<<1,
+    DF_INVMOD     = 1<<2,
+    DF_OVERBRIGHT = 1<<3
 };
 
 VARP(decalfade, 1000, 5000, 60000);
@@ -301,7 +302,7 @@ struct decalrenderer
         decalradius = radius;
         decalnormal = dir;
         decaltangent.orthogonal(dir);
-        decaltangent.rotate(rnd(360)*RAD, dir);
+        if(flags&DF_ROTATE) decaltangent.rotate(rnd(360)*RAD, dir);
         decaltangent.normalize();
         decalbitangent.cross(decaltangent, dir);
         if(flags&DF_RND4)
@@ -407,8 +408,8 @@ struct decalrenderer
 
 decalrenderer decals[] =
 {
-    decalrenderer("data/scorch.png", 0, 500),
-    decalrenderer("data/blood.png", DF_RND4|DF_INVMOD),
+    decalrenderer("data/scorch.png", DF_ROTATE, 500),
+    decalrenderer("data/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
     decalrenderer("<decal>data/bullet.jpg", DF_OVERBRIGHT)
 };
 
