@@ -410,7 +410,7 @@ decalrenderer decals[] =
 {
     decalrenderer("data/scorch.png", DF_ROTATE, 500),
     decalrenderer("data/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<decal>data/bullet.jpg", DF_OVERBRIGHT)
+    decalrenderer("<decal>data/bullet.png", DF_OVERBRIGHT)
 };
 
 VARFP(maxdecaltris, 0, 1024, 16384, initdecals());
