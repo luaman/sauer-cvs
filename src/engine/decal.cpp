@@ -17,8 +17,9 @@ struct decalinfo
 
 enum
 {
-    DF_RND4   = 1<<0,
-    DF_INVMOD = 1<<1
+    DF_RND4       = 1<<0,
+    DF_INVMOD     = 1<<1,
+    DF_OVERBRIGHT = 1<<2
 };
 
 VARP(decalfade, 1000, 5000, 60000);
@@ -99,7 +100,7 @@ struct decalrenderer
     {
         vec color((d.color>>16)&0xFF, (d.color>>8)&0xFF, d.color&0xFF);
         color.div(255.0f);
-        if(flags&DF_INVMOD) color.mul(alpha); 
+        if(flags&(DF_INVMOD|DF_OVERBRIGHT)) color.mul(alpha); 
         decalvert *vert = &verts[d.startvert],
                   *end = &verts[d.endvert < d.startvert ? maxverts : d.endvert]; 
         while(vert < end)
@@ -235,7 +236,8 @@ struct decalrenderer
         glTexCoordPointer(2, GL_FLOAT, sizeof(decalvert), &verts->u);
         glColorPointer(4, GL_FLOAT, sizeof(decalvert), &verts->color);
 
-        if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+        if(flags&DF_OVERBRIGHT) glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+        else if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
         else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glBindTexture(GL_TEXTURE_2D, tex->gl);
@@ -403,10 +405,11 @@ struct decalrenderer
     }
 };
 
-decalrenderer decals[2] =
+decalrenderer decals[] =
 {
     decalrenderer("data/scorch.png", 0, 500),
-    decalrenderer("data/blood.png", DF_RND4|DF_INVMOD)
+    decalrenderer("data/blood.png", DF_RND4|DF_INVMOD),
+    decalrenderer("<decal>data/bullet.jpg", DF_OVERBRIGHT)
 };
 
 VARFP(maxdecaltris, 0, 1024, 16384, initdecals());
@@ -421,6 +424,8 @@ void cleardecals()
     loopi(sizeof(decals)/sizeof(decals[0])) decals[i].cleardecals();
 }
 
+VARNP(decals, showdecals, 0, 1, 1);
+
 void renderdecals(int time)
 {
     bool rendered = false;
@@ -433,7 +438,7 @@ void renderdecals(int time)
             d.fadeindecals();
             d.fadeoutdecals();
         }
-        if(!d.hasdecals()) continue;
+        if(!showdecals || !d.hasdecals()) continue;
         if(!rendered)
         {
             rendered = true;
@@ -449,7 +454,7 @@ VARP(maxdecaldistance, 1, 512, 10000);
 
 void adddecal(int type, const vec &center, const vec &surface, float radius, int color, int info)
 {
-    if(type<0 || (size_t)type>=sizeof(decals)/sizeof(decals[0]) || center.dist(camera1->o) - radius > maxdecaldistance) return;
+    if(!showdecals || type<0 || (size_t)type>=sizeof(decals)/sizeof(decals[0]) || center.dist(camera1->o) - radius > maxdecaldistance) return;
     decalrenderer &d = decals[type];
     d.adddecal(center, surface, radius, color, info);
 }
