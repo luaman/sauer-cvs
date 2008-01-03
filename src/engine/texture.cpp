@@ -350,7 +350,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     SDL_Surface *s = IMG_Load(findfile(file, "rb"));
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
-    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 24, or 32 bpp: %s", tname); return NULL; }
+    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 16, 24, or 32 bpp: %s", tname); return NULL; }
     if(tex)
     {
         if(tex->rotation) s = texrotate(s, tex->rotation, tex->type);
