@@ -332,14 +332,30 @@ struct decalrenderer
         loopoctabox(o, size, bborigin, bbsize)
         {
             ivec co(i, o.x, o.y, o.z, size);
+            bool solid;
             if(cu[i].children) gendecaltris(cu[i].children, co, size>>1);
-            else if(!isempty(cu[i]))
+            else if((solid = cu[i].ext && isclipped(cu[i].ext->material) && cu[i].ext->material!=MAT_CLIP) || !isempty(cu[i]))
             {
-                vec v[8];
-                vvec vv[8];
                 bool usefaces[6];
-                int vertused = calcverts(cu[i], co.x, co.y, co.z, size, vv, usefaces, false);
-                loopj(8) if(vertused&(1<<j)) v[j] = vv[j].tovec(co.x, co.y, co.z);
+                int vertused = 0;
+                if(!solid) 
+                {
+                    loopj(6) if(usefaces[j] = visibleface(cu[i], j, co.x, co.y, co.z, size))
+                    {
+                        loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
+                    }
+                }
+                else loopj(6) if(usefaces[j] = visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE)
+                {
+                    loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
+                }
+                vec v[8];
+                vvec vv;
+                loopj(8) if(vertused&(1<<j)) 
+                {
+                    calcvert(cu[i], co.x, co.y, co.z, size, vv, j, solid);
+                    v[j] = vv.tovec(co.x, co.y, co.z);
+                }
                 loopj(6) if(usefaces[j])
                 {
                     int fv[4];
