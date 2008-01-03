@@ -1496,6 +1496,8 @@ void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
     }
 }
 
+VAR(oqgeom, 0, 1, 1);
+
 void rendergeom(bool causticspass, bool fogpass)
 {
     renderstate cur;
@@ -1546,7 +1548,7 @@ void rendergeom(bool causticspass, bool fogpass)
                 }
             }
         }
-        else if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o))
+        else if(hasOQ && oqfrags && (zpass || va->distance > oqdist) && !insideva(va, camera1->o) && oqgeom)
         {
             if(!zpass && va->query && va->query->owner == va) 
                 va->occluded = checkquery(va->query) ? min(va->occluded+1, int(OCCLUDE_BB)) : OCCLUDE_NOTHING;
