@@ -301,7 +301,12 @@ struct decalrenderer
         decalcenter = center;
         decalradius = radius;
         decalnormal = dir;
+#if 0
         decaltangent.orthogonal(dir);
+#else
+        decaltangent = vec(dir.z, -dir.x, dir.y);
+        decaltangent.sub(vec(dir).mul(decaltangent.dot(dir)));
+#endif
         if(flags&DF_ROTATE) decaltangent.rotate(rnd(360)*RAD, dir);
         decaltangent.normalize();
         decalbitangent.cross(decaltangent, dir);
