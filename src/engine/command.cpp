@@ -390,7 +390,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
     const int MAXWORDS = 25;                    // limit, remove
     char *w[MAXWORDS];
     char *retval = NULL;
-    #define setretval(v) { char *rv = v; if(rv) retval = rv; commandret = NULL; }
+    #define setretval(v) { char *rv = v; if(rv) retval = rv; }
     for(bool cont = true; cont;)                // for each ; seperated statement
     {
         int numargs = MAXWORDS;
@@ -463,6 +463,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     }
                     if(cargs) delete[] cargs;
                     setretval(commandret);
+                    commandret = NULL;
                     SAUERBRATEN_COMMAND_RETURN(c);
                     break;
                 }
