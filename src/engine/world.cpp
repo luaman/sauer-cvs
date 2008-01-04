@@ -1012,6 +1012,15 @@ void mapname()
 
 COMMAND(mapname, "");
 
+void mapsize()
+{
+    int size = 0;
+    while(1<<size < hdr.worldsize) size++;
+    intret(size);
+}
+
+COMMAND(mapsize, "");
+
 void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local)
 {
     if(et->getents().length()<=i)
