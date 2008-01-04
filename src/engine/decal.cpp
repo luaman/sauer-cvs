@@ -350,11 +350,9 @@ struct decalrenderer
                     loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                 }
                 vec v[8];
-                vvec vv;
                 loopj(8) if(vertused&(1<<j)) 
                 {
-                    calcvert(cu[i], co.x, co.y, co.z, size, vv, j, solid);
-                    v[j] = vv.tovec(co.x, co.y, co.z);
+                    calcvert(cu[i], co.x, co.y, co.z, size, v[j], j, solid);
                 }
                 loopj(6) if(usefaces[j])
                 {

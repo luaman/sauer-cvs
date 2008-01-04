@@ -897,9 +897,10 @@ void calcvert(cube &c, int x, int y, int z, int size, vvec &v, int i, bool solid
 
 void calcvert(cube &c, int x, int y, int z, int size, vec &v, int i, bool solid)
 {
-    if(solid || isentirelysolid(c)) v = cubecooords[i].tovec();
-    else v = vec(edgeval(c, p, 0, p.x), edgeval(c, p, 1, p.y), edgeval(c, p, 2, p.z));
-    v.mul(size/8.0f).add(vec(x, y, z));
+    ivec vv;
+    if(solid || isentirelysolid(c)) vv = cubecoords[i];
+    else genvectorvert(cubecoords[i], c, vv);
+    v = vv.tovec().mul(size/8.0f).add(vec(x, y, z));
 }
 
 int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, bool lodcube)

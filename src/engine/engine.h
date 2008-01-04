@@ -181,6 +181,7 @@ extern void converttovectorworld();
 extern int faceverts(cube &c, int orient, int vert);
 extern int faceconvexity(cube &c, int orient);
 extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
+extern void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i, bool solid = false);
 extern int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, bool lodcube);
 extern uint faceedges(cube &c, int orient);
 extern bool collapsedface(uint cfe);
