@@ -178,7 +178,7 @@ struct rpgclient : igameclient, g3d_callback
         os.render();
     }
     
-    void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos); }
+    void g3d_gamemenus() { os.g3d_npcmenus(); if(menutime) g3d_addgui(this, menupos, GUI_2D); }
 
     void writegamedata(vector<char> &extras) {}
     void readgamedata (vector<char> &extras) {}

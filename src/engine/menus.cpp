@@ -321,9 +321,9 @@ void g3d_mainmenu()
 {
     if(!guistack.empty()) 
     {   
-        extern int gui2d;
-        if(!gui2d && camera1->o.dist(menupos) > menuautoclose) cleargui();
-        else g3d_addgui(&mmcb, menupos, true);
+        extern int usegui2d;
+        if(!usegui2d && camera1->o.dist(menupos) > menuautoclose) cleargui();
+        else g3d_addgui(&mmcb, menupos, GUI_2D | GUI_FOLLOW);
     }
 }
 

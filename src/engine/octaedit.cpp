@@ -1537,7 +1537,7 @@ struct texturegui : g3d_callback
         if(!menuon) return;
         filltexlist();
         if(!editmode || camera1->o.dist(menupos) > menuautoclose) menuon = false;
-        else g3d_addgui(this, menupos); //follow?
+        else g3d_addgui(this, menupos, GUI_2D);
     }
 } gui;
 
