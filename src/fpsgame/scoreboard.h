@@ -357,7 +357,7 @@ struct scoreboard : g3d_callback
     {
         if(scoreson) 
         {
-            g3d_addgui(this, menupos, true);
+            g3d_addgui(this, menupos, GUI_2D | GUI_FOLLOW);
         }
     }
 };

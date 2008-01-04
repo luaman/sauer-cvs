@@ -475,7 +475,7 @@ struct weaponstate
                 {
                     particle_splash(0, 20, 250, sg[i]);
                     particle_flare(hudgunorigin(gun, from, sg[i], d), sg[i], 300, 10);
-                    if(!local && !rnd(4)) adddecal(DECAL_BULLET, sg[i], vec(from).sub(sg[i]).normalize(), 2.0f);
+                    if(!local) adddecal(DECAL_BULLET, sg[i], vec(from).sub(sg[i]).normalize(), 2.0f);
                 }
                 break;
             }
@@ -569,7 +569,7 @@ struct weaponstate
                 if(hitrays) hitpush(hitrays*qdam, o, d, from, to, d->gunselect, hitrays);
                 if(!raysleft) break;
             }
-            loopj(SGRAYS) if(!done[j] && !rnd(4)) adddecal(DECAL_BULLET, sg[j], vec(from).sub(sg[j]).normalize(), 2.0f); 
+            loopj(SGRAYS) if(!done[j]) adddecal(DECAL_BULLET, sg[j], vec(from).sub(sg[j]).normalize(), 2.0f); 
         }
         else if((o = intersectclosest(from, to, d)))
         {
