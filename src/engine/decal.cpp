@@ -358,7 +358,6 @@ struct decalrenderer
                 {
                     int fv[4];
                     loopk(4) fv[k] = faceverts(cu[i], j, k);
-                    if(fv[0]==fv[2]) continue;
                     int faces = 0;
                     vec p(v[fv[0]]), e(v[fv[2]]), surfaces[2];
                     e.sub(p);
