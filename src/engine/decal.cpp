@@ -345,7 +345,7 @@ struct decalrenderer
                         loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                     }
                 }
-                else loopj(6) if(usefaces[j] = visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE)
+                else loopj(6) if(usefaces[j] = visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE || (!isempty(cu[i]) && visibleface(cu[i], j, co.x, co.y, co.z, size)))
                 {
                     loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                 }
