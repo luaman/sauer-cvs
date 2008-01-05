@@ -349,6 +349,7 @@ struct decalrenderer
                 {
                     loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                 }
+                if(!vertused) continue;
                 vec v[8];
                 loopj(8) if(vertused&(1<<j)) 
                 {
