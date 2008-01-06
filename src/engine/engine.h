@@ -75,6 +75,7 @@ extern vector<vertex> verts;            // the vertex array for all world render
 extern int curtexnum;
 extern const ivec cubecoords[8];
 extern const ushort fv[6][4];
+extern const uchar fvmasks[64];
 extern const uchar faceedgesidx[6][4];
 extern bool inbetweenframes;
 
@@ -258,7 +259,7 @@ extern void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->
 extern int showmat;
 
 extern int findmaterial(const char *name);
-extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs);
+extern void genmatsurfs(cube &c, int cx, int cy, int cz, int size, vector<materialsurface> &matsurfs, uchar &vismask, uchar &clipmask);
 extern void rendermatsurfs(materialsurface *matbuf, int matsurfs);
 extern void rendermatgrid(materialsurface *matbuf, int matsurfs);
 extern int optimizematsurfs(materialsurface *matbuf, int matsurfs);
