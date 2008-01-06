@@ -15,8 +15,8 @@ struct ident
 {
     int type;           // one of ID_* above
     const char *name;
-    int min, max; // ID_VAR
-    int override; // either NO_OVERRIDE, OVERRIDDEN, or value
+    int minval, maxval; // ID_VAR
+    int override;       // either NO_OVERRIDE, OVERRIDDEN, or value
     union
     {
         void (__cdecl *fun)(); // ID_VAR, ID_COMMAND, ID_CCOMMAND
@@ -49,7 +49,7 @@ struct ident
     ident() {}
     // ID_VAR
     ident(int t, const char *n, int m, int c, int x, int *s, void *f = NULL, bool p = false)
-        : type(t), name(n), min(m), max(x), override(NO_OVERRIDE), fun((void (__cdecl *)())f), persist(p)
+        : type(t), name(n), minval(m), maxval(x), override(NO_OVERRIDE), fun((void (__cdecl *)())f), persist(p)
     { val.i = c; storage.i = s; }
     // ID_FVAR
     ident(int t, const char *n, float c, float *s, void *f = NULL, bool p = false)
