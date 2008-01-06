@@ -340,12 +340,12 @@ struct decalrenderer
                 int vertused = 0;
                 if(!solid) 
                 {
-                    loopj(6) if(usefaces[j] = visibleface(cu[i], j, co.x, co.y, co.z, size))
+                    loopj(6) if(usefaces[j] = cu[i].texture[j]!=DEFAULT_SKY && visibleface(cu[i], j, co.x, co.y, co.z, size))
                     {
                         loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                     }
                 }
-                else loopj(6) if(usefaces[j] = visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE || (!isempty(cu[i]) && visibleface(cu[i], j, co.x, co.y, co.z, size)))
+                else loopj(6) if(usefaces[j] = visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE || (!isempty(cu[i]) && cu[i].texture[j]!=DEFAULT_SKY && visibleface(cu[i], j, co.x, co.y, co.z, size)))
                 {
                     loopk(4) vertused |= 1<<faceverts(cu[i], j, k);
                 }
