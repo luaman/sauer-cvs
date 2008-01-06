@@ -444,7 +444,7 @@ struct decalrenderer
                 bool solid = cu[i].ext && isclipped(cu[i].ext->material) && cu[i].ext->material!=MAT_CLIP;
                 vec v[8];
                 loopj(8) if(vertused&(1<<j)) calcvert(cu[i], co.x, co.y, co.z, size, v[j], j, solid);
-                loopj(6) if(vismask&(1<<j)) gendecaltris(cu[i], j, v, solid || faceedges(cu[i], j)==F_SOLID);
+                loopj(6) if(vismask&(1<<j)) gendecaltris(cu[i], j, v, solid || (flataxisface(cu[i], j) && faceedges(cu[i], j)==F_SOLID));
             }
             else
             {
@@ -455,7 +455,7 @@ struct decalrenderer
                 uchar vertused = fvmasks[vismask];
                 vec v[8];
                 loopj(8) if(vertused&(1<<j)) calcvert(cu[i], co.x, co.y, co.z, size, v[j], j, solid);
-                loopj(6) if(vismask&(1<<j)) gendecaltris(cu[i], j, v, solid || faceedges(cu[i], j)==F_SOLID);
+                loopj(6) if(vismask&(1<<j)) gendecaltris(cu[i], j, v, solid || (flataxisface(cu[i], j) && faceedges(cu[i], j)==F_SOLID));
             }
         }
     }
