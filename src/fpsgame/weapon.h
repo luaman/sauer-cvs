@@ -511,7 +511,7 @@ struct weaponstate
             case GUN_RIFLE: 
                 particle_splash(0, 200, 250, to);
                 particle_trail(21, 500, hudgunorigin(gun, from, to, d), to);
-                if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
+                if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 3.0f);
                 break;
         }
     }
@@ -576,7 +576,7 @@ struct weaponstate
             hitpush(qdam, o, d, from, to, d->gunselect, 1);
             shorten(from, o->o, to);
         }
-        else if(d->gunselect!=GUN_FIST && d->gunselect!=GUN_BITE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f); 
+        else if(d->gunselect!=GUN_FIST && d->gunselect!=GUN_BITE) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), d->gunselect==GUN_RIFLE ? 3.0f : 2.0f); 
     }
 
     void shoot(fpsent *d, vec &targ)
