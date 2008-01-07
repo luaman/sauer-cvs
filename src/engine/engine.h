@@ -228,7 +228,7 @@ extern void destroyva(vtxarray *va, bool reparent = true);
 // renderva
 extern GLuint fogtex;
 
-extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov);
+extern void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, float fov);
 extern void reflectvfcP(float z);
 extern void restorevfcP();
 extern void createfogtex();

@@ -1497,32 +1497,6 @@ dir(right,    strafe, -1, k_right, k_left);
 ICOMMAND(jump,   "D", (int *down), { if(cl->canjump()) player->jumpnext = *down!=0; });
 ICOMMAND(attack, "D", (int *down), { cl->doattack(*down!=0); });
 
-VARP(sensitivity, 0, 3, 1000);
-VARP(sensitivityscale, 1, 1, 100);
-VARP(invmouse, 0, 0, 1);
-
-void fixcamerarange()
-{
-    const float MAXPITCH = 90.0f;
-    if(camera1->pitch>MAXPITCH) camera1->pitch = MAXPITCH;
-    if(camera1->pitch<-MAXPITCH) camera1->pitch = -MAXPITCH;
-    while(camera1->yaw<0.0f) camera1->yaw += 360.0f;
-    while(camera1->yaw>=360.0f) camera1->yaw -= 360.0f;
-}
-
-void mousemove(int dx, int dy)
-{
-    const float SENSF = 33.0f;     // try match quake sens
-    camera1->yaw += (dx/SENSF)*(sensitivity/(float)sensitivityscale);
-    camera1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
-    fixcamerarange();
-    if(camera1!=player && player->state!=CS_DEAD)
-    {
-        player->yaw = camera1->yaw;
-        player->pitch = camera1->pitch;
-    }
-}
-
 bool entinmap(dynent *d, bool avoidplayers)        // brute force but effective way to find a free spawn spot in the map
 {
     d->o.z += d->eyeheight;     // pos specified is at feet

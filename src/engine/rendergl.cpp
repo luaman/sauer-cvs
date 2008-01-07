@@ -412,7 +412,62 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
 }
 
-VARP(fov, 10, 105, 150);
+float curfov = 105;
+VARP(zoominvel, 0, 250, 5000);
+VARP(zoomoutvel, 0, 100, 5000);
+VARP(zoomfov, 10, 35, 60);
+VARFP(fov, 10, 105, 150, curfov = fov);
+
+static int zoommillis = 0;
+VARF(zoom, -1, 0, 1,
+    if(zoom) zoommillis = lastmillis;
+);
+
+void computezoom()
+{
+    if(!zoom) { curfov = fov; return; }
+    if(zoom < 0 && curfov >= fov) { zoom = 0; return; } // don't zoom-out if not zoomed-in
+    int zoomvel = zoom > 0 ? zoominvel : zoomoutvel,
+        oldfov = zoom > 0 ? fov : zoomfov,
+        newfov = zoom > 0 ? zoomfov : fov;
+    float t = zoomvel ? float(zoomvel - (lastmillis - zoommillis)) / zoomvel : 0;
+    if(t <= 0) zoom = max(zoom, 0);
+    else curfov = oldfov*t + newfov*(1 - t);
+}
+
+VARP(zoomsens, 1, 100, 10000); // 3*35=105 <==> 300:100 sense
+VARP(zoomautosens, 0, 1, 1);
+VARP(sensitivity, 0, 3, 1000);
+VARP(sensitivityscale, 1, 1, 100);
+VARP(invmouse, 0, 0, 1);
+
+void fixcamerarange()
+{
+    const float MAXPITCH = 90.0f;
+    if(camera1->pitch>MAXPITCH) camera1->pitch = MAXPITCH;
+    if(camera1->pitch<-MAXPITCH) camera1->pitch = -MAXPITCH;
+    while(camera1->yaw<0.0f) camera1->yaw += 360.0f;
+    while(camera1->yaw>=360.0f) camera1->yaw -= 360.0f;
+}
+
+void mousemove(int dx, int dy)
+{
+    float cursens = sensitivity;
+    if(zoom)
+    {
+        if(zoomautosens) cursens = float(sensitivity*zoomfov)/fov;
+        else cursens = zoomsens;
+    }
+    cursens /= 33.0f*sensitivityscale;
+    camera1->yaw += dx*cursens;
+    camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
+    fixcamerarange();
+    if(camera1!=player && player->state!=CS_DEAD)
+    {
+        player->yaw = camera1->yaw;
+        player->pitch = camera1->pitch;
+    }
+}
 
 int xtraverts, xtravertsva;
 
@@ -428,6 +483,8 @@ bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (refl
 void recomputecamera()
 {
     cl->setupcamera();
+    computezoom();
+
     if(deathcam && player->state!=CS_DEAD) deathcam = false;
     extern int testanims;
     if(((editmode && !testanims) || !thirdperson) && player->state!=CS_DEAD)
@@ -754,8 +811,7 @@ void gl_drawframe(int w, int h)
     cleardynlights();
     cl->adddynlights();
 
-    float fovy = (float)fov*h/w;
-    float aspect = w/(float)h;
+    float fovy = float(curfov*h)/w, aspect = w/float(h);
     int fogmat = lookupmaterial(vec(camera1->o.x, camera1->o.y, camera1->o.z + camera1->aboveeye*0.5f));
     if(fogmat!=MAT_WATER && fogmat!=MAT_LAVA) fogmat = MAT_AIR;
 
@@ -780,7 +836,7 @@ void gl_drawframe(int w, int h)
 
     if(!hasFBO) drawreflections();
 
-    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, fov);
+    visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, curfov);
     
     extern GLuint shadowmapfb;
     if(shadowmap && !shadowmapfb) rendershadowmap();

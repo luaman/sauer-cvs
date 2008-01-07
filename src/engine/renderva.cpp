@@ -15,7 +15,8 @@ void drawvatris(vtxarray *va, GLsizei numindices, const GLvoid *indices, ushort 
 
 plane vfcP[5];  // perpindictular vectors to view frustrum bounding planes
 float vfcDfog;  // far plane culling distance (fog limit).
-int vfcw, vfch, vfcfov;
+int vfcw, vfch;
+float vfcfov;
 
 vtxarray *visibleva;
 
@@ -146,7 +147,7 @@ void restorevfcP()
 
 extern vector<vtxarray *> varoot;
 
-void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, int fov)
+void visiblecubes(cube *c, int size, int cx, int cy, int cz, int w, int h, float fov)
 {
     memset(vasort, 0, sizeof(vasort));
 
