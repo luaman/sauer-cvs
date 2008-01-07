@@ -433,7 +433,7 @@ void computezoom()
     float t = zoomvel ? float(zoomvel - (lastmillis - zoommillis)) / zoomvel : 0;
     if(t <= 0) 
     {
-        if(!zoomvel && fabs(newfov - oldfov) >= 1) curfov = newfov;
+        if(!zoomvel && fabs(newfov - curfov) >= 1) curfov = newfov;
         zoom = max(zoom, 0);
     }
     else curfov = oldfov*t + newfov*(1 - t);
