@@ -12,6 +12,7 @@ CLIENT_OBJS= \
 	engine/command.o \
 	engine/console.o \
 	engine/cubeloader.o \
+	engine/decal.o \
 	engine/grass.o \
 	engine/lightmap.o \
 	engine/main.o \
