@@ -439,7 +439,7 @@ void computezoom()
     else curfov = oldfov*t + newfov*(1 - t);
 }
 
-VARP(zoomsens, 1, 100, 10000); // 3*35=105 <==> 300:100 sense
+VARP(zoomsens, 1, 1, 1000);
 VARP(zoomautosens, 0, 1, 1);
 VARP(sensitivity, 0, 3, 1000);
 VARP(sensitivityscale, 1, 1, 100);
