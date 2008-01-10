@@ -9,7 +9,7 @@
 		<Option compiler="0"/>
 		<Build>
 			<Target title="default">
-				<Option output="..\..\bin\sauerbraten-mingw.exe"/>
+				<Option output="..\..\bin\sauerbraten.exe"/>
 				<Option working_dir="..\..\"/>
 				<Option object_output=".objs"/>
 				<Option deps_output=".deps"/>
@@ -278,6 +278,10 @@
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="..\engine\cubeloader.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\engine\decal.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
@@ -587,6 +591,8 @@
 		</Unit>
 		<Unit filename="..\shared\pch.cpp">
 			<Option compilerVar="CPP"/>
+			<Option compile="0"/>
+			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="..\shared\pch.h">

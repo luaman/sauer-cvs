@@ -2,7 +2,7 @@ CXX=g++
 CXXOPTFLAGS=-O3 -fomit-frame-pointer
 CXXFLAGS= $(CXXOPTFLAGS) -Wall -fsigned-char -Ienet/include -Iinclude -Ishared -Iengine -Ifpsgame
 
-CLIENT_LIBS=-Lenet -Lmingw/lib -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lfmod -lz -lopengl32 -lglu32 -lws2_32 -lwinmm
+CLIENT_LIBS=-Lenet -Lmingw/lib -lstdc++ -lenet -lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -mwindows -lz -lopengl32 -lglu32 -lws2_32 -lwinmm
 CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
@@ -56,5 +56,5 @@ clean:
 	$(MAKE) -C enet/ clean
 
 client: $(CLIENT_OBJS)
-	$(CXX) $(CXXFLAGS) -o ../bin/sauerbraten-mingw.exe $(CLIENT_OBJS) $(CLIENT_LIBS)
-	strip ../bin/sauerbraten-mingw.exe
+	$(CXX) $(CXXFLAGS) -o ../bin/sauerbraten.exe $(CLIENT_OBJS) $(CLIENT_LIBS)
+	strip ../bin/sauerbraten.exe
