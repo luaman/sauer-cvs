@@ -681,21 +681,27 @@ void rendermodel(entitylight *light, const char *mdl, int anim, int varseed, int
             if(cull&MDL_LIGHT && light->millis!=lastmillis)
             {
                 lightreaching(d->o, light->color, light->dir);
+                dynlightreaching(o, light->color, light->dir);
                 cl->lighteffects(d, light->color, light->dir);
                 light->millis = lastmillis;
             }
         }
         else if(cull&MDL_LIGHT)
         {
-            if(!light) lightreaching(o, lightcolor, lightdir);
+            if(!light) 
+            {
+                lightreaching(o, lightcolor, lightdir);
+                dynlightreaching(o, lightcolor, lightdir);
+            }
             else if(light->millis!=lastmillis)
             {
                 lightreaching(o, light->color, light->dir);
+                dynlightreaching(o, light->color, light->dir);
                 light->millis = lastmillis;
             }
         }
         if(light) { lightcolor = light->color; lightdir = light->dir; }
-        dynlightreaching(o, lightcolor, lightdir);
+        if(!(cull&MDL_LIGHT)) dynlightreaching(o, lightcolor, lightdir);
     }
 
     if(a) for(int i = 0; a[i].name; i++)
