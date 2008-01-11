@@ -209,7 +209,7 @@ bool insideworld(const vec &o)
     ivec lsizemask(invray.x>0 ? 1 : 0, invray.y>0 ? 1 : 0, invray.z>0 ? 1 : 0); \
 
 #define CHECKINSIDEWORLD \
-    if(!insideworld(v)) \
+    if(o.x<0 || o.x>=hdr.worldsize || o.y<0 || o.y>=hdr.worldsize || o.z<0 || o.z>=hdr.worldsize) \
     { \
         float disttoworld = 0, exitworld = 1e16f; \
         loopi(3) \
@@ -482,7 +482,7 @@ void cleardynentcache()
     if(!dynentframe) dynentframe = 1;
 }
 
-VARF(dynentsize, 6, 8, 12, cleardynentcache());
+VARF(dynentsize, 4, 6, 12, cleardynentcache());
 
 #define DYNENTHASH(x, y) (((((x)^(y))<<5) + (((x)^(y))>>5)) & (DYNENTCACHESIZE - 1))
 
