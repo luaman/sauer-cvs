@@ -241,7 +241,7 @@ extern void renderoutline();
 extern bool rendersky(bool explicitonly = false, float zreflect = 0);
 
 extern int isvisiblesphere(float rad, const vec &cv);
-extern bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size);
+extern bool bboccluded(const ivec &bo, const ivec &br);
 extern occludequery *newquery(void *owner);
 extern bool checkquery(occludequery *query, bool nowait = false);
 extern void resetqueries();

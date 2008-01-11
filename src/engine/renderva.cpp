@@ -500,7 +500,7 @@ void rendermapmodels()
     }
 }
 
-bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
+static inline bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
 {
     loopoctabox(o, size, bo, br)
     {
@@ -514,6 +514,32 @@ bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size
         return false;
     }
     return true;
+}
+
+bool bboccluded(const ivec &bo, const ivec &br)
+{
+    int diff = (bo.x^(bo.x+br.x)) | (bo.y^(bo.y+br.y)) | (bo.z^(bo.z+br.z)),
+        scale = worldscale-1;
+    if(diff&~((1<<scale)-1)) return false;
+    cube *c = &worldroot[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+    if(c->ext && c->ext->va)
+    {
+        vtxarray *va = c->ext->va;
+        if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) return true;
+    }
+    scale--;
+    while(c->children && !(diff&(1<<scale)))
+    {
+        c = &c->children[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+        if(c->ext && c->ext->va)
+        {
+            vtxarray *va = c->ext->va;
+            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) return true;
+        }
+        scale--;
+    }
+    if(c->children) return bboccluded(bo, br, c->children, ivec(bo).mask(~((2<<scale)-1)), 1<<scale);
+    return false;
 }
 
 VAR(outline, 0, 0, 0xFFFFFF);

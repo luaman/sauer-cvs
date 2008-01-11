@@ -482,7 +482,7 @@ void cleardynentcache()
     if(!dynentframe) dynentframe = 1;
 }
 
-VARF(dynentsize, 4, 6, 12, cleardynentcache());
+VARF(dynentsize, 4, 7, 12, cleardynentcache());
 
 #define DYNENTHASH(x, y) (((((x)^(y))<<5) + (((x)^(y))>>5)) & (DYNENTCACHESIZE - 1))
 
@@ -614,9 +614,9 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
     return true;
 }
 
-bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size) // collide with cube geometry
+bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y, int z, int size, bool solid) // collide with cube geometry
 {
-    if(isentirelysolid(c) || (c.ext && ((d->type==ENT_AI && c.ext->material==MAT_AICLIP) || ((d->type<ENT_CAMERA || c.ext->material != MAT_CLIP) && isclipped(c.ext->material)))))
+    if(solid || isentirelysolid(c))
     {
         int s2 = size>>1;
         vec o = vec(x+s2, y+s2, z+s2);
@@ -682,7 +682,7 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
     return false;
 }
 
-bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const ivec &bs, cube *c, const ivec &cor, int size) // collide with octants
+static inline bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const ivec &bs, cube *c, const ivec &cor, int size) // collide with octants
 {
     loopoctabox(cor, size, bo, bs)
     {
@@ -692,12 +692,49 @@ bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const
         {
             if(!octacollide(d, dir, cutoff, bo, bs, c[i].children, o, size>>1)) return false;
         }
-        else if(c[i].ext && c[i].ext->material!=MAT_NOCLIP && (!isempty(c[i]) || (d->type==ENT_AI && c[i].ext->material==MAT_AICLIP) || ((d->type<ENT_CAMERA || c[i].ext->material != MAT_CLIP) && isclipped(c[i].ext->material))))
+        else
         {
-            if(!cubecollide(d, dir, cutoff, c[i], o.x, o.y, o.z, size)) return false;
+            bool solid = false;
+            if(c[i].ext) switch(c[i].ext->material)
+            {
+                case MAT_NOCLIP: continue;
+                case MAT_AICLIP: if(d->type==ENT_AI) solid = true; break;
+                case MAT_CLIP: if(d->type<ENT_CAMERA) solid = true; break;
+                case MAT_GLASS: solid = true; break;
+            }
+            if(!solid && isempty(c[i])) continue;
+            if(!cubecollide(d, dir, cutoff, c[i], o.x, o.y, o.z, size, solid)) return false;
         }
     }
     return true;
+}
+
+static inline bool octacollide(physent *d, const vec &dir, float cutoff, const ivec &bo, const ivec &bs)
+{
+    int diff = (bo.x^(bo.x+bs.x)) | (bo.y^(bo.y+bs.y)) | (bo.z^(bo.z+bs.z)),
+        scale = worldscale-1;
+    if(diff&~((1<<scale)-1)) return octacollide(d, dir, cutoff, bo, bs, worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
+    cube *c = &worldroot[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+    if(c->ext && c->ext->ents && !mmcollide(d, dir, *c->ext->ents)) return false;
+    scale--;
+    while(c->children && !(diff&(1<<scale)))
+    {
+        c = &c->children[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+        if(c->ext && c->ext->ents && !mmcollide(d, dir, *c->ext->ents)) return false;
+        scale--;
+    }
+    if(c->children) return octacollide(d, dir, cutoff, bo, bs, c->children, ivec(bo).mask(~((2<<scale)-1)), 1<<scale);
+    bool solid = false;
+    if(c->ext) switch(c->ext->material)
+    {
+        case MAT_NOCLIP: return true;
+        case MAT_AICLIP: if(d->type==ENT_AI) solid = true; break;
+        case MAT_CLIP: if(d->type<ENT_CAMERA) solid = true; break;
+        case MAT_GLASS: solid = true; break;
+    }
+    if(!solid && isempty(*c)) return true;
+    int csize = 2<<scale, cmask = ~(csize-1);
+    return cubecollide(d, dir, cutoff, *c, bo.x&cmask, bo.y&cmask, bo.z&cmask, csize, solid);
 }
 
 // all collision happens here
@@ -709,7 +746,7 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
     ivec bo(int(d->o.x-d->radius), int(d->o.y-d->radius), int(d->o.z-d->eyeheight)),
          bs(int(d->radius)*2, int(d->radius)*2, int(d->eyeheight+d->aboveeye));
     bs.add(2);  // guard space for rounding errors
-    if(!octacollide(d, dir, cutoff, bo, bs, worldroot, ivec(0, 0, 0), hdr.worldsize>>1)) return false; // collide with world
+    if(!octacollide(d, dir, cutoff, bo, bs)) return false;//, worldroot, ivec(0, 0, 0), hdr.worldsize>>1)) return false; // collide with world
     return !playercol || plcollide(d, dir);
 }
 
