@@ -86,7 +86,7 @@ bool pointincube(const clipplanes &p, const vec &v)
 // optimized shadow version
 bool shadowcubeintersect(const cube &c, const vec &o, const vec &ray, float &dist)
 {
-    INTERSECTPLANES( );
+    INTERSECTPLANES({});
     if(exitdist < 0) return false;
     enterdist += 0.1f;
     if(enterdist < 0) enterdist = 0;
