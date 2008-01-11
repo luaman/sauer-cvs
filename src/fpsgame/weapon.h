@@ -112,6 +112,8 @@ struct weaponstate
         vec offset;
         int offsetmillis;
         int id;
+        bool updatelights;
+        vec lightcolor, lightdir;
     };
 
     vector<bouncent *> bouncers;
@@ -142,6 +144,7 @@ struct weaponstate
         bnc.offset = hudgunorigin(type==BNC_GRENADE ? GUN_GL : -1, from, to, owner);
         bnc.offset.sub(bnc.o);
         bnc.offsetmillis = OFFSETMILLIS;
+        bnc.updatelights = true;
     }
 
     void bounceupdate(int time)
@@ -181,6 +184,7 @@ struct weaponstate
             }
             bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
             bnc.offsetmillis = max(bnc.offsetmillis-time, 0);
+            bnc.updatelights = true;
             next:;
         }
     }
@@ -190,7 +194,18 @@ struct weaponstate
         loopv(bouncers) if(bouncers[i]->owner==owner) { delete bouncers[i]; bouncers.remove(i--); }
     }
 
-    struct projectile { vec dir, o, to, offset; float speed; fpsent *owner; int gun; bool local; int offsetmillis; int id; };
+    struct projectile
+    {
+        vec dir, o, to, offset;
+        float speed;
+        fpsent *owner;
+        int gun;
+        bool local;
+        int offsetmillis;
+        int id;
+        bool updatelights;
+        vec lightcolor, lightdir;
+    };
     vector<projectile> projs;
 
     void projreset() { projs.setsize(0); bouncers.deletecontentsp(); bouncers.setsize(0); }
@@ -209,6 +224,7 @@ struct weaponstate
         p.gun = gun;
         p.offsetmillis = OFFSETMILLIS;
         p.id = cl.lastmillis;
+        p.updatelights = true;
     }
    
     void removeprojectiles(fpsent *owner) 
@@ -431,7 +447,11 @@ struct weaponstate
                             hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
                 projs.remove(i--);
             }
-            else p.o = v;
+            else
+            {
+                p.o = v;
+                p.updatelights = true;
+            }
         }
     }
 
@@ -649,14 +669,12 @@ struct weaponstate
 
     void renderprojectiles()
     {
-        vec color, dir;
         float yaw, pitch;
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
             vec pos(bnc.o);
             pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
-            lightreaching(pos, color, dir);
             vec vel(bnc.vel);
             vel.add(bnc.gravity);
             if(vel.magnitude() <= 25.0f) yaw = bnc.lastyaw;
@@ -674,8 +692,12 @@ struct weaponstate
             else if(bnc.bouncetype==BNC_DEBRIS) { s_sprintf(debrisname)("debris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; }
             else if(bnc.bouncetype==BNC_BARRELDEBRIS) { s_sprintf(debrisname)("barreldebris/debris0%d", ((((int)(size_t)&bnc)&0xC0)>>6)+1); mdl = debrisname; }
             else cull = MDL_CULL_VFC|MDL_DYNSHADOW;
-                
-            rendermodel(color, dir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos, yaw, pitch, 0, 0, NULL, cull);
+            if(bnc.updatelights)
+            {
+                lightreaching(pos, bnc.lightcolor, bnc.lightdir);
+                bnc.updatelights = false;
+            }
+            rendermodel(bnc.lightcolor, bnc.lightdir, mdl, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, pos, yaw, pitch, 0, 0, NULL, cull);
         }
         loopv(projs)
         {
@@ -692,8 +714,12 @@ struct weaponstate
             yaw += 90;
             v.mul(3);
             v.add(pos);
-            lightreaching(v, color, dir);
-            rendermodel(color, dir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v, yaw, pitch, 0, 0, NULL, MDL_CULL_VFC|MDL_DYNSHADOW);
+            if(p.updatelights)
+            {
+                lightreaching(v, p.lightcolor, p.lightdir);
+                p.updatelights = false;
+            }
+            rendermodel(p.lightcolor, p.lightdir, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, v, yaw, pitch, 0, 0, NULL, MDL_CULL_VFC|MDL_DYNSHADOW);
         }
     }  
 };
