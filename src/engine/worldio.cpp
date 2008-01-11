@@ -460,6 +460,9 @@ void load_world(const char *mname, const char *cname)        // still supports a
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
 
+    worldscale = 0;
+    while(1<<worldscale < hdr.worldsize) worldscale++;
+
     if(hdr.version >= 7) loopi(hdr.lightmaps)
     {
         show_out_of_renderloop_progress(i/(float)hdr.lightmaps, "loading lightmaps...");

@@ -4,6 +4,7 @@
 #include "engine.h"
 
 header hdr;
+int worldscale;
 
 VAR(octaentsize, 0, 128, 1024);
 VAR(entselradius, 0, 2, 10);
@@ -947,8 +948,9 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     strncpy(hdr.head, "OCTA", 4);
     hdr.version = MAPVERSION;
     hdr.headersize = sizeof(header);
-    hdr.worldsize = 1 << (scale<10 ? 10 : (scale>20 ? 20 : scale));
-
+    worldscale = scale<10 ? 10 : (scale>20 ? 20 : scale);
+    hdr.worldsize = 1<<worldscale;
+    
     s_strncpy(hdr.maptitle, "Untitled Map by Unknown", 128);
     hdr.waterlevel = -100000;
     memset(hdr.watercolour, 0, sizeof(hdr.watercolour));
@@ -987,6 +989,7 @@ bool enlargemap(bool force)
     }
     if(hdr.worldsize >= 1<<20) return false;
 
+    worldscale++;
     hdr.worldsize *= 2;
     cube *c = newcubes(F_EMPTY);
     c[0].children = worldroot;

@@ -153,13 +153,14 @@ struct vtxarray
     int hasmerges;
 };
 
+struct cube;
+
 struct clipplanes
 {
     vec o, r;
     int size;
     plane p[12];
-    clipplanes *next, *prev;
-    clipplanes **backptr;
+    cube *owner;
 };
 
 struct mergeinfo
