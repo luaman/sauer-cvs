@@ -762,7 +762,8 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
     e.reserved = 0;
     e.spawned = false;
     e.inoctanode = false;
-    e.color = vec(1, 1, 1);
+    e.light.color = vec(1, 1, 1);
+    e.light.dir = vec(0, 0, 1);
     if(local)
     {
         switch(type)

@@ -612,7 +612,7 @@ struct fpsclient : igameclient
     {
         if(player1->gunselect>GUN_PISTOL) return;
 
-        vec sway, color, dir;
+        vec sway;
         vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, sway);
         float swayspeed = min(4.0f, player1->vel.magnitude());
         sway.mul(swayspeed);
@@ -624,8 +624,6 @@ struct fpsclient : igameclient
         sway.z = -fabs(swayspeed*swayz);
         sway.add(swaydir).add(player1->o);
         if(!hudgunsway()) sway = player1->o;
-        lightreaching(sway, color, dir);
-        dynlightreaching(sway, color, dir);
 
 #if 0
         if(player1->state!=CS_DEAD && player1->quadmillis)
@@ -637,7 +635,7 @@ struct fpsclient : igameclient
 
         s_sprintfd(gunname)("hudguns/%s", guns[player1->gunselect].file);
         if((m_teamskins || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
-        rendermodel(color, dir, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, 0);
+        rendermodel(NULL, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, MDL_LIGHT);
     }
 
     void drawhudgun()

@@ -22,10 +22,18 @@ enum
     TRIGGER_DISAPPEARED
 };
 
+struct entitylight
+{
+    vec color, dir;
+    int millis;
+
+    entitylight() : color(1, 1, 1), dir(0, 0, 1), millis(-1) {}
+};
+
 struct extentity : entity                       // part of the entity that doesn't get saved to disk
 {
     uchar spawned, inoctanode, visible, triggerstate;        // the only dynamic state of a map entity
-    vec color, dir;
+    entitylight light;
     int lasttrigger;
     extentity *attached;
 
@@ -140,6 +148,7 @@ struct dynent : physent                         // animated characters, or chara
     float lastyaw, lastpitch;                   // last yaw/pitch to interpolate from, MP only
     int orientmillis;                           // time last yaw/pitch was recorded
 
+    entitylight light;
     animstate prev[2], current[2];              // md2's need only [0], md3's need both for the lower&upper model
     int lastanimswitchtime[2];
     void *lastmodel[2];

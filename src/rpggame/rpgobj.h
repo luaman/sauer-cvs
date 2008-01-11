@@ -153,9 +153,7 @@ struct rpgobj : g3d_callback, stats
         }
         else
         {
-            vec color, dir;
-            lightreaching(ent->o, color, dir);  // FIXME just once for nonmoving objects
-            rendermodel(color, dir, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, vec(ent->o).sub(vec(0, 0, ent->eyeheight)), ent->yaw+90, 0, 0, 0, ent);
+            rendermodel(NULL, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, vec(ent->o).sub(vec(0, 0, ent->eyeheight)), ent->yaw+90, 0, 0, 0, ent);
         }
     }
 

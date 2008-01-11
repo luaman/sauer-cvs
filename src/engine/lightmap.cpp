@@ -1168,8 +1168,8 @@ void clearlights()
     loopv(ents)
     {
         extentity &e = *ents[i];
-        e.color = vec(1, 1, 1);
-        e.dir = vec(0, 0, 1);
+        e.light.color = vec(1, 1, 1);
+        e.light.dir = vec(0, 0, 1);
     }
     if(nolights) return;
 
@@ -1202,7 +1202,7 @@ void lightent(extentity &e, float height)
     }
     else if(e.type>=ET_GAMESPECIFIC) ambient = 0.4f;
     vec target(e.o.x, e.o.y, e.o.z + height);
-    lightreaching(target, e.color, e.dir, &e, ambient);
+    lightreaching(target, e.light.color, e.light.dir, &e, ambient);
 }
 
 void updateentlighting()

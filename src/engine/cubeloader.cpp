@@ -69,7 +69,8 @@ struct cubeloader
         e.spawned = false;
         e.inoctanode = false;
         e.o = vec(ce.x*4+hdr.worldsize/4, ce.y*4+hdr.worldsize/4, (ce.z+ce.attr3)*4+hdr.worldsize/2);
-        e.color[0] = e.color[1] = e.color[2] = 255;
+        e.light.color = vec(1, 1, 1);
+        e.light.dir = vec(0, 0, 1);
         e.attr1 = ce.attr1;
         e.attr2 = ce.attr2;
         if(e.type == ET_MAPMODEL) e.attr3 = e.attr4 = 0;
