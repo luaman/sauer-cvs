@@ -149,7 +149,11 @@ struct fpsclient : igameclient
 
     void followplayer(fpsent *target)
     {
-		if(followorient() && target->state!=CS_DEAD) interpolateorientation(target, player1->yaw, player1->pitch);
+		if(followorient() && target->state!=CS_DEAD) 
+        { 
+            player1->yaw = target->yaw; 
+            player1->pitch = target->pitch; 
+        }
 
         physent followcam;
         followcam.o = target->o;
@@ -198,13 +202,22 @@ struct fpsclient : igameclient
             }
             if(d->state==CS_ALIVE)
             {
-                int diff = lastmillis-d->posmillis;
-                if(diff<smoothmove())
+                if(smoothmove() && d->smoothmillis>0)
                 {
                     d->o = d->newpos;
+                    d->yaw = d->newyaw;
+                    d->pitch = d->newpitch;
                     moveplayer(d, 2, false);
                     d->newpos = d->o;
-                    d->o.add(vec(d->oldpos).mul(1.0f - float(diff)/smoothmove()));
+                    float k = 1.0f - float(lastmillis - d->smoothmillis)/smoothmove();
+                    if(k>0)
+                    {
+                        d->o.add(vec(d->deltapos).mul(k));
+                        d->yaw += d->deltayaw*k;
+                        if(d->yaw<0) d->yaw += 360;
+                        else if(d->yaw>=360) d->yaw -= 360;
+                        d->pitch += d->deltapitch*k;
+                    }
                 }
                 else moveplayer(d, 2, false);
             }

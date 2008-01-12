@@ -355,6 +355,7 @@ struct clientcom : iclientcom
                 f = getuint(p);
                 fpsent *d = cl.getclient(cn);
                 if(!d || seqcolor!=(d->lifesequence&1)) continue;
+                float oldyaw = d->yaw, oldpitch = d->pitch;
                 d->yaw = yaw;
                 d->pitch = pitch;
                 d->roll = roll;
@@ -368,24 +369,32 @@ struct clientcom : iclientcom
                 d->quadmillis = f&4 ? 1 : 0;
                 f >>= 3;
                 d->maxhealth = 100 + f*itemstats[I_BOOST-I_SHELLS].add;
+                vec oldpos(d->o);
                 if(cl.allowmove(d))
                 {
-                    d->oldpos = d->o;
                     d->o = o;
                     d->vel = vel;
                     d->physstate = physstate & 0x0F;
                     d->gravity = gravity;
                     updatephysstate(d);
                     updatepos(d);
-                    if(cl.smoothmove() && d->posmillis>=0 && d->oldpos.dist(d->o) < cl.smoothdist())
-                    {
-                        d->newpos = d->o;
-                        d->o = d->oldpos;
-                        d->oldpos.sub(d->newpos);
-                        d->posmillis = cl.lastmillis;
-                    }
-                    else d->posmillis = cl.lastmillis-1000;
                 }
+                if(cl.smoothmove() && d->smoothmillis>=0 && oldpos.dist(d->o) < cl.smoothdist())
+                {
+                    d->newpos = d->o;
+                    d->newyaw = d->yaw;
+                    d->newpitch = d->pitch;
+                    d->o = oldpos;
+                    d->yaw = oldyaw;
+                    d->pitch = oldpitch;
+                    (d->deltapos = oldpos).sub(d->newpos);
+                    d->deltayaw = oldyaw - d->newyaw;
+                    if(d->deltayaw > 180) d->deltayaw -= 360;
+                    else if(d->deltayaw < -180) d->deltayaw += 360;
+                    d->deltapitch = oldpitch - d->newpitch;
+                    d->smoothmillis = cl.lastmillis;
+                }
+                else d->smoothmillis = 0;
                 if(d->state==CS_LAGGED || d->state==CS_SPAWNING) d->state = CS_ALIVE;
                 break;
             }
