@@ -370,12 +370,21 @@ struct clientcom : iclientcom
                 d->maxhealth = 100 + f*itemstats[I_BOOST-I_SHELLS].add;
                 if(cl.allowmove(d))
                 {
+                    d->oldpos = d->o;
                     d->o = o;
                     d->vel = vel;
                     d->physstate = physstate & 0x0F;
                     d->gravity = gravity;
                     updatephysstate(d);
                     updatepos(d);
+                    if(cl.smoothmove() && d->posmillis>=0 && d->oldpos.dist(d->o) < cl.smoothdist())
+                    {
+                        d->newpos = d->o;
+                        d->o = d->oldpos;
+                        d->oldpos.sub(d->newpos);
+                        d->posmillis = cl.lastmillis;
+                    }
+                    else d->posmillis = cl.lastmillis-1000;
                 }
                 if(d->state==CS_LAGGED || d->state==CS_SPAWNING) d->state = CS_ALIVE;
                 break;
@@ -995,7 +1004,9 @@ struct clientcom : iclientcom
 
     void changemap(const char *name) // request map change, server may ignore
     {
-        if(!spectator || player1->privilege) addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
+        if(spectator && !player1->privilege) return;
+        if(!remote) stopdemo();
+        addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
     }
         
     void receivefile(uchar *data, int len)

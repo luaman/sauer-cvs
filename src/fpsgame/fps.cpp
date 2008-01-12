@@ -181,17 +181,34 @@ struct fpsclient : igameclient
         followplayer(target);
     }
 
+    IVARP(smoothmove, 0, 75, 100);
+    IVARP(smoothdist, 0, 32, 64);
+
     void otherplayers()
     {
         loopv(players) if(players[i])
         {
-            const int lagtime = lastmillis-players[i]->lastupdate;
-            if(lagtime>1000 && players[i]->state==CS_ALIVE)
+            fpsent *d = players[i];
+            const int lagtime = lastmillis-d->lastupdate;
+            if(!lagtime || intermission) continue;
+            else if(lagtime>1000 && d->state==CS_ALIVE)
             {
-                players[i]->state = CS_LAGGED;
+                d->state = CS_LAGGED;
                 continue;
             }
-            if(lagtime && (players[i]->state==CS_ALIVE || (players[i]->state==CS_DEAD && lastmillis-players[i]->lastpain<2000)) && !intermission) moveplayer(players[i], 2, false);   // use physics to extrapolate player position
+            if(d->state==CS_ALIVE)
+            {
+                int diff = lastmillis-d->posmillis;
+                if(diff<smoothmove())
+                {
+                    d->o = d->newpos;
+                    moveplayer(d, 2, false);
+                    d->newpos = d->o;
+                    d->o.add(vec(d->oldpos).mul(1.0f - float(diff)/smoothmove()));
+                }
+                else moveplayer(d, 2, false);
+            }
+            else if(d->state==CS_DEAD && lastmillis-d->lastpain) moveplayer(d, 2, false);
         }
     }
 
@@ -223,8 +240,8 @@ struct fpsclient : igameclient
         ws.moveprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos); // only shoot when connected to server
         ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
-        gets2c();           // do this first, so we have most accurate information when our player moves
         otherplayers();
+        gets2c();
         mo.update(curtime);
         ms.monsterthink(curtime, gamemode);
         if(player1->state==CS_DEAD)

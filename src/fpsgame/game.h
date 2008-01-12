@@ -344,10 +344,12 @@ struct fpsent : dynent, fpsstate
     int superdamage;
     int frags, deaths, totaldamage, totalshots;
     editinfo *edit;
+    vec oldpos, newpos;
+    int posmillis;
 
     string name, team, info;
 
-    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL)
+    fpsent() : weight(100), clientnum(-1), privilege(PRIV_NONE), lastupdate(0), plag(0), ping(0), lifesequence(0), lastpain(0), frags(0), deaths(0), totaldamage(0), totalshots(0), edit(NULL), posmillis(-1)
                { name[0] = team[0] = info[0] = 0; respawn(); }
     ~fpsent() { freeeditinfo(edit); }
 
