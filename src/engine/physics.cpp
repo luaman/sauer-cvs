@@ -237,7 +237,7 @@ bool insideworld(const vec &o)
         for(;;) \
         { \
             lshift--; \
-            lc += ((z>>(lshift-2))&4) | ((y>>(lshift-1))&2) | ((x>>lshift)&1); \
+            lc += (((z>>lshift)&1)<<2) | (((y>>lshift)&1)<<1) | ((x>>lshift)&1); \
             if(lc->ext && lc->ext->ents && dent > 1e15f) \
             { \
                 dent = disttoent(lc->ext->ents, oclast, o, ray, radius, mode, t); \
@@ -714,12 +714,12 @@ static inline bool octacollide(physent *d, const vec &dir, float cutoff, const i
     int diff = (bo.x^(bo.x+bs.x)) | (bo.y^(bo.y+bs.y)) | (bo.z^(bo.z+bs.z)),
         scale = worldscale-1;
     if(diff&~((1<<scale)-1)) return octacollide(d, dir, cutoff, bo, bs, worldroot, ivec(0, 0, 0), hdr.worldsize>>1);
-    cube *c = &worldroot[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+    cube *c = &worldroot[(((bo.z>>scale)&1)<<2) | (((bo.y>>scale)&1)<<1) | ((bo.x>>scale)&1)];
     if(c->ext && c->ext->ents && !mmcollide(d, dir, *c->ext->ents)) return false;
     scale--;
     while(c->children && !(diff&(1<<scale)))
     {
-        c = &c->children[((bo.z>>(scale-2))&4) | ((bo.y>>(scale-1))&2) | ((bo.x>>scale)&1)];
+        c = &c->children[(((bo.z>>scale)&1)<<2) | (((bo.y>>scale)&1)<<1) | ((bo.x>>scale)&1)];
         if(c->ext && c->ext->ents && !mmcollide(d, dir, *c->ext->ents)) return false;
         scale--;
     }
