@@ -204,8 +204,6 @@ struct decalrenderer
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
-
-        foggedshader->set();
     }
 
     static void cleanuprenderstate()
@@ -225,13 +223,14 @@ struct decalrenderer
         if(startvert==endvert) return;
 
         float oldfogc[4];
-        if(flags&DF_INVMOD)
+        if(flags&(DF_INVMOD|DF_OVERBRIGHT))
         {
             glGetFloatv(GL_FOG_COLOR, oldfogc);
-            static float zerofog[4] = { 0, 0, 0, 1 };
+            static float zerofog[4] = { 0, 0, 0, 0 };
             glFogfv(GL_FOG_COLOR, zerofog);
         }
-
+        (flags&DF_OVERBRIGHT ? rgbafoggedshader : foggedshader)->set();
+        
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
