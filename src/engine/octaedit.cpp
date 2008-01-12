@@ -330,7 +330,7 @@ void cursorupdate()
                                            | RAY_SKIPFIRST 
                                            | (passthroughcube==1 ? RAY_PASS : 0), gridsize, entorient, ent);
      
-        if((havesel || dragging) && !passthroughsel)     // now try selecting the selection
+        if((havesel || dragging) && !passthroughsel && !hmapedit)     // now try selecting the selection
             if(rayrectintersect(sel.o.tovec(), vec(sel.s.tovec()).mul(sel.grid), player->o, ray, sdist, orient))
             {   // and choose the nearest of the two
                 if(sdist < wdist) 
@@ -364,7 +364,7 @@ void cursorupdate()
             od = dimension(orient);
             d = dimension(sel.orient);
             
-            if(mag > 0 && hmapedit==1 && dimcoord(horient) == ray[dimension(horient)]<0)
+            if(hmapedit==1 && dimcoord(horient) == ray[dimension(horient)]<0)
             {
                 hmapsel = isheightmap(horient, dimension(horient), false, c);     
                 if(hmapsel)
@@ -450,7 +450,10 @@ void cursorupdate()
         cs[C[d]]  = 0.5f*(sel.cys*gridsize);       
         cs[D[d]] *= gridsize;
         boxs(sel.orient, co, cs);
-        glColor3ub(0,0,120);     // 3D selection box
+        if(hmapedit==1)         // 3D selection box
+            glColor3ub(0,120,0);
+        else 
+            glColor3ub(0,0,120);
         boxs3D(sel.o.tovec(), sel.s.tovec(), sel.grid);
     }
    
@@ -762,20 +765,6 @@ ICOMMAND(hmapselect, "", (),
         htextures.remove(i);
 );
 
-bool ischildless(cube &c)
-{
-    if(!c.children)
-        return true;
-    loopi(8)
-    {
-        if(!ischildless(c.children[i]) || !isempty(c.children[i]))
-            return false;
-    }
-    emptyfaces(c);
-    discardchildren(c);    
-    return true;
-}
-
 inline bool ishtexture(int t)
 {    
     loopv(htextures)
@@ -788,13 +777,9 @@ VARP(bypassheightmapcheck, 0, 0, 1);    // temp
 
 inline bool isheightmap(int o, int d, bool empty, cube *c) 
 {
-    return bypassheightmapcheck || (ischildless(*c) && 
-           ( (empty && isempty(*c)) ||
-           (         
-            (c->faces[R[d]] & 0x77777777) == 0 &&
-            (c->faces[C[d]] & 0x77777777) == 0 &&
-            ishtexture(c->texture[o])
-           )));
+    return havesel ||
+           (empty && isempty(*c)) ||
+           ishtexture(c->texture[o]);
 }
 
 namespace hmap 
@@ -817,11 +802,10 @@ namespace hmap
     {
         t[d] += dcr*f*gridsize;    
         if(t[d] > nz || t[d] < mz) return NULL;
-        cube *c = &lookupcube(t.x, t.y, t.z, -gridsize);
-        if(!isheightmap(sel.orient, d, true, c)) return NULL;        
-        if(lusize > gridsize)
-            c = &lookupcube(t.x, t.y, t.z, gridsize);
+        cube *c = &lookupcube(t.x, t.y, t.z, gridsize);
+        if(c->children) forcemip(*c);
         discardchildren(*c);    
+        if(!isheightmap(sel.orient, d, true, c)) return NULL;        
         if     (t.x < changes.o.x) changes.o.x = t.x;
         else if(t.x > changes.s.x) changes.s.x = t.x;
         if     (t.y < changes.o.y) changes.o.y = t.y;
@@ -1002,7 +986,7 @@ namespace hmap
     void smooth()
     {
         int sum, div;
-        loopbrush(-2)        
+        loopbrush(-2)
         {
             sum = 0;
             div = 9;
