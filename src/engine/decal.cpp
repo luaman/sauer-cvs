@@ -449,7 +449,7 @@ struct decalrenderer
             {
                 bool solid = cu[i].ext && isclipped(cu[i].ext->material) && cu[i].ext->material!=MAT_CLIP;
                 uchar vismask = 0;
-                loopj(6) if(!(avoid&(1<<j)) && (solid ? visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE : visibleface(cu[i], j, co.x, co.y, co.z, size))) vismask |= 1<<j;
+                loopj(6) if(!(avoid&(1<<j)) && (solid ? visiblematerial(cu[i], j, co.x, co.y, co.z, size)==MATSURF_VISIBLE : cu[i].texture[j]!=DEFAULT_SKY && visibleface(cu[i], j, co.x, co.y, co.z, size))) vismask |= 1<<j;
                 if(!vismask) continue;
                 uchar vertused = fvmasks[vismask];
                 vec v[8];
