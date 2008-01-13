@@ -20,7 +20,8 @@ enum
     DF_RND4       = 1<<0,
     DF_ROTATE     = 1<<1,
     DF_INVMOD     = 1<<2,
-    DF_OVERBRIGHT = 1<<3
+    DF_OVERBRIGHT = 1<<3,
+    DF_ADD        = 1<<4
 };
 
 VARFP(maxdecaltris, 1, 1024, 16384, initdecals());
@@ -30,25 +31,21 @@ VAR(dbgdec, 0, 0, 1);
 struct decalrenderer
 {
     const char *texname;
-    int flags, fadeintime;
+    int flags, fadeintime, fadeouttime, timetolive;
     Texture *tex;
     decalinfo *decals;
     int maxdecals, startdecal, enddecal;
     decalvert *verts;
     int maxverts, startvert, endvert, availverts;
 
-    decalrenderer(const char *texname, int flags = 0, int fadeintime = 0) 
-        : texname(texname), flags(flags), fadeintime(fadeintime),
+    decalrenderer(const char *texname, int flags = 0, int fadeintime = 0, int fadeouttime = 1000, int timetolive = -1)
+        : texname(texname), flags(flags),
+          fadeintime(fadeintime), fadeouttime(fadeouttime), timetolive(timetolive),
           tex(NULL),
           decals(NULL), maxdecals(0), startdecal(0), enddecal(0),
           verts(NULL), maxverts(0), startvert(0), endvert(0), availverts(0),
           decalu(0), decalv(0)
     {
-    }
-    ~decalrenderer()
-    {
-        DELETEA(decals);
-        DELETEA(verts);
     }
 
     void init(int tris)
@@ -110,7 +107,7 @@ struct decalrenderer
         else
         {
             color = bvec((d.color>>16)&0xFF, (d.color>>8)&0xFF, d.color&0xFF);
-            if(flags&DF_INVMOD) loopk(3) color[k] = uchar((int(color[k])*int(alpha))>>8);
+            if(flags&(DF_ADD|DF_INVMOD)) loopk(3) color[k] = uchar((int(color[k])*int(alpha))>>8);
         }
 
         decalvert *vert = &verts[d.startvert],
@@ -136,7 +133,7 @@ struct decalrenderer
 
     void clearfadeddecals()
     {
-        int threshold = lastmillis - decalfade;
+        int threshold = lastmillis - (timetolive>=0 ? timetolive : decalfade) - fadeouttime;
         decalinfo *d = &decals[startdecal],
                   *end = &decals[enddecal < startdecal ? maxdecals : enddecal];
         while(d < end && d->millis <= threshold) d++;
@@ -182,11 +179,12 @@ struct decalrenderer
     {
         decalinfo *d = &decals[startdecal],
                   *end = &decals[enddecal < startdecal ? maxdecals : enddecal];
+        int offset = (timetolive>=0 ? timetolive : decalfade) + fadeouttime - lastmillis;
         while(d < end)
         {
-            int fade = decalfade - (lastmillis - d->millis);
-            if(fade >= 1000) return;
-            fadedecal(*d, (fade<<8)/1000);
+            int fade = d->millis + offset;
+            if(fade >= fadeouttime) return;
+            fadedecal(*d, (fade<<8)/fadeouttime);
             d++;
         }
         if(enddecal < startdecal)
@@ -195,9 +193,9 @@ struct decalrenderer
             end = &decals[enddecal];
             while(d < end)
             {
-                int fade = decalfade - (lastmillis - d->millis);
-                if(fade >= 1000) return;
-                fadedecal(*d, (fade<<8)/1000);
+                int fade = d->millis + offset;
+                if(fade >= fadeouttime) return;
+                fadedecal(*d, (fade<<8)/fadeouttime);
                 d++;
             }
         }
@@ -232,7 +230,7 @@ struct decalrenderer
         if(startvert==endvert) return;
 
         float oldfogc[4];
-        if(flags&(DF_INVMOD|DF_OVERBRIGHT))
+        if(flags&(DF_ADD|DF_INVMOD|DF_OVERBRIGHT))
         {
             glGetFloatv(GL_FOG_COLOR, oldfogc);
             static float zerofog[4] = { 0, 0, 0, 1 }, grayfog[4] = { 0.5f, 0.5f, 0.5f, 1 };
@@ -258,6 +256,7 @@ struct decalrenderer
         else 
         {
             if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+            else if(flags&DF_ADD) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
             else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             foggedshader->set();
         }
@@ -277,7 +276,7 @@ struct decalrenderer
         }
         xtravertsva += count;
 
-        if(flags&(DF_INVMOD|DF_OVERBRIGHT)) glFogfv(GL_FOG_COLOR, oldfogc);
+        if(flags&(DF_ADD|DF_INVMOD|DF_OVERBRIGHT)) glFogfv(GL_FOG_COLOR, oldfogc);
         if(flags&DF_OVERBRIGHT && hasTE) resettmu(0);
     }
 
