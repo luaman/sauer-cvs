@@ -700,7 +700,7 @@ void rendermodel(entitylight *light, const char *mdl, int anim, int varseed, int
             }
         }
         if(light) { lightcolor = light->color; lightdir = light->dir; }
-        if(!(cull&MDL_LIGHT)) dynlightreaching(o, lightcolor, lightdir);
+        if(cull&MDL_DYNLIGHT) dynlightreaching(o, lightcolor, lightdir);
     }
 
     if(a) for(int i = 0; a[i].name; i++)
