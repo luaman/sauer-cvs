@@ -176,7 +176,6 @@ extern cube &neighbourcube(int x, int y, int z, int size, int rsize, int orient)
 extern int lookupmaterial(const vec &o);
 extern void newclipplanes(cube &c);
 extern void freeclipplanes(cube &c);
-extern uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s);
 extern void forcemip(cube &c);
 extern bool subdividecube(cube &c, bool fullcheck=true, bool brighten=true);
 extern void converttovectorworld();
@@ -207,6 +206,30 @@ struct cubeface : mergeinfo
 
 extern int mergefaces(int orient, cubeface *m, int sz);
 extern void mincubeface(cube &cu, int orient, const ivec &o, int size, const mergeinfo &orig, mergeinfo &cf);
+
+static inline uchar octantrectangleoverlap(const ivec &c, int size, const ivec &o, const ivec &s)
+{
+    uchar p = 0xFF; // bitmask of possible collisions with octants. 0 bit = 0 octant, etc
+    ivec v(c);
+    v.add(size);
+    if(v.z <= o.z)     p &= 0xF0; // not in a -ve Z octant
+    if(v.z >= o.z+s.z) p &= 0x0F; // not in a +ve Z octant
+    if(v.y <= o.y)     p &= 0xCC; // not in a -ve Y octant
+    if(v.y >= o.y+s.y) p &= 0x33; // etc..
+    if(v.x <= o.x)     p &= 0xAA;
+    if(v.x >= o.x+s.x) p &= 0x55;
+    return p;
+}
+
+static inline bool insideworld(const vec &o)
+{
+    return o.x>=0 && o.x<hdr.worldsize && o.y>=0 && o.y<hdr.worldsize && o.z>=0 && o.z<hdr.worldsize;
+}
+
+static inline bool insideworld(const ivec &o)
+{
+    return uint(o.x)<uint(hdr.worldsize) && uint(o.y)<uint(hdr.worldsize) && uint(o.z)<uint(hdr.worldsize);
+}
 
 // ents
 extern char *entname(entity &e);

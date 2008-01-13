@@ -128,7 +128,7 @@ struct movableset
             if(m->state!=CS_ALIVE) continue;
             if(m->etype==PLATFORM || m->etype==ELEVATOR)
             {
-                if(m->vel.iszero() || !insideworld(m->o)) continue;
+                if(m->vel.iszero()) continue;
                 for(int remaining = curtime; remaining>0;)
                 {
                     int step = min(remaining, 20);
