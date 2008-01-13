@@ -101,9 +101,18 @@ struct decalrenderer
 
     void fadedecal(decalinfo &d, float alpha)
     {
-        vec color((d.color>>16)&0xFF, (d.color>>8)&0xFF, d.color&0xFF);
-        color.div(255.0f);
-        if(flags&(DF_INVMOD|DF_OVERBRIGHT)) color.mul(alpha); 
+        vec color;
+        if(flags&DF_OVERBRIGHT)
+        {
+            if(renderpath!=R_FIXEDFUNCTION || hasTE) color = vec(0.5f, 0.5f, 0.5f);
+            else color = vec(alpha, alpha, alpha);
+        }
+        else
+        {
+            color = vec((d.color>>16)&0xFF, (d.color>>8)&0xFF, d.color&0xFF).div(255.0f);
+            if(flags&DF_INVMOD) color.mul(alpha);
+        }
+
         decalvert *vert = &verts[d.startvert],
                   *end = &verts[d.endvert < d.startvert ? maxverts : d.endvert]; 
         while(vert < end)
@@ -226,20 +235,38 @@ struct decalrenderer
         if(flags&(DF_INVMOD|DF_OVERBRIGHT))
         {
             glGetFloatv(GL_FOG_COLOR, oldfogc);
-            static float zerofog[4] = { 0, 0, 0, 0 };
-            glFogfv(GL_FOG_COLOR, zerofog);
+            static float zerofog[4] = { 0, 0, 0, 1 }, grayfog[4] = { 0.5f, 0.5f, 0.5f, 1 };
+            glFogfv(GL_FOG_COLOR, flags&DF_OVERBRIGHT && (renderpath!=R_FIXEDFUNCTION || hasTE) ? grayfog : zerofog);
         }
-        (flags&DF_OVERBRIGHT ? rgbafoggedshader : foggedshader)->set();
         
+        if(flags&DF_OVERBRIGHT) 
+        {
+            if(renderpath!=R_FIXEDFUNCTION)
+            {
+                glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR); 
+                static Shader *overbrightdecalshader = NULL;
+                if(!overbrightdecalshader) overbrightdecalshader = lookupshaderbyname("overbrightdecal");
+                overbrightdecalshader->set();
+            }
+            else if(hasTE)
+            {
+                glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+                setuptmu(0, "T , C @ Ca");
+            }
+            else glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        else 
+        {
+            if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+            else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            foggedshader->set();
+        }
+
+        glBindTexture(GL_TEXTURE_2D, tex->gl);
+
         glVertexPointer(3, GL_FLOAT, sizeof(decalvert), &verts->pos);
         glTexCoordPointer(2, GL_FLOAT, sizeof(decalvert), &verts->u);
         glColorPointer(4, GL_FLOAT, sizeof(decalvert), &verts->color);
-
-        if(flags&DF_OVERBRIGHT) glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-        else if(flags&DF_INVMOD) glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-        else glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glBindTexture(GL_TEXTURE_2D, tex->gl);
 
         int count = endvert < startvert ? maxverts - startvert : endvert - startvert;
         glDrawArrays(GL_TRIANGLES, startvert, count);
@@ -250,7 +277,8 @@ struct decalrenderer
         }
         xtravertsva += count;
 
-        if(flags&DF_INVMOD) glFogfv(GL_FOG_COLOR, oldfogc);
+        if(flags&(DF_INVMOD|DF_OVERBRIGHT)) glFogfv(GL_FOG_COLOR, oldfogc);
+        if(flags&DF_OVERBRIGHT && hasTE) resettmu(0);
     }
 
     decalinfo &newdecal()

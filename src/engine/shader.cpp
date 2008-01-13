@@ -5,7 +5,7 @@
 
 Shader *Shader::lastshader = NULL;
 
-Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *foggedshader = NULL, *rgbafoggedshader = NULL, *foggednotextureshader = NULL;
+Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *foggedshader = NULL, *foggednotextureshader = NULL;
 
 static hashtable<const char *, Shader> shaders;
 static Shader *curshader = NULL;
@@ -20,7 +20,6 @@ void loadshaders()
     notextureshader = lookupshaderbyname("notexture");
     nocolorshader = lookupshaderbyname("nocolor");
     foggedshader = lookupshaderbyname("fogged");
-    rgbafoggedshader = lookupshaderbyname("rgbafogged");
     foggednotextureshader = lookupshaderbyname("foggednotexture");
     if(renderpath!=R_FIXEDFUNCTION)
     {
@@ -1257,6 +1256,7 @@ void inittmus()
         }
         glActiveTexture_(GL_TEXTURE0_ARB);
     }
+    else if(hasTE) { maxtmus = 1; resettmu(0); }
     if(renderpath==R_FIXEDFUNCTION)
     {
         if(maxtmus<4) caustics = 0;
