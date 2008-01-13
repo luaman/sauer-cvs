@@ -520,6 +520,8 @@ struct fpsclient : igameclient
         if(m_sp) ms.preloadmonsters();
     }
 
+    IVARP(startmenu, 0, 1, 1);
+
     void startmap(const char *name)   // called just after a map load
     {
         respawned = suicided = -1;
