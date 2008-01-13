@@ -593,7 +593,7 @@ bool mmcollide(physent *d, const vec &dir, octaentities &oc)               // co
     loopv(oc.mapmodels)
     {
         extentity &e = *ents[oc.mapmodels[i]];
-        if(e.attr3 && e.attr3!=15 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED)) continue;
+        if(e.attr3 && e.attr3!=15 && (e.triggerstate == TRIGGER_DISAPPEARED || !checktriggertype(e.attr3, TRIG_COLLIDE) || e.triggerstate == TRIGGERED || (e.triggerstate == TRIGGERING && lastmillis-e.lasttrigger >= 500))) continue;
         model *m = loadmodel(NULL, e.attr2);
         if(!m || !m->collide) continue;
         vec center, radius;
