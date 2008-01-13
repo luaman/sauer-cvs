@@ -563,7 +563,7 @@ struct fpsclient : igameclient
             lastslowmohealth = lastmillis;
         }
 
-        if(*name && openmainmenu)
+        if(*name && openmainmenu && startmenu())
         {
             showgui("main");
             openmainmenu = false;
