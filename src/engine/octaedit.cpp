@@ -1014,6 +1014,7 @@ namespace hmap
         br = dir>0 ? 0x08080808 : 0;
      //   biasup = mode == dir<0;
         biasup = dir<0;
+        bool paintme = paintbrush;
         int cx = (sel.corner&1 ? 0 : -1);
         int cy = (sel.corner&2 ? 0 : -1);
         hws= (hdr.worldsize>>gridpower);
@@ -1028,15 +1029,20 @@ namespace hmap
         ny = min(MAXBRUSH-1, hws-gy) - 1; 
         if(havesel)
         {   // selection range
-            mx = max(mx, (sel.o[R[d]]>>gridpower)-gx);
-            my = max(my, (sel.o[C[d]]>>gridpower)-gy);
-            nx = min(nx, (sel.s[R[d]]+(sel.o[R[d]]>>gridpower))-gx-1);
-            ny = min(ny, (sel.s[C[d]]+(sel.o[C[d]]>>gridpower))-gy-1);
+            bmx = mx = max(mx, (sel.o[R[d]]>>gridpower)-gx);
+            bmy = my = max(my, (sel.o[C[d]]>>gridpower)-gy);
+            bnx = nx = min(nx, (sel.s[R[d]]+(sel.o[R[d]]>>gridpower))-gx-1);
+            bny = ny = min(ny, (sel.s[C[d]]+(sel.o[C[d]]>>gridpower))-gy-1);
         }
-        bmx = max(mx, brushminx); // brush range
-        bmy = max(my, brushminy);
-        bnx = min(nx, brushmaxx-1);
-        bny = min(ny, brushmaxy-1);   
+        if(havesel && mode<0) // -ve means smooth selection
+            paintme = false;
+        else
+        {   // brush range
+            bmx = max(mx, brushminx);
+            bmy = max(my, brushminy);
+            bnx = min(nx, brushmaxx-1);
+            bny = min(ny, brushmaxy-1);   
+        }
         nz = hdr.worldsize-gridsize;
         mz = 0;
                     
@@ -1050,7 +1056,7 @@ namespace hmap
                clamp(MAXBRUSH2-cy, bmy, bny),
                dc ? gz : hws - gz);
         selecting = false;
-        if(paintbrush)
+        if(paintme)
             paint();
         else 
             smooth();
