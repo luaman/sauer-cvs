@@ -19,6 +19,7 @@ extern PFNGLACTIVETEXTUREARBPROC       glActiveTexture_;
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture_;
 extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2f_;
 extern PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_;
+extern PFNGLMULTITEXCOORD4FARBPROC     glMultiTexCoord4f_;
 
 // GL_ARB_vertex_buffer_object
 extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
@@ -145,7 +146,7 @@ extern void rendershadowmapreceivers();
 extern void guessshadowdir();
 
 // rendergl
-extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF, hasVP2, hasVP3, hasPP;
 
 extern bool envmapping;
 

@@ -6,9 +6,12 @@ VARP(animationinterpolationtime, 0, 150, 1000);
 
 model *loadingmodel = NULL;
 
+#include "animmodel.h"
 #include "vertmodel.h"
+#include "skelmodel.h"
 #include "md2.h"
 #include "md3.h"
+#include "md5.h"
 
 #define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
 
@@ -229,8 +232,14 @@ model *loadmodel(const char *name, int i, bool msg)
             if(!m->load())
             {    
                 delete m;
-                loadingmodel = NULL;
-                return NULL; 
+                m = new md5(name);
+                loadingmodel = m;
+                if(!m->load())
+                {
+                    delete m;
+                    loadingmodel = NULL;
+                    return NULL; 
+                }
             }
         }
         loadingmodel = NULL;
@@ -832,7 +841,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 // convenient function that covers the usual anims for players/monsters/npcs
 
-VAR(animoverride, 0, 0, NUMANIMS-1);
+VAR(animoverride, -1, 0, NUMANIMS-1);
 VAR(testanims, 0, 0, 1);
 
 void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int attack, int attackdelay, int lastaction, int lastpain, float sink)
@@ -842,7 +851,7 @@ void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int 
     vec o(d->o);
     o.z -= d->eyeheight + sink;
     int varseed = (int)(size_t)d, basetime = 0;
-    if(animoverride) anim = animoverride|ANIM_LOOP;
+    if(animoverride) anim = (animoverride<0 ? ANIM_ALL : animoverride)|ANIM_LOOP;
     else if(d->state==CS_DEAD)
     {
         pitch = 0;

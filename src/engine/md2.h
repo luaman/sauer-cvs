@@ -77,7 +77,7 @@ struct md2 : vertmodel
 
     int type() { return MDL_MD2; }
 
-    struct md2meshgroup : meshgroup
+    struct md2meshgroup : vertmeshgroup
     {
         void genverts(int *glcommands, vector<tcvert> &tcverts, vector<ushort> &vindexes, vector<tri> &tris)
         {
@@ -141,7 +141,7 @@ struct md2 : vertmodel
 
             numframes = header.numframes;
 
-            mesh &m = *new mesh;
+            vertmesh &m = *new vertmesh;
             m.group = this;
             meshes.add(&m);
 
@@ -256,7 +256,7 @@ struct md2 : vertmodel
         center.add(radius);
     }
 
-    meshgroup *loadmeshes(char *name)
+    meshgroup *loadmeshes(char *name, va_list args)
     {
         md2meshgroup *group = new md2meshgroup();
         if(!group->load(name)) { delete group; return NULL; }
@@ -276,7 +276,7 @@ struct md2 : vertmodel
         if(!mdl.meshes)
         {
             s_sprintfd(name2)("packages/models/%s/tris.md2", pname);    // try md2 in parent folder (vert sharing)
-            mdl.meshes = loadmeshes(path(name2));
+            mdl.meshes = sharemeshes(path(name2));
             if(!mdl.meshes) return false;
         }
         Texture *tex, *masks;

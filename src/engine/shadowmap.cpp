@@ -323,10 +323,6 @@ VAR(smscissor, 0, 1, 1);
    
 void rendershadowmapcasters()
 {
-    static Shader *shadowmapshader = NULL;
-    if(!shadowmapshader) shadowmapshader = lookupshaderbyname("shadowmapcaster");
-    shadowmapshader->set();
-
     shadowmapcasters = 0;
     smx2 = smy2 = -1;
     smx1 = smy1 = 1;

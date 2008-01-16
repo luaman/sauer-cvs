@@ -1436,6 +1436,8 @@ void setupTMUs(renderstate &cur, bool causticspass, bool fogpass)
     }
     else
     {
+        // need to invalidate vertex params in case they were used somewhere else for streaming params
+        invalidateenvparams(SHPARAM_VERTEX, 10, RESERVEDSHADERPARAMS + MAXSHADERPARAMS - 10);
         glEnableClientState(GL_COLOR_ARRAY);
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glEnable(GL_TEXTURE_2D); }
         glActiveTexture_(GL_TEXTURE0_ARB);

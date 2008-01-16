@@ -55,6 +55,7 @@ enum
     NUMANIMS 
 };
 
+#define ANIM_ALL         0xFF
 #define ANIM_INDEX       0xFF
 #define ANIM_LOOP        (1<<8)
 #define ANIM_START       (1<<9)

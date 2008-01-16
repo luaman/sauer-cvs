@@ -54,7 +54,7 @@ struct md3 : vertmodel
 
     int type() { return MDL_MD3; }
 
-    struct md3meshgroup : meshgroup
+    struct md3meshgroup : vertmeshgroup
     {
         bool load(char *path)
         {
@@ -98,8 +98,10 @@ struct md3 : vertmodel
             int mesh_offset = header.ofs_meshes;
             loopi(header.nummeshes)
             {
-                mesh &m = *meshes.add(new mesh);
+                vertmesh &m = *new vertmesh;
                 m.group = this;
+                meshes.add(&m);
+
                 md3meshheader mheader;
                 fseek(f, mesh_offset, SEEK_SET);
                 fread(&mheader, sizeof(md3meshheader), 1, f);
@@ -172,12 +174,10 @@ struct md3 : vertmodel
 
         if(a) for(int i = 0; a[i].name; i++)
         {
-            switch(a[i].type)
-            {
-                case MDL_ATTACH_VWEP: link(NULL, "tag_weapon"); break;
-                case MDL_ATTACH_SHIELD: link(NULL, "tag_shield"); break;
-                case MDL_ATTACH_POWERUP: link(NULL, "tag_powerup"); break;
-            }
+            md3 *m = (md3 *)a[i].m;
+            if(!m) continue;
+            part *p = m->parts[0];
+            unlink(p);
         }
     }
 
@@ -190,7 +190,7 @@ struct md3 : vertmodel
         radius.y += margin;
     }   
 
-    meshgroup *loadmeshes(char *name)
+    meshgroup *loadmeshes(char *name, va_list args)
     {
         md3meshgroup *group = new md3meshgroup();
         if(!group->load(name)) { delete group; return NULL; }
@@ -280,7 +280,7 @@ void md3pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pit
     if(!mdl.meshes) return; \
     loopv(mdl.meshes->meshes) \
     { \
-        md3::mesh &m = *mdl.meshes->meshes[i]; \
+        md3::vertmesh &m = *(md3::vertmesh *)mdl.meshes->meshes[i]; \
         if(!strcmp(meshname, "*") || !strcmp(m.name, meshname)) \
         { \
             md3::skin &s = mdl.skins[i]; \
