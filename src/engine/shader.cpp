@@ -21,11 +21,10 @@ VAR(maxfplocalparams, 1, 0, 0);
 
 void loadshaders()
 {
-    GLint val;
-    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val); maxvpenvparams = val; 
-    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val); maxvplocalparams = val;
-    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val); maxfpenvparams = val;
-    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val); maxfplocalparams = val;
+    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, (GLint*)&maxvpenvparams); 
+    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, (GLint*)&maxvplocalparams);
+    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, (GLint*)&maxfpenvparams);
+    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, (GLint*)&maxfplocalparams);
     
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
@@ -1293,8 +1292,7 @@ void inittmus()
 {
     if(hasTE && hasMT)
     {
-        GLint val;
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &val); maxtmus = val;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint*)&maxtmus);
         maxtmus = max(1, min(MAXTMUS, maxtmus));
         loopi(maxtmus)
         {
