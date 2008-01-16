@@ -6542,6 +6542,15 @@ GLAPI void APIENTRY glStringMarkerGREMEDY (GLsizei, const GLvoid *);
 typedef void (APIENTRYP PFNGLSTRINGMARKERGREMEDYPROC) (GLsizei len, const GLvoid *string);
 #endif
 
+#ifndef GL_EXT_gpu_program_parameters
+#define GL_EXT_gpu_program_parameters 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glProgramEnvParameters4fvEXT (GLenum, GLuint, GLsizei, const GLfloat *);
+GLAPI void APIENTRY glProgramLocalParameters4fvEXT (GLenum, GLuint, GLsizei, const GLfloat *);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLPROGRAMENVPARAMETERS4FVEXTPROC) (GLenum target, GLuint index, GLsizei count, const GLfloat *params);
+typedef void (APIENTRYP PFNGLPROGRAMLOCALPARAMETERS4FVEXTPROC) (GLenum target, GLuint index, GLsizei count, const GLfloat *params);
+#endif
 
 #ifdef __cplusplus
 }
