@@ -667,7 +667,7 @@ struct fpsclient : igameclient
 
         s_sprintfd(gunname)("hudguns/%s", guns[player1->gunselect].file);
         if((m_teamskins || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
-        rendermodel(NULL, gunname, anim, 0, 0, sway, player1->yaw+90, player1->pitch, speed, base, NULL, MDL_LIGHT);
+        rendermodel(NULL, gunname, anim, sway, player1->yaw+90, player1->pitch, MDL_LIGHT, NULL, NULL, base, speed);
     }
 
     void drawhudgun()

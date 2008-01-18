@@ -200,7 +200,7 @@ struct md2 : vertmodel
 
     struct md2part : part
     {
-        void getdefaultanim(animstate &as, int anim, int varseed, dynent *d)
+        void getdefaultanim(animinfo &info, int anim, uint varseed, dynent *d)
         {
             //                      0              3              6   7   8   9   10   11  12  13   14  15  16  17
             //                      D    D    D    D    D    D    A   P   I   R,  E    J   T   W    FO  SA  GS  GI
@@ -212,31 +212,35 @@ struct md2 : vertmodel
             anim &= ANIM_INDEX;
             if((size_t)anim >= sizeof(animfr)/sizeof(animfr[0]))
             {
-                as.frame = 0;
-                as.range = 1;
+                info.frame = 0;
+                info.range = 1;
                 return;
             }
             int n = animfr[anim];
-            if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= uint(varseed)%3;
-            as.frame = _frame[n];
-            as.range = _range[n];
+            if(anim==ANIM_DYING || anim==ANIM_DEAD) n -= varseed%3;
+            info.frame = _frame[n];
+            info.range = _range[n];
         }
     };
 
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
+    void render(int anim, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
     {
         if(!loaded) return;
 
-        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
+        parts[0]->render(anim, speed, basetime, pitch, axis, d, dir, campos, fogplane);
 
-        if(a) for(int i = 0; a[i].name; i++)
+        if(a) 
         {
-            md2 *m = (md2 *)a[i].m;
-            if(!m) continue;
-            m->setskin();
-            part *p = m->parts[0];
-            p->index = parts.length()+i;
-            p->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
+            int index = parts.last()->index + parts.last()->numanimparts;
+            for(int i = 0; a[i].name; i++)
+            {
+                animmodel *m = (animmodel *)a[i].m;
+                if(!m) continue;
+                part *p = m->parts[0];
+                p->index = index;
+                p->render(anim, speed, basetime, pitch, axis, d, dir, campos, fogplane);
+                index += p->numanimparts;
+            }
         }
     }
 
@@ -256,7 +260,7 @@ struct md2 : vertmodel
         center.add(radius);
     }
 
-    meshgroup *loadmeshes(char *name, va_list args)
+    meshgroup *loadmeshes(char *name)
     {
         md2meshgroup *group = new md2meshgroup();
         if(!group->load(name)) { delete group; return NULL; }
@@ -323,7 +327,7 @@ void md2anim(char *anim, int *frame, int *range, float *speed, int *priority)
     if(anims.empty()) conoutf("could not find animation %s", anim);
     else loopv(anims)
     {
-        loadingmd2->parts.last()->setanim(anims[i], *frame, *range, *speed, *priority);
+        loadingmd2->parts.last()->setanim(0, anims[i], *frame, *range, *speed, *priority);
     }
 }
 

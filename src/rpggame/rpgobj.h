@@ -153,7 +153,7 @@ struct rpgobj : g3d_callback, stats
         }
         else
         {
-            rendermodel(NULL, model, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, vec(ent->o).sub(vec(0, 0, ent->eyeheight)), ent->yaw+90, 0, 0, 0, ent);
+            rendermodel(NULL, model, ANIM_MAPMODEL|ANIM_LOOP, vec(ent->o).sub(vec(0, 0, ent->eyeheight)), ent->yaw+90, 0, MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED | MDL_LIGHT, ent);
         }
     }
 

@@ -86,12 +86,29 @@ struct md3 : vertmodel
                     fread(&tag, sizeof(md3tag), 1, f);
                     endianswap(&tag.pos, sizeof(float), 12);
                     if(tag.name[0] && i<header.numtags) tags[i].name = newstring(tag.name);
+                    matrix3x4 &m = tags[i].transform;
+                    tag.pos.y *= -1;
+                    // undo the -y
+                    loopj(3) tag.rotation[1][j] *= -1;
+                    // then restore it
+                    loopj(3) tag.rotation[j][1] *= -1;
+                    m.X.w = tag.pos.x;
+                    m.Y.w = tag.pos.y;
+                    m.Z.w = tag.pos.z;
+                    loopj(3) 
+                    {
+                        m.X[j] = tag.rotation[j][0];
+                        m.Y[j] = tag.rotation[j][1];
+                        m.Z[j] = tag.rotation[j][2];
+                    }
+#if 0
                     tags[i].pos = vec(tag.pos.x, -tag.pos.y, tag.pos.z);
                     memcpy(tags[i].transform, tag.rotation, sizeof(tag.rotation));
                     // undo the -y
                     loopj(3) tags[i].transform[1][j] *= -1;
                     // then restore it
                     loopj(3) tags[i].transform[j][1] *= -1;
+#endif
                 }
             }
 
@@ -153,34 +170,6 @@ struct md3 : vertmodel
         }
     };
     
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
-    {
-        if(!loaded) return;
-
-        if(a) for(int i = 0; a[i].name; i++)
-        {
-            md3 *m = (md3 *)a[i].m;
-            if(!m) continue;
-            part *p = m->parts[0];
-            switch(a[i].type)
-            {
-                case MDL_ATTACH_VWEP: if(link(p, "tag_weapon", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
-                case MDL_ATTACH_SHIELD: if(link(p, "tag_shield", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
-                case MDL_ATTACH_POWERUP: if(link(p, "tag_powerup", a[i].anim, a[i].basetime)) p->index = parts.length()+i; break;
-            }
-        }
-
-        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
-
-        if(a) for(int i = 0; a[i].name; i++)
-        {
-            md3 *m = (md3 *)a[i].m;
-            if(!m) continue;
-            part *p = m->parts[0];
-            unlink(p);
-        }
-    }
-
     void extendbb(int frame, vec &center, vec &radius, modelattach &a)
     {
         vec acenter, aradius;
@@ -190,7 +179,7 @@ struct md3 : vertmodel
         radius.y += margin;
     }   
 
-    meshgroup *loadmeshes(char *name, va_list args)
+    meshgroup *loadmeshes(char *name)
     {
         md3meshgroup *group = new md3meshgroup();
         if(!group->load(name)) { delete group; return NULL; }
@@ -383,7 +372,7 @@ void md3anim(char *anim, int *frame, int *range, float *speed, int *priority)
     if(anims.empty()) conoutf("could not find animation %s", anim);
     else loopv(anims)
     {
-        loadingmd3->parts.last()->setanim(anims[i], *frame, *range, *speed, *priority);
+        loadingmd3->parts.last()->setanim(0, anims[i], *frame, *range, *speed, *priority);
     }
 }
 

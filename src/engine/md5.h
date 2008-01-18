@@ -4,6 +4,13 @@ md5 *loadingmd5 = NULL;
 
 string md5dir;
 
+struct md5jointinfo
+{
+    string name;
+};
+
+vector<md5jointinfo> md5joints;
+
 struct md5joint
 {
     vec pos;
@@ -70,20 +77,30 @@ struct md5 : skelmodel
                 }
                 vert &vv = verts[i];
                 vv.pos = pos;
-                loopj(4)
+                int sorted = 0;
+                loopj(v.count)
                 {
-                    if(j < v.count)
+                    md5weight &w = weightinfo[v.start+j];
+                    loopk(sorted) if(w.bias > vv.weights[k])
                     {
-                        md5weight &w = weightinfo[v.start+j];
-                        vv.weights[j] = w.bias;
-                        vv.bones[j] = w.joint;
+                        for(int l = min(sorted-1, 2); l >= k; l--)
+                        {
+                            vv.weights[l+1] = vv.weights[l];
+                            vv.bones[l+1] = vv.bones[l];     
+                        }
+                        vv.weights[k] = w.bias;
+                        vv.bones[k] = w.joint;
+                        if(sorted<4) sorted++;
+                        goto nextweight;
                     }
-                    else
+                    if(sorted<4)
                     {
-                        vv.weights[j] = 0;
-                        vv.bones[j] = 0;
+                        vv.weights[sorted] = w.bias;
+                        vv.bones[sorted++] = w.joint;
                     }
+                    nextweight:;
                 }
+                loopj(4-sorted) { vv.weights[sorted+j] = 0; vv.bones[sorted+j] = 0; }
                 tcverts[i].u = v.u;
                 tcverts[i].v = v.v;
             }
@@ -117,10 +134,27 @@ struct md5 : skelmodel
             {
                 fgets(buf, bufsize, f);
                 if(buf[0]=='}' || feof(f)) break;
-                if(strstr(buf, "shader"))
+                if(strstr(buf, "// meshes:"))
+                {
+                    char *start = strchr(buf, ':')+1;
+                    if(*start==' ') start++; 
+                    char *end = start + strlen(start)-1;
+                    while(end >= start && isspace(*end)) end--;
+                    name = newstring(start, end+1-start);
+                }
+                else if(strstr(buf, "shader"))
                 {
                     char *start = strchr(buf, '"'), *end = start ? strchr(start+1, '"') : NULL;
-                    if(start && end) name = newstring(start+1, end-(start+1));
+                    if(start && end) 
+                    {
+                        char *texname = newstring(start+1, end-(start+1));
+                        part *p = loadingmd5->parts.last();
+                        p->initskins(notexture, notexture, group->meshes.length());
+                        skin &s = p->skins.last();
+                        s_sprintfd(spath)("%s/%s", md5dir, texname);
+                        s.tex = textureload(spath, 0, true, false);
+                        delete[] texname;
+                    }
                 }
                 else if(sscanf(buf, " numverts %d", &numverts)==1)
                 {
@@ -160,65 +194,107 @@ struct md5 : skelmodel
         md5meshgroup() 
         {
         }
-        
-        bool loadmd5mesh(const char *filename, char *buf, int bufsize)
+
+        bool loadmd5mesh(const char *filename)
         {
             FILE *f = openfile(filename, "r");
             if(!f) return false;
 
+            md5joints.setsize(0);
+
+            char buf[512];
+            vector<md5joint> basejoints;
             for(;;)
             {
-                fgets(buf, bufsize, f);
+                fgets(buf, sizeof(buf), f);
                 if(feof(f)) break;
                 int tmp;
                 if(sscanf(buf, " MD5Version %d", &tmp)==1)
                 {
                     if(tmp!=10) { fclose(f); return false; }
                 }
-                else if(sscanf(buf, " numJoints %d", &tmp)==1);
+                else if(sscanf(buf, " numJoints %d", &numbones)==1);
                 else if(sscanf(buf, " numMeshes %d", &tmp)==1);
                 else if(strstr(buf, "joints {"))
                 {
+                    string name;
+                    int parent;
+                    md5joint j;
                     for(;;)
                     {
-                        fgets(buf, bufsize, f);
+                        fgets(buf, sizeof(buf), f);
                         if(buf[0]=='}' || feof(f)) break;
+                        if(sscanf(buf, " %s %d ( %f %f %f ) ( %f %f %f )",
+                            name, &parent, &j.pos.x, &j.pos.y, &j.pos.z,
+                            &j.orient.x, &j.orient.y, &j.orient.z)==8)
+                        {
+                            char *start = strchr(name, '"'), *end = start ? strchr(start+1, '"') : NULL;
+                            if(start && end) s_strncpy(md5joints.add().name, start+1, end-(start+1)+1);
+                            else s_strcpy(md5joints.add().name, name);
+
+                            j.orient.restorew();
+                            basejoints.add(j);
+                        }
                     }
+                    if(basejoints.length()!=numbones) { fclose(f); return false; }
                 }
                 else if(strstr(buf, "mesh {"))
                 {
                     md5mesh *m = new md5mesh;
                     m->group = this;
                     meshes.add(m);
-                    m->load(f, buf, bufsize);
+                    m->load(f, buf, sizeof(buf));
                 }
             }
-            
+         
+            numbones = basejoints.length();
+            basebones = new dualquat[numbones];
+            loopv(basejoints) basebones[i] = dualquat(basejoints[i].orient, basejoints[i].pos);
+
+            loopv(meshes)
+            {
+                md5mesh &m = *(md5mesh *)meshes[i];
+                m.buildverts(basejoints);
+                m.buildnorms();
+                m.cleanup();
+            }
+ 
             fclose(f);
             return true;
         }
 
-        bool loadmd5anim(const char *filename, char *buf, int bufsize)
+        skelanimspec *loadmd5anim(const char *filename)
         {
+            skelanimspec *sa = findskelanim(filename);
+            if(sa) return sa;
+
             FILE *f = openfile(filename, "r");
-            if(!f) return false;
+            if(!f) return NULL;
 
             vector<md5hierarchy> hierarchy;
             vector<md5joint> basejoints;
-            int animdatalen = 0;
+            int animdatalen = 0, animframes = 0;
             float *animdata = NULL;
-
+            dualquat *animbones = NULL;
+            uchar *usedjoints = NULL;
+            char buf[512];
             for(;;)
             {
-                fgets(buf, bufsize, f);
+                fgets(buf, sizeof(buf), f);
                 if(feof(f)) break;
                 int tmp;
                 if(sscanf(buf, " MD5Version %d", &tmp)==1)
                 {
-                    if(tmp!=10) { fclose(f); return false; }
+                    if(tmp!=10) { fclose(f); return NULL; }
                 }
-                else if(sscanf(buf, " numJoints %d", &tmp)==1);
-                else if(sscanf(buf, " numFrames %d", &numframes)==1);
+                else if(sscanf(buf, " numJoints %d", &tmp)==1)
+                {
+                    if(tmp!=numbones) { fclose(f); return NULL; }
+                }
+                else if(sscanf(buf, " numFrames %d", &animframes)==1)
+                {
+                    if(numframes<1) { fclose(f); return NULL; }
+                }
                 else if(sscanf(buf, " frameRate %d", &tmp)==1);
                 else if(sscanf(buf, " numAnimatedComponents %d", &animdatalen)==1)
                 {
@@ -228,7 +304,7 @@ struct md5 : skelmodel
                 {
                     for(;;)
                     {
-                        fgets(buf, bufsize, f);
+                        fgets(buf, sizeof(buf), f);
                         if(buf[0]=='}' || feof(f)) break;
                     }
                 }
@@ -236,7 +312,7 @@ struct md5 : skelmodel
                 {
                     for(;;)
                     {
-                        fgets(buf, bufsize, f);
+                        fgets(buf, sizeof(buf), f);
                         if(buf[0]=='}' || feof(f)) break;
                         md5hierarchy h;
                         if(sscanf(buf, " %s %d %d %d", h.name, &h.parent, &h.flags, &h.start)==4)
@@ -247,7 +323,7 @@ struct md5 : skelmodel
                 {
                     for(;;)
                     {
-                        fgets(buf, bufsize, f);
+                        fgets(buf, sizeof(buf), f);
                         if(buf[0]=='}' || feof(f)) break;
                         md5joint j;
                         if(sscanf(buf, " ( %f %f %f ) ( %f %f %f )", &j.pos.x, &j.pos.y, &j.pos.z, &j.orient.x, &j.orient.y, &j.orient.z)==6)
@@ -256,27 +332,52 @@ struct md5 : skelmodel
                             basejoints.add(j);
                         }
                     }
-                    numbones = basejoints.length();
-                    bones = new bone[numframes*numbones];
+                    if(basejoints.length()!=numbones) { fclose(f); return NULL; }
+                    dualquat *animbones = new dualquat[(numframes+animframes)*numbones];
+                    if(bones)
+                    {
+                        memcpy(animbones, bones, numframes*numbones*sizeof(dualquat));
+                        delete[] bones;
+                    }
+                    bones = animbones;
+                    animbones += numframes*numbones;
+
+                    sa = &addskelanim(filename);
+                    usedjoints = sa->bonemask;
+                    uchar **animmasks = new uchar *[numframes+animframes];
+                    if(framemasks)
+                    {
+                        memcpy(animmasks, framemasks, numframes*sizeof(uchar *));
+                        delete[] framemasks;
+                    }
+                    framemasks = animmasks;
+                    animmasks += numframes;
+                    loopi(animframes) animmasks[i] = sa->bonemask;
+
+                    numframes += animframes;
                 }
                 else if(sscanf(buf, " frame %d", &tmp)==1)
                 {
                     loopi(animdatalen) fscanf(f, "%f", &animdata[i]);
-                    bone *frame = &bones[tmp*numbones];
+                    dualquat *frame = &animbones[tmp*numbones];
                     loopv(basejoints)
                     {
                         md5hierarchy &h = hierarchy[i];
                         md5joint j = basejoints[i];
                         float *jdata = &animdata[h.start];
-                        if(h.flags&1) j.pos.x = *jdata++;
-                        if(h.flags&2) j.pos.y = *jdata++;
-                        if(h.flags&4) j.pos.z = *jdata++;
-                        if(h.flags&8) j.orient.x = *jdata++;
-                        if(h.flags&16) j.orient.y = *jdata++;
-                        if(h.flags&32) j.orient.z = *jdata++;
-                        j.orient.restorew();
-                        if(h.parent<0) frame[i].transform = dualquat(j.orient, j.pos); 
-                        else (frame[i] = frame[h.parent]).transform.mul(dualquat(j.orient, j.pos));
+                        if(h.flags)
+                        {
+                            usedjoints[i] = 1;
+                            if(h.flags&1) j.pos.x = *jdata++;
+                            if(h.flags&2) j.pos.y = *jdata++;
+                            if(h.flags&4) j.pos.z = *jdata++;
+                            if(h.flags&8) j.orient.x = *jdata++;
+                            if(h.flags&16) j.orient.y = *jdata++;
+                            if(h.flags&32) j.orient.z = *jdata++;
+                            j.orient.restorew();
+                        }
+                        if(h.parent<0) frame[i] = dualquat(j.orient, j.pos); 
+                        else (frame[i] = frame[h.parent]).mul(dualquat(j.orient, j.pos));
                     }
                 }    
             }
@@ -285,62 +386,44 @@ struct md5 : skelmodel
             fclose(f);
 
             vector<dualquat> invbase;
-            loopv(basejoints)
+            loopi(numbones) 
             {
-                md5hierarchy &h = hierarchy[i];
-                md5joint &j = basejoints[i];
-                if(h.parent>=0)
-                {
-                    md5joint &p = basejoints[h.parent];
-                    j.pos = p.orient.rotate(j.pos).add(p.pos);
-                    quat q;
-                    q.mul(p.orient, j.orient);
-                    q.normalize();
-                    j.orient = q;
-                }
-                dualquat d(j.orient, j.pos);
+                dualquat &d = invbase.add(basebones[i]);
+#if 1
+                d.translate(vec(translate).neg());
+                d.scale(1.0f/scale);
+#endif
                 d.invert();
-                d.normalize();
-                invbase.add(d);
             }
-            loopv(meshes)
+            loopi(animframes) 
             {
-                md5mesh &m = *(md5mesh *)meshes[i];
-                m.buildverts(basejoints);
-                m.buildnorms();
-                m.cleanup();
-            }
-            loopi(numframes) 
-            {
-                bone *frame = &bones[i*numbones];
+                dualquat *frame = &animbones[i*numbones];
                 loopj(numbones) 
                 {
-                    frame[j].transform.mul(invbase[j]);
-                    frame[j].transform.normalize();        
+                    dualquat &d = frame[j];
+#if 1
+                    d.mul(invbase[j]);
+#endif
+                    d.scale(scale);
+                    d.translate(translate);
+#if 0
+                    d.mul(invbase[j]);
+#endif
                 }
             }
 
-            return true;
+            return sa;
         }
 
-        bool load(const char *meshfile, const char *animfile)
+        bool load(const char *meshfile)
         {
             name = newstring(meshfile);
 
-            char buf[512];
-            if(!loadmd5mesh(meshfile, buf, sizeof(buf))) return false;
-            if(!loadmd5anim(animfile, buf, sizeof(buf))) return false;
+            if(!loadmd5mesh(meshfile)) return false;
             
             return true;
         }
     };            
-
-    void render(int anim, int varseed, float speed, int basetime, float pitch, const vec &axis, dynent *d, modelattach *a, const vec &dir, const vec &campos, const plane &fogplane)
-    {
-        if(!loaded) return;
-
-        parts[0]->render(anim, varseed, speed, basetime, pitch, axis, d, dir, campos, fogplane);
-    }
 
     void extendbb(int frame, vec &center, vec &radius, modelattach &a)
     {
@@ -351,10 +434,10 @@ struct md5 : skelmodel
         radius.y += margin;
     }
 
-    meshgroup *loadmeshes(char *name, va_list args)
+    meshgroup *loadmeshes(char *name)
     {
         md5meshgroup *group = new md5meshgroup();
-        if(!group->load(name, va_arg(args, char *))) { delete group; return NULL; }
+        if(!group->load(name)) { delete group; return NULL; }
         return group;
     }
 
@@ -368,13 +451,11 @@ struct md5 : skelmodel
         do --fname; while(fname >= loadname && *fname!='/' && *fname!='\\');
         fname++;
         s_sprintfd(meshname)("packages/models/%s/%s.md5mesh", loadname, fname);
-        s_sprintfd(animname)("packages/models/%s/%s.md5anim", loadname, fname);
-        mdl.meshes = sharemeshes(path(meshname), path(animname));
+        mdl.meshes = sharemeshes(path(meshname));
         if(!mdl.meshes) return false;
-        Texture *tex, *masks;
-        loadskin(loadname, parentdir(loadname), tex, masks);
-        mdl.initskins(tex, masks);
-        if(tex==notexture) conoutf("could not load model skin for %s", meshname);
+        s_sprintfd(animname)("packages/models/%s/%s.md5anim", loadname, fname);
+        ((md5meshgroup *)mdl.meshes)->loadmd5anim(path(animname));
+        mdl.initskins();
         return true;
     }
 
@@ -390,13 +471,204 @@ struct md5 : skelmodel
             loadingmd5 = NULL;
             loopv(parts) if(!parts[i]->meshes) return false;
         }
-        else // md5 without configuration, try default tris and skin
+        else if(!loaddefaultparts()) // md5 without configuration, try default tris and skin
         {
             loadingmd5 = NULL;
-            if(!loaddefaultparts()) return false;
+            return false;
         }
+        loadingmd5 = NULL;
         loopv(parts) parts[i]->meshes = parts[i]->meshes->scaleverts(scale/4.0f, i ? vec(0, 0, 0) : vec(translate.x, -translate.y, translate.z));
         return loaded = true;
     }
 };
+
+void md5load(char *meshfile)
+{
+    if(!loadingmd5) { conoutf("not loading an md5"); return; }
+    s_sprintfd(filename)("%s/%s", md5dir, meshfile);
+    md5::part &mdl = *new md5::part;
+    loadingmd5->parts.add(&mdl);
+    mdl.model = loadingmd5;
+    mdl.index = loadingmd5->parts.length()-1;
+    if(mdl.index) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
+    mdl.meshes = loadingmd5->sharemeshes(path(filename));
+    if(!mdl.meshes) conoutf("could not load %s", filename); // ignore failure
+    else mdl.initskins();
+}
+
+void md5tag(char *name, char *tagname)
+{
+    if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
+    md5::part &mdl = *loadingmd5->parts.last();
+    if(mdl.meshes) loopv(md5joints) if(!strcmp(name, md5joints[i].name))
+    {
+        ((md5::skelmeshgroup *)mdl.meshes)->addtag(tagname, i);
+        return;
+    }
+    conoutf("could not find bone %s for tag %s", name, tagname);
+}
+        
+void md5pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
+{
+    if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
+    md5::part &mdl = *loadingmd5->parts.last();
+
+    mdl.pitchscale = *pitchscale;
+    mdl.pitchoffset = *pitchoffset;
+    if(*pitchmin || *pitchmax)
+    {
+        mdl.pitchmin = *pitchmin;
+        mdl.pitchmax = *pitchmax;
+    }
+    else
+    {
+        mdl.pitchmin = -360*mdl.pitchscale;
+        mdl.pitchmax = 360*mdl.pitchscale;
+    }
+}
+
+#define loopmd5skins(meshname, s, body) \
+    if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; } \
+    md5::part &mdl = *loadingmd5->parts.last(); \
+    if(!mdl.meshes) return; \
+    loopv(mdl.meshes->meshes) \
+    { \
+        md5::skelmesh &m = *(md5::skelmesh *)mdl.meshes->meshes[i]; \
+        if(!strcmp(meshname, "*") || (m.name && !strcmp(m.name, meshname))) \
+        { \
+            md5::skin &s = mdl.skins[i]; \
+            body; \
+        } \
+    }
+
+void md5skin(char *meshname, char *tex, char *masks, float *envmapmax, float *envmapmin)
+{
+    loopmd5skins(meshname, s,
+        s_sprintfd(spath)("%s/%s", md5dir, tex);
+        s.tex = textureload(spath, 0, true, false);
+        if(*masks)
+        {
+            s_sprintfd(mpath)("%s%s/%s", renderpath==R_FIXEDFUNCTION ? "<ffmask:25>" : "", md5dir, masks);
+            s.masks = textureload(mpath, 0, true, false);
+            s.envmapmax = *envmapmax;
+            s.envmapmin = *envmapmin;
+        }
+    );
+}
+
+void md5spec(char *meshname, int *percent)
+{
+    float spec = 1.0f;
+    if(*percent>0) spec = *percent/100.0f;
+    else if(*percent<0) spec = 0.0f;
+    loopmd5skins(meshname, s, s.spec = spec);
+}
+
+void md5ambient(char *meshname, int *percent)
+{
+    float ambient = 0.3f;
+    if(*percent>0) ambient = *percent/100.0f;
+    else if(*percent<0) ambient = 0.0f;
+    loopmd5skins(meshname, s, s.ambient = ambient);
+}
+
+void md5glow(char *meshname, int *percent)
+{
+    float glow = 3.0f;
+    if(*percent>0) glow = *percent/100.0f;
+    else if(*percent<0) glow = 0.0f;
+    loopmd5skins(meshname, s, s.glow = glow);
+}
+
+void md5alphatest(char *meshname, float *cutoff)
+{
+    loopmd5skins(meshname, s, s.alphatest = max(0.0f, min(1.0f, *cutoff)));
+}
+
+void md5alphablend(char *meshname, int *blend)
+{
+    loopmd5skins(meshname, s, s.alphablend = *blend!=0);
+}
+
+void md5envmap(char *meshname, char *envmap)
+{
+    Texture *tex = cubemapload(envmap);
+    loopmd5skins(meshname, s, s.envmap = tex);
+}
+
+void md5bumpmap(char *meshname, char *skin, char *normalmap)
+{
+    if(renderpath==R_FIXEDFUNCTION) return;
+    Texture *skintex, *normalmaptex;
+    s_sprintfd(spath)("%s/%s", md5dir, skin);
+    skintex = textureload(spath, 0, true, false);
+    s_sprintf(spath)("%s/%s", md5dir, normalmap);
+    normalmaptex = textureload(spath, 0, true, false);
+    loopmd5skins(meshname, s, { s.unlittex = skintex; s.normalmap = normalmaptex; m.calctangents(); });
+}
+
+void md5translucent(char *meshname, float *translucency)
+{
+    loopmd5skins(meshname, s, s.translucency = *translucency);
+}
+
+void md5fullbright(char *meshname, float *fullbright)
+{
+    loopmd5skins(meshname, s, s.fullbright = *fullbright);
+}
+
+void md5shader(char *meshname, char *shader)
+{
+    loopmd5skins(meshname, s, s.shader = lookupshaderbyname(shader));
+}
+
+void md5scroll(char *meshname, float *scrollu, float *scrollv)
+{
+    if(renderpath!=R_FIXEDFUNCTION) return;
+    loopmd5skins(meshname, s, { s.scrollu = *scrollu; s.scrollv = *scrollv; });
+}
+
+void md5anim(char *anim, char *animfile, float *speed, int *priority)
+{
+    if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
+    vector<int> anims;
+    findanims(anim, anims);
+    if(anims.empty()) conoutf("could not find animation %s", anim);
+    else 
+    {
+        s_sprintfd(filename)("%s/%s", md5dir, animfile);
+        md5::part *p = loadingmd5->parts.last();
+        md5::skelanimspec *sa = ((md5::md5meshgroup *)p->meshes)->loadmd5anim(path(filename));
+        if(!sa) conoutf("could not load md5anim file %s", filename);
+        else loopv(anims)
+        {
+            loadingmd5->parts.last()->setanim(0, anims[i], sa->frame, sa->range, *speed, *priority);
+        }
+    }
+}
+
+void md5link(int *parent, int *child, char *tagname)
+{
+    if(!loadingmd5) { conoutf("not loading an md5"); return; }
+    if(!loadingmd5->parts.inrange(*parent) || !loadingmd5->parts.inrange(*child)) { conoutf("no models loaded to link"); return; }
+    if(!loadingmd5->parts[*parent]->link(loadingmd5->parts[*child], tagname)) conoutf("could not link model %s", loadingmd5->loadname);
+}
+
+COMMAND(md5load, "ss");
+COMMAND(md5tag, "ss");
+COMMAND(md5pitch, "ffff");
+COMMAND(md5skin, "sssff");
+COMMAND(md5spec, "si");
+COMMAND(md5ambient, "si");
+COMMAND(md5glow, "si");
+COMMAND(md5alphatest, "sf");
+COMMAND(md5alphablend, "si");
+COMMAND(md5envmap, "ss");
+COMMAND(md5bumpmap, "sss");
+COMMAND(md5translucent, "sf");
+COMMAND(md5fullbright, "sf");
+COMMAND(md5shader, "ss");
+COMMAND(md5scroll, "sff");
+COMMAND(md5anim, "ssfi");
+COMMAND(md5link, "iis");
             

@@ -147,7 +147,7 @@ struct rpgclient : igameclient, g3d_callback
     
     void drawhudmodel(int anim, float speed = 0, int base = 0)
     {
-        rendermodel(NULL, "hudguns/fist", anim, 0, 0, player1.o, player1.yaw+90, player1.pitch, speed, base, NULL, MDL_LIGHT);
+        rendermodel(NULL, "hudguns/fist", anim, player1.o, player1.yaw+90, player1.pitch, MDL_LIGHT, NULL, NULL, base, speed);
     }
 
     void drawhudgun()

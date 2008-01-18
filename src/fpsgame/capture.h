@@ -233,7 +233,7 @@ struct captureclient : capturestate
         {
             baseinfo &b = bases[i];
             const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
-            rendermodel(&b.ent->light, flagname, ANIM_MAPMODEL|ANIM_LOOP, 0, 0, b.o, 0, 0, 0, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+            rendermodel(&b.ent->light, flagname, ANIM_MAPMODEL|ANIM_LOOP, b.o, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
             if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) loopi(m_noitemsrail ? 0 : (m_noitems ? 1 : b.ammo))
             {
                 float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
@@ -241,7 +241,7 @@ struct captureclient : capturestate
                 p.x += 10*cosf(angle);
                 p.y += 10*sinf(angle);
                 p.z += 4;
-                rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, 0, 0, p, 0, 0, 0, 0, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+                rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, p, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
             }
             int ttype = 11, mtype = -1;
             if(b.owner[0])

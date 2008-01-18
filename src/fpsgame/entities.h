@@ -45,11 +45,11 @@ struct entities : icliententities
         }
     }
 
-    void renderent(extentity &e, int type, float z, float yaw, int anim = ANIM_MAPMODEL|ANIM_LOOP, int basetime = 0, float speed = 10.0f)
+    void renderent(extentity &e, int type, float z, float yaw)
     {
         const char *mdlname = entmdlname(type);
         if(!mdlname) return;
-        rendermodel(&e.light, mdlname, anim, 0, 0, vec(e.o).add(vec(0, 0, z)), yaw, 0, speed, basetime, NULL, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
+        rendermodel(&e.light, mdlname, ANIM_MAPMODEL|ANIM_LOOP, vec(e.o).add(vec(0, 0, z)), yaw, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
     }
 
     void renderentities()

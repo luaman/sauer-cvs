@@ -63,7 +63,7 @@ struct fpsrender
         if(d->state!=CS_DEAD && d->quadmillis) 
         {
             vec color(1, 1, 1), dir(0, 0, 1);
-            rendermodel(color, dir, "quadrings", ANIM_MAPMODEL|ANIM_LOOP, 0, 0, vec(d->o).sub(vec(0, 0, d->eyeheight/2)), 360*cl.lastmillis/1000.0f, 0, 0, 0, NULL, MDL_DYNSHADOW | MDL_CULL_VFC | MDL_CULL_DIST);
+            rendermodel(color, dir, "quadrings", ANIM_MAPMODEL|ANIM_LOOP, vec(d->o).sub(vec(0, 0, d->eyeheight/2)), 360*cl.lastmillis/1000.0f, 0, MDL_DYNSHADOW | MDL_CULL_VFC | MDL_CULL_DIST);
         }
 #endif
     }
