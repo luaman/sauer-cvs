@@ -793,7 +793,8 @@ struct skelmodel : animmodel
         void interpbones(const animstate *as, int numanimparts, float pitch, const vec &axis, skelcacheentry &sc)
         {
             const animstate &as1 = numanimparts>1 ? as[1] : as[0];
-            uchar *curmask = framemasks[as1.cur.fr1], *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;;
+            uchar *curmask = framemasks[as1.cur.fr1], *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
+            float pt = as->interp<1 ? as->prev.t : as->cur.t, mpt = as1.interp<1 ? as1.prev.t : as1.cur.t;
             if(matskel)
             {
                 if(!matframebones)
@@ -833,13 +834,13 @@ struct skelmodel : animmodel
                     {
                         if(prevmask[i])
                         {
-                            m.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp));
-                            m.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                            m.accumulate(mpfr1[i], (1-mpt)*(1-interp));
+                            m.accumulate(mpfr2[i], mpt*(1-interp));
                         }
                         else
                         {
-                            m.accumulate(pfr1[i], (1-as->prev.t)*(1-interp));
-                            m.accumulate(pfr2[i], as->prev.t*(1-interp));
+                            m.accumulate(pfr1[i], (1-pt)*(1-interp));
+                            m.accumulate(pfr2[i], pt*(1-interp));
                         }
                     }
                     const boneinfo &b = bones[i];
@@ -885,13 +886,13 @@ struct skelmodel : animmodel
                     {
                         if(prevmask[i]) 
                         { 
-                            d.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp)); 
-                            d.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                            d.accumulate(mpfr1[i], (1-mpt)*(1-interp)); 
+                            d.accumulate(mpfr2[i], mpt*(1-interp));
                         }
                         else 
                         { 
-                            d.accumulate(pfr1[i], (1-as->prev.t)*(1-interp)); 
-                            d.accumulate(pfr2[i], as->prev.t*(1-interp)); 
+                            d.accumulate(pfr1[i], (1-pt)*(1-interp)); 
+                            d.accumulate(pfr2[i], pt*(1-interp)); 
                         }
                     }
                     const boneinfo &b = bones[i];

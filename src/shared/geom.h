@@ -336,7 +336,7 @@ struct matrix3x4
         {
             X[i] += to.X[i]*t + from.X[i]*(1-t);
             Y[i] += to.Y[i]*t + from.Y[i]*(1-t);
-            Z[i] += to.Z[i]*t + from.Z[i]*(1-t);;
+            Z[i] += to.Z[i]*t + from.Z[i]*(1-t);
         }
     }
 

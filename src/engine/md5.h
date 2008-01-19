@@ -376,7 +376,6 @@ struct md5 : skelmodel
                         float *jdata = &animdata[h.start];
                         if(h.flags)
                         {
-                            usedjoints[i] = 1;
                             if(h.flags&1) j.pos.x = *jdata++;
                             if(h.flags&2) j.pos.y = *jdata++;
                             if(h.flags&4) j.pos.z = *jdata++;
@@ -384,7 +383,7 @@ struct md5 : skelmodel
                             if(h.flags&16) j.orient.y = *jdata++;
                             if(h.flags&32) j.orient.z = *jdata++;
                             j.orient.restorew();
-                            if(h.flags && memcmp(&j, &basejoints[i], sizeof(j))) usedjoints[i] = 1;
+                            /*if(memcmp(&j, &basejoints[i], sizeof(j))) usedjoints[i] = 1; */
                         }
                         frame[i] = dualquat(j.orient, j.pos);
 #if 0

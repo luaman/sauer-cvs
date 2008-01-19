@@ -21,16 +21,19 @@ VAR(maxfplocalparams, 1, 0, 0);
 
 void loadshaders()
 {
-    GLint val;
-    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val);
-    maxvpenvparams = val; 
-    glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val);
-    maxvplocalparams = val;
-    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val);
-    maxfpenvparams = val;
-    glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val);
-    maxfplocalparams = val;
-    
+    if(renderpath!=R_FIXEDFUNCTION)
+    {
+        GLint val;
+        glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val);
+        maxvpenvparams = val; 
+        glGetProgramiv_(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val);
+        maxvplocalparams = val;
+        glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &val);
+        maxfpenvparams = val;
+        glGetProgramiv_(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &val);
+        maxfplocalparams = val;
+    }
+
     exec("data/stdshader.cfg");
     defaultshader = lookupshaderbyname("default");
     notextureshader = lookupshaderbyname("notexture");
