@@ -254,8 +254,8 @@ struct vertmodel : animmodel
         {
             vert *vert1 = &verts[as.cur.fr1 * numverts],
                  *vert2 = &verts[as.cur.fr2 * numverts],
-                 *pvert1 = as.interp ? &verts[as.prev.fr1 * numverts] : NULL, 
-                 *pvert2 = as.interp ? &verts[as.prev.fr2 * numverts] : NULL;
+                 *pvert1 = as.interp<1 ? &verts[as.prev.fr1 * numverts] : NULL, 
+                 *pvert2 = as.interp<1 ? &verts[as.prev.fr2 * numverts] : NULL;
             #define ip(p1, p2, t)   (p1+t*(p2-p1))
             #define ip_v(p, c, t)   ip(p##1[i].c, p##2[i].c, t)
             #define ip_v_ai(c)      ip(ip_v(pvert, c, as.prev.t), ip_v(vert, c, as.cur.t), as.interp)
@@ -276,17 +276,17 @@ struct vertmodel : animmodel
             {
                 bumpvert *bvert1 = &bumpverts[as.cur.fr1 * numverts],
                          *bvert2 = &bumpverts[as.cur.fr2 * numverts],
-                         *bpvert1 = as.interp ? &bumpverts[as.prev.fr1 * numverts] : NULL, 
-                         *bpvert2 = as.interp ? &bumpverts[as.prev.fr2 * numverts] : NULL;
-                if(as.interp) iploop(vvertbump, { v.pos = ip_pos_ai; v.norm = ip_norm_ai; v.tangent = ip_tangent_ai; v.bitangent = bvert1[i].bitangent; })
+                         *bpvert1 = as.interp<1 ? &bumpverts[as.prev.fr1 * numverts] : NULL, 
+                         *bpvert2 = as.interp<1 ? &bumpverts[as.prev.fr2 * numverts] : NULL;
+                if(as.interp<1) iploop(vvertbump, { v.pos = ip_pos_ai; v.norm = ip_norm_ai; v.tangent = ip_tangent_ai; v.bitangent = bvert1[i].bitangent; })
                 else iploop(vvertbump, { v.pos = ip_pos; v.norm = ip_norm; v.tangent = ip_tangent; v.bitangent = bvert1[i].bitangent; })
             }
             else if(norms)
             {
-                if(as.interp) iploop(vvert, { v.pos = ip_pos_ai; v.norm = ip_norm_ai; })
+                if(as.interp<1) iploop(vvert, { v.pos = ip_pos_ai; v.norm = ip_norm_ai; })
                 else iploop(vvert, { v.pos = ip_pos; v.norm = ip_norm; })
             }
-            else if(as.interp) iploop(vvertff, v.pos = ip_pos_ai)
+            else if(as.interp<1) iploop(vvertff, v.pos = ip_pos_ai)
             else iploop(vvertff, v.pos = ip_pos)
             #undef iploop
             #undef ip
@@ -435,13 +435,13 @@ struct vertmodel : animmodel
             n.mul(m, tags[frame*numtags + i].transform);
         }
 
-        void calctagmatrix(int i, const animstate *as, GLfloat *matrix)
+        void calctagmatrix(int i, const animstate *as, int numanimparts, GLfloat *matrix)
         {
             const matrix3x4 &tag1 = tags[as->cur.fr1*numtags + i].transform, 
                             &tag2 = tags[as->cur.fr2*numtags + i].transform;
             #define ip(p1, p2, t) (p1+t*(p2-p1))
             #define ip_ai_tag(c) ip( ip( tag1p.c, tag2p.c, as->prev.t), ip( tag1.c, tag2.c, as->cur.t), as->interp)
-            if(as->interp)
+            if(as->interp<1)
             {
                 const matrix3x4 &tag1p = tags[as->prev.fr1*numtags + i].transform, 
                                 &tag2p = tags[as->prev.fr2*numtags + i].transform;
@@ -566,7 +566,7 @@ struct vertmodel : animmodel
             }
         }
 
-        void render(const animstate *as, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins) 

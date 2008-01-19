@@ -213,7 +213,10 @@ struct md5 : skelmodel
                 {
                     if(tmp!=10) { fclose(f); return false; }
                 }
-                else if(sscanf(buf, " numJoints %d", &numbones)==1);
+                else if(sscanf(buf, " numJoints %d", &numbones)==1)
+                {
+                    boneparents = new int[numbones];
+                }
                 else if(sscanf(buf, " numMeshes %d", &tmp)==1);
                 else if(strstr(buf, "joints {"))
                 {
@@ -231,6 +234,8 @@ struct md5 : skelmodel
                             char *start = strchr(name, '"'), *end = start ? strchr(start+1, '"') : NULL;
                             if(start && end) s_strncpy(md5joints.add().name, start+1, end-(start+1)+1);
                             else s_strcpy(md5joints.add().name, name);
+
+                            if(basejoints.length()<numbones) boneparents[basejoints.length()] = parent;
 
                             j.orient.restorew();
                             basejoints.add(j);
@@ -250,6 +255,9 @@ struct md5 : skelmodel
             numbones = basejoints.length();
             basebones = new dualquat[numbones];
             loopv(basejoints) basebones[i] = dualquat(basejoints[i].orient, basejoints[i].pos);
+
+            invbones = new dualquat[numbones];
+            loopi(numbones) invbones[i] = dualquat(basebones[i]).invert();
 
             loopv(meshes)
             {
@@ -293,7 +301,7 @@ struct md5 : skelmodel
                 }
                 else if(sscanf(buf, " numFrames %d", &animframes)==1)
                 {
-                    if(numframes<1) { fclose(f); return NULL; }
+                    if(animframes<1) { fclose(f); return NULL; }
                 }
                 else if(sscanf(buf, " frameRate %d", &tmp)==1);
                 else if(sscanf(buf, " numAnimatedComponents %d", &animdatalen)==1)
@@ -333,7 +341,7 @@ struct md5 : skelmodel
                         }
                     }
                     if(basejoints.length()!=numbones) { fclose(f); return NULL; }
-                    dualquat *animbones = new dualquat[(numframes+animframes)*numbones];
+                    animbones = new dualquat[(numframes+animframes)*numbones];
                     if(bones)
                     {
                         memcpy(animbones, bones, numframes*numbones*sizeof(dualquat));
@@ -376,8 +384,11 @@ struct md5 : skelmodel
                             if(h.flags&32) j.orient.z = *jdata++;
                             j.orient.restorew();
                         }
+                        frame[i] = dualquat(j.orient, j.pos);
+#if 0
                         if(h.parent<0) frame[i] = dualquat(j.orient, j.pos); 
                         else (frame[i] = frame[h.parent]).mul(dualquat(j.orient, j.pos));
+#endif
                     }
                 }    
             }
@@ -385,6 +396,7 @@ struct md5 : skelmodel
             DELETEA(animdata);
             fclose(f);
 
+#if 0
             vector<dualquat> invbase;
             loopi(numbones) 
             {
@@ -411,6 +423,7 @@ struct md5 : skelmodel
 #endif
                 }
             }
+#endif
 
             return sa;
         }
@@ -642,9 +655,17 @@ void md5anim(char *anim, char *animfile, float *speed, int *priority)
         if(!sa) conoutf("could not load md5anim file %s", filename);
         else loopv(anims)
         {
-            loadingmd5->parts.last()->setanim(0, anims[i], sa->frame, sa->range, *speed, *priority);
+            loadingmd5->parts.last()->setanim(p->numanimparts-1, anims[i], sa->frame, sa->range, *speed, *priority);
         }
     }
+}
+
+void md5animpart()
+{
+    if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
+    md5::part *p = loadingmd5->parts.last();
+    if(p->numanimparts>=MAXANIMPARTS) { conoutf("too many animation parts"); return; }
+    p->numanimparts++;
 }
 
 void md5link(int *parent, int *child, char *tagname)
@@ -669,6 +690,7 @@ COMMAND(md5translucent, "sf");
 COMMAND(md5fullbright, "sf");
 COMMAND(md5shader, "ss");
 COMMAND(md5scroll, "sff");
+COMMAND(md5animpart, "");
 COMMAND(md5anim, "ssfi");
 COMMAND(md5link, "iis");
             

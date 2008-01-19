@@ -400,7 +400,7 @@ struct animmodel : model
 
         virtual int findtag(const char *name) { return -1; }
         virtual void concattagtransform(int frame, int i, const matrix3x4 &m, matrix3x4 &n) {}
-        virtual void calctagmatrix(int i, const animstate *as, GLfloat *matrix) {}
+        virtual void calctagmatrix(int i, const animstate *as, int numanimparts, GLfloat *matrix) {}
 
         void calcbb(int frame, vec &bbmin, vec &bbmax, const matrix3x4 &m)
         {
@@ -450,7 +450,7 @@ struct animmodel : model
             return this;
         }
 
-        virtual void render(const animstate *as, vector<skin> &skins) {}
+        virtual void render(const animstate *as, int numanimparts, vector<skin> &skins) {}
     };
 
     virtual meshgroup *loadmeshes(char *name) { return NULL; }
@@ -741,7 +741,7 @@ struct animmodel : model
                 animstate &p = as[i];
                 p.anim = info.anim;
                 p.cur.setframes(info);
-                p.interp = 0;
+                p.interp = 1;
                 if(interp>=0 && d->animinterp[interp].prev.range>0)
                 {
                     int diff = lastmillis-d->animinterp[interp].lastswitch;
@@ -792,14 +792,14 @@ struct animmodel : model
                 }
             }
 
-            meshes->render(as, skins);
+            meshes->render(as, numanimparts, skins);
 
             loopv(links)
             {
                 linkedpart &link = links[i];
 
                 GLfloat matrix[16];
-                meshes->calctagmatrix(link.tag, as, matrix);
+                meshes->calctagmatrix(link.tag, as, numanimparts, matrix);
 
                 vec naxis(raxis), ndir(rdir), ncampos(rcampos);
                 plane nfogplane(rfogplane);

@@ -110,8 +110,15 @@ struct vec4 : vec
 struct quat : vec4
 {
     quat() {}
-    quat(const vec &v, float w) : vec4(v, w) {}
     quat(float x, float y, float z, float w) : vec4(x, y, z, w) {}
+    quat(const vec &axis, float angle)
+    {
+        w = cosf(angle/2);
+        float s = sinf(angle/2);
+        x = s*axis.x;
+        y = s*axis.y;
+        z = s*axis.z;
+    }
  
     void restorew() { w = 1.0f-x*x-y*y-z*z; w = w<0 ? 0 : -sqrtf(w); }
 
@@ -182,7 +189,8 @@ struct dualquat
         dual.z =  0.5f*( p.x*q.y - p.y*q.x + p.z*q.w);
         dual.w = -0.5f*( p.x*q.x + p.y*q.y + p.z*q.z);
     }
-
+    explicit dualquat(const quat &q) : real(q), dual(0, 0, 0, 0) {}
+    
     dualquat &mul(float k) { real.vec4::mul(k); dual.vec4::mul(k); return *this; }
     dualquat &add(const dualquat &d) { real.vec4::add(d.real); dual.vec4::add(d.dual); return *this; }
 
@@ -336,6 +344,7 @@ struct matrix3x4
         (Y = n.X).mul(m.Y.x).add(vec4(n.Y).mul(m.Y.y)).add(vec4(n.Z).mul(m.Y.z)).w += m.Y.w;
         (Z = n.X).mul(m.Z.x).add(vec4(n.Y).mul(m.Z.y)).add(vec4(n.Z).mul(m.Z.z)).w += m.Z.w;
     }
+    void mul(const matrix3x4 &n) { mul(matrix3x4(*this), n); }
 
     vec transform(const vec &o) const { return vec(X.dot(o), Y.dot(o), Z.dot(o)); }
     vec transformnormal(const vec &o) const { return vec(X.vec::dot(o), Y.vec::dot(o), Z.vec::dot(o)); }

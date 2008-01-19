@@ -432,8 +432,9 @@ struct skelmodel : animmodel
 
     struct skelmeshgroup : meshgroup
     {
-        dualquat *basebones, *bones;
-        matrix3x4 *matbones;
+        int *boneparents;
+        dualquat *basebones, *invbones, *bones;
+        matrix3x4 *matbones, *matinvbones;
         int numbones;
         vector<skelanimspec> skelanims;
         uchar **framemasks;
@@ -450,15 +451,17 @@ struct skelmodel : animmodel
         int vlen, vertsize;
         uchar *vdata;
 
-        skelmeshgroup() : basebones(NULL), bones(NULL), matbones(NULL), numbones(0), framemasks(NULL), edata(NULL), ebuf(0), vdata(NULL)
+        skelmeshgroup() : boneparents(NULL), basebones(NULL), bones(NULL), matbones(NULL), matinvbones(NULL), numbones(0), framemasks(NULL), edata(NULL), ebuf(0), vdata(NULL)
         {
         }
 
         virtual ~skelmeshgroup()
         {
+            DELETEA(boneparents);
             DELETEA(basebones);
             DELETEA(bones);
             DELETEA(matbones);
+            DELETEA(matinvbones);
             DELETEA(framemasks);
             if(ebuf) glDeleteBuffers_(1, &ebuf);
             loopi(MAXVBOCACHE)
@@ -521,22 +524,18 @@ struct skelmodel : animmodel
 
         void scaletags(const vec &transdiff, float scalediff)
         {
+            if(matbones) DELETEA(matbones);
+            if(matinvbones) DELETEA(matinvbones);
             loopi(numbones)
             {
-                basebones[i].translate(transdiff);
+                if(boneparents[i]<0) basebones[i].translate(transdiff);
                 basebones[i].scale(scalediff);
+                invbones[i] = dualquat(basebones[i]).invert();
             }
             loopi(numframes*numbones) 
             {
-                bones[i].translate(transdiff);
+                if(boneparents[i]<0) bones[i].translate(transdiff);
                 bones[i].scale(scalediff);
-                if(matbones)
-                {
-                    matbones[i].translate(transdiff);
-                    matbones[i].X.w *= scalediff;
-                    matbones[i].Y.w *= scalediff;
-                    matbones[i].Z.w *= scalediff;
-                }
             }
         }
  
@@ -684,8 +683,10 @@ struct skelmodel : animmodel
             }
         }
 
-        void interpbones(const animstate *as, skelcacheentry &sc)
+        void interpbones(const animstate *as, int numanimparts, skelcacheentry &sc)
         {
+            const animstate &as1 = numanimparts>1 ? as[1] : as[0];
+            uchar *curmask = framemasks[as1.cur.fr1];
             if(matskel)
             {
                 if(!matbones)
@@ -693,48 +694,118 @@ struct skelmodel : animmodel
                     matbones = new matrix3x4[numframes*numbones];
                     loopi(numframes*numbones) matbones[i] = bones[i];
                 }
+                if(!matinvbones)
+                {
+                    matinvbones = new matrix3x4[numframes*numbones];
+                    loopi(numframes*numbones) matinvbones[i] = invbones[i];
+                }
                 if(!sc.mdata) sc.mdata = new matrix3x4[numbones];
-                matrix3x4 *fr1 = &matbones[as->cur.fr1*numbones], *fr2 = &matbones[as->cur.fr2*numbones];
-                if(!as->interp) loopi(numbones) sc.mdata[i].lerp(fr1[i], fr2[i], as->cur.t);
+                matrix3x4 *fr1 = &matbones[as->cur.fr1*numbones], *fr2 = &matbones[as->cur.fr2*numbones],
+                          *mfr1 = &matbones[as1.cur.fr1*numbones], *mfr2 = &matbones[as1.cur.fr2*numbones];
+                if(as->interp>=1 && as1.interp>=1) loopi(numbones)
+                {
+                    matrix3x4 m;
+                    if(curmask[i]) m.lerp(mfr1[i], mfr2[i], as1.cur.t);
+                    else m.lerp(fr1[i], fr2[i], as->cur.t);
+                    if(boneparents[i]<0) sc.mdata[i] = m;
+                    else sc.mdata[i].mul(sc.mdata[boneparents[i]], m);
+                }
                 else
                 {
-                    matrix3x4 *pfr1 = &matbones[as->prev.fr1*numbones], *pfr2 = &matbones[as->prev.fr2*numbones];
-                    float w1 = (1-as->cur.t)*as->interp, w2 = as->cur.t*as->interp, 
-                          pw1 = (1-as->prev.t)*(1-as->interp), pw2 = as->prev.t*(1-as->interp);
+                    matrix3x4 *pfr1 = as->interp<1 ? &matbones[as->prev.fr1*numbones] : fr1,
+                              *pfr2 = as->interp<1 ? &matbones[as->prev.fr2*numbones] : fr2,
+                              *mpfr1 = as1.interp<1 ? &matbones[as1.prev.fr1*numbones] : mfr1,
+                              *mpfr2 = as1.interp<1 ? &matbones[as1.prev.fr2*numbones] : mfr2;
+                    uchar *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
                     loopi(numbones)
                     {
-                        matrix3x4 &m = sc.mdata[i];
-                        (m = fr1[i]).scale(w1);
-                        m.accumulate(fr2[i], w2);
-                        m.accumulate(pfr1[i], pw1);
-                        m.accumulate(pfr2[i], pw2);
+                        matrix3x4 m;
+                        float interp;
+                        if(curmask[i])
+                        {
+                            interp = as1.interp;
+                            (m = mfr1[i]).scale((1-as1.cur.t)*interp);
+                            m.accumulate(mfr2[i], as1.cur.t*interp);
+                        }
+                        else
+                        {
+                            interp = as->interp;
+                            (m = fr1[i]).scale((1-as->cur.t)*interp);
+                            m.accumulate(fr2[i], as->cur.t*interp);
+                        }
+                        if(interp<1)
+                        {
+                            if(prevmask[i])
+                            {
+                                m.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp));
+                                m.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                            }
+                            else
+                            {
+                                m.accumulate(pfr1[i], (1-as->prev.t)*(1-interp));
+                                m.accumulate(pfr2[i], as->prev.t*(1-interp));
+                            }
+                        }
+                        if(boneparents[i]<0) sc.mdata[i] = m;
+                        else sc.mdata[i].mul(sc.mdata[boneparents[i]], m);
                     }
                 }
+                loopi(numbones) sc.mdata[i].mul(matinvbones[i]);
             }
             else
             {
                 if(!sc.bdata) sc.bdata = new dualquat[numbones];
-                dualquat *fr1 = &bones[as->cur.fr1*numbones], *fr2 = &bones[as->cur.fr2*numbones];
-                if(!as->interp) loopi(numbones) 
+                dualquat *fr1 = &bones[as->cur.fr1*numbones], *fr2 = &bones[as->cur.fr2*numbones],
+                         *mfr1 = &bones[as1.cur.fr1*numbones], *mfr2 = &bones[as1.cur.fr2*numbones];
+                if(as->interp>=1 && as1.interp>=1) loopi(numbones) 
                 {
-                    sc.bdata[i].lerp(fr1[i], fr2[i], as->cur.t);
-                    sc.bdata[i].normalize();
+                    dualquat d;
+                    if(curmask[i]) d.lerp(mfr1[i], mfr2[i], as1.cur.t);
+                    else d.lerp(fr1[i], fr2[i], as->cur.t);
+                    if(boneparents[i]<0) sc.bdata[i] = d;
+                    else sc.bdata[i].mul(sc.bdata[boneparents[i]], d);
                 }
                 else
                 {
-                    dualquat *pfr1 = &bones[as->prev.fr1*numbones], *pfr2 = &bones[as->prev.fr2*numbones];
-                    float w1 = (1-as->cur.t)*as->interp, w2 = as->cur.t*as->interp, 
-                          pw1 = (1-as->prev.t)*(1-as->interp), pw2 = as->prev.t*(1-as->interp);
+                    dualquat *pfr1 = as->interp<1 ? &bones[as->prev.fr1*numbones] : fr1, 
+                             *pfr2 = as->interp<1 ? &bones[as->prev.fr2*numbones] : fr2,
+                             *mpfr1 = as1.interp<1 ? &bones[as1.prev.fr1*numbones] : mfr1, 
+                             *mpfr2 = as1.interp<1 ? &bones[as1.prev.fr2*numbones] : mfr2;
+                    uchar *prevmask = framemasks[as1.prev.fr1];
                     loopi(numbones)
                     {
-                        dualquat &d = sc.bdata[i];
-                        (d = fr1[i]).mul(w1);
-                        d.accumulate(fr2[i], w2);
-                        d.accumulate(pfr1[i], pw1);
-                        d.accumulate(pfr2[i], pw2);
-                        d.normalize();
+                        dualquat d;
+                        float interp;
+                        if(curmask[i]) 
+                        { 
+                            interp = as1.interp;
+                            (d = mfr1[i]).mul((1-as1.cur.t)*interp); 
+                            d.accumulate(mfr2[i], as1.cur.t*interp); 
+                        }
+                        else 
+                        { 
+                            interp = as->interp;
+                            (d = fr1[i]).mul((1-as->cur.t)*interp); 
+                            d.accumulate(fr2[i], as->cur.t*interp); 
+                        }
+                        if(interp<1)
+                        {
+                            if(prevmask[i]) 
+                            { 
+                                d.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp)); 
+                                d.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                            }
+                            else 
+                            { 
+                                d.accumulate(pfr1[i], (1-as->prev.t)*(1-interp)); 
+                                d.accumulate(pfr2[i], as->prev.t*(1-interp)); 
+                            }
+                        }
+                        if(boneparents[i]<0) sc.bdata[i] = d;
+                        else sc.bdata[i].mul(sc.bdata[boneparents[i]], d);
                     }
                 }
+                loopi(numbones) sc.bdata[i].mul(invbones[i]);
             }
         }
 
@@ -744,23 +815,51 @@ struct skelmodel : animmodel
             n.mul(m, t);
         }
 
-        void calctagmatrix(int tag, const animstate *as, GLfloat *matrix)
+        void calctagmatrix(int tag, const animstate *as, int numanimparts, GLfloat *matrix)
         {
-            int bone = tags[tag].bone;
-            dualquat &fr1 = bones[as->cur.fr1*numbones+bone], &fr2 = bones[as->cur.fr2*numbones+bone];
+            const animstate &as1 = numanimparts>1 ? as[1] : as[0];
+            uchar *curmask = framemasks[as1.cur.fr1],
+                  *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
+            dualquat *fr1 = &bones[as->cur.fr1*numbones], *fr2 = &bones[as->cur.fr2*numbones],
+                     *mfr1 = &bones[as1.cur.fr1*numbones], *mfr2 = &bones[as1.cur.fr2*numbones],
+                     *pfr1 = as->interp<1 ? &bones[as->prev.fr1*numbones] : fr1,
+                     *pfr2 = as->interp<1 ? &bones[as->prev.fr2*numbones] : fr2,
+                     *mpfr1 = as1.interp<1 ? &bones[as1.prev.fr1*numbones] : mfr1,
+                     *mpfr2 = as1.interp<1 ? &bones[as1.prev.fr2*numbones] : mfr2;
+            int tagbone = tags[tag].bone, bone = tagbone;
             dualquat d;
-            if(!as->interp) d.lerp(fr1, fr2, as->cur.t);
-            else
+            do
             {
-                dualquat &pfr1 = bones[as->prev.fr1*numbones+bone], &pfr2 = bones[as->prev.fr2*numbones+bone];
-                float w1 = (1-as->cur.t)*as->interp, w2 = as->cur.t*as->interp, 
-                      pw1 = (1-as->prev.t)*(1-as->interp), pw2 = as->prev.t*(1-as->interp);
-                (d = fr1).mul(w1);
-                d.accumulate(fr2, w2);
-                d.accumulate(pfr1, pw1);
-                d.accumulate(pfr2, pw2);
-            }
-            d.mul(basebones[bone]);
+                dualquat p;
+                float interp;
+                if(curmask[bone])
+                {
+                    interp = as1.interp;
+                    (p = mfr1[bone]).mul((1-as1.cur.t)*interp);
+                    p.accumulate(mfr2[bone], as1.cur.t*interp);
+                }
+                else
+                {
+                    interp = as->interp;
+                    (p = fr1[bone]).mul((1-as->cur.t)*interp);
+                    p.accumulate(fr2[bone], as->cur.t*interp);
+                }
+                if(interp<1)
+                {
+                    if(prevmask[bone])
+                    {
+                        p.accumulate(mpfr1[bone], (1-as1.prev.t)*(1-interp));
+                        p.accumulate(mpfr2[bone], as1.prev.t*(1-interp));
+                    }
+                    else
+                    {
+                        p.accumulate(pfr1[bone], (1-as->prev.t)*(1-interp));
+                        p.accumulate(pfr2[bone], as->prev.t*(1-interp));
+                    }
+                }
+                if(bone==tagbone) d = p;
+                else d.mul(p, dualquat(d));
+            } while((bone = boneparents[bone])>=0);
             matrix3x4 m = d;
             loopk(4) 
             {
@@ -771,7 +870,7 @@ struct skelmodel : animmodel
             }
         }
         
-        void render(const animstate *as, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins)
@@ -801,7 +900,7 @@ struct skelmodel : animmodel
             loopv(skelcache)
             {
                 skelcacheentry &c = skelcache[i];
-                loopj(MAXANIMPARTS) if(c.as[j]!=as[j])
+                loopj(numanimparts) if(c.as[j]!=as[j])
                 {
                     if(c.millis < lastmillis) goto useentry; else goto nextentry;
                 }
@@ -814,8 +913,8 @@ struct skelmodel : animmodel
             if(!sc) sc = &skelcache.add();
             if(!match)
             {
-                loopi(MAXANIMPARTS) sc->as[i] = as[i];
-                interpbones(as, *sc);    
+                loopi(numanimparts) sc->as[i] = as[i];
+                interpbones(as, numanimparts, *sc);    
                 if(sc->vc) { sc->vc->owner = -1; sc->vc = NULL; }
             }
             sc->millis = lastmillis;
