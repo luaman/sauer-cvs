@@ -284,17 +284,17 @@ struct matrix3x4
     
     matrix3x4() {}
     matrix3x4(const vec4 &x, const vec4 &y, const vec4 &z) : X(x), Y(y), Z(z) {}
-    matrix3x4(dualquat &d)
+    matrix3x4(const dualquat &d)
     {
         float x = d.real.x, y = d.real.y, z = d.real.z, w = d.real.w, 
-              ww = w*w, xx = x*x, yy = y*y, zz = z*z,
+              /*ww = w*w,*/ xx = x*x, yy = y*y, zz = z*z,
               xy = x*y, xz = x*z, yz = y*z,
               wx = w*x, wy = w*y, wz = w*z;
-        X = vec4(ww + xx - yy - zz, 2*(xy - wz), 2*(xz + wy),
+        X = vec4(/*ww + xx - yy - zz*/ 1 - 2*(yy + zz), 2*(xy - wz), 2*(xz + wy),
             -2*(d.dual.w*x - d.dual.x*w + d.dual.y*z - d.dual.z*y));
-        Y = vec4(2*(xy + wz), ww + yy - xx - zz, 2*(yz - wx),
+        Y = vec4(2*(xy + wz), /*ww + yy - xx - zz*/1 - 2*(xx + zz), 2*(yz - wx),
             -2*(d.dual.w*y - d.dual.x*z - d.dual.y*w + d.dual.z*x));
-        Z = vec4(2*(xz - wy), 2*(yz + wx), ww + zz - xx - yy,
+        Z = vec4(2*(xz - wy), 2*(yz + wx), /*ww + zz - xx - yy*/1 - 2*(xx + yy),
             -2*(d.dual.w*z + d.dual.x*y - d.dual.y*x - d.dual.z*w));
 
         float invrr = 1/d.real.dot(d.real);
