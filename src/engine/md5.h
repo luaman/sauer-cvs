@@ -461,6 +461,7 @@ struct md5 : skelmodel
         parts.add(&mdl);
         mdl.model = this;
         mdl.index = 0;
+        mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
         const char *fname = loadname + strlen(loadname);
         do --fname; while(fname >= loadname && *fname!='/' && *fname!='\\');
         fname++;
@@ -504,7 +505,7 @@ void md5load(char *meshfile)
     loadingmd5->parts.add(&mdl);
     mdl.model = loadingmd5;
     mdl.index = loadingmd5->parts.length()-1;
-    if(mdl.index) mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
+    mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
     mdl.meshes = loadingmd5->sharemeshes(path(filename));
     if(!mdl.meshes) conoutf("could not load %s", filename); // ignore failure
     else mdl.initskins();
