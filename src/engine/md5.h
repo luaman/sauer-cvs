@@ -242,6 +242,7 @@ struct md5 : skelmodel
                         }
                     }
                     if(basejoints.length()!=numbones) { fclose(f); return false; }
+                    linkchildren();
                 }
                 else if(strstr(buf, "mesh {"))
                 {
@@ -251,7 +252,7 @@ struct md5 : skelmodel
                     m->load(f, buf, sizeof(buf));
                 }
             }
-         
+        
             loopv(basejoints) bones[i].base = dualquat(basejoints[i].orient, basejoints[i].pos);
 
             invbones = new dualquat[numbones];
@@ -264,14 +265,14 @@ struct md5 : skelmodel
                 m.buildnorms();
                 m.cleanup();
             }
- 
+
             fclose(f);
             return true;
         }
 
-        skelanimspec *loadmd5anim(const char *filename)
+        skelanimspec *loadmd5anim(const char *filename, ushort *bonemod = NULL)
         {
-            skelanimspec *sa = findskelanim(filename);
+            skelanimspec *sa = findskelanim(filename, bonemod);
             if(sa) return sa;
 
             FILE *f = openfile(filename, "r");
@@ -348,7 +349,7 @@ struct md5 : skelmodel
                     framebones = animbones;
                     animbones += numframes*numbones;
 
-                    sa = &addskelanim(filename);
+                    sa = &addskelanim(filename, bonemod);
                     sa->frame = numframes;
                     sa->range = animframes;
                     usedjoints = sa->bonemask;
@@ -396,6 +397,8 @@ struct md5 : skelmodel
 
             DELETEA(animdata);
             fclose(f);
+
+            applybonemod(bonemod, usedjoints);
 
 #if 0
             vector<dualquat> invbase;
@@ -511,11 +514,18 @@ void md5load(char *meshfile)
     else mdl.initskins();
 }
 
+static int findmd5joint(const char *name)
+{
+    loopv(md5joints) if(!strcmp(name, md5joints[i].name)) return i;
+    return -1;
+}
+
 void md5tag(char *name, char *tagname)
 {
     if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
     md5::part &mdl = *loadingmd5->parts.last();
-    if(mdl.meshes) loopv(md5joints) if(!strcmp(name, md5joints[i].name))
+    int i = findmd5joint(name);
+    if(mdl.meshes && i>=0)
     {
         ((md5::skelmeshgroup *)mdl.meshes)->addtag(tagname, i);
         return;
@@ -530,7 +540,8 @@ void md5pitch(char *name, float *pitchscale, float *pitchoffset, float *pitchmin
 
     if(name[0])
     {
-        if(mdl.meshes) loopv(md5joints) if(!strcmp(name, md5joints[i].name))
+        int i = findmd5joint(name);
+        if(mdl.meshes && i>=0)
         {
             md5::boneinfo &b = ((md5::skelmeshgroup *)mdl.meshes)->bones[i];
             b.pitchscale = *pitchscale;
@@ -666,9 +677,24 @@ void md5scroll(char *meshname, float *scrollu, float *scrollv)
     loopmd5skins(meshname, s, { s.scrollu = *scrollu; s.scrollv = *scrollv; });
 }
 
-void md5anim(char *anim, char *animfile, float *speed, int *priority)
+void md5anim(char *anim, char *animfile, float *speed, int *priority, char *modstr)
 {
     if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
+
+    vector<char *> bonestrs;
+    explodelist(modstr, bonestrs);
+    vector<ushort> bonemod;
+    loopv(bonestrs)
+    {
+        char *bonestr = bonestrs[i];
+        int bone = findmd5joint(bonestr[0]=='!' ? bonestr+1 : bonestr);
+        if(bone<0) { conoutf("could not find bone %s for anim %s", bonestr, anim); bonestrs.deletecontentsa(); return; }
+        bonemod.add(bone | (bonestr[0]=='!' ? BONEMOD_NOT : 0));
+    }
+    bonestrs.deletecontentsa();
+    bonemod.sort(bonemodcmp);
+    if(bonemod.length()) bonemod.add(BONEMOD_END);
+
     vector<int> anims;
     findanims(anim, anims);
     if(anims.empty()) conoutf("could not find animation %s", anim);
@@ -676,7 +702,7 @@ void md5anim(char *anim, char *animfile, float *speed, int *priority)
     {
         s_sprintfd(filename)("%s/%s", md5dir, animfile);
         md5::part *p = loadingmd5->parts.last();
-        md5::skelanimspec *sa = ((md5::md5meshgroup *)p->meshes)->loadmd5anim(path(filename));
+        md5::skelanimspec *sa = ((md5::md5meshgroup *)p->meshes)->loadmd5anim(path(filename), bonemod.empty() ? NULL : bonemod.getbuf());
         if(!sa) conoutf("could not load md5anim file %s", filename);
         else loopv(anims)
         {
@@ -716,6 +742,6 @@ COMMAND(md5fullbright, "sf");
 COMMAND(md5shader, "ss");
 COMMAND(md5scroll, "sff");
 COMMAND(md5animpart, "");
-COMMAND(md5anim, "ssfi");
+COMMAND(md5anim, "ssfis");
 COMMAND(md5link, "iis");
             

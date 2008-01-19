@@ -1,6 +1,40 @@
 VARP(gpuskel, 0, 1, 1);
 VARP(matskel, 0, 1, 1);
 
+#define BONEMOD_NOT  0x8000
+#define BONEMOD_END  0xFFFF
+#define BONEMOD_BONE 0x7FFF
+
+static bool bonemodmatch(ushort *x, ushort *y)
+{
+    if(!x || !y) return !x == !y;
+    while(*x!=BONEMOD_END && *y!=BONEMOD_END) if(*x!=*y) return false;
+    return *x==*y;
+}
+
+static int bonemodcmp(ushort *x, ushort *y)
+{
+    if(*x<*y) return -1;
+    if(*x>*y) return 1;
+    return 0;
+}
+
+static int bonemodlen(ushort *b)
+{
+    int len = 0;
+    while(*b++!=0xFFFF) len++;
+    return len;
+}
+
+static ushort *newbonemod(ushort *b)
+{
+    if(!b) return NULL;
+    int len = bonemodlen(b);
+    ushort *n = new ushort[len+1];
+    memcpy(n, b, (len+1)*sizeof(ushort));
+    return n;
+}
+
 struct skelmodel : animmodel
 {
     struct vert { vec norm, pos; float weights[4]; uchar bones[4]; };
@@ -420,10 +454,11 @@ struct skelmodel : animmodel
     struct skelanimspec
     {
         char *name;
+        ushort *bonemod;
         int frame, range;
         uchar *bonemask;
-        
-        skelanimspec() : name(NULL), frame(0), range(0), bonemask(NULL) {}
+
+        skelanimspec() : name(NULL), bonemod(NULL), frame(0), range(0), bonemask(NULL) {}
         ~skelanimspec()
         {
             DELETEA(name);
@@ -433,11 +468,11 @@ struct skelmodel : animmodel
 
     struct boneinfo
     {
-        int parent;
+        int parent, children, next;
         float pitchscale, pitchoffset, pitchmin, pitchmax;
         dualquat base;
 
-        boneinfo() : parent(-1), pitchscale(0), pitchoffset(0), pitchmin(0), pitchmax(0) {}
+        boneinfo() : parent(-1), children(-1), next(-1), pitchscale(0), pitchoffset(0), pitchmin(0), pitchmax(0) {}
     };
 
     struct skelmeshgroup : meshgroup
@@ -487,16 +522,23 @@ struct skelmodel : animmodel
             DELETEA(vdata);
         }
 
-        skelanimspec *findskelanim(const char *name)
+        skelanimspec *findskelanim(const char *name, ushort *bonemod)
         {
-            loopv(skelanims) if(skelanims[i].name && !strcmp(name, skelanims[i].name)) return &skelanims[i];
+            loopv(skelanims) 
+            {
+                if(skelanims[i].name && 
+                   !strcmp(name, skelanims[i].name) && 
+                   bonemodmatch(bonemod, skelanims[i].bonemod)) 
+                    return &skelanims[i];
+            }
             return NULL;
         }
 
-        skelanimspec &addskelanim(const char *name)
+        skelanimspec &addskelanim(const char *name, ushort *bonemod)
         {
             skelanimspec &sa = skelanims.add();
             sa.name = name ? newstring(name) : NULL;
+            sa.bonemod = newbonemod(bonemod);
             sa.bonemask = new uchar[numbones];
             memset(sa.bonemask, 0, numbones);
             return sa;
@@ -529,7 +571,7 @@ struct skelmodel : animmodel
             memcpy(group.framebones, framebones, numframes*numbones*sizeof(dualquat));
             loopv(skelanims)
             {
-                skelanimspec &sa = addskelanim(skelanims[i].name);
+                skelanimspec &sa = addskelanim(skelanims[i].name, skelanims[i].bonemod);
                 sa.frame = skelanims[i].frame;
                 sa.range = skelanims[i].range;
                 memcpy(sa.bonemask, skelanims[i].bonemask, numbones);
@@ -541,6 +583,42 @@ struct skelmodel : animmodel
                 t.bone = tags[i].bone;
             }
             return &group;
+        }
+
+        void expandbonemod(uchar *mask, int bone, int val)
+        {
+            mask[bone] = val;
+            bone = bones[bone].children;
+            while(bone>=0) { expandbonemod(mask, bone, val); bone = bones[bone].next; }
+        }
+
+        void applybonemod(ushort *mod, uchar *mask)
+        {
+            if(!mod || *mod==BONEMOD_END) return;
+            uchar *expand = new uchar[numbones];
+            memset(expand, *mod&BONEMOD_NOT ? 1 : 0, numbones);
+            while(*mod!=BONEMOD_END)
+            {
+                expandbonemod(expand, *mod&BONEMOD_BONE, *mod&BONEMOD_NOT ? 0 : 1);
+                mod++;
+            }
+            loopi(numbones) if(!expand[i]) mask[i] = 0;
+            delete[] expand;
+        }
+
+        void linkchildren()
+        {
+            loopi(numbones)
+            {
+                boneinfo &b = bones[i];
+                b.children = -1;
+                if(b.parent<0) b.next = -1;
+                else
+                {
+                    b.next = bones[b.parent].children;
+                    bones[b.parent].children = i;
+                }
+            }
         }
 
         bool gpuaccelerate() { return renderpath!=R_FIXEDFUNCTION && gpuskel && 10+(matskel ? 3 : 2)*numbones<=maxvpenvparams-reservevpparams; }
