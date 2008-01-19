@@ -725,8 +725,8 @@ struct skelmodel : animmodel
                 }
                 if(!matinvbones)
                 {
-                    matinvbones = new matrix3x4[numframes*numbones];
-                    loopi(numframes*numbones) matinvbones[i] = invbones[i];
+                    matinvbones = new matrix3x4[numbones];
+                    loopi(numbones) matinvbones[i] = invbones[i];
                 }
                 if(!sc.mdata) sc.mdata = new matrix3x4[numbones];
                 matrix3x4 *fr1 = &matframebones[as->cur.fr1*numbones], *fr2 = &matframebones[as->cur.fr2*numbones],
@@ -736,17 +736,17 @@ struct skelmodel : animmodel
                     matrix3x4 m;
                     if(curmask[i]) m.lerp(mfr1[i], mfr2[i], as1.cur.t);
                     else m.lerp(fr1[i], fr2[i], as->cur.t);
-                        const boneinfo &b = bones[i];
-                        if(b.pitchscale)
-                        {
-                            float angle = b.pitchscale*pitch + b.pitchoffset;
-                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
-                            matrix3x4 rmat;
-                            rmat.rotate(angle*RAD, b.parent>=0 ? sc.mdata[b.parent].transposedtransformnormal(axis) : axis);
-                            m.mul(rmat, matrix3x4(m));
-                        }
-                        if(b.parent<0) sc.mdata[i] = m;
-                        else sc.mdata[i].mul(sc.mdata[b.parent], m);
+                    const boneinfo &b = bones[i];
+                    if(b.pitchscale)
+                    {
+                        float angle = b.pitchscale*pitch + b.pitchoffset;
+                        if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
+                        matrix3x4 rmat;
+                        rmat.rotate(angle*RAD, b.parent>=0 ? sc.mdata[b.parent].transposedtransformnormal(axis) : axis);
+                        m.mul(rmat, matrix3x4(m));
+                    }
+                    if(b.parent<0) sc.mdata[i] = m;
+                    else sc.mdata[i].mul(sc.mdata[b.parent], m);
                 }
                 else
                 {
