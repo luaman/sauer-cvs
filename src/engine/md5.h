@@ -351,6 +351,8 @@ struct md5 : skelmodel
                     animbones += numframes*numbones;
 
                     sa = &addskelanim(filename);
+                    sa->frame = numframes;
+                    sa->range = animframes;
                     usedjoints = sa->bonemask;
                     uchar **animmasks = new uchar *[numframes+animframes];
                     if(framemasks)
@@ -383,6 +385,7 @@ struct md5 : skelmodel
                             if(h.flags&16) j.orient.y = *jdata++;
                             if(h.flags&32) j.orient.z = *jdata++;
                             j.orient.restorew();
+                            if(h.flags && memcmp(&j, &basejoints[i], sizeof(j))) usedjoints[i] = 1;
                         }
                         frame[i] = dualquat(j.orient, j.pos);
 #if 0
