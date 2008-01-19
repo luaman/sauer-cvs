@@ -140,7 +140,7 @@ struct quat : vec4
     }
     void mul(const vec &o) { mul(quat(*this), o); }
 
-    void invert() { vec::neg(); }
+    quat &invert() { vec::neg(); return *this; }
 
     void slerp(const quat &from, const quat &to, float t)
     {
@@ -346,8 +346,27 @@ struct matrix3x4
     }
     void mul(const matrix3x4 &n) { mul(matrix3x4(*this), n); }
 
+    void rotate(float angle, const vec &d)
+    {
+        float c = cosf(angle), s = sinf(angle);
+        rotate(c, s, d);
+    }
+
+    void rotate(float c, float s, const vec &d)
+    {
+        X = vec4(d.x*d.x*(1-c)+c, d.x*d.y*(1-c)-d.z*s, d.x*d.z*(1-c)+d.y*s, 0);
+        Y = vec4(d.y*d.x*(1-c)+d.z*s, d.y*d.y*(1-c)+c, d.y*d.z*(1-c)-d.x*s, 0);
+        Z = vec4(d.x*d.z*(1-c)-d.y*s, d.y*d.z*(1-c)+d.x*s, d.z*d.z*(1-c)+c, 0);
+    }
+
     vec transform(const vec &o) const { return vec(X.dot(o), Y.dot(o), Z.dot(o)); }
     vec transformnormal(const vec &o) const { return vec(X.vec::dot(o), Y.vec::dot(o), Z.vec::dot(o)); }
+    vec transposedtransformnormal(const vec &o) const
+    {
+        return vec(X.x*o.x + Y.x*o.y + Z.x*o.z,
+                   X.y*o.x + Y.y*o.y + Z.y*o.z,
+                   X.z*o.x + Y.z*o.y + Z.z*o.z);
+    }
 };
 
 struct matrix3x3

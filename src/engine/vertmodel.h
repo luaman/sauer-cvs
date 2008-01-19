@@ -435,16 +435,16 @@ struct vertmodel : animmodel
             n.mul(m, tags[frame*numtags + i].transform);
         }
 
-        void calctagmatrix(int i, const animstate *as, int numanimparts, GLfloat *matrix)
+        void calctagmatrix(int i, const animstate &as, GLfloat *matrix)
         {
-            const matrix3x4 &tag1 = tags[as->cur.fr1*numtags + i].transform, 
-                            &tag2 = tags[as->cur.fr2*numtags + i].transform;
+            const matrix3x4 &tag1 = tags[as.cur.fr1*numtags + i].transform, 
+                            &tag2 = tags[as.cur.fr2*numtags + i].transform;
             #define ip(p1, p2, t) (p1+t*(p2-p1))
-            #define ip_ai_tag(c) ip( ip( tag1p.c, tag2p.c, as->prev.t), ip( tag1.c, tag2.c, as->cur.t), as->interp)
-            if(as->interp<1)
+            #define ip_ai_tag(c) ip( ip( tag1p.c, tag2p.c, as.prev.t), ip( tag1.c, tag2.c, as.cur.t), as.interp)
+            if(as.interp<1)
             {
-                const matrix3x4 &tag1p = tags[as->prev.fr1*numtags + i].transform, 
-                                &tag2p = tags[as->prev.fr2*numtags + i].transform;
+                const matrix3x4 &tag1p = tags[as.prev.fr1*numtags + i].transform, 
+                                &tag2p = tags[as.prev.fr2*numtags + i].transform;
                 loopj(4)
                 {
                     matrix[4*j+0] = ip_ai_tag(X[j]);
@@ -454,9 +454,9 @@ struct vertmodel : animmodel
             }
             else loopj(4)
             {
-                matrix[4*j+0] = ip(tag1.X[j], tag2.X[j], as->cur.t);
-                matrix[4*j+1] = ip(tag1.Y[j], tag2.Y[j], as->cur.t);
-                matrix[4*j+2] = ip(tag1.Z[j], tag2.Z[j], as->cur.t);
+                matrix[4*j+0] = ip(tag1.X[j], tag2.X[j], as.cur.t);
+                matrix[4*j+1] = ip(tag1.Y[j], tag2.Y[j], as.cur.t);
+                matrix[4*j+2] = ip(tag1.Z[j], tag2.Z[j], as.cur.t);
             } 
             #undef ip_ai_tag
             #undef ip 
@@ -566,7 +566,7 @@ struct vertmodel : animmodel
             }
         }
 
-        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<linkedpart> &links, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins) 
@@ -623,6 +623,8 @@ struct vertmodel : animmodel
         
             bindvbo(as, *vc);
             loopv(meshes) ((vertmesh *)meshes[i])->render(as, skins[i], *vc);
+            
+            loopv(links) calctagmatrix(links[i].tag, *as, links[i].matrix);
         }
     };
 

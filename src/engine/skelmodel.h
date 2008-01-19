@@ -479,7 +479,11 @@ struct skelmodel : animmodel
                 DELETEA(vbocache[i].vdata);
                 if(vbocache[i].vbuf) glDeleteBuffers_(1, &vbocache[i].vbuf);
             }
-            loopv(skelcache) DELETEP(skelcache[i].bdata);
+            loopv(skelcache) 
+            {
+                DELETEA(skelcache[i].bdata);
+                DELETEA(skelcache[i].mdata);
+            }
             DELETEA(vdata);
         }
 
@@ -874,62 +878,20 @@ struct skelmodel : animmodel
             n.mul(m, t);
         }
 
-        void calctagmatrix(int tag, const animstate *as, int numanimparts, GLfloat *matrix)
+        void calctagmatrix(int bone, const matrix3x4 &m, linkedpart &l)
         {
-            const animstate &as1 = numanimparts>1 ? as[1] : as[0];
-            uchar *curmask = framemasks[as1.cur.fr1],
-                  *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
-            dualquat *fr1 = &framebones[as->cur.fr1*numbones], *fr2 = &framebones[as->cur.fr2*numbones],
-                     *mfr1 = &framebones[as1.cur.fr1*numbones], *mfr2 = &framebones[as1.cur.fr2*numbones],
-                     *pfr1 = as->interp<1 ? &framebones[as->prev.fr1*numbones] : fr1,
-                     *pfr2 = as->interp<1 ? &framebones[as->prev.fr2*numbones] : fr2,
-                     *mpfr1 = as1.interp<1 ? &framebones[as1.prev.fr1*numbones] : mfr1,
-                     *mpfr2 = as1.interp<1 ? &framebones[as1.prev.fr2*numbones] : mfr2;
-            int tagbone = tags[tag].bone, bone = tagbone;
-            dualquat d;
-            do
-            {
-                dualquat p;
-                float interp;
-                if(curmask[bone])
-                {
-                    interp = as1.interp;
-                    (p = mfr1[bone]).mul((1-as1.cur.t)*interp);
-                    p.accumulate(mfr2[bone], as1.cur.t*interp);
-                }
-                else
-                {
-                    interp = as->interp;
-                    (p = fr1[bone]).mul((1-as->cur.t)*interp);
-                    p.accumulate(fr2[bone], as->cur.t*interp);
-                }
-                if(interp<1)
-                {
-                    if(prevmask[bone])
-                    {
-                        p.accumulate(mpfr1[bone], (1-as1.prev.t)*(1-interp));
-                        p.accumulate(mpfr2[bone], as1.prev.t*(1-interp));
-                    }
-                    else
-                    {
-                        p.accumulate(pfr1[bone], (1-as->prev.t)*(1-interp));
-                        p.accumulate(pfr2[bone], as->prev.t*(1-interp));
-                    }
-                }
-                if(bone==tagbone) d = p;
-                else d.mul(p, dualquat(d));
-            } while((bone = bones[bone].parent)>=0);
-            matrix3x4 m = d;
+            matrix3x4 t;
+            t.mul(m, bones[bone].base);
             loopk(4) 
             {
-                matrix[4*k] = m.X[k];
-                matrix[4*k+1] = m.Y[k];
-                matrix[4*k+2] = m.Z[k];
-                matrix[4*k+3] = k==3 ? 1 : 0;
+                l.matrix[4*k] = t.X[k];
+                l.matrix[4*k+1] = t.Y[k];
+                l.matrix[4*k+2] = t.Z[k];
+                l.matrix[4*k+3] = k==3 ? 1 : 0;
             }
         }
         
-        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<linkedpart> &links, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins)
@@ -1009,6 +971,12 @@ struct skelmodel : animmodel
 
             bindvbo(as, *sc, *vc);
             loopv(meshes) ((skelmesh *)meshes[i])->render(as, skins[i], *vc);
+
+            loopv(links)
+            {
+                int tagbone = tags[links[i].tag].bone;
+                calctagmatrix(tagbone, vmat ? sc->mdata[tagbone] : sc->bdata[tagbone], links[i]);
+            }
         }
     };
 

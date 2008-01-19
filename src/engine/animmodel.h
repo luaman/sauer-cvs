@@ -63,6 +63,7 @@ struct animmodel : model
     };
 
     struct part;
+    struct linkedpart;
 
     struct skin
     {
@@ -400,7 +401,6 @@ struct animmodel : model
 
         virtual int findtag(const char *name) { return -1; }
         virtual void concattagtransform(int frame, int i, const matrix3x4 &m, matrix3x4 &n) {}
-        virtual void calctagmatrix(int i, const animstate *as, int numanimparts, GLfloat *matrix) {}
 
         void calcbb(int frame, vec &bbmin, vec &bbmax, const matrix3x4 &m)
         {
@@ -450,7 +450,7 @@ struct animmodel : model
             return this;
         }
 
-        virtual void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<skin> &skins) {}
+        virtual void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<linkedpart> &links, vector<skin> &skins) {}
     };
 
     virtual meshgroup *loadmeshes(char *name) { return NULL; }
@@ -471,6 +471,7 @@ struct animmodel : model
     {
         part *p;
         int tag, anim, basetime;
+        GLfloat matrix[16];
 
         linkedpart() : p(NULL), tag(-1), anim(-1), basetime(0) {}
     };
@@ -792,32 +793,29 @@ struct animmodel : model
                 }
             }
 
-            meshes->render(as, numanimparts, pitch, axis, skins);
+            meshes->render(as, numanimparts, pitch, axis, links, skins);
 
             loopv(links)
             {
                 linkedpart &link = links[i];
 
-                GLfloat matrix[16];
-                meshes->calctagmatrix(link.tag, as, numanimparts, matrix);
-
                 vec naxis(raxis), ndir(rdir), ncampos(rcampos);
                 plane nfogplane(rfogplane);
-                calcnormal(matrix, naxis);
+                calcnormal(link.matrix, naxis);
                 if(!(anim&ANIM_NOSKIN))
                 {
-                    calcnormal(matrix, ndir);
-                    calcvertex(matrix, ncampos);
-                    calcplane(matrix, nfogplane);
+                    calcnormal(link.matrix, ndir);
+                    calcvertex(link.matrix, ncampos);
+                    calcplane(link.matrix, nfogplane);
                 }
 
                 glPushMatrix();
-                glMultMatrixf(matrix);
+                glMultMatrixf(link.matrix);
                 if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
                 {
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
-                    glMultMatrixf(matrix);
+                    glMultMatrixf(link.matrix);
                     glMatrixMode(GL_MODELVIEW);
                 }
                 int nanim = anim, nbasetime = basetime;
