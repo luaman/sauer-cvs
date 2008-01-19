@@ -715,7 +715,7 @@ struct skelmodel : animmodel
         void interpbones(const animstate *as, int numanimparts, float pitch, const vec &axis, skelcacheentry &sc)
         {
             const animstate &as1 = numanimparts>1 ? as[1] : as[0];
-            uchar *curmask = framemasks[as1.cur.fr1];
+            uchar *curmask = framemasks[as1.cur.fr1], *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;;
             if(matskel)
             {
                 if(!matframebones)
@@ -730,12 +730,40 @@ struct skelmodel : animmodel
                 }
                 if(!sc.mdata) sc.mdata = new matrix3x4[numbones];
                 matrix3x4 *fr1 = &matframebones[as->cur.fr1*numbones], *fr2 = &matframebones[as->cur.fr2*numbones],
-                          *mfr1 = &matframebones[as1.cur.fr1*numbones], *mfr2 = &matframebones[as1.cur.fr2*numbones];
-                if(as->interp>=1 && as1.interp>=1) loopi(numbones)
+                          *mfr1 = &matframebones[as1.cur.fr1*numbones], *mfr2 = &matframebones[as1.cur.fr2*numbones],
+                          *pfr1 = as->interp<1 ? &matframebones[as->prev.fr1*numbones] : fr1,
+                          *pfr2 = as->interp<1 ? &matframebones[as->prev.fr2*numbones] : fr2,
+                          *mpfr1 = as1.interp<1 ? &matframebones[as1.prev.fr1*numbones] : mfr1,
+                          *mpfr2 = as1.interp<1 ? &matframebones[as1.prev.fr2*numbones] : mfr2;
+                loopi(numbones)
                 {
                     matrix3x4 m;
-                    if(curmask[i]) m.lerp(mfr1[i], mfr2[i], as1.cur.t);
-                    else m.lerp(fr1[i], fr2[i], as->cur.t);
+                    float interp;
+                    if(curmask[i])
+                    {
+                        interp = as1.interp;
+                        (m = mfr1[i]).scale((1-as1.cur.t)*interp);
+                        m.accumulate(mfr2[i], as1.cur.t*interp);
+                    }
+                    else
+                    {
+                        interp = as->interp;
+                        (m = fr1[i]).scale((1-as->cur.t)*interp);
+                        m.accumulate(fr2[i], as->cur.t*interp);
+                    }
+                    if(interp<1)
+                    {
+                        if(prevmask[i])
+                        {
+                            m.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp));
+                            m.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                        }
+                        else
+                        {
+                            m.accumulate(pfr1[i], (1-as->prev.t)*(1-interp));
+                            m.accumulate(pfr2[i], as->prev.t*(1-interp));
+                        }
+                    }
                     const boneinfo &b = bones[i];
                     if(b.pitchscale)
                     {
@@ -748,67 +776,46 @@ struct skelmodel : animmodel
                     if(b.parent<0) sc.mdata[i] = m;
                     else sc.mdata[i].mul(sc.mdata[b.parent], m);
                 }
-                else
-                {
-                    matrix3x4 *pfr1 = as->interp<1 ? &matframebones[as->prev.fr1*numbones] : fr1,
-                              *pfr2 = as->interp<1 ? &matframebones[as->prev.fr2*numbones] : fr2,
-                              *mpfr1 = as1.interp<1 ? &matframebones[as1.prev.fr1*numbones] : mfr1,
-                              *mpfr2 = as1.interp<1 ? &matframebones[as1.prev.fr2*numbones] : mfr2;
-                    uchar *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
-                    loopi(numbones)
-                    {
-                        matrix3x4 m;
-                        float interp;
-                        if(curmask[i])
-                        {
-                            interp = as1.interp;
-                            (m = mfr1[i]).scale((1-as1.cur.t)*interp);
-                            m.accumulate(mfr2[i], as1.cur.t*interp);
-                        }
-                        else
-                        {
-                            interp = as->interp;
-                            (m = fr1[i]).scale((1-as->cur.t)*interp);
-                            m.accumulate(fr2[i], as->cur.t*interp);
-                        }
-                        if(interp<1)
-                        {
-                            if(prevmask[i])
-                            {
-                                m.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp));
-                                m.accumulate(mpfr2[i], as1.prev.t*(1-interp));
-                            }
-                            else
-                            {
-                                m.accumulate(pfr1[i], (1-as->prev.t)*(1-interp));
-                                m.accumulate(pfr2[i], as->prev.t*(1-interp));
-                            }
-                        }
-                        const boneinfo &b = bones[i];
-                        if(b.pitchscale)
-                        {
-                            float angle = b.pitchscale*pitch + b.pitchoffset;
-                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
-                            matrix3x4 rmat;
-                            rmat.rotate(angle*RAD, b.parent>=0 ? sc.mdata[b.parent].transposedtransformnormal(axis) : axis);
-                            m.mul(rmat, matrix3x4(m));
-                        }
-                        if(b.parent<0) sc.mdata[i] = m;
-                        else sc.mdata[i].mul(sc.mdata[b.parent], m);
-                    }
-                }
                 loopi(numbones) sc.mdata[i].mul(matinvbones[i]);
             }
             else
             {
                 if(!sc.bdata) sc.bdata = new dualquat[numbones];
                 dualquat *fr1 = &framebones[as->cur.fr1*numbones], *fr2 = &framebones[as->cur.fr2*numbones],
-                         *mfr1 = &framebones[as1.cur.fr1*numbones], *mfr2 = &framebones[as1.cur.fr2*numbones];
-                if(as->interp>=1 && as1.interp>=1) loopi(numbones) 
+                         *mfr1 = &framebones[as1.cur.fr1*numbones], *mfr2 = &framebones[as1.cur.fr2*numbones],
+                         *pfr1 = as->interp<1 ? &framebones[as->prev.fr1*numbones] : fr1, 
+                         *pfr2 = as->interp<1 ? &framebones[as->prev.fr2*numbones] : fr2,
+                         *mpfr1 = as1.interp<1 ? &framebones[as1.prev.fr1*numbones] : mfr1, 
+                         *mpfr2 = as1.interp<1 ? &framebones[as1.prev.fr2*numbones] : mfr2;
+                loopi(numbones)
                 {
                     dualquat d;
-                    if(curmask[i]) d.lerp(mfr1[i], mfr2[i], as1.cur.t);
-                    else d.lerp(fr1[i], fr2[i], as->cur.t);
+                    float interp;
+                    if(curmask[i]) 
+                    { 
+                        interp = as1.interp;
+                        (d = mfr1[i]).mul((1-as1.cur.t)*interp); 
+                        d.accumulate(mfr2[i], as1.cur.t*interp); 
+                    }
+                    else 
+                    { 
+                        interp = as->interp;
+                        (d = fr1[i]).mul((1-as->cur.t)*interp); 
+                        d.accumulate(fr2[i], as->cur.t*interp); 
+                    }
+                    if(interp<1)
+                    {
+                        if(prevmask[i]) 
+                        { 
+                            d.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp)); 
+                            d.accumulate(mpfr2[i], as1.prev.t*(1-interp));
+                        }
+                        else 
+                        { 
+                            d.accumulate(pfr1[i], (1-as->prev.t)*(1-interp)); 
+                            d.accumulate(pfr2[i], as->prev.t*(1-interp)); 
+                        }
+                    }
                     const boneinfo &b = bones[i];
                     if(b.pitchscale)
                     {
@@ -819,54 +826,6 @@ struct skelmodel : animmodel
                     }
                     if(b.parent<0) sc.bdata[i] = d;
                     else sc.bdata[i].mul(sc.bdata[b.parent], d);
-                }
-                else
-                {
-                    dualquat *pfr1 = as->interp<1 ? &framebones[as->prev.fr1*numbones] : fr1, 
-                             *pfr2 = as->interp<1 ? &framebones[as->prev.fr2*numbones] : fr2,
-                             *mpfr1 = as1.interp<1 ? &framebones[as1.prev.fr1*numbones] : mfr1, 
-                             *mpfr2 = as1.interp<1 ? &framebones[as1.prev.fr2*numbones] : mfr2;
-                    uchar *prevmask = framemasks[as1.prev.fr1];
-                    loopi(numbones)
-                    {
-                        dualquat d;
-                        float interp;
-                        if(curmask[i]) 
-                        { 
-                            interp = as1.interp;
-                            (d = mfr1[i]).mul((1-as1.cur.t)*interp); 
-                            d.accumulate(mfr2[i], as1.cur.t*interp); 
-                        }
-                        else 
-                        { 
-                            interp = as->interp;
-                            (d = fr1[i]).mul((1-as->cur.t)*interp); 
-                            d.accumulate(fr2[i], as->cur.t*interp); 
-                        }
-                        if(interp<1)
-                        {
-                            if(prevmask[i]) 
-                            { 
-                                d.accumulate(mpfr1[i], (1-as1.prev.t)*(1-interp)); 
-                                d.accumulate(mpfr2[i], as1.prev.t*(1-interp));
-                            }
-                            else 
-                            { 
-                                d.accumulate(pfr1[i], (1-as->prev.t)*(1-interp)); 
-                                d.accumulate(pfr2[i], as->prev.t*(1-interp)); 
-                            }
-                        }
-                        const boneinfo &b = bones[i];
-                        if(b.pitchscale)
-                        {
-                            float angle = b.pitchscale*pitch + b.pitchoffset;
-                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
-                            vec raxis = b.parent>=0 ? quat(sc.bdata[b.parent].real).invert().rotate(axis) : axis;
-                            d.mul(dualquat(quat(raxis, angle*RAD)), dualquat(d));
-                        }
-                        if(b.parent<0) sc.bdata[i] = d;
-                        else sc.bdata[i].mul(sc.bdata[b.parent], d);
-                    }
                 }
                 loopi(numbones) sc.bdata[i].mul(invbones[i]);
             }

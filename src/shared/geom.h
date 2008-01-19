@@ -122,6 +122,9 @@ struct quat : vec4
  
     void restorew() { w = 1.0f-x*x-y*y-z*z; w = w<0 ? 0 : -sqrtf(w); }
 
+    void add(const vec4 &o) { vec4::add(o); }
+    void mul(float k) { vec4::mul(k); }
+
     void mul(const quat &p, const quat &o)
     {
         x = p.w*o.x + p.x*o.w + p.y*o.z - p.z*o.y;
@@ -155,7 +158,7 @@ struct quat : vec4
             tok *= sinf(t*omega)*recipsinomega;
         }
 
-        (*this = from).vec4::mul(fromk).vec4::add(quat(to).vec4::mul(tok));
+        loopi(4) v[i] = from[i]*fromk + to[i]*tok;
     }
 
     vec rotate(const vec &v) const
@@ -191,14 +194,17 @@ struct dualquat
     }
     explicit dualquat(const quat &q) : real(q), dual(0, 0, 0, 0) {}
     
-    dualquat &mul(float k) { real.vec4::mul(k); dual.vec4::mul(k); return *this; }
-    dualquat &add(const dualquat &d) { real.vec4::add(d.real); dual.vec4::add(d.dual); return *this; }
+    dualquat &mul(float k) { real.mul(k); dual.mul(k); return *this; }
+    dualquat &add(const dualquat &d) { real.add(d.real); dual.add(d.dual); return *this; }
 
     void lerp(const dualquat &from, const dualquat &to, float t)
     {
         float a = 1-t, b = from.real.dot(to.real)<0 ? -t : t;
-        (real = from.real).vec4::mul(a).vec4::add(vec4(to.real).mul(b));
-        (dual = from.dual).vec4::mul(a).vec4::add(vec4(to.dual).mul(b));
+        loopi(4)
+        {
+            real[i] = from.real[i]*a + to.real[i]*b;
+            dual[i] = from.dual[i]*a + to.dual[i]*b;
+        }
     }
 
     dualquat &invert()
@@ -214,7 +220,7 @@ struct dualquat
             quat tmp(real);
             tmp.vec::mul(-invrd);
             tmp.w *= invrd;
-            dual.vec4::add(tmp);
+            dual.add(tmp);
 
             real.vec::mul(-invrr);
             real.w *= invrr;
@@ -229,15 +235,15 @@ struct dualquat
         dual.mul(p.real, o.dual);
         quat tmp;
         tmp.mul(p.dual, o.real);
-        dual.vec4::add(tmp);
+        dual.add(tmp);
     }       
     void mul(const dualquat &o) { mul(dualquat(*this), o); }    
     
     void normalize()
     {
         float invlen = 1/real.magnitude();
-        real.vec4::mul(invlen);
-        dual.vec4::mul(invlen);
+        real.mul(invlen);
+        dual.mul(invlen);
     }
 
     void translate(const vec &p)
@@ -250,14 +256,14 @@ struct dualquat
 
     void scale(float k)
     {
-        dual.vec4::mul(k);
+        dual.mul(k);
     }
 
     void accumulate(const dualquat &d, float k)
     {
         if(real.dot(d.real) < 0) k = -k;
-        real.vec4::add(vec4(d.real).mul(k));
-        dual.vec4::add(vec4(d.dual).mul(k));
+        real.add(vec4(d.real).mul(k));
+        dual.add(vec4(d.dual).mul(k));
     }
 
     vec transform(const vec &v) const
@@ -287,14 +293,14 @@ struct matrix3x4
     matrix3x4(const dualquat &d)
     {
         float x = d.real.x, y = d.real.y, z = d.real.z, w = d.real.w, 
-              /*ww = w*w,*/ xx = x*x, yy = y*y, zz = z*z,
+              ww = w*w, xx = x*x, yy = y*y, zz = z*z,
               xy = x*y, xz = x*z, yz = y*z,
               wx = w*x, wy = w*y, wz = w*z;
-        X = vec4(/*ww + xx - yy - zz*/ 1 - 2*(yy + zz), 2*(xy - wz), 2*(xz + wy),
+        X = vec4(ww + xx - yy - zz, 2*(xy - wz), 2*(xz + wy),
             -2*(d.dual.w*x - d.dual.x*w + d.dual.y*z - d.dual.z*y));
-        Y = vec4(2*(xy + wz), /*ww + yy - xx - zz*/1 - 2*(xx + zz), 2*(yz - wx),
+        Y = vec4(2*(xy + wz), ww + yy - xx - zz, 2*(yz - wx),
             -2*(d.dual.w*y - d.dual.x*z - d.dual.y*w + d.dual.z*x));
-        Z = vec4(2*(xz - wy), 2*(yz + wx), /*ww + zz - xx - yy*/1 - 2*(xx + yy),
+        Z = vec4(2*(xz - wy), 2*(yz + wx), ww + zz - xx - yy,
             -2*(d.dual.w*z + d.dual.x*y - d.dual.y*x - d.dual.z*w));
 
         float invrr = 1/d.real.dot(d.real);
@@ -326,9 +332,12 @@ struct matrix3x4
 
     void lerp(const matrix3x4 &from, const matrix3x4 &to, float t)
     {
-        (X = to.X).mul(t).add(vec4(from.X).mul(1-t));
-        (Y = to.Y).mul(t).add(vec4(from.Y).mul(1-t));
-        (Z = to.Z).mul(t).add(vec4(from.Z).mul(1-t));
+        loopi(4)
+        {
+            X[i] += to.X[i]*t + from.X[i]*(1-t);
+            Y[i] += to.Y[i]*t + from.Y[i]*(1-t);
+            Z[i] += to.Z[i]*t + from.Z[i]*(1-t);;
+        }
     }
 
     void identity()
@@ -340,9 +349,18 @@ struct matrix3x4
 
     void mul(const matrix3x4 &m, const matrix3x4 &n)
     {
-        (X = n.X).mul(m.X.x).add(vec4(n.Y).mul(m.X.y)).add(vec4(n.Z).mul(m.X.z)).w += m.X.w;
-        (Y = n.X).mul(m.Y.x).add(vec4(n.Y).mul(m.Y.y)).add(vec4(n.Z).mul(m.Y.z)).w += m.Y.w;
-        (Z = n.X).mul(m.Z.x).add(vec4(n.Y).mul(m.Z.y)).add(vec4(n.Z).mul(m.Z.z)).w += m.Z.w;
+        X = vec4(vec(n.X.x, n.Y.x, n.Z.x).dot(m.X),
+                 vec(n.X.y, n.Y.y, n.Z.y).dot(m.X),  
+                 vec(n.X.z, n.Y.z, n.Z.z).dot(m.X),
+                 m.X.dot(vec(n.X.w, n.Y.w, n.Z.w)));
+        Y = vec4(vec(n.X.x, n.Y.x, n.Z.x).dot(m.Y),
+                 vec(n.X.y, n.Y.y, n.Z.y).dot(m.Y),
+                 vec(n.X.z, n.Y.z, n.Z.z).dot(m.Y),
+                 m.Y.dot(vec(n.X.w, n.Y.w, n.Z.w)));
+        Z = vec4(vec(n.X.x, n.Y.x, n.Z.x).dot(m.Z),
+                 vec(n.X.y, n.Y.y, n.Z.y).dot(m.Z),
+                 vec(n.X.z, n.Y.z, n.Z.z).dot(m.Z),
+                 m.Z.dot(vec(n.X.w, n.Y.w, n.Z.w)));
     }
     void mul(const matrix3x4 &n) { mul(matrix3x4(*this), n); }
 
