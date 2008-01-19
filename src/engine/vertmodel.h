@@ -566,7 +566,7 @@ struct vertmodel : animmodel
             }
         }
 
-        void render(const animstate *as, int numanimparts, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins) 

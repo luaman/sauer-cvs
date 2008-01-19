@@ -30,6 +30,7 @@ struct skelmodel : animmodel
         matrix3x4 *mdata;
         vbocacheentry *vc;
         animstate as[MAXANIMPARTS];
+        float pitch;
         int millis;
 
         skelcacheentry() : bdata(NULL), mdata(NULL), vc(NULL) 
@@ -430,14 +431,23 @@ struct skelmodel : animmodel
         }
     };
 
+    struct boneinfo
+    {
+        int parent;
+        float pitchscale, pitchoffset, pitchmin, pitchmax;
+        dualquat base;
+
+        boneinfo() : parent(-1), pitchscale(0), pitchoffset(0), pitchmin(0), pitchmax(0) {}
+    };
+
     struct skelmeshgroup : meshgroup
     {
-        int *boneparents;
-        dualquat *basebones, *invbones, *bones;
-        matrix3x4 *matbones, *matinvbones;
+        boneinfo *bones;
         int numbones;
-        vector<skelanimspec> skelanims;
+        dualquat *invbones, *framebones;
+        matrix3x4 *matinvbones, *matframebones;
         uchar **framemasks;
+        vector<skelanimspec> skelanims;
         vector<tag> tags;
 
         static const int MAXVBOCACHE = 8;
@@ -451,17 +461,17 @@ struct skelmodel : animmodel
         int vlen, vertsize;
         uchar *vdata;
 
-        skelmeshgroup() : boneparents(NULL), basebones(NULL), bones(NULL), matbones(NULL), matinvbones(NULL), numbones(0), framemasks(NULL), edata(NULL), ebuf(0), vdata(NULL)
+        skelmeshgroup() : bones(NULL), numbones(0), invbones(NULL), framebones(NULL), matinvbones(NULL), matframebones(NULL), framemasks(NULL), edata(NULL), ebuf(0), vdata(NULL)
         {
         }
 
         virtual ~skelmeshgroup()
         {
-            DELETEA(boneparents);
-            DELETEA(basebones);
             DELETEA(bones);
-            DELETEA(matbones);
+            DELETEA(invbones);
+            DELETEA(framebones);
             DELETEA(matinvbones);
+            DELETEA(matframebones);
             DELETEA(framemasks);
             if(ebuf) glDeleteBuffers_(1, &ebuf);
             loopi(MAXVBOCACHE)
@@ -507,8 +517,19 @@ struct skelmodel : animmodel
         {
             skelmeshgroup &group = *(skelmeshgroup *)meshgroup::copy();
             group.numbones = numbones;
-            group.bones = new dualquat[numframes*numbones];
-            memcpy(group.bones, bones, numframes*numbones*sizeof(dualquat));
+            group.bones = new boneinfo[numbones];
+            memcpy(group.bones, bones, numbones*sizeof(boneinfo));
+            group.invbones = new dualquat[numbones];
+            memcpy(group.invbones, invbones, numbones*sizeof(dualquat));
+            group.framebones = new dualquat[numframes*numbones];
+            memcpy(group.framebones, framebones, numframes*numbones*sizeof(dualquat));
+            loopv(skelanims)
+            {
+                skelanimspec &sa = addskelanim(skelanims[i].name);
+                sa.frame = skelanims[i].frame;
+                sa.range = skelanims[i].range;
+                memcpy(sa.bonemask, skelanims[i].bonemask, numbones);
+            }
             loopv(tags)
             {
                 tag &t = group.tags.add();
@@ -524,18 +545,22 @@ struct skelmodel : animmodel
 
         void scaletags(const vec &transdiff, float scalediff)
         {
-            if(matbones) DELETEA(matbones);
             if(matinvbones) DELETEA(matinvbones);
+            if(matframebones) DELETEA(matframebones);
             loopi(numbones)
             {
-                if(boneparents[i]<0) basebones[i].translate(transdiff);
-                basebones[i].scale(scalediff);
-                invbones[i] = dualquat(basebones[i]).invert();
+                if(bones[i].parent<0) bones[i].base.translate(transdiff);
+                bones[i].base.scale(scalediff);
+                invbones[i] = dualquat(bones[i].base).invert();
             }
-            loopi(numframes*numbones) 
+            loopi(numframes) 
             {
-                if(boneparents[i]<0) bones[i].translate(transdiff);
-                bones[i].scale(scalediff);
+                int frame = i*numbones;
+                loopj(numbones)
+                {
+                    if(bones[j].parent<0) framebones[frame+j].translate(transdiff);
+                    framebones[frame+j].scale(scalediff);
+                }
             }
         }
  
@@ -683,16 +708,16 @@ struct skelmodel : animmodel
             }
         }
 
-        void interpbones(const animstate *as, int numanimparts, skelcacheentry &sc)
+        void interpbones(const animstate *as, int numanimparts, float pitch, const vec &axis, skelcacheentry &sc)
         {
             const animstate &as1 = numanimparts>1 ? as[1] : as[0];
             uchar *curmask = framemasks[as1.cur.fr1];
             if(matskel)
             {
-                if(!matbones)
+                if(!matframebones)
                 {
-                    matbones = new matrix3x4[numframes*numbones];
-                    loopi(numframes*numbones) matbones[i] = bones[i];
+                    matframebones = new matrix3x4[numframes*numbones];
+                    loopi(numframes*numbones) matframebones[i] = framebones[i];
                 }
                 if(!matinvbones)
                 {
@@ -700,22 +725,31 @@ struct skelmodel : animmodel
                     loopi(numframes*numbones) matinvbones[i] = invbones[i];
                 }
                 if(!sc.mdata) sc.mdata = new matrix3x4[numbones];
-                matrix3x4 *fr1 = &matbones[as->cur.fr1*numbones], *fr2 = &matbones[as->cur.fr2*numbones],
-                          *mfr1 = &matbones[as1.cur.fr1*numbones], *mfr2 = &matbones[as1.cur.fr2*numbones];
+                matrix3x4 *fr1 = &matframebones[as->cur.fr1*numbones], *fr2 = &matframebones[as->cur.fr2*numbones],
+                          *mfr1 = &matframebones[as1.cur.fr1*numbones], *mfr2 = &matframebones[as1.cur.fr2*numbones];
                 if(as->interp>=1 && as1.interp>=1) loopi(numbones)
                 {
                     matrix3x4 m;
                     if(curmask[i]) m.lerp(mfr1[i], mfr2[i], as1.cur.t);
                     else m.lerp(fr1[i], fr2[i], as->cur.t);
-                    if(boneparents[i]<0) sc.mdata[i] = m;
-                    else sc.mdata[i].mul(sc.mdata[boneparents[i]], m);
+                        const boneinfo &b = bones[i];
+                        if(b.pitchscale)
+                        {
+                            float angle = b.pitchscale*pitch + b.pitchoffset;
+                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
+                            matrix3x4 rmat;
+                            rmat.rotate(angle*RAD, b.parent>=0 ? sc.mdata[b.parent].transposedtransformnormal(axis) : axis);
+                            m.mul(rmat, matrix3x4(m));
+                        }
+                        if(b.parent<0) sc.mdata[i] = m;
+                        else sc.mdata[i].mul(sc.mdata[b.parent], m);
                 }
                 else
                 {
-                    matrix3x4 *pfr1 = as->interp<1 ? &matbones[as->prev.fr1*numbones] : fr1,
-                              *pfr2 = as->interp<1 ? &matbones[as->prev.fr2*numbones] : fr2,
-                              *mpfr1 = as1.interp<1 ? &matbones[as1.prev.fr1*numbones] : mfr1,
-                              *mpfr2 = as1.interp<1 ? &matbones[as1.prev.fr2*numbones] : mfr2;
+                    matrix3x4 *pfr1 = as->interp<1 ? &matframebones[as->prev.fr1*numbones] : fr1,
+                              *pfr2 = as->interp<1 ? &matframebones[as->prev.fr2*numbones] : fr2,
+                              *mpfr1 = as1.interp<1 ? &matframebones[as1.prev.fr1*numbones] : mfr1,
+                              *mpfr2 = as1.interp<1 ? &matframebones[as1.prev.fr2*numbones] : mfr2;
                     uchar *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
                     loopi(numbones)
                     {
@@ -746,8 +780,17 @@ struct skelmodel : animmodel
                                 m.accumulate(pfr2[i], as->prev.t*(1-interp));
                             }
                         }
-                        if(boneparents[i]<0) sc.mdata[i] = m;
-                        else sc.mdata[i].mul(sc.mdata[boneparents[i]], m);
+                        const boneinfo &b = bones[i];
+                        if(b.pitchscale)
+                        {
+                            float angle = b.pitchscale*pitch + b.pitchoffset;
+                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
+                            matrix3x4 rmat;
+                            rmat.rotate(angle*RAD, b.parent>=0 ? sc.mdata[b.parent].transposedtransformnormal(axis) : axis);
+                            m.mul(rmat, matrix3x4(m));
+                        }
+                        if(b.parent<0) sc.mdata[i] = m;
+                        else sc.mdata[i].mul(sc.mdata[b.parent], m);
                     }
                 }
                 loopi(numbones) sc.mdata[i].mul(matinvbones[i]);
@@ -755,22 +798,30 @@ struct skelmodel : animmodel
             else
             {
                 if(!sc.bdata) sc.bdata = new dualquat[numbones];
-                dualquat *fr1 = &bones[as->cur.fr1*numbones], *fr2 = &bones[as->cur.fr2*numbones],
-                         *mfr1 = &bones[as1.cur.fr1*numbones], *mfr2 = &bones[as1.cur.fr2*numbones];
+                dualquat *fr1 = &framebones[as->cur.fr1*numbones], *fr2 = &framebones[as->cur.fr2*numbones],
+                         *mfr1 = &framebones[as1.cur.fr1*numbones], *mfr2 = &framebones[as1.cur.fr2*numbones];
                 if(as->interp>=1 && as1.interp>=1) loopi(numbones) 
                 {
                     dualquat d;
                     if(curmask[i]) d.lerp(mfr1[i], mfr2[i], as1.cur.t);
                     else d.lerp(fr1[i], fr2[i], as->cur.t);
-                    if(boneparents[i]<0) sc.bdata[i] = d;
-                    else sc.bdata[i].mul(sc.bdata[boneparents[i]], d);
+                    const boneinfo &b = bones[i];
+                    if(b.pitchscale)
+                    {
+                        float angle = b.pitchscale*pitch + b.pitchoffset;
+                        if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
+                        vec raxis = b.parent>=0 ? quat(sc.bdata[b.parent].real).invert().rotate(axis) : axis;
+                        d.mul(dualquat(quat(raxis, angle*RAD)), dualquat(d));
+                    }
+                    if(b.parent<0) sc.bdata[i] = d;
+                    else sc.bdata[i].mul(sc.bdata[b.parent], d);
                 }
                 else
                 {
-                    dualquat *pfr1 = as->interp<1 ? &bones[as->prev.fr1*numbones] : fr1, 
-                             *pfr2 = as->interp<1 ? &bones[as->prev.fr2*numbones] : fr2,
-                             *mpfr1 = as1.interp<1 ? &bones[as1.prev.fr1*numbones] : mfr1, 
-                             *mpfr2 = as1.interp<1 ? &bones[as1.prev.fr2*numbones] : mfr2;
+                    dualquat *pfr1 = as->interp<1 ? &framebones[as->prev.fr1*numbones] : fr1, 
+                             *pfr2 = as->interp<1 ? &framebones[as->prev.fr2*numbones] : fr2,
+                             *mpfr1 = as1.interp<1 ? &framebones[as1.prev.fr1*numbones] : mfr1, 
+                             *mpfr2 = as1.interp<1 ? &framebones[as1.prev.fr2*numbones] : mfr2;
                     uchar *prevmask = framemasks[as1.prev.fr1];
                     loopi(numbones)
                     {
@@ -801,8 +852,16 @@ struct skelmodel : animmodel
                                 d.accumulate(pfr2[i], as->prev.t*(1-interp)); 
                             }
                         }
-                        if(boneparents[i]<0) sc.bdata[i] = d;
-                        else sc.bdata[i].mul(sc.bdata[boneparents[i]], d);
+                        const boneinfo &b = bones[i];
+                        if(b.pitchscale)
+                        {
+                            float angle = b.pitchscale*pitch + b.pitchoffset;
+                            if(b.pitchmin || b.pitchmax) angle = max(b.pitchmin, min(b.pitchmax, angle));
+                            vec raxis = b.parent>=0 ? quat(sc.bdata[b.parent].real).invert().rotate(axis) : axis;
+                            d.mul(dualquat(quat(raxis, angle*RAD)), dualquat(d));
+                        }
+                        if(b.parent<0) sc.bdata[i] = d;
+                        else sc.bdata[i].mul(sc.bdata[b.parent], d);
                     }
                 }
                 loopi(numbones) sc.bdata[i].mul(invbones[i]);
@@ -811,7 +870,7 @@ struct skelmodel : animmodel
 
         void concattagtransform(int frame, int i, const matrix3x4 &m, matrix3x4 &n)
         {
-            matrix3x4 t = basebones[tags[i].bone];
+            matrix3x4 t = bones[tags[i].bone].base;
             n.mul(m, t);
         }
 
@@ -820,12 +879,12 @@ struct skelmodel : animmodel
             const animstate &as1 = numanimparts>1 ? as[1] : as[0];
             uchar *curmask = framemasks[as1.cur.fr1],
                   *prevmask = as1.interp<1 ? framemasks[as1.prev.fr1] : curmask;
-            dualquat *fr1 = &bones[as->cur.fr1*numbones], *fr2 = &bones[as->cur.fr2*numbones],
-                     *mfr1 = &bones[as1.cur.fr1*numbones], *mfr2 = &bones[as1.cur.fr2*numbones],
-                     *pfr1 = as->interp<1 ? &bones[as->prev.fr1*numbones] : fr1,
-                     *pfr2 = as->interp<1 ? &bones[as->prev.fr2*numbones] : fr2,
-                     *mpfr1 = as1.interp<1 ? &bones[as1.prev.fr1*numbones] : mfr1,
-                     *mpfr2 = as1.interp<1 ? &bones[as1.prev.fr2*numbones] : mfr2;
+            dualquat *fr1 = &framebones[as->cur.fr1*numbones], *fr2 = &framebones[as->cur.fr2*numbones],
+                     *mfr1 = &framebones[as1.cur.fr1*numbones], *mfr2 = &framebones[as1.cur.fr2*numbones],
+                     *pfr1 = as->interp<1 ? &framebones[as->prev.fr1*numbones] : fr1,
+                     *pfr2 = as->interp<1 ? &framebones[as->prev.fr2*numbones] : fr2,
+                     *mpfr1 = as1.interp<1 ? &framebones[as1.prev.fr1*numbones] : mfr1,
+                     *mpfr2 = as1.interp<1 ? &framebones[as1.prev.fr2*numbones] : mfr2;
             int tagbone = tags[tag].bone, bone = tagbone;
             dualquat d;
             do
@@ -859,7 +918,7 @@ struct skelmodel : animmodel
                 }
                 if(bone==tagbone) d = p;
                 else d.mul(p, dualquat(d));
-            } while((bone = boneparents[bone])>=0);
+            } while((bone = bones[bone].parent)>=0);
             matrix3x4 m = d;
             loopk(4) 
             {
@@ -870,7 +929,7 @@ struct skelmodel : animmodel
             }
         }
         
-        void render(const animstate *as, int numanimparts, vector<skin> &skins)
+        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<skin> &skins)
         {
             bool norms = false, tangents = false;
             loopv(skins)
@@ -904,6 +963,7 @@ struct skelmodel : animmodel
                 {
                     if(c.millis < lastmillis) goto useentry; else goto nextentry;
                 }
+                if(c.pitch!=pitch) { if(c.millis<lastmillis) goto useentry; else goto nextentry; }
                 match = true;
             useentry:
                 sc = &c; 
@@ -914,7 +974,8 @@ struct skelmodel : animmodel
             if(!match)
             {
                 loopi(numanimparts) sc->as[i] = as[i];
-                interpbones(as, numanimparts, *sc);    
+                sc->pitch = pitch;
+                interpbones(as, numanimparts, pitch, axis, *sc);    
                 if(sc->vc) { sc->vc->owner = -1; sc->vc = NULL; }
             }
             sc->millis = lastmillis;

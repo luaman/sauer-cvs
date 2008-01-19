@@ -215,7 +215,7 @@ struct md5 : skelmodel
                 }
                 else if(sscanf(buf, " numJoints %d", &numbones)==1)
                 {
-                    boneparents = new int[numbones];
+                    bones = new boneinfo[numbones];
                 }
                 else if(sscanf(buf, " numMeshes %d", &tmp)==1);
                 else if(strstr(buf, "joints {"))
@@ -235,7 +235,7 @@ struct md5 : skelmodel
                             if(start && end) s_strncpy(md5joints.add().name, start+1, end-(start+1)+1);
                             else s_strcpy(md5joints.add().name, name);
 
-                            if(basejoints.length()<numbones) boneparents[basejoints.length()] = parent;
+                            if(basejoints.length()<numbones) bones[basejoints.length()].parent = parent;
 
                             j.orient.restorew();
                             basejoints.add(j);
@@ -252,12 +252,10 @@ struct md5 : skelmodel
                 }
             }
          
-            numbones = basejoints.length();
-            basebones = new dualquat[numbones];
-            loopv(basejoints) basebones[i] = dualquat(basejoints[i].orient, basejoints[i].pos);
+            loopv(basejoints) bones[i].base = dualquat(basejoints[i].orient, basejoints[i].pos);
 
             invbones = new dualquat[numbones];
-            loopi(numbones) invbones[i] = dualquat(basebones[i]).invert();
+            loopi(numbones) invbones[i] = dualquat(bones[i].base).invert();
 
             loopv(meshes)
             {
@@ -344,10 +342,10 @@ struct md5 : skelmodel
                     animbones = new dualquat[(numframes+animframes)*numbones];
                     if(bones)
                     {
-                        memcpy(animbones, bones, numframes*numbones*sizeof(dualquat));
-                        delete[] bones;
+                        memcpy(animbones, framebones, numframes*numbones*sizeof(dualquat));
+                        delete[] framebones;
                     }
-                    bones = animbones;
+                    framebones = animbones;
                     animbones += numframes*numbones;
 
                     sa = &addskelanim(filename);
@@ -524,10 +522,33 @@ void md5tag(char *name, char *tagname)
     conoutf("could not find bone %s for tag %s", name, tagname);
 }
         
-void md5pitch(float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
+void md5pitch(char *name, float *pitchscale, float *pitchoffset, float *pitchmin, float *pitchmax)
 {
     if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
     md5::part &mdl = *loadingmd5->parts.last();
+
+    if(name[0])
+    {
+        if(mdl.meshes) loopv(md5joints) if(!strcmp(name, md5joints[i].name))
+        {
+            md5::boneinfo &b = ((md5::skelmeshgroup *)mdl.meshes)->bones[i];
+            b.pitchscale = *pitchscale;
+            b.pitchoffset = *pitchoffset;
+            if(*pitchmin || *pitchmax)
+            {
+                b.pitchmin = *pitchmin;
+                b.pitchmax = *pitchmax;
+            }
+            else
+            {
+                b.pitchmin = -360*b.pitchscale;
+                b.pitchmax = 360*b.pitchscale;
+            }
+            return;
+        }
+        conoutf("could not find bone %s to pitch", name);
+        return;
+    }
 
     mdl.pitchscale = *pitchscale;
     mdl.pitchoffset = *pitchoffset;
@@ -680,7 +701,7 @@ void md5link(int *parent, int *child, char *tagname)
 
 COMMAND(md5load, "ss");
 COMMAND(md5tag, "ss");
-COMMAND(md5pitch, "ffff");
+COMMAND(md5pitch, "sffff");
 COMMAND(md5skin, "sssff");
 COMMAND(md5spec, "si");
 COMMAND(md5ambient, "si");
