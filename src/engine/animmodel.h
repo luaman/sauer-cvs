@@ -450,7 +450,7 @@ struct animmodel : model
             return this;
         }
 
-        virtual void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<linkedpart> &links, vector<skin> &skins) {}
+        virtual void render(const animstate *as, float pitch, const vec &axis, part *p) {}
     };
 
     virtual meshgroup *loadmeshes(char *name) { return NULL; }
@@ -793,7 +793,7 @@ struct animmodel : model
                 }
             }
 
-            meshes->render(as, numanimparts, pitch, axis, links, skins);
+            meshes->render(as, pitch, axis, this);
 
             loopv(links)
             {

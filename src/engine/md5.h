@@ -270,9 +270,9 @@ struct md5 : skelmodel
             return true;
         }
 
-        skelanimspec *loadmd5anim(const char *filename, ushort *bonemod = NULL)
+        skelanimspec *loadmd5anim(const char *filename)
         {
-            skelanimspec *sa = findskelanim(filename, bonemod);
+            skelanimspec *sa = findskelanim(filename);
             if(sa) return sa;
 
             FILE *f = openfile(filename, "r");
@@ -283,7 +283,6 @@ struct md5 : skelmodel
             int animdatalen = 0, animframes = 0;
             float *animdata = NULL;
             dualquat *animbones = NULL;
-            uchar *usedjoints = NULL;
             char buf[512];
             for(;;)
             {
@@ -349,19 +348,9 @@ struct md5 : skelmodel
                     framebones = animbones;
                     animbones += numframes*numbones;
 
-                    sa = &addskelanim(filename, bonemod);
+                    sa = &addskelanim(filename);
                     sa->frame = numframes;
                     sa->range = animframes;
-                    usedjoints = sa->bonemask;
-                    uchar **animmasks = new uchar *[numframes+animframes];
-                    if(framemasks)
-                    {
-                        memcpy(animmasks, framemasks, numframes*sizeof(uchar *));
-                        delete[] framemasks;
-                    }
-                    framemasks = animmasks;
-                    animmasks += numframes;
-                    loopi(animframes) animmasks[i] = sa->bonemask;
 
                     numframes += animframes;
                 }
@@ -396,8 +385,6 @@ struct md5 : skelmodel
 
             DELETEA(animdata);
             fclose(f);
-
-            applybonemod(bonemod, usedjoints);
 
 #if 0
             vector<dualquat> invbase;
@@ -459,7 +446,7 @@ struct md5 : skelmodel
 
     bool loaddefaultparts()
     {
-        part &mdl = *new part;
+        skelpart &mdl = *new skelpart;
         parts.add(&mdl);
         mdl.model = this;
         mdl.index = 0;
@@ -470,9 +457,10 @@ struct md5 : skelmodel
         s_sprintfd(meshname)("packages/models/%s/%s.md5mesh", loadname, fname);
         mdl.meshes = sharemeshes(path(meshname));
         if(!mdl.meshes) return false;
+        mdl.initanimparts();
+        mdl.initskins();
         s_sprintfd(animname)("packages/models/%s/%s.md5anim", loadname, fname);
         ((md5meshgroup *)mdl.meshes)->loadmd5anim(path(animname));
-        mdl.initskins();
         return true;
     }
 
@@ -503,14 +491,18 @@ void md5load(char *meshfile)
 {
     if(!loadingmd5) { conoutf("not loading an md5"); return; }
     s_sprintfd(filename)("%s/%s", md5dir, meshfile);
-    md5::part &mdl = *new md5::part;
+    md5::skelpart &mdl = *new md5::skelpart;
     loadingmd5->parts.add(&mdl);
     mdl.model = loadingmd5;
     mdl.index = loadingmd5->parts.length()-1;
     mdl.pitchscale = mdl.pitchoffset = mdl.pitchmin = mdl.pitchmax = 0;
     mdl.meshes = loadingmd5->sharemeshes(path(filename));
     if(!mdl.meshes) conoutf("could not load %s", filename); // ignore failure
-    else mdl.initskins();
+    else 
+    {
+        mdl.initanimparts();
+        mdl.initskins();
+    }
 }
 
 static int findmd5joint(const char *name)
@@ -676,23 +668,9 @@ void md5scroll(char *meshname, float *scrollu, float *scrollv)
     loopmd5skins(meshname, s, { s.scrollu = *scrollu; s.scrollv = *scrollv; });
 }
 
-void md5anim(char *anim, char *animfile, float *speed, int *priority, char *modstr)
+void md5anim(char *anim, char *animfile, float *speed, int *priority)
 {
     if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
-
-    vector<char *> bonestrs;
-    explodelist(modstr, bonestrs);
-    vector<ushort> bonemod;
-    loopv(bonestrs)
-    {
-        char *bonestr = bonestrs[i];
-        int bone = findmd5joint(bonestr[0]=='!' ? bonestr+1 : bonestr);
-        if(bone<0) { conoutf("could not find bone %s for anim %s", bonestr, anim); bonestrs.deletecontentsa(); return; }
-        bonemod.add(bone | (bonestr[0]=='!' ? BONEMOD_NOT : 0));
-    }
-    bonestrs.deletecontentsa();
-    bonemod.sort(bonemodcmp);
-    if(bonemod.length()) bonemod.add(BONEMOD_END);
 
     vector<int> anims;
     findanims(anim, anims);
@@ -701,7 +679,7 @@ void md5anim(char *anim, char *animfile, float *speed, int *priority, char *mods
     {
         s_sprintfd(filename)("%s/%s", md5dir, animfile);
         md5::part *p = loadingmd5->parts.last();
-        md5::skelanimspec *sa = ((md5::md5meshgroup *)p->meshes)->loadmd5anim(path(filename), bonemod.empty() ? NULL : bonemod.getbuf());
+        md5::skelanimspec *sa = ((md5::md5meshgroup *)p->meshes)->loadmd5anim(path(filename));
         if(!sa) conoutf("could not load md5anim file %s", filename);
         else loopv(anims)
         {
@@ -710,12 +688,26 @@ void md5anim(char *anim, char *animfile, float *speed, int *priority, char *mods
     }
 }
 
-void md5animpart()
+void md5animpart(char *maskstr)
 {
     if(!loadingmd5 || loadingmd5->parts.empty()) { conoutf("not loading an md5"); return; }
-    md5::part *p = loadingmd5->parts.last();
-    if(p->numanimparts>=MAXANIMPARTS) { conoutf("too many animation parts"); return; }
-    p->numanimparts++;
+
+    vector<char *> bonestrs;
+    explodelist(maskstr, bonestrs);
+    vector<ushort> bonemask;
+    loopv(bonestrs)
+    {
+        char *bonestr = bonestrs[i];
+        int bone = findmd5joint(bonestr[0]=='!' ? bonestr+1 : bonestr);
+        if(bone<0) { conoutf("could not find bone %s for anim part mask [%s]", bonestr, maskstr); bonestrs.deletecontentsa(); return; }
+        bonemask.add(bone | (bonestr[0]=='!' ? BONEMASK_NOT : 0));
+    }
+    bonestrs.deletecontentsa();
+    bonemask.sort(bonemaskcmp);
+    if(bonemask.length()) bonemask.add(BONEMASK_END);
+
+    md5::skelpart *p = (md5::skelpart *)loadingmd5->parts.last();
+    if(!p->addanimpart(bonemask.getbuf())) conoutf("too many animation parts");
 }
 
 void md5link(int *parent, int *child, char *tagname)
@@ -740,7 +732,7 @@ COMMAND(md5translucent, "sf");
 COMMAND(md5fullbright, "sf");
 COMMAND(md5shader, "ss");
 COMMAND(md5scroll, "sff");
-COMMAND(md5animpart, "");
-COMMAND(md5anim, "ssfis");
+COMMAND(md5animpart, "s");
+COMMAND(md5anim, "ssfi");
 COMMAND(md5link, "iis");
             

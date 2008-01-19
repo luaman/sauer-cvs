@@ -566,13 +566,13 @@ struct vertmodel : animmodel
             }
         }
 
-        void render(const animstate *as, int numanimparts, float pitch, const vec &axis, vector<linkedpart> &links, vector<skin> &skins)
+        void render(const animstate *as, float pitch, const vec &axis, part *p)
         {
             bool norms = false, tangents = false;
-            loopv(skins) 
+            loopv(p->skins) 
             {
-                if(skins[i].normals()) norms = true;
-                if(skins[i].tangents()) tangents = true;
+                if(p->skins[i].normals()) norms = true;
+                if(p->skins[i].tangents()) tangents = true;
             }
             if(norms!=vnorms || tangents!=vtangents)
             {
@@ -610,7 +610,7 @@ struct vertmodel : animmodel
                     loopv(meshes) 
                     {
                         vertmesh &m = *(vertmesh *)meshes[i];
-                        m.interpverts(*as, norms, tangents, (hasVBO ? vdata : vc->vdata) + m.voffset*vertsize, skins[i]);
+                        m.interpverts(*as, norms, tangents, (hasVBO ? vdata : vc->vdata) + m.voffset*vertsize, p->skins[i]);
                     }
                     if(hasVBO)
                     {
@@ -622,9 +622,9 @@ struct vertmodel : animmodel
             }
         
             bindvbo(as, *vc);
-            loopv(meshes) ((vertmesh *)meshes[i])->render(as, skins[i], *vc);
+            loopv(meshes) ((vertmesh *)meshes[i])->render(as, p->skins[i], *vc);
             
-            loopv(links) calctagmatrix(links[i].tag, *as, links[i].matrix);
+            loopv(p->links) calctagmatrix(p->links[i].tag, *as, p->links[i].matrix);
         }
     };
 
