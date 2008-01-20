@@ -923,7 +923,7 @@ struct skelmodel : animmodel
                 if(sc->vc) { sc->vc->owner = -1; sc->vc = NULL; }
             }
             sc->millis = lastmillis;
-            vbocacheentry *vc = vaccel ? vbocache : sc->vc;
+            vbocacheentry *vc = gpuaccelerate() ? vbocache : sc->vc;
             if(!vc) 
             {
                 loopi(MAXVBOCACHE) 
