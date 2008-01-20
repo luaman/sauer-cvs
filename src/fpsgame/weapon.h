@@ -117,7 +117,7 @@ struct weaponstate
 
     vector<bouncent *> bouncers;
 
-    void newbouncer(const vec &from, const vec &to, bool local, fpsent *owner, int type, int lifetime, int speed)
+    void newbouncer(const vec &from, const vec &to, bool local, fpsent *owner, int type, int lifetime, int speed, entitylight *light = NULL)
     {
         bouncent &bnc = *(bouncers.add(new bouncent));
         bnc.reset();
@@ -132,6 +132,7 @@ struct weaponstate
         bnc.owner = owner;
         bnc.bouncetype = type;
         bnc.id = cl.lastmillis;
+        if(light) bnc.light = *light;
 
         vec dir(to);
         dir.sub(from).normalize();
@@ -241,12 +242,12 @@ struct weaponstate
         }
     }
     
-    void spawnbouncer(vec &p, vec &vel, fpsent *d, int type)
+    void spawnbouncer(vec &p, vec &vel, fpsent *d, int type, entitylight *light = NULL)
     {
         vec to(rnd(100)-50, rnd(100)-50, rnd(100)-50);
         to.normalize();
         to.add(p);
-        newbouncer(p, to, true, d, type, rnd(1000)+1000, rnd(100)+20);
+        newbouncer(p, to, true, d, type, rnd(1000)+1000, rnd(100)+20, light);
     }    
 
     void superdamageeffect(vec &vel, fpsent *d)
@@ -346,8 +347,13 @@ struct weaponstate
         int numdebris = gun==GUN_BARREL ? rnd(max(maxbarreldebris()-5, 1))+5 : rnd(maxdebris()-5)+5;
         vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
-        loopi(numdebris)
-            spawnbouncer(debrisorigin, debrisvel, owner, gun==GUN_BARREL ? BNC_BARRELDEBRIS : BNC_DEBRIS);
+        if(numdebris)
+        {
+            entitylight light;
+            lightreaching(debrisorigin, light.color, light.dir);
+            loopi(numdebris)
+                spawnbouncer(debrisorigin, debrisvel, owner, gun==GUN_BARREL ? BNC_BARRELDEBRIS : BNC_DEBRIS, &light);
+        }
         if(!local) return;
         loopi(cl.numdynents())
         {
