@@ -221,7 +221,7 @@ struct fpsclient : igameclient
                 }
                 else moveplayer(d, 2, false);
             }
-            else if(d->state==CS_DEAD && lastmillis-d->lastpain) moveplayer(d, 2, false);
+            else if(d->state==CS_DEAD && lastmillis-d->lastpain<2000) moveplayer(d, 2, false);
         }
     }
 
