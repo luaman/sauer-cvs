@@ -1014,8 +1014,9 @@ struct clientcom : iclientcom
     void changemap(const char *name) // request map change, server may ignore
     {
         if(spectator && !player1->privilege) return;
+        int nextmode = cl.nextmode; // in case stopdemo clobbers cl.nextmode
         if(!remote) stopdemo();
-        addmsg(SV_MAPVOTE, "rsi", name, cl.nextmode);
+        addmsg(SV_MAPVOTE, "rsi", name, nextmode);
     }
         
     void receivefile(uchar *data, int len)
