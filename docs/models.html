@@ -168,7 +168,7 @@ animation. S is the optional frames per second at which to run the anim. If none
 
 <p>
 For example, defining a "pain" animation starting at frame 50 with 6 frames and running at 30 frames per
-second would like like: <i>md2anim "pain" 50 6 30</i>
+second would look like: <i>md2anim "pain" 50 6 30</i>
 </p>
 
 
@@ -206,7 +206,7 @@ following commands may be used in the <i>md3.cfg</i>:
 <pre id="md3load">md3load P</pre>
 <p>
 This command loads the first part of your model. As an example, this could be the <i>head.md3</i>
-of a playermodel. P is the path to the md3 file to load, its recursive to the location of the
+of a playermodel. P is the path to the md3 file to load, its relative to the location of the
 <i>md3.cfg</i>.
 </p>
 
@@ -232,13 +232,13 @@ after scaled into this range, is then multiplied by the chrome map.
 <pre id="md3bumpmap">md3bumpmap H S N</pre>
 <p>
 This command enables bumpmapping for a given mesh in the last loaded model (md3load). H is the name
-of the mesh you want to assign normal map textures to. S is the path to a diffuse skin texture which is
-used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports normal
-mapping, otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
+of the mesh you want to assign bumpmapping textures to. S is the path to a diffuse skin texture which is
+used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports bumpmapping, 
+otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
 two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
 little to no directional shading baked into it, whereas flat diffuse skins (no bumpmapping) generally should,
-and this allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is 
-used to shade the supplied iffuse skin texture.
+and this command allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is 
+used to shade the supplied diffuse skin texture.
 </p>
 
 <pre id="md3anim">md3anim A F N [S [P]]</pre>
