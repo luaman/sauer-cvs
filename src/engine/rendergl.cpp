@@ -471,10 +471,10 @@ void computezoom()
     else curfov = oldfov*t + newfov*(1 - t);
 }
 
-VARP(zoomsens, 1, 1, 1000);
+VARP(zoomsens, 1, 1, 10000);
 VARP(zoomautosens, 0, 1, 1);
-VARP(sensitivity, 0, 3, 1000);
-VARP(sensitivityscale, 1, 1, 100);
+VARP(sensitivity, 0, 3, 10000);
+VARP(sensitivityscale, 1, 1, 10000);
 VARP(invmouse, 0, 0, 1);
 
 void fixcamerarange()
