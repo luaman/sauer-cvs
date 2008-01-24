@@ -85,6 +85,9 @@ struct vec
     }
 };
 
+static inline bool htcmp(const vec &a, const vec &b) { return a==b; }
+static inline uint hthash(const vec &a) { const uint *i = (const uint *)a.v; return i[0]^i[1]^i[2]; }
+
 struct vec4 : vec
 {
     float w;
