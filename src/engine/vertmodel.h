@@ -340,7 +340,7 @@ struct vertmodel : animmodel
                         enabletangents = true;
                     }
                 }
-                else if(enablemtc) disablemtc();
+                else if(enabletangents) disabletangents();
 
                 if(renderpath==R_FIXEDFUNCTION && (s.scrollu || s.scrollv))
                 {
