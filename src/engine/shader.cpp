@@ -142,16 +142,11 @@ static void linkglslprogram(Shader &s, bool msg = true)
         }
         glUseProgramObject_(0);
     }
-    else
+    else if(s.program)
     {
-        if(s.program)
-        {
-            if(msg) showglslinfo(s.program, "PROG", s.name);
-            glDeleteObject_(s.program);
-            s.program = 0;
-        }
-        if(s.vsobj) { glDeleteObject_(s.vsobj); s.vsobj = 0; }
-        if(s.psobj) { glDeleteObject_(s.psobj); s.psobj = 0; }
+        if(msg) showglslinfo(s.program, "PROG", s.name);
+        glDeleteObject_(s.program);
+        s.program = 0;
     }
 }
 
@@ -501,22 +496,32 @@ Shader *newshader(int type, char *name, char *vs, char *ps, Shader *variant = NU
     else loopv(curparams) s.defaultparams.add(curparams[i]);
     if(renderpath!=R_FIXEDFUNCTION)
     {
+        bool reusevs = variant && !vs[0], reuseps = variant && !ps[0];
         if(type & SHADER_GLSLANG)
         {
-            compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name, !variant);
-            compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name, !variant);
+            if(reusevs) s.vsobj = variant->vsobj;
+            else compileglslshader(GL_VERTEX_SHADER_ARB,   s.vsobj, vs, "VS", name, !variant);
+            if(reuseps) s.psobj = variant->psobj;
+            else compileglslshader(GL_FRAGMENT_SHADER_ARB, s.psobj, ps, "PS", name, !variant);
             linkglslprogram(s, !variant);
+            if(!s.program)
+            {
+                if(s.vsobj) { if(!reusevs) glDeleteObject_(s.vsobj); s.vsobj = 0; }
+                if(s.psobj) { if(!reuseps) glDeleteObject_(s.psobj); s.psobj = 0; }
+            }
         }
         else
         {
-            if(!compileasmshader(GL_VERTEX_PROGRAM_ARB, s.vs, vs, "VS", name, !variant, variant!=NULL))
+            if(reusevs) s.vs = variant->vs;
+            else if(!compileasmshader(GL_VERTEX_PROGRAM_ARB, s.vs, vs, "VS", name, !variant, variant!=NULL))
                 s.native = false;
-            if(!compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant, variant!=NULL))
+            if(reuseps) s.ps = variant->ps;
+            else if(!compileasmshader(GL_FRAGMENT_PROGRAM_ARB, s.ps, ps, "PS", name, !variant, variant!=NULL))
                 s.native = false;
             if(!s.vs || !s.ps || (variant && !s.native))
             {
-                if(s.vs) { glDeletePrograms_(1, &s.vs); s.vs = 0; }
-                if(s.ps) { glDeletePrograms_(1, &s.ps); s.ps = 0; }
+                if(s.vs) { if(!reusevs) glDeletePrograms_(1, &s.vs); s.vs = 0; }
+                if(s.ps) { if(!reuseps) glDeletePrograms_(1, &s.ps); s.ps = 0; }
             }
         }
         if(!s.program && !s.vs && !s.ps)
@@ -892,6 +897,19 @@ void shader(int *type, char *name, char *vs, char *ps)
     curparams.setsize(0);
 }
 
+void variantshader(int *type, char *name, int *row, char *vs, char *ps)
+{
+    if(renderpath==R_FIXEDFUNCTION) return;
+
+    Shader *s = lookupshaderbyname(name);
+    if(!s) return;
+
+    s_sprintfd(varname)("<variant:%d,%d>%s", s->variants[*row].length(), *row, name);
+    s_sprintfd(info)("shader %s", varname);
+    show_out_of_renderloop_progress(0.0, info);
+    newshader(*type, varname, vs, ps, s, *row);
+}
+
 void setshader(char *name)
 {
     Shader *s = lookupshaderbyname(name);
@@ -965,6 +983,7 @@ void fastshader(char *nice, char *fast, int *detail)
 }
 
 COMMAND(shader, "isss");
+COMMAND(variantshader, "isiss");
 COMMAND(setshader, "s");
 COMMAND(altshader, "ss");
 COMMAND(fastshader, "ssi");
