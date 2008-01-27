@@ -388,9 +388,6 @@ struct animmodel : model
             DELETEP(next);
         }            
 
-        virtual bool skeletal() { return false; }
-        virtual bool skeletalmat() { return false; }
-
         virtual int findtag(const char *name) { return -1; }
         virtual void concattagtransform(int frame, int i, const matrix3x4 &m, matrix3x4 &n) {}
 
