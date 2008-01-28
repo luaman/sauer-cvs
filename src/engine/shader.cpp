@@ -724,9 +724,10 @@ static void gendynlightvariant(Shader &s, const char *sname, const char *vs, con
                 "dynlight%ddir = gl_Vertex.xyz*dynlight%dpos.w + dynlight%dpos.xyz;\n",   
                 k, k, k); 
             else s_sprintf(tc)(
-				"MOV result.texcoord[%d].w, 1;\n"
-                "MAD result.texcoord[%d].xyz, vertex.position, program.env[%d].w, program.env[%d];\n", 
-                lights[k], lights[k], 10+k, 10+k);
+                "MAD result.texcoord[%d].xyz, vertex.position, program.env[%d].w, program.env[%d];\n" 
+                "MOV result.texcoord[%d].w, 1;\n",
+
+                lights[k], 10+k, 10+k, lights[k]);
             vsdl.put(tc, strlen(tc));
 
             if(s.type & SHADER_GLSLANG) s_sprintf(dl)(

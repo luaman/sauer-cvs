@@ -751,15 +751,19 @@ int limitdynlights()
     if(maxdynlights) loopvj(dynlights)
     {
         dynlight &d = dynlights[j];
-        d.dist = camera1->o.dist(d.o) - d.calcradius();
+        float radius = d.calcradius();
+        if(d.radius<=0) continue;
+        d.dist = camera1->o.dist(d.o) - radius;
         if(d.dist>dynlightdist || isvisiblesphere(d.radius, d.o) >= VFC_FOGGED) continue;
         int insert = 0;
         loopvrev(closedynlights) if(d.dist >= closedynlights[i]->dist) { insert = i+1; break; }
+#if 0
         if(closedynlights.length()>=maxdynlights)
         {
             if(insert+1>=maxdynlights) continue;
             closedynlights.drop();
         }
+#endif
         closedynlights.insert(insert, &d);
     }
     return closedynlights.length();
@@ -810,16 +814,21 @@ void setdynlights(vtxarray *va)
     loopv(closedynlights)
     {
         dynlight &d = *closedynlights[i];
-		float radius = d.calcradius();
-		if(radius <= 0 || d.o.dist_to_bb(va->min, va->max) >= radius) continue;
-		visibledynlights.add(&d);
+        float radius = d.calcradius();
+        if(d.o.dist_to_bb(va->min, va->max) >= radius) continue;
+
+        int index = visibledynlights.length();
+        visibledynlights.add(&d);
+
         float scale = 1.0f/radius;
-		vec origin(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec());
-		origin.sub(d.o).mul(scale);
-		setenvparamf(vertexparams[i], SHPARAM_VERTEX, 10+i, origin.x, origin.y, origin.z, scale/(1<<VVEC_FRAC));
-		vec color(d.color);
+        vec origin(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec());
+        origin.sub(d.o).mul(scale);
+        setenvparamf(vertexparams[index], SHPARAM_VERTEX, 10+index, origin.x, origin.y, origin.z, scale/(1<<VVEC_FRAC));
+        vec color(d.color);
         color.mul(d.intensity());
-        setenvparamf(pixelparams[i], SHPARAM_PIXEL, 10+i, color.x, color.y, color.z);
+        setenvparamf(pixelparams[index], SHPARAM_PIXEL, 10+index, color.x, color.y, color.z);
+
+        if(index+1 >= maxdynlights) break;
     }
 }
 
