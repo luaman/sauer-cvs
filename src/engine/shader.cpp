@@ -56,6 +56,7 @@ Shader *lookupshaderbyname(const char *name)
 
 static bool compileasmshader(GLenum type, GLuint &idx, const char *def, const char *tname, const char *name, bool msg = true, bool nativeonly = false)
 {
+    msg = true;
     glGenPrograms_(1, &idx);
     glBindProgram_(type, idx);
     def += strspn(def, " \t\r\n");
@@ -721,25 +722,23 @@ static void gendynlightvariant(Shader &s, const char *sname, const char *vs, con
         {
             string tc, dl;
             if(s.type & SHADER_GLSLANG) s_sprintf(tc)(
-                "dynlight%ddir = gl_Vertex.xyz - dynlight%dpos.xyz;\n",   
-                k, k); 
+                "dynlight%ddir = gl_Vertex.xyz*dynlight%dpos.w + dynlight%dpos.xyz;\n",   
+                k, k, k); 
             else s_sprintf(tc)(
-                "SUB result.texcoord[%d].xyz, vertex.position, program.env[%d];\n", 
-                lights[k], 10+k);
+                "MAD result.texcoord[%d].xyz, vertex.position, program.env[%d].w, program.env[%d];\n", 
+                lights[k], 10+k, 10+k);
             vsdl.put(tc, strlen(tc));
 
             if(s.type & SHADER_GLSLANG) s_sprintf(dl)(
-                "%s.rgb += dynlight%dcolor.rgb * clamp(1.0 - dynlight%dcolor.a*dot(dynlight%ddir, dynlight%ddir), 0.0, 1.0);\n",
-                pslight, k, k, k, k);
+                "%s.rgb += dynlight%dcolor.rgb * (1.0 - clamp(dot(dynlight%ddir, dynlight%ddir), 0.0, 1.0));\n",
+                pslight, k, k, k);
             else s_sprintf(dl)(
                 "%s"
-                "DP3 dynlight, fragment.texcoord[%d], fragment.texcoord[%d];\n"
-                "MAD_SAT dynlight, dynlight, program.env[%d].a, 1;\n"
+                "DP3_SAT dynlight, fragment.texcoord[%d], fragment.texcoord[%d];\n"
+                "SUB dynlight, 1, dynlight;\n"
                 "MAD %s.rgb, program.env[%d], dynlight, %s;\n",
-
                 !k ? "TEMP dynlight;\n" : "",
                 lights[k], lights[k],
-                10+k,
                 pslight, 10+k, pslight);
             psdl.put(dl, strlen(dl));
         }
