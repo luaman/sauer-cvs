@@ -343,7 +343,7 @@ struct weaponstate
         particle_splash(0, 200, 300, v);
         playsound(S_RLHIT, &v);
         particle_fireball(v, RL_DAMRAD, gun==GUN_RL || gun==GUN_BARREL ? 22 : 23);
-        adddynlight(v, 1.15f*RL_DAMRAD, vec(1, 0.75f, 0.5f), 600, 400);
+        adddynlight(v, 1.15f*RL_DAMRAD, vec(2, 1.5f, 1), 600, 400);
         int numdebris = gun==GUN_BARREL ? rnd(max(maxbarreldebris()-5, 1))+5 : rnd(maxdebris()-5)+5;
         vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
