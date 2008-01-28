@@ -700,7 +700,7 @@ struct dynlight
         {
             int remaining = expire - lastmillis;
             if(flags&DL_EXPAND) return radius * (1.0f - remaining/float(fade + peak));
-            if(remaining > fade) return radius * (1.0f - float(remaining - fade)/peak);
+			if(remaining > fade) return radius * (1.0f - float(remaining - fade)/peak);
             else if(flags&DL_SHRINK) return (radius*remaining)/fade;
         }
         return radius;
@@ -799,14 +799,6 @@ void dynlightreaching(const vec &target, vec &color, vec &dir)
 
 void setdynlights(vtxarray *va)
 {
-    visibledynlights.setsizenodelete(0);
-    loopv(closedynlights)
-    {
-        dynlight &d = *closedynlights[i];
-        if(d.o.dist_to_bb(va->min, va->max) < d.calcradius()) visibledynlights.add(&d);
-    }
-    if(visibledynlights.empty()) return;
-
     static string vertexparams[MAXDYNLIGHTS] = { "" }, pixelparams[MAXDYNLIGHTS] = { "" };
     if(!*vertexparams[0]) loopi(MAXDYNLIGHTS)
     {
@@ -814,14 +806,18 @@ void setdynlights(vtxarray *va)
         s_sprintf(pixelparams[i])("dynlight%dcolor", i);
     }
 
-    loopv(visibledynlights)
+    visibledynlights.setsizenodelete(0);
+    loopv(closedynlights)
     {
-        dynlight &d = *visibledynlights[i];
-        float scale = 1.0f/d.calcradius();
-        vec origin(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec());
-        origin.sub(d.o).mul(scale);
-        setenvparamf(vertexparams[i], SHPARAM_VERTEX, 10+i, origin.x, origin.y, origin.z, scale/(1<<VVEC_FRAC));
-        vec color(d.color);
+        dynlight &d = *closedynlights[i];
+		float radius = d.calcradius();
+		if(radius <= 0 || d.o.dist_to_bb(va->min, va->max) >= radius) continue;
+		visibledynlights.add(&d);
+        float scale = 1.0f/radius;
+		vec origin(ivec(va->x, va->y, va->z).mask(~VVEC_INT_MASK).tovec());
+		origin.sub(d.o).mul(scale);
+		setenvparamf(vertexparams[i], SHPARAM_VERTEX, 10+i, origin.x, origin.y, origin.z, scale/(1<<VVEC_FRAC));
+		vec color(d.color);
         color.mul(d.intensity());
         setenvparamf(pixelparams[i], SHPARAM_PIXEL, 10+i, color.x, color.y, color.z);
     }

@@ -56,7 +56,6 @@ Shader *lookupshaderbyname(const char *name)
 
 static bool compileasmshader(GLenum type, GLuint &idx, const char *def, const char *tname, const char *name, bool msg = true, bool nativeonly = false)
 {
-    msg = true;
     glGenPrograms_(1, &idx);
     glBindProgram_(type, idx);
     def += strspn(def, " \t\r\n");
@@ -725,9 +724,9 @@ static void gendynlightvariant(Shader &s, const char *sname, const char *vs, con
                 "dynlight%ddir = gl_Vertex.xyz*dynlight%dpos.w + dynlight%dpos.xyz;\n",   
                 k, k, k); 
             else s_sprintf(tc)(
-                "MAD result.texcoord[%d].xyz, vertex.position, program.env[%d].w, program.env[%d];\n"
-                "MOV result.texcoord[%d].w, 1;\n", 
-                lights[k], 10+k, 10+k, lights[k]);
+				"MOV result.texcoord[%d].w, 1;\n"
+                "MAD result.texcoord[%d].xyz, vertex.position, program.env[%d].w, program.env[%d];\n", 
+                lights[k], lights[k], 10+k, 10+k);
             vsdl.put(tc, strlen(tc));
 
             if(s.type & SHADER_GLSLANG) s_sprintf(dl)(
@@ -735,8 +734,8 @@ static void gendynlightvariant(Shader &s, const char *sname, const char *vs, con
                 pslight, k, k, k);
             else s_sprintf(dl)(
                 "%s"
-                "DPH_SAT dynlight, -fragment.texcoord[%d], fragment.texcoord[%d];\n"
-                "MAD %s.rgb, program.env[%d], dynlight, %s;\n",
+                "DPH_SAT dynlight.x, -fragment.texcoord[%d], fragment.texcoord[%d];\n"
+                "MAD %s.rgb, program.env[%d], dynlight.x, %s;\n",
                 !k ? "TEMP dynlight;\n" : "",
                 lights[k], lights[k],
                 pslight, 10+k, pslight);
@@ -916,8 +915,8 @@ void variantshader(int *type, char *name, int *row, char *vs, char *ps)
     if(!s) return;
 
     s_sprintfd(varname)("<variant:%d,%d>%s", s->variants[*row].length(), *row, name);
-    s_sprintfd(info)("shader %s", varname);
-    show_out_of_renderloop_progress(0.0, info);
+    //s_sprintfd(info)("shader %s", varname);
+    //show_out_of_renderloop_progress(0.0, info);
     newshader(*type, varname, vs, ps, s, *row);
 }
 
