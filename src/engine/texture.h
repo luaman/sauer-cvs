@@ -211,6 +211,7 @@ struct cubemapside
 {
     GLenum target;
     const char *name;
+    bool flipx, flipy, swapxy;
 };
 
 extern cubemapside cubemapsides[6];

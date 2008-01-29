@@ -5,14 +5,14 @@ Texture *sky[6] = { 0, 0, 0, 0, 0, 0 };
 
 void loadsky(const char *basename)
 {
-    static const char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     loopi(6)
     {
-        s_sprintfd(name)("packages/%s_%s.jpg", basename, side[i]);
+        const char *side = cubemapsides[i].name;
+        s_sprintfd(name)("packages/%s_%s.jpg", basename, side);
         if((sky[i] = textureload(name, 3, true, false))==notexture)
         {
             strcpy(name+strlen(name)-3, "png");
-            if((sky[i] = textureload(name, 3, true, false))==notexture) conoutf("could not load sky texture packages/%s_%s", basename, side[i]);
+            if((sky[i] = textureload(name, 3, true, false))==notexture) conoutf("could not load sky texture packages/%s_%s", basename, side);
         }
     }
 }
@@ -45,25 +45,25 @@ void draw_envbox(int w, float zclip = 0.0f)
 
     glDepthMask(GL_FALSE);
 
-    draw_envbox_face(1.0f, vclip, -w, -w,  z,
-                     0.0f, vclip,  w, -w,  z,
-                     0.0f, 0.0f,  w, -w, -w,
-                     1.0f, 0.0f, -w, -w, -w, sky[0]->gl);
-
-    draw_envbox_face(1.0f, vclip, +w,  w,  z,
-                     0.0f, vclip, -w,  w,  z,
-                     0.0f, 0.0f, -w,  w, -w,
-                     1.0f, 0.0f, +w,  w, -w, sky[1]->gl);
-
     draw_envbox_face(0.0f, 0.0f, -w, -w, -w,
                      1.0f, 0.0f, -w,  w, -w,
                      1.0f, vclip, -w,  w,  z,
-                     0.0f, vclip, -w, -w,  z, sky[2]->gl);
+                     0.0f, vclip, -w, -w,  z, sky[0]->gl);
 
     draw_envbox_face(1.0f, vclip, +w, -w,  z,
                      0.0f, vclip, +w,  w,  z,
                      0.0f, 0.0f, +w,  w, -w,
-                     1.0f, 0.0f, +w, -w, -w, sky[3]->gl);
+                     1.0f, 0.0f, +w, -w, -w, sky[1]->gl);
+
+    draw_envbox_face(1.0f, vclip, -w, -w,  z,
+                     0.0f, vclip,  w, -w,  z,
+                     0.0f, 0.0f,  w, -w, -w,
+                     1.0f, 0.0f, -w, -w, -w, sky[2]->gl);
+
+    draw_envbox_face(1.0f, vclip, +w,  w,  z,
+                     0.0f, vclip, -w,  w,  z,
+                     0.0f, 0.0f, -w,  w, -w,
+                     1.0f, 0.0f, +w,  w, -w, sky[3]->gl);
 
     if(!zclip)
         draw_envbox_face(0.0f, 1.0f, -w,  w,  w,

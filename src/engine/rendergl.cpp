@@ -548,11 +548,12 @@ void recomputecamera()
     }
 }
 
-void project(float fovy, float aspect, int farplane, bool flipx = false, bool flipy = false)
+void project(float fovy, float aspect, int farplane, bool flipx = false, bool flipy = false, bool swapxy = false)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    if(flipx || flipy) glScalef(flipx ? -1 : 1, flipy ? -1 : 1, 1);
+    if(swapxy) glRotatef(90, 0, 0, 1);
+    if(flipx || flipy!=swapxy) glScalef(flipx ? -1 : 1, flipy!=swapxy ? -1 : 1, 1);
     gluPerspective(fovy, aspect, 0.54f, farplane);
     glMatrixMode(GL_MODELVIEW);
 }
@@ -777,7 +778,7 @@ static void setfog(int fogmat)
 
 bool envmapping = false;
 
-void drawcubemap(int size, const vec &o, float yaw, float pitch)
+void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapside &side)
 {
     envmapping = true;
 
@@ -803,7 +804,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch)
 
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
-    project(90.0f, 1.0f, farplane, true, true);
+    project(90.0f, 1.0f, farplane, !side.flipx, !side.flipy, side.swapxy);
 
     transplayer();
 
@@ -894,7 +895,7 @@ void gl_drawframe(int w, int h)
 
     rendermapmodels();
 
-    if(!waterrefract) 
+    if(!waterrefract || nowater) 
     {
         defaultshader->set();
         cl->rendergame();
@@ -906,16 +907,17 @@ void gl_drawframe(int w, int h)
 
     if(hasFBO) drawreflections();
 
-    if(waterrefract)
+    if(waterrefract && !nowater)
     {
         defaultshader->set();
         cl->rendergame();
     }
 
+    if(!waterrefract || nowater) renderdecals(curtime);
     renderwater();
     rendergrass();
 
-    renderdecals(curtime);
+    if(waterrefract && !nowater) renderdecals(curtime);
     rendermaterials();
     render_particles(curtime);
 
