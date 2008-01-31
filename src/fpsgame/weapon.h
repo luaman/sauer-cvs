@@ -343,7 +343,8 @@ struct weaponstate
         particle_splash(0, 200, 300, v);
         playsound(S_RLHIT, &v);
         particle_fireball(v, RL_DAMRAD, gun==GUN_RL || gun==GUN_BARREL ? 22 : 23);
-        adddynlight(v, 1.15f*RL_DAMRAD, vec(2, 1.5f, 1), 600, 400);
+        if(gun==GUN_RL) adddynlight(v, RL_DAMRAD/2, vec(1, 0.75f, 0.5f), 200, 0, DL_SHRINK);
+        adddynlight(v, 1.25f*RL_DAMRAD, vec(2, 1.5f, 1), 600, 400, DL_EXPAND);
         int numdebris = gun==GUN_BARREL ? rnd(max(maxbarreldebris()-5, 1))+5 : rnd(maxdebris()-5)+5;
         vec debrisvel = owner->o==v ? vec(0, 0, 0) : vec(owner->o).sub(v).normalize(), debrisorigin(v);
         if(gun==GUN_RL) debrisorigin.add(vec(debrisvel).mul(8));
@@ -504,6 +505,7 @@ struct weaponstate
                 //particle_trail(1, 10, from, to);
                 particle_flare(hudgunorigin(gun, from, to, d), to, 600, 10);
                 if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
+                if(gun==GUN_CG) adddynlight(d->o, 30, vec(1, 0.75f, 0.5f), 100, 0, DL_FLASH); 
                 break;
             }
 
@@ -664,6 +666,18 @@ struct weaponstate
         d->totalshots += guns[d->gunselect].damage*(d->quadmillis ? 4 : 1)*(d->gunselect==GUN_SG ? SGRAYS : 1);
     }
 
+    void adddynlights()
+    {
+        loopv(projs)
+        {
+            projectile &p = projs[i];
+            if(p.gun!=GUN_RL) continue;
+            vec pos(p.o);
+            pos.add(vec(p.offset).mul(p.offsetmillis/float(OFFSETMILLIS)));
+            adddynlight(pos, RL_DAMRAD/2, vec(1, 0.75f, 0.5f));
+        }
+    }
+
     void renderprojectiles()
     {
         float yaw, pitch;
@@ -706,7 +720,7 @@ struct weaponstate
             yaw += 90;
             v.mul(3);
             v.add(pos);
-            rendermodel(&p.light, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, v, yaw, pitch, MDL_CULL_VFC|MDL_CULL_OCCLUDED|MDL_DYNSHADOW|MDL_LIGHT);
+            rendermodel(&p.light, "projectiles/rocket", ANIM_MAPMODEL|ANIM_LOOP, v, yaw, pitch, MDL_CULL_VFC|MDL_CULL_OCCLUDED|MDL_LIGHT);
         }
     }  
 };

@@ -99,6 +99,8 @@ struct fpsclient : igameclient
 
     char *getclientmap() { return clientmap; }
 
+    void adddynlights() { ws.adddynlights(); }
+
     void rendergame() { fr.rendergame(gamemode); }
 
     void resetgamestate()
