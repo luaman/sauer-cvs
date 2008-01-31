@@ -6,8 +6,8 @@ struct monsterset
     vector<extentity *> &ents;
     vector<int> teleports;
 
-    static const int TOTMFREQ = 13;
-    static const int NUMMONSTERTYPES = 8;
+    static const int TOTMFREQ = 14;
+    static const int NUMMONSTERTYPES = 9;
 
     struct monstertype      // see docs for how these values modify behaviour
     {
@@ -252,6 +252,7 @@ struct monsterset
             { GUN_BITE,      22,  50, 3, 0,   100, 400, 1, 15,  75, S_PAINP, S_PIGGR2, "a hellpig",   "monster/hellpig",    NULL},
             { GUN_ICEBALL,   11, 250, 1, 0,    10, 400, 6, 18, 160, S_PAINH, S_DEATHH, "a knight",    "monster/knight",     "monster/knight/vwep"},
             { GUN_SLIMEBALL, 15, 100, 1, 0,   200, 400, 2, 10,  60, S_PAIND, S_DEATHD, "a goblin",    "monster/goblin",     "monster/goblin/vwep"},
+            { GUN_GL,        25,  50, 1, 0,   200, 400, 1, 10,  40, S_PAIND, S_DEATHD, "a spider",    "monster/spider",      NULL }, 
         };
         monstertypes = _monstertypes;
     }
