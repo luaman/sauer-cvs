@@ -16,6 +16,10 @@
 		B90ADD7209B344D800A5B00B /* peer.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3009B344D800A5B00B /* peer.c */; };
 		B90ADD7309B344D800A5B00B /* protocol.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3109B344D800A5B00B /* protocol.c */; };
 		B90ADD7609B344D800A5B00B /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = B90ADD3409B344D800A5B00B /* unix.c */; };
+		B91D401F0D525FD3004EF78A /* animmodel.h in Headers */ = {isa = PBXBuildFile; fileRef = B91D401E0D525FD3004EF78A /* animmodel.h */; };
+		B91D40210D525FE0004EF78A /* decal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B91D40200D525FE0004EF78A /* decal.cpp */; };
+		B91D40230D525FE9004EF78A /* md5.h in Headers */ = {isa = PBXBuildFile; fileRef = B91D40220D525FE9004EF78A /* md5.h */; };
+		B91D40250D52600A004EF78A /* skelmodel.h in Headers */ = {isa = PBXBuildFile; fileRef = B91D40240D52600A004EF78A /* skelmodel.h */; };
 		B92DC0FC09D08CF9008219BD /* SDL_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0F909D08CF9008219BD /* SDL_image.framework */; };
 		B92DC0FD09D08CF9008219BD /* SDL_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */; };
 		B92DC0FE09D08CF9008219BD /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B92DC0FB09D08CF9008219BD /* SDL.framework */; };
@@ -138,6 +142,10 @@
 		B90ADD3009B344D800A5B00B /* peer.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = peer.c; sourceTree = "<group>"; };
 		B90ADD3109B344D800A5B00B /* protocol.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = protocol.c; sourceTree = "<group>"; };
 		B90ADD3409B344D800A5B00B /* unix.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = unix.c; sourceTree = "<group>"; };
+		B91D401E0D525FD3004EF78A /* animmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = animmodel.h; sourceTree = "<group>"; };
+		B91D40200D525FE0004EF78A /* decal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = decal.cpp; sourceTree = "<group>"; };
+		B91D40220D525FE9004EF78A /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
+		B91D40240D52600A004EF78A /* skelmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skelmodel.h; sourceTree = "<group>"; };
 		B92DC0F909D08CF9008219BD /* SDL_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_image.framework; path = /Library/Frameworks/SDL_image.framework; sourceTree = "<absolute>"; };
 		B92DC0FA09D08CF9008219BD /* SDL_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL_mixer.framework; path = /Library/Frameworks/SDL_mixer.framework; sourceTree = "<absolute>"; };
 		B92DC0FB09D08CF9008219BD /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
@@ -376,12 +384,14 @@
 			isa = PBXGroup;
 			children = (
 				B9AC7A840D06DB44005506F8 /* 3dgui.cpp */,
+				B91D401E0D525FD3004EF78A /* animmodel.h */,
 				B9AC7A850D06DB44005506F8 /* bih.cpp */,
 				B9AC7A860D06DB44005506F8 /* bih.h */,
 				B9AC7A870D06DB44005506F8 /* client.cpp */,
 				B9AC7A880D06DB44005506F8 /* command.cpp */,
 				B9AC7A890D06DB44005506F8 /* console.cpp */,
 				B9AC7A8A0D06DB44005506F8 /* cubeloader.cpp */,
+				B91D40200D525FE0004EF78A /* decal.cpp */,
 				B9AC7A8B0D06DB44005506F8 /* engine.h */,
 				B9AC7A8C0D06DB44005506F8 /* grass.cpp */,
 				B9AC7A8D0D06DB44005506F8 /* lightmap.cpp */,
@@ -390,6 +400,7 @@
 				B9AC7A900D06DB44005506F8 /* material.cpp */,
 				B9AC7A910D06DB44005506F8 /* md2.h */,
 				B9AC7A920D06DB44005506F8 /* md3.h */,
+				B91D40220D525FE9004EF78A /* md5.h */,
 				B9AC7A930D06DB44005506F8 /* menus.cpp */,
 				B9AC7A940D06DB44005506F8 /* model.h */,
 				B9AC7A950D06DB44005506F8 /* normal.cpp */,
@@ -408,6 +419,7 @@
 				B9AC7AA20D06DB44005506F8 /* serverbrowser.cpp */,
 				B9AC7AA30D06DB44005506F8 /* shader.cpp */,
 				B9AC7AA40D06DB44005506F8 /* shadowmap.cpp */,
+				B91D40240D52600A004EF78A /* skelmodel.h */,
 				B9AC7AA50D06DB44005506F8 /* sound.cpp */,
 				B9AC7AA60D06DB44005506F8 /* texture.cpp */,
 				B9AC7AA70D06DB44005506F8 /* texture.h */,
@@ -519,6 +531,9 @@
 				B9AC7B120D06DB44005506F8 /* pch.h in Headers */,
 				B9AC7B140D06DB44005506F8 /* sbtrace.h in Headers */,
 				B9AC7B160D06DB44005506F8 /* tools.h in Headers */,
+				B91D401F0D525FD3004EF78A /* animmodel.h in Headers */,
+				B91D40230D525FE9004EF78A /* md5.h in Headers */,
+				B91D40250D52600A004EF78A /* skelmodel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -680,6 +695,7 @@
 				B9AC7B110D06DB44005506F8 /* pch.cpp in Sources */,
 				B9AC7B130D06DB44005506F8 /* sbtrace.d in Sources */,
 				B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */,
+				B91D40210D525FE0004EF78A /* decal.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
