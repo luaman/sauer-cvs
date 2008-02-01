@@ -199,7 +199,13 @@
 <a href="#waterreflect"><tt>waterreflect</tt></a>
 </li>
 <li>
+<a href="#waterenvmap"><tt>waterenvmap</tt></a>
+</li>
+<li>
 <a href="#waterrefract"><tt>waterrefract</tt></a>
+</li>
+<li>
+<a href="#waterfade"><tt>waterfade</tt></a>
 </li>
 <li>
 <a href="#reflectdist"><tt>reflectdist</tt></a>
@@ -744,9 +750,19 @@ Sets the precision level of the water LOD (Level of Detail) from 0..3, where 0 i
 Enables or disables water reflections (default: 1).
 </p>
 
+<pre id="waterenvmap">waterenvmap B</pre>
+<p>
+Enables or disables water environment-mapping (cheaper fake reflections). By default, this is used when "waterreflect" is turned off.
+</p>
+
 <pre id="waterrefract">waterrefract B</pre>
 <p>
 Enables or disables water refractions. (default: 1).
+</p>
+
+<pre id="waterfade">waterfade B</pre>
+<p>
+Enables or disables soft fading of water edges. This option only works if "waterrefract" is enabled. (default: 1).
 </p>
 
 <pre id="reflectdist">reflectdist N</pre>
