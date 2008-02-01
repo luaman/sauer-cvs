@@ -5,7 +5,8 @@ enum
 {
     PVS_HIDE_GEOM = 1<<0,
     PVS_HIDE_BB   = 1<<1,
-    PVS_COMPACTED = 1<<2
+    PVS_NOVIS     = 1<<2,
+    PVS_COMPACTED = 1<<3
 };
 
 struct pvsnode
@@ -80,6 +81,9 @@ void genpvsnodes(cube *c, int parent = 0, const ivec &co = ivec(0, 0, 0), int si
         if(c[i].children || isempty(c[i])) memset(n.edges.v, 0xFF, 3);
         else
         {
+            int vis = 0;
+            loopk(6) if(visibleface(c[i], k, o.x, o.y, o.z, size)) { vis++; break; }
+            if(!vis) n.flags = PVS_HIDE_BB | PVS_HIDE_GEOM | PVS_NOVIS;
             loopk(3)
             {
                 uint face = c[i].faces[k];
@@ -248,6 +252,18 @@ struct shaftbb
         return min.x<=o.min.x && min.y<=o.min.y && min.z<=o.min.z &&
                max.x>=o.max.x && max.y>=o.max.y && max.z>=o.max.z;
     }
+
+    bool outside(const shaftbb &o) const
+    {
+        return o.min.x>max.x || o.min.y>max.y || o.min.z>max.z ||
+               o.max.x<min.x || o.max.y<min.y || o.max.z<min.z;
+    }
+
+    bool notinside(const shaftbb &o) const
+    {
+        return o.min.x<min.x || o.min.y<min.y || o.min.z<min.z ||
+               o.max.x>max.x || o.max.y>max.y || o.max.z>max.z;
+    }
 };
 
 struct shaft
@@ -297,9 +313,7 @@ struct shaft
 
     bool outside(const shaftbb &o) const
     {
-        if(o.min.x > bounds.max.x || o.min.y > bounds.max.y || o.min.z > bounds.max.z ||
-           o.max.x < bounds.min.x || o.max.y < bounds.min.y || o.max.z < bounds.min.z)
-            return true;
+        if(bounds.outside(o)) return true;
 
         for(const shaftplane *p = planes; p < &planes[numplanes]; p++)
         {
@@ -310,9 +324,7 @@ struct shaft
 
     bool inside(const shaftbb &o) const
     {
-        if(o.min.x < bounds.min.x || o.min.y < bounds.min.y || o.min.z < bounds.min.z ||
-           o.max.x > bounds.max.x || o.max.y > bounds.max.y || o.max.z > bounds.max.z)
-            return false;
+        if(bounds.notinside(o)) return false;
 
         for(const shaftplane *p = planes; p < &planes[numplanes]; p++)
         {
@@ -518,5 +530,137 @@ void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsiz
             ccenter = cmax[c] + 1;
         }
     }
+}
+
+bool compresspvsnode(pvsnode &p, pvsnode *children)
+{
+    int lastvis = 7;
+    while(lastvis>=0 && children[lastvis].flags&PVS_NOVIS) lastvis--;
+    if(lastvis<0)
+    {
+        p.flags = PVS_HIDE_BB | PVS_HIDE_GEOM | PVS_NOVIS;
+        p.children = 0;
+        return true;
+    }
+
+    if(!(p.flags&PVS_HIDE_BB))
+    {
+        int hide = children[lastvis].flags&PVS_HIDE_BB;
+        loopi(lastvis)  if((children[i].flags&PVS_HIDE_BB)!=hide) return false;
+        p.flags = (p.flags & ~PVS_HIDE_BB) | hide;
+    }
+    p.children = 0;
+    return true;
+}
+
+bool compresspvsnodes(pvsnode &p, int size, int threshold)
+{
+    if(!p.children) return true;
+    pvsnode *children = &pvsnodes[p.children];
+    bool canreduce = true;
+    loopi(8)
+    {
+        if(!compresspvsnodes(children[i], size/2, threshold)) canreduce = false;
+    }
+    if(p.flags&PVS_HIDE_BB) canreduce = true;
+    if(!canreduce || !compresspvsnode(p, children))
+    {
+        if(size <= threshold)
+        {
+            p.children = 0;
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+vector<uchar> pvsbuf;
+
+void serializepvs(pvsnode &p, int storage)
+{
+    int index = pvsbuf.length();
+    pvsnode *children = &pvsnodes[p.children];
+    int i = 0;
+    uchar leafvalues = 0;
+    for(; i < 8; i++)
+    {
+        pvsnode &child = children[i];
+        if(child.children) break;
+        else if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
+    }
+    if(i==8) { pvsbuf[storage] = leafvalues; return; } 
+    pvsbuf[storage] = (index - storage + 8)/9;
+    pvsbuf.add(0);
+    loopj(8) pvsbuf.add(leafvalues&(1<<j) ? 0xFF : 0); 
+    uchar leafmask = (1<<i)-1;
+    for(; i < 8; i++)
+    {
+        pvsnode &child = children[i];
+        if(child.children) serializepvs(p, index+1+i);
+        else { leafmask |= 1<<i; pvsbuf[index+1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
+    }
+    pvsbuf[index] = leafmask; 
+}
+
+void serializepvs(pvsnode &p)
+{
+    if(!p.children)
+    {
+        pvsbuf.add(0xFF);
+        loopi(8) pvsbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
+        return;
+    }
+    loopi(9) pvsbuf.add(0);
+    pvsnode *children = &pvsnodes[p.children];
+    uchar leafmask = 0;
+    loopi(8)
+    {
+        pvsnode &child = children[i];
+        if(child.children) serializepvs(p, 1+i);
+        else { leafmask |= 1<<i; pvsbuf[1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
+    }
+    pvsbuf[0] = leafmask;
+}
+
+bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
+{
+    uchar leafmask = buf[0];
+    loopoctabox(co, size, bborigin, bbsize)
+    {
+        ivec o(i, co.x, co.y, co.z, size);
+        if(leafmask&(1<<i))
+        {
+            uchar leafvalues = buf[1+i];
+            if(!leafvalues || (leafvalues!=0xFF && leafvalues&~octantrectangleoverlap(o, size>>1, bborigin, bbsize))) 
+                return false;
+            continue;
+        }
+        if(!pvsoccluded(buf+9*buf[1+i], o, size>>1, bborigin, bbsize)) return false;
+    }
+    return true;
+}
+
+bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
+{
+    int diff = (bborigin.x^(bborigin.x+bbsize.x)) | (bborigin.y^(bborigin.y+bbsize.y)) | (bborigin.z^(bborigin.z+bbsize.z)),
+        scale = worldscale-1;
+    if(diff&~((1<<scale)-1)) return pvsoccluded(buf, ivec(0, 0, 0), 1<<scale, bborigin, bbsize);
+    uchar leafmask = buf[0];
+    int i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
+    scale--;
+    while(!(leafmask&(1<<i)) && !(diff&(1<<scale)))
+    {
+        buf += 9*buf[1+i];
+        leafmask = buf[0];
+        i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
+        scale--;
+    }
+    if(leafmask&(1<<i))
+    {
+        uchar leafvalues = buf[1+i];
+        return leafvalues && (leafvalues==0xFF || leafvalues&~octantrectangleoverlap(ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize)); 
+    }
+    return pvsoccluded(buf, ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize);
 }
 
