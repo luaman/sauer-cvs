@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "engine.h"
+#include "SDL_thread.h"
 
 enum
 {
@@ -16,7 +17,6 @@ struct pvsnode
 };
 
 vector<pvsnode> origpvsnodes;
-pvsnode *pvsnodes = NULL;
 
 bool mergepvsnodes(pvsnode &p, pvsnode *children)
 {
@@ -106,90 +106,6 @@ void genpvsnodes(cube *c, int parent = 0, const ivec &co = ivec(0, 0, 0), int si
     }
     if(!branches && mergepvsnodes(origpvsnodes[parent], &origpvsnodes[index])) origpvsnodes.setsizenodelete(index);
     else origpvsnodes[parent].children = index;
-}
-
-static pvsnode *levels[32];
-static int curlevel = worldscale;
-static ivec origin;
-
-static inline void resetlevels()
-{
-    curlevel = worldscale;
-    levels[curlevel] = &pvsnodes[0];
-    origin = ivec(0, 0, 0);
-}
-
-static int hasvoxel(const ivec &p, int coord, int dir, int ocoord = 0, int odir = 0, int *omin = NULL)
-{
-    uint diff = (origin.x^p.x)|(origin.y^p.y)|(origin.z^p.z);
-    if(diff >= uint(hdr.worldsize)) return 0;
-    diff >>= curlevel;
-    while(diff)
-    {
-        curlevel++;
-        diff >>= 1;
-    }
-
-    pvsnode *cur = levels[curlevel];
-    while(cur->children && !(cur->flags&PVS_HIDE_BB))
-    {
-        cur = &pvsnodes[cur->children];
-        curlevel--;
-        cur += ((p.z>>(curlevel-2))&4) | ((p.y>>(curlevel-1))&2) | ((p.x>>curlevel)&1);
-        levels[curlevel] = cur;
-    }
-
-    origin = ivec(p.x&(~0<<curlevel), p.y&(~0<<curlevel), p.z&(~0<<curlevel));
-    int size = 1<<curlevel;
-
-    if(cur->flags&PVS_HIDE_BB)
-    {
-        if(p.x < origin.x || p.y < origin.y || p.z < origin.z ||
-           p.x >= origin.x+size || p.y >= origin.y+size || p.z >= origin.z+size)
-            return 0;
-        if(omin)
-        {
-            int step = origin[ocoord] + (odir<<curlevel) - p[ocoord] + odir - 1;
-            if(odir ? step < *omin : step > *omin) *omin = step;
-        }
-        return origin[coord] + (dir<<curlevel) - p[coord] + dir - 1;
-    }
-
-    if(cur->edges.x==0xFF) return 0;
-    ivec bbp(p);
-    bbp.sub(origin);
-    ivec bbmin, bbmax;
-    bbmin.x = ((cur->edges.x&0xF)<<curlevel)/8;
-    if(bbp.x < bbmin.x) return 0;
-    bbmax.x = ((cur->edges.x>>4)<<curlevel)/8;
-    if(bbp.x >= bbmax.x) return 0;
-    bbmin.y = ((cur->edges.y&0xF)<<curlevel)/8;
-    if(bbp.y < bbmin.y) return 0;
-    bbmax.y = ((cur->edges.y>>4)<<curlevel)/8;
-    if(bbp.y >= bbmax.y) return 0;
-    bbmin.z = ((cur->edges.z&0xF)<<curlevel)/8;
-    if(bbp.z < bbmin.z) return 0;
-    bbmax.z = ((cur->edges.z>>4)<<curlevel)/8;
-    if(bbp.z >= bbmax.z) return 0; 
-    if(omin)
-    {
-        int step = (odir ? bbmax[ocoord] : bbmin[ocoord]) - bbp[ocoord] + (odir - 1);
-        if(odir ? step < *omin : step > *omin) *omin = step;
-    }
-    return (dir ? bbmax[coord] : bbmin[coord]) - bbp[coord] + (dir - 1);
-}
-
-void hidepvs(pvsnode &p)
-{
-    if(p.children)
-    {
-        pvsnode *children = &pvsnodes[p.children];
-        loopi(8) hidepvs(children[i]);
-        p.flags |= PVS_HIDE_BB;
-        return;
-    }
-    p.flags |= PVS_HIDE_BB;
-    if(p.edges.x!=0xFF) p.flags |= PVS_HIDE_GEOM;
 }
 
 struct shaftplane
@@ -332,359 +248,7 @@ struct shaft
         }
         return true;
     }
-
-    void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
-    {
-        if(p.flags&PVS_HIDE_BB) return;
-        shaftbb bb(co, size);
-        if(outside(bb)) return;
-        if(inside(bb)) { hidepvs(p); return; }
-        if(p.children)
-        {
-            pvsnode *children = &pvsnodes[p.children];
-            uchar flags = 0xFF;
-            loopi(8)
-            {
-                ivec o(i, co.x, co.y, co.z, size>>1);
-                cullpvs(children[i], o, size>>1);
-                flags &= children[i].flags;
-            }
-            if(flags & PVS_HIDE_BB) p.flags |= PVS_HIDE_BB;
-            return;
-        }
-        if(p.edges.x==0xFF) return;
-        shaftbb geom(co, size, p.edges);
-        if(inside(geom)) p.flags |= PVS_HIDE_GEOM;
-    }
 };
-
-static shaftbb viewcellbb;
-static ivec viewcellcenter;
-
-VAR(maxpvsblocker, 1, 512, 1<<16);
-
-bool genpvs_canceled = false;
-
-void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
-{
-    if(p.flags&(PVS_HIDE_BB | PVS_HIDE_GEOM) || genpvs_canceled) return;
-    bvec edges = p.children ? bvec(0x80, 0x80, 0x80) : p.edges;
-    if(p.children && !(p.flags&PVS_HIDE_BB))
-    {
-        pvsnode *children = &pvsnodes[p.children];
-        loopi(8)
-        {
-            ivec o(i, co.x, co.y, co.z, size>>1);
-            cullpvs(children[i], o, size>>1);
-        }
-        if(!(p.flags & PVS_HIDE_BB)) return;
-    }
-    if(edges.x==0xFF) return;
-    shaftbb geom(co, size, p.edges);
-    loopi(6)
-    {
-        int dim = dimension(i), dc = dimcoord(i), r = R[dim], c = C[dim];
-        int ccenter = geom.min[c];
-        if(geom.min[r]==geom.max[r] || geom.min[c]==geom.max[c]) continue;
-        while(ccenter < geom.max[c])
-        {
-            ivec rmin;
-            rmin[dim] = geom[dim + 3*dc] + (dc ? -1 : 0);
-            rmin[r] = geom.min[r];
-            rmin[c] = ccenter;
-            ivec rmax = rmin;
-            rmax[r] = geom.max[r] - 1;
-            int rcenter = (rmin[r] + rmax[r])/2;
-            resetlevels();
-            for(int minstep = -1, maxstep = 1; (minstep || maxstep) && rmax[r] - rmin[r] < maxpvsblocker;)
-            {
-                if(minstep) minstep = hasvoxel(rmin, r, 0);
-                if(maxstep) maxstep = hasvoxel(rmax, r, 1);
-                rmin[r] += minstep;
-                rmax[r] += maxstep;
-            }
-            rmin[r] = rcenter + (rmin[r] - rcenter)/2;
-            rmax[r] = rcenter + (rmax[r] - rcenter)/2;
-            if(rmin[r]>=geom.min[r] && rmax[r]<geom.max[r]) { rmin[r] = geom.min[r]; rmax[r] = geom.max[r] - 1; }
-            ivec cmin = rmin, cmax = rmin;
-            if(rmin[r]>=geom.min[r] && rmax[r]<geom.max[r])
-            {
-                cmin[c] = geom.min[c];
-                cmax[c] = geom.max[c]-1;
-            }
-            int cminstep = -1, cmaxstep = 1;
-            for(; (cminstep || cmaxstep) && cmax[c] - cmin[c] < maxpvsblocker;)
-            {
-                if(cminstep)
-                {
-                    cmin[c] += cminstep; cminstep = INT_MIN;
-                    cmin[r] = rmin[r];
-                    resetlevels();
-                    for(int rstep = 1; rstep && cmin[r] <= rmax[r];)
-                    {
-                        rstep = hasvoxel(cmin, r, 1, c, 0, &cminstep);
-                        cmin[r] += rstep;
-                    }
-                    if(cmin[r] <= rmax[r]) cminstep = 0;
-                }
-                if(cmaxstep)
-                {
-                    cmax[c] += cmaxstep; cmaxstep = INT_MAX;
-                    cmax[r] = rmin[r];
-                    resetlevels();
-                    for(int rstep = 1; rstep && cmax[r] <= rmax[r];)
-                    {
-                        rstep = hasvoxel(cmax, r, 1, c, 1, &cmaxstep);
-                        cmax[r] += rstep;
-                    }
-                    if(cmax[r] <= rmax[r]) cmaxstep = 0;
-                }
-            }
-            if(!cminstep) cmin[c]++;
-            if(!cmaxstep) cmax[c]--;
-            ivec emin = rmin, emax = rmax;
-            if(cmin[c]>=geom.min[c] && cmax[c]<geom.max[c])
-            {
-                if(emin[r]>geom.min[r]) emin[r] = geom.min[r];
-                if(emax[r]<geom.max[r]-1) emax[r] = geom.max[r]-1;
-            }
-            int rminstep = -1, rmaxstep = 1;
-            for(; (rminstep || rmaxstep) && emax[r] - emin[r] < maxpvsblocker;)
-            {
-                if(rminstep)
-                {
-                    emin[r] += -1; rminstep = INT_MIN;
-                    emin[c] = cmin[c];
-                    resetlevels();
-                    for(int cstep = 1; cstep && emin[c] <= cmax[c];)
-                    {
-                        cstep = hasvoxel(emin, c, 1, r, 0, &rminstep);
-                        emin[c] += cstep;
-                    }
-                    if(emin[c] <= cmax[c]) rminstep = 0;
-                }
-                if(rmaxstep)
-                {
-                    emax[r] += 1; rmaxstep = INT_MAX;
-                    emax[c] = cmin[c];
-                    resetlevels();
-                    for(int cstep = 1; cstep && emax[c] <= cmax[c];)
-                    {
-                        cstep = hasvoxel(emax, c, 1, r, 1, &rmaxstep);
-                        emax[c] += cstep;
-                    }
-                    if(emax[c] <= cmax[c]) rmaxstep = 0;
-                }
-            }
-            if(!rminstep) emin[r]++;
-            if(!rmaxstep) emax[r]--;
-            shaftbb bb;
-            bb.min[dim] = rmin[dim];
-            bb.max[dim] = rmin[dim]+1;
-            bb.min[r] = emin[r];
-            bb.max[r] = emax[r]+1;
-            bb.min[c] = cmin[c];
-            bb.max[c] = cmax[c]+1;
-            if(bb.min[dim] >= viewcellbb.max[dim] || bb.max[dim] <= viewcellbb.min[dim])
-            {
-                int ddir = bb.min[dim] >= viewcellbb.max[dim] ? 1 : -1, 
-                    dval = ddir>0 ? USHRT_MAX-1 : 0, 
-                    dlimit = maxpvsblocker;
-                loopj(4)
-                {
-                    ivec dmax;
-                    int odim = j < 2 ? c : r;
-                    if(j&1)
-                    {
-                        if(bb.max[odim] >= viewcellbb.max[odim]) continue;
-                        dmax[odim] = viewcellbb.max[odim];
-                    }
-                    else
-                    {
-                        if(bb.min[odim] <= viewcellbb.min[odim]) continue;
-                        dmax[odim] = viewcellbb.min[odim];
-                    }
-                    dmax[dim] = bb.min[dim];
-                    int stepdim = j < 2 ? r : c, stepstart = bb.min[stepdim], stepend = bb.max[stepdim];
-                    int dstep = ddir;
-                    for(; dstep && ddir*(dmax[dim] - (int)bb.min[dim]) < dlimit;)
-                    {
-                        dmax[dim] += dstep; dstep = ddir > 0 ? INT_MAX : INT_MIN;
-                        dmax[stepdim] = stepstart;
-                        resetlevels();
-                        for(int step = 1; step && dmax[stepdim] < stepend;)
-                        {
-                            step = hasvoxel(dmax, stepdim, 1, dim, (ddir+1)/2, &dstep);
-                            dmax[r] += step;
-                        }
-                        if(dmax[stepdim] < stepend) dstep = 0;
-                    }
-                    dlimit = min(dlimit, ddir*(dmax[dim] - (int)bb.min[dim]));
-                    if(!dstep) dmax[dim] -= ddir;
-                    if(ddir>0) dval = min(dval, dmax[dim]);
-                    else dval = max(dval, dmax[dim]);
-                }
-                if(ddir>0) bb.max[dim] = dval+1;
-                else bb.min[dim] = dval;
-            }
-            shaft s(viewcellbb, bb);
-            s.cullpvs(pvsnodes[0]);
-            if(bb.contains(geom)) return;
-            ccenter = cmax[c] + 1;
-        }
-    }
-}
-
-bool compresspvsnode(pvsnode &p, pvsnode *children)
-{
-    if(!(p.flags&PVS_HIDE_BB))
-    {
-        int hide = children[7].flags&PVS_HIDE_BB;
-        loopi(8)  if((children[i].flags&PVS_HIDE_BB)!=hide) return false;
-        p.flags = (p.flags & ~PVS_HIDE_BB) | hide;
-    }
-    p.children = 0;
-    return true;
-}
-
-bool compresspvsnodes(pvsnode &p, int size, int threshold)
-{
-    if(!p.children) return true;
-    pvsnode *children = &pvsnodes[p.children];
-    bool canreduce = true;
-    loopi(8)
-    {
-        if(!compresspvsnodes(children[i], size/2, threshold)) canreduce = false;
-    }
-    if(p.flags&PVS_HIDE_BB) canreduce = true;
-    if(!canreduce || !compresspvsnode(p, children))
-    {
-        if(size <= threshold)
-        {
-            p.children = 0;
-            return true;
-        }
-        return false;
-    }
-    return true;
-}
-
-vector<uchar> pvsbuf;
-
-void serializepvs(pvsnode &p, int storage)
-{
-    int index = pvsbuf.length();
-    pvsnode *children = &pvsnodes[p.children];
-    int i = 0;
-    uchar leafvalues = 0;
-    for(; i < 8; i++)
-    {
-        pvsnode &child = children[i];
-        if(child.children) break;
-        else if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
-    }
-    if(i==8) { pvsbuf[storage] = leafvalues; return; } 
-    pvsbuf[storage] = (index - storage + 8)/9;
-    pvsbuf.add(0);
-    loopj(8) pvsbuf.add(leafvalues&(1<<j) ? 0xFF : 0); 
-    uchar leafmask = (1<<i)-1;
-    for(; i < 8; i++)
-    {
-        pvsnode &child = children[i];
-        if(child.children) serializepvs(child, index+1+i);
-        else { leafmask |= 1<<i; pvsbuf[index+1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
-    }
-    pvsbuf[index] = leafmask; 
-}
-
-void serializepvs(pvsnode &p)
-{
-    if(!p.children)
-    {
-        pvsbuf.add(0xFF);
-        loopi(8) pvsbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
-        return;
-    }
-    loopi(9) pvsbuf.add(0);
-    pvsnode *children = &pvsnodes[p.children];
-    uchar leafmask = 0;
-    loopi(8)
-    {
-        pvsnode &child = children[i];
-        if(child.children) serializepvs(child, 1+i);
-        else { leafmask |= 1<<i; pvsbuf[1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
-    }
-    pvsbuf[0] = leafmask;
-}
-
-bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
-{
-    uchar leafmask = buf[0];
-    loopoctabox(co, size, bborigin, bbsize)
-    {
-        ivec o(i, co.x, co.y, co.z, size);
-        if(leafmask&(1<<i))
-        {
-            uchar leafvalues = buf[1+i];
-            if(!leafvalues || (leafvalues!=0xFF && leafvalues&~octantrectangleoverlap(o, size>>1, bborigin, bbsize))) 
-                return false;
-            continue;
-        }
-        if(!pvsoccluded(buf+9*buf[1+i], o, size>>1, bborigin, bbsize)) return false;
-    }
-    return true;
-}
-
-bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
-{
-    int diff = (bborigin.x^(bborigin.x+bbsize.x)) | (bborigin.y^(bborigin.y+bbsize.y)) | (bborigin.z^(bborigin.z+bbsize.z)),
-        scale = worldscale-1;
-    if(diff&~((1<<scale)-1)) return pvsoccluded(buf, ivec(0, 0, 0), 1<<scale, bborigin, bbsize);
-    uchar leafmask = buf[0];
-    int i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
-    scale--;
-    while(!(leafmask&(1<<i)) && !(diff&(1<<scale)))
-    {
-        buf += 9*buf[1+i];
-        leafmask = buf[0];
-        i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
-        scale--;
-    }
-    if(leafmask&(1<<i))
-    {
-        uchar leafvalues = buf[1+i];
-        return leafvalues && (leafvalues==0xFF || leafvalues&~octantrectangleoverlap(ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize)); 
-    }
-    return pvsoccluded(buf, ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize);
-}
-
-#if 0
-void testpvs(int *vcsize)
-{
-    origpvsnodes.setsizenodelete(0);
-    pvsnode &root = origpvsnodes.add();
-    memset(root.edges.v, 0xFF, 3);
-    root.flags = 0;
-    root.children = 0;
-    genpvsnodes(worldroot);
-    int viewcellsize = 1<<(*vcsize > 0 ? *vcsize : 5);
-    ivec viewcell = camera1->o;
-    viewcell.mask(~(viewcellsize-1));
-    viewcellbb.min.x = viewcell.x;
-    viewcellbb.min.y = viewcell.y;
-    viewcellbb.min.z = viewcell.z;
-    viewcellbb.max.x = viewcell.x + viewcellsize;
-    viewcellbb.max.y = viewcell.y + viewcellsize;
-    viewcellbb.max.z = viewcell.z + viewcellsize;
-    viewcellcenter = ivec(viewcell).add(viewcellsize/2);
-    cullpvs(pvsnodes[0]);
-    compresspvsnodes(pvsnodes[0], hdr.worldsize, viewcellsize);
-    pvsbuf.setsizenodelete(0);
-    serializepvs(pvsnodes[0]);
-}
-
-COMMAND(testpvs, "i");
-#endif
 
 struct pvsdata
 {
@@ -707,8 +271,431 @@ static inline bool htcmp(const pvsdata &x, const pvsdata &y)
     return x.len==y.len && !memcmp(x.buf, y.buf, x.len);
 }
 
+SDL_mutex *pvsmutex = NULL;
 hashtable<pvsdata, int> pvscompress;
 vector<pvsdata> pvs;
+
+SDL_mutex *viewcellmutex = NULL;
+struct viewcellrequest
+{
+    int *result;
+    ivec o;
+    int size;
+};
+vector<viewcellrequest> viewcellrequests;
+
+bool genpvs_canceled = false;
+int numviewcells = 0;
+
+VAR(maxpvsblocker, 1, 512, 1<<16);
+VAR(pvsleafsize, 1, 64, 1024);
+
+struct pvsworker
+{
+    pvsworker() : thread(NULL), pvsnodes(new pvsnode[origpvsnodes.length()])
+    {
+    }
+    ~pvsworker()
+    {
+        delete[] pvsnodes;
+    }
+
+    SDL_Thread *thread;
+    pvsnode *pvsnodes;
+
+    shaftbb viewcellbb;
+    ivec viewcellcenter;
+
+    pvsnode *levels[32];
+    int curlevel;
+    ivec origin;
+
+    void resetlevels()
+    {
+        curlevel = worldscale;
+        levels[curlevel] = &pvsnodes[0];
+        origin = ivec(0, 0, 0);
+    }
+
+    int hasvoxel(const ivec &p, int coord, int dir, int ocoord = 0, int odir = 0, int *omin = NULL)
+    {
+        uint diff = (origin.x^p.x)|(origin.y^p.y)|(origin.z^p.z);
+        if(diff >= uint(hdr.worldsize)) return 0;
+        diff >>= curlevel;
+        while(diff)
+        {
+            curlevel++;
+            diff >>= 1;
+        }
+
+        pvsnode *cur = levels[curlevel];
+        while(cur->children && !(cur->flags&PVS_HIDE_BB))
+        {
+            cur = &pvsnodes[cur->children];
+            curlevel--;
+            cur += ((p.z>>(curlevel-2))&4) | ((p.y>>(curlevel-1))&2) | ((p.x>>curlevel)&1);
+            levels[curlevel] = cur;
+        }
+
+        origin = ivec(p.x&(~0<<curlevel), p.y&(~0<<curlevel), p.z&(~0<<curlevel));
+        int size = 1<<curlevel;
+
+        if(cur->flags&PVS_HIDE_BB)
+        {
+            if(p.x < origin.x || p.y < origin.y || p.z < origin.z ||
+               p.x >= origin.x+size || p.y >= origin.y+size || p.z >= origin.z+size)
+                return 0;
+            if(omin)
+            {
+                int step = origin[ocoord] + (odir<<curlevel) - p[ocoord] + odir - 1;
+                if(odir ? step < *omin : step > *omin) *omin = step;
+            }
+            return origin[coord] + (dir<<curlevel) - p[coord] + dir - 1;
+        }
+
+        if(cur->edges.x==0xFF) return 0;
+        ivec bbp(p);
+        bbp.sub(origin);
+        ivec bbmin, bbmax;
+        bbmin.x = ((cur->edges.x&0xF)<<curlevel)/8;
+        if(bbp.x < bbmin.x) return 0;
+        bbmax.x = ((cur->edges.x>>4)<<curlevel)/8;
+        if(bbp.x >= bbmax.x) return 0;
+        bbmin.y = ((cur->edges.y&0xF)<<curlevel)/8;
+        if(bbp.y < bbmin.y) return 0;
+        bbmax.y = ((cur->edges.y>>4)<<curlevel)/8;
+        if(bbp.y >= bbmax.y) return 0;
+        bbmin.z = ((cur->edges.z&0xF)<<curlevel)/8;
+        if(bbp.z < bbmin.z) return 0;
+        bbmax.z = ((cur->edges.z>>4)<<curlevel)/8;
+        if(bbp.z >= bbmax.z) return 0;
+        if(omin)
+        {
+            int step = (odir ? bbmax[ocoord] : bbmin[ocoord]) - bbp[ocoord] + (odir - 1);
+            if(odir ? step < *omin : step > *omin) *omin = step;
+        }
+        return (dir ? bbmax[coord] : bbmin[coord]) - bbp[coord] + (dir - 1);
+    }
+
+    void hidepvs(pvsnode &p)
+    {
+        if(p.children)
+        {
+            pvsnode *children = &pvsnodes[p.children];
+            loopi(8) hidepvs(children[i]);
+            p.flags |= PVS_HIDE_BB;
+            return;
+        }
+        p.flags |= PVS_HIDE_BB;
+        if(p.edges.x!=0xFF) p.flags |= PVS_HIDE_GEOM;
+    }
+
+    void shaftcullpvs(shaft &s, pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
+    {
+        if(p.flags&PVS_HIDE_BB) return;
+        shaftbb bb(co, size);
+        if(s.outside(bb)) return;
+        if(s.inside(bb)) { hidepvs(p); return; }
+        if(p.children)
+        {
+            pvsnode *children = &pvsnodes[p.children];
+            uchar flags = 0xFF;
+            loopi(8)
+            {
+                ivec o(i, co.x, co.y, co.z, size>>1);
+                shaftcullpvs(s, children[i], o, size>>1);
+                flags &= children[i].flags;
+            }
+            if(flags & PVS_HIDE_BB) p.flags |= PVS_HIDE_BB;
+            return;
+        }
+        if(p.edges.x==0xFF) return;
+        shaftbb geom(co, size, p.edges);
+        if(s.inside(geom)) p.flags |= PVS_HIDE_GEOM;
+    }
+
+    void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
+    {
+        if(p.flags&(PVS_HIDE_BB | PVS_HIDE_GEOM) || genpvs_canceled) return;
+        bvec edges = p.children ? bvec(0x80, 0x80, 0x80) : p.edges;
+        if(p.children && !(p.flags&PVS_HIDE_BB))
+        {
+            pvsnode *children = &pvsnodes[p.children];
+            loopi(8)
+            {
+                ivec o(i, co.x, co.y, co.z, size>>1);
+                cullpvs(children[i], o, size>>1);
+            }
+            if(!(p.flags & PVS_HIDE_BB)) return;
+        }
+        if(edges.x==0xFF) return;
+        shaftbb geom(co, size, p.edges);
+        loopi(6)
+        {
+            int dim = dimension(i), dc = dimcoord(i), r = R[dim], c = C[dim];
+            int ccenter = geom.min[c];
+            if(geom.min[r]==geom.max[r] || geom.min[c]==geom.max[c]) continue;
+            while(ccenter < geom.max[c])
+            {
+                ivec rmin;
+                rmin[dim] = geom[dim + 3*dc] + (dc ? -1 : 0);
+                rmin[r] = geom.min[r];
+                rmin[c] = ccenter;
+                ivec rmax = rmin;
+                rmax[r] = geom.max[r] - 1;
+                int rcenter = (rmin[r] + rmax[r])/2;
+                resetlevels();
+                for(int minstep = -1, maxstep = 1; (minstep || maxstep) && rmax[r] - rmin[r] < maxpvsblocker;)
+                {
+                    if(minstep) minstep = hasvoxel(rmin, r, 0);
+                    if(maxstep) maxstep = hasvoxel(rmax, r, 1);
+                    rmin[r] += minstep;
+                    rmax[r] += maxstep;
+                }
+                rmin[r] = rcenter + (rmin[r] - rcenter)/2;
+                rmax[r] = rcenter + (rmax[r] - rcenter)/2;
+                if(rmin[r]>=geom.min[r] && rmax[r]<geom.max[r]) { rmin[r] = geom.min[r]; rmax[r] = geom.max[r] - 1; }
+                ivec cmin = rmin, cmax = rmin;
+                if(rmin[r]>=geom.min[r] && rmax[r]<geom.max[r])
+                {
+                    cmin[c] = geom.min[c];
+                    cmax[c] = geom.max[c]-1;
+                }
+                int cminstep = -1, cmaxstep = 1;
+                for(; (cminstep || cmaxstep) && cmax[c] - cmin[c] < maxpvsblocker;)
+                {
+                    if(cminstep)
+                    {
+                        cmin[c] += cminstep; cminstep = INT_MIN;
+                        cmin[r] = rmin[r];
+                        resetlevels();
+                        for(int rstep = 1; rstep && cmin[r] <= rmax[r];)
+                        {
+                            rstep = hasvoxel(cmin, r, 1, c, 0, &cminstep);
+                            cmin[r] += rstep;
+                        }
+                        if(cmin[r] <= rmax[r]) cminstep = 0;
+                    }
+                    if(cmaxstep)
+                    {
+                        cmax[c] += cmaxstep; cmaxstep = INT_MAX;
+                        cmax[r] = rmin[r];
+                        resetlevels();
+                        for(int rstep = 1; rstep && cmax[r] <= rmax[r];)
+                        {
+                            rstep = hasvoxel(cmax, r, 1, c, 1, &cmaxstep);
+                            cmax[r] += rstep;
+                        }
+                        if(cmax[r] <= rmax[r]) cmaxstep = 0;
+                    }
+                }
+                if(!cminstep) cmin[c]++;
+                if(!cmaxstep) cmax[c]--;
+                ivec emin = rmin, emax = rmax;
+                if(cmin[c]>=geom.min[c] && cmax[c]<geom.max[c])
+                {
+                    if(emin[r]>geom.min[r]) emin[r] = geom.min[r];
+                    if(emax[r]<geom.max[r]-1) emax[r] = geom.max[r]-1;
+                }
+                int rminstep = -1, rmaxstep = 1;
+                for(; (rminstep || rmaxstep) && emax[r] - emin[r] < maxpvsblocker;)
+                {
+                    if(rminstep)
+                    {
+                        emin[r] += -1; rminstep = INT_MIN;
+                        emin[c] = cmin[c];
+                        resetlevels();
+                        for(int cstep = 1; cstep && emin[c] <= cmax[c];)
+                        {
+                            cstep = hasvoxel(emin, c, 1, r, 0, &rminstep);
+                            emin[c] += cstep;
+                        }
+                        if(emin[c] <= cmax[c]) rminstep = 0;
+                    }
+                    if(rmaxstep)
+                    {
+                        emax[r] += 1; rmaxstep = INT_MAX;
+                        emax[c] = cmin[c];
+                        resetlevels();
+                        for(int cstep = 1; cstep && emax[c] <= cmax[c];)
+                        {
+                            cstep = hasvoxel(emax, c, 1, r, 1, &rmaxstep);
+                            emax[c] += cstep;
+                        }
+                        if(emax[c] <= cmax[c]) rmaxstep = 0;
+                    }
+                }
+                if(!rminstep) emin[r]++;
+                if(!rmaxstep) emax[r]--;
+                shaftbb bb;
+                bb.min[dim] = rmin[dim];
+                bb.max[dim] = rmin[dim]+1;
+                bb.min[r] = emin[r];
+                bb.max[r] = emax[r]+1;
+                bb.min[c] = cmin[c];
+                bb.max[c] = cmax[c]+1;
+                if(bb.min[dim] >= viewcellbb.max[dim] || bb.max[dim] <= viewcellbb.min[dim])
+                {
+                    int ddir = bb.min[dim] >= viewcellbb.max[dim] ? 1 : -1,
+                        dval = ddir>0 ? USHRT_MAX-1 : 0,
+                        dlimit = maxpvsblocker;
+                    loopj(4)
+                    {
+                        ivec dmax;
+                        int odim = j < 2 ? c : r;
+                        if(j&1)
+                        {
+                            if(bb.max[odim] >= viewcellbb.max[odim]) continue;
+                            dmax[odim] = viewcellbb.max[odim];
+                        }
+                        else
+                        {
+                            if(bb.min[odim] <= viewcellbb.min[odim]) continue;
+                            dmax[odim] = viewcellbb.min[odim];
+                        }
+                        dmax[dim] = bb.min[dim];
+                        int stepdim = j < 2 ? r : c, stepstart = bb.min[stepdim], stepend = bb.max[stepdim];
+                        int dstep = ddir;
+                        for(; dstep && ddir*(dmax[dim] - (int)bb.min[dim]) < dlimit;)
+                        {
+                            dmax[dim] += dstep; dstep = ddir > 0 ? INT_MAX : INT_MIN;
+                            dmax[stepdim] = stepstart;
+                            resetlevels();
+                            for(int step = 1; step && dmax[stepdim] < stepend;)
+                            {
+                                step = hasvoxel(dmax, stepdim, 1, dim, (ddir+1)/2, &dstep);
+                                dmax[r] += step;
+                            }
+                            if(dmax[stepdim] < stepend) dstep = 0;
+                        }
+                        dlimit = min(dlimit, ddir*(dmax[dim] - (int)bb.min[dim]));
+                        if(!dstep) dmax[dim] -= ddir;
+                        if(ddir>0) dval = min(dval, dmax[dim]);
+                        else dval = max(dval, dmax[dim]);
+                    }
+                    if(ddir>0) bb.max[dim] = dval+1;
+                    else bb.min[dim] = dval;
+                }
+                shaft s(viewcellbb, bb);
+                shaftcullpvs(s, pvsnodes[0]);
+                if(bb.contains(geom)) return;
+                ccenter = cmax[c] + 1;
+            }
+        }
+    }
+
+    bool compresspvs(pvsnode &p, int size, int threshold)
+    {
+        if(!p.children) return true;
+        if(p.flags&PVS_HIDE_BB) { p.children = 0; return true; }
+        pvsnode *children = &pvsnodes[p.children];
+        bool canreduce = true;
+        loopi(8)
+        {
+            if(!compresspvs(children[i], size/2, threshold)) canreduce = false;
+        }
+        if(canreduce)
+        {
+            int hide = children[7].flags&PVS_HIDE_BB;
+            loopi(8) if((children[i].flags&PVS_HIDE_BB)!=hide) canreduce = false;
+            if(canreduce) 
+            {
+                p.flags = (p.flags & ~PVS_HIDE_BB) | hide;
+                p.children = 0;
+                return true;
+            }
+        }
+        if(size <= threshold)
+        {
+            p.children = 0;
+            return true;
+        }
+        return false;
+    }
+    
+    vector<uchar> pvsbuf;
+
+    void serializepvs(pvsnode &p, int storage = -1)
+    {
+        if(!p.children)
+        {
+            pvsbuf.add(0xFF);
+            loopi(8) pvsbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
+            return;
+        }
+        int index = pvsbuf.length();
+        pvsnode *children = &pvsnodes[p.children];
+        int i = 0;
+        uchar leafvalues = 0;
+        if(storage>=0)
+        {
+            for(; i < 8; i++)
+            {   
+                pvsnode &child = children[i];
+                if(child.children) break;
+                else if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
+            }
+            if(i==8) { pvsbuf[storage] = leafvalues; return; }
+            pvsbuf[storage] = (index - storage + 8)/9;
+        }
+        pvsbuf.add(0);
+        loopj(8) pvsbuf.add(leafvalues&(1<<j) ? 0xFF : 0);
+        uchar leafmask = (1<<i)-1;
+        for(; i < 8; i++)
+        {
+            pvsnode &child = children[i];
+            if(child.children) serializepvs(child, index+1+i);
+            else { leafmask |= 1<<i; pvsbuf[index+1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
+        }
+        pvsbuf[index] = leafmask;
+    }
+
+    int genviewcell(const ivec &co, int size)
+    {
+        loopk(3)
+        {
+            viewcellbb.min[k] = co[k];
+            viewcellbb.max[k] = co[k]+size;
+            viewcellcenter[k] = co[k]+size/2;
+        }
+        memcpy(pvsnodes, origpvsnodes.getbuf(), origpvsnodes.length()*sizeof(pvsnode));
+        cullpvs(pvsnodes[0]);
+        compresspvs(pvsnodes[0], hdr.worldsize, pvsleafsize);
+        pvsbuf.setsizenodelete(0);
+        serializepvs(pvsnodes[0]);
+        
+        SDL_LockMutex(pvsmutex);
+        numviewcells++;
+        int *val = pvscompress.access(pvsdata(pvsbuf.getbuf(), pvsbuf.length()));
+        if(!val)
+        {
+            pvsdata &vcpvs = pvs.add();
+            vcpvs.buf = new uchar[pvsbuf.length()];
+            memcpy(vcpvs.buf, pvsbuf.getbuf(), pvsbuf.length());
+            vcpvs.len = pvsbuf.length();
+            val = &pvscompress[vcpvs];
+            *val = pvs.length()-1;
+        }
+        SDL_UnlockMutex(pvsmutex);
+        return *val;
+    }
+
+    static int run(void *data)
+    {
+        pvsworker *w = (pvsworker *)data;
+        SDL_LockMutex(viewcellmutex);
+        while(viewcellrequests.length())
+        {
+            viewcellrequest req = viewcellrequests.pop();
+            SDL_UnlockMutex(viewcellmutex);
+            int result = w->genviewcell(req.o, req.size);
+            SDL_LockMutex(viewcellmutex);
+            *req.result = result;
+        }
+        SDL_UnlockMutex(viewcellmutex);
+        return 0;
+    }
+};
 
 struct viewcellnode
 {
@@ -729,6 +716,43 @@ struct viewcellnode
     }
 };
 
+VAR(pvsthreads, 1, 1, 16);
+static vector<pvsworker *> pvsworkers;
+
+volatile bool check_genpvs_progress = false;
+
+static Uint32 genpvs_timer(Uint32 interval, void *param)
+{
+    check_genpvs_progress = true;
+    return interval;
+}
+
+int totalviewcells = 0;
+
+void show_genpvs_progress(int unique = pvs.length(), int processed = numviewcells)
+{
+    float bar1 = float(processed) / float(totalviewcells>0 ? totalviewcells : 1),
+          bar2 = float(unique) / float(totalviewcells>0 ? totalviewcells : 1);
+
+    s_sprintfd(text1)("%d%% - %d of %d view cells", int(bar1 * 100), processed, totalviewcells);
+    s_sprintfd(text2)("%d unique view cells", unique);
+
+    show_out_of_renderloop_progress(bar1, text1, bar2, text2);
+
+    SDL_Event event;
+    while(SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+        case SDL_KEYDOWN:
+            if(event.key.keysym.sym == SDLK_ESCAPE)
+                genpvs_canceled = true;
+            break;
+        }
+    }
+    check_genpvs_progress = false;
+}
+
 shaftbb pvsbounds;
 
 void calcpvsbounds()
@@ -747,74 +771,18 @@ void calcpvsbounds()
         }
     }
 }
-        
+
 static inline bool isallclip(cube *c)
 {
     loopi(8)
     {
         cube &h = c[i];
-        if(h.children ? !isallclip(h.children) : (!isentirelysolid(h) && (!h.ext || !isclipped(h.ext->material)))) 
+        if(h.children ? !isallclip(h.children) : (!isentirelysolid(h) && (!h.ext || !isclipped(h.ext->material))))
             return false;
     }
     return true;
 }
-
-int numviewcells = 0, totalviewcells = 0;
-
-void show_genpvs_progress()
-{
-    float bar1 = float(numviewcells) / float(totalviewcells>0 ? totalviewcells : 1),
-          bar2 = float(pvs.length()) / float(totalviewcells>0 ? totalviewcells : 1);
-
-    s_sprintfd(text1)("%d%% - %d of %d view cells", int(bar1 * 100), numviewcells, totalviewcells);
-    s_sprintfd(text2)("%d unique view cells", pvs.length());
-
-    show_out_of_renderloop_progress(bar1, text1, bar2, text2);
-
-    SDL_Event event;
-    while(SDL_PollEvent(&event))
-    {
-        switch(event.type)
-        {
-        case SDL_KEYDOWN:
-            if(event.key.keysym.sym == SDLK_ESCAPE)
-                genpvs_canceled = true;
-            break;
-        }
-    }
-}
    
-VAR(pvsleafsize, 1, 64, 1024);
- 
-void genviewcell(viewcellnode &p, int i, const ivec &co, int size)
-{
-    loopk(3) 
-    {
-        viewcellbb.min[k] = co[k];
-        viewcellbb.max[k] = co[k]+size;
-        viewcellcenter[k] = co[k]+size/2;
-    }
-    memcpy(pvsnodes, origpvsnodes.getbuf(), origpvsnodes.length()*sizeof(pvsnode));
-    cullpvs(pvsnodes[0]);
-    compresspvsnodes(pvsnodes[0], hdr.worldsize, pvsleafsize);
-    serializepvs(pvsnodes[0]);
-    int *shared = pvscompress.access(pvsdata(pvsbuf.getbuf(), pvsbuf.length()));
-    if(shared) p.children[i].pvs = *shared;
-    else
-    {
-        pvsdata &vcpvs = pvs.add();
-        vcpvs.buf = new uchar[pvsbuf.length()];
-        memcpy(vcpvs.buf, pvsbuf.getbuf(), pvsbuf.length());
-        vcpvs.len = pvsbuf.length();
-        pvscompress[vcpvs] = pvs.length()-1;
-        p.children[i].pvs = pvs.length()-1;
-    }
-    pvsbuf.setsizenodelete(0);
-    numviewcells++;
-
-    show_genpvs_progress();
-}
-
 int countviewcells(cube *c, const ivec &co, int size, int threshold)
 {
     int count = 0;
@@ -858,7 +826,19 @@ void genviewcells(viewcellnode &p, cube *c, const ivec &co, int size, int thresh
             if(isallclip(h.children)) continue;
         }
         else if(isentirelysolid(h) || (h.ext && isclipped(h.ext->material))) continue;
-        genviewcell(p, i, co, size);      
+        if(pvsthreads<=1)
+        {
+            if(genpvs_canceled) return;
+            p.children[i].pvs = pvsworkers[0]->genviewcell(co, size);
+            if(check_genpvs_progress) show_genpvs_progress();
+        }
+        else
+        {
+            viewcellrequest &req = viewcellrequests.add();
+            req.result = &p.children[i].pvs;
+            req.o = co;
+            req.size = size;
+        }
     }
 }
 
@@ -868,6 +848,8 @@ void genpvs(int *viewcellsize)
     genpvs_canceled = false;
     Uint32 start = SDL_GetTicks();
 
+    show_out_of_renderloop_progress(0, "finding view cells");
+
     calcpvsbounds();
 
     pvsnode &root = origpvsnodes.add();
@@ -875,17 +857,50 @@ void genpvs(int *viewcellsize)
     root.flags = 0;
     root.children = 0;
     genpvsnodes(worldroot);
-    pvsnodes = new pvsnode[origpvsnodes.length()];
 
     totalviewcells = countviewcells(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
     numviewcells = 0;
+    genpvs_canceled = false;
+    check_genpvs_progress = false;
+    SDL_TimerID timer = NULL;
+    if(pvsthreads<=1) 
+    {
+        pvsworkers.add(new pvsworker);
+        timer = SDL_AddTimer(500, genpvs_timer, NULL);
+    }
     viewcellnode *rootvc = new viewcellnode;
     genviewcells(*rootvc, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
-    delete rootvc;
-    loopv(pvs) delete[] pvs[i].buf;
-    pvs.setsizenodelete(0);
+    if(pvsthreads<=1)
+    {
+        SDL_RemoveTimer(timer);
+    }
+    else
+    {
+        show_out_of_renderloop_progress(0, "creating threads");
+        if(!pvsmutex) pvsmutex = SDL_CreateMutex();
+        if(!viewcellmutex) viewcellmutex = SDL_CreateMutex();
+        loopi(pvsthreads)
+        {
+            pvsworker *w = pvsworkers.add(new pvsworker);
+            w->thread = SDL_CreateThread(pvsworker::run, w);
+        }
+        show_genpvs_progress(0, 0);
+        while(!genpvs_canceled)
+        {
+            SDL_Delay(500);
+            SDL_LockMutex(viewcellmutex);
+            int unique = pvs.length(), processed = numviewcells, remaining = viewcellrequests.length();
+            SDL_UnlockMutex(viewcellmutex);
+            show_genpvs_progress(unique, processed);
+            if(!remaining) break;
+        }        
+        SDL_LockMutex(viewcellmutex);
+        viewcellrequests.setsizenodelete(0);
+        SDL_UnlockMutex(viewcellmutex);
+        loopv(pvsworkers) SDL_WaitThread(pvsworkers[i]->thread, NULL);
+    }
+    pvsworkers.deletecontentsp();
 
-    delete[] pvsnodes;
     origpvsnodes.setsizenodelete(0);
     pvscompress.clear();
 
@@ -893,7 +908,53 @@ void genpvs(int *viewcellsize)
     if(genpvs_canceled) conoutf("genpvs canceled");
     else conoutf("generated %d unique view cells out of %d (%.1f seconds)", 
         pvs.length(), totalviewcells, (end - start) / 1000.0f);
+
+    // FIXME: do something other than delete PVS data
+    delete rootvc;
+    loopv(pvs) delete[] pvs[i].buf;
+    pvs.setsizenodelete(0);
 }
 
 COMMAND(genpvs, "i");
+
+bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
+{
+    uchar leafmask = buf[0];
+    loopoctabox(co, size, bborigin, bbsize)
+    {
+        ivec o(i, co.x, co.y, co.z, size);
+        if(leafmask&(1<<i))
+        {
+            uchar leafvalues = buf[1+i];
+            if(!leafvalues || (leafvalues!=0xFF && leafvalues&~octantrectangleoverlap(o, size>>1, bborigin, bbsize)))
+                return false;
+            continue;
+        }
+        if(!pvsoccluded(buf+9*buf[1+i], o, size>>1, bborigin, bbsize)) return false;
+    }
+    return true;
+}
+
+bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
+{
+    int diff = (bborigin.x^(bborigin.x+bbsize.x)) | (bborigin.y^(bborigin.y+bbsize.y)) | (bborigin.z^(bborigin.z+bbsize.z)),
+        scale = worldscale-1;
+    if(diff&~((1<<scale)-1)) return pvsoccluded(buf, ivec(0, 0, 0), 1<<scale, bborigin, bbsize);
+    uchar leafmask = buf[0];
+    int i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
+    scale--;
+    while(!(leafmask&(1<<i)) && !(diff&(1<<scale)))
+    {
+        buf += 9*buf[1+i];
+        leafmask = buf[0];
+        i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
+        scale--;
+    }
+    if(leafmask&(1<<i))
+    {
+        uchar leafvalues = buf[1+i];
+        return leafvalues && (leafvalues==0xFF || leafvalues&~octantrectangleoverlap(ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize));
+    }
+    return pvsoccluded(buf, ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize);
+}
 
