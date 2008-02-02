@@ -256,7 +256,8 @@ void clear_mdls()
 bool modeloccluded(const vec &center, float radius)
 {
     int br = int(radius*2)+1;
-    return bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br));
+    return pvsoccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br)) ||
+           bboccluded(ivec(int(center.x-radius), int(center.y-radius), int(center.z-radius)), ivec(br, br, br));
 }
 
 VAR(showboundingbox, 0, 0, 2);

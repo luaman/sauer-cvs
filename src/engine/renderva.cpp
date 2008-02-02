@@ -117,6 +117,11 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
         v.curvfc = isvisiblecube(vec(v.x, v.y, v.z), v.size);
         if(v.curvfc!=VFC_NOT_VISIBLE) 
         {
+            if(pvsoccluded(ivec(v.x, v.y, v.z), v.size))
+            {
+                v.curvfc = VFC_NOT_VISIBLE;
+                continue;
+            }
             addvisibleva(&v);
             if(v.children->length()) findvisiblevas(*v.children, prevvfc==VFC_NOT_VISIBLE);
             if(prevvfc==VFC_NOT_VISIBLE)
@@ -334,7 +339,7 @@ void findvisiblemms(const vector<extentity *> &ents)
         loopv(*va->mapmodels)
         {
             octaentities *oe = (*va->mapmodels)[i];
-            if(isvisiblecube(oe->o.tovec(), oe->size) >= VFC_FOGGED) continue;
+            if(isvisiblecube(oe->o.tovec(), oe->size) >= VFC_FOGGED || pvsoccluded(oe->o, oe->size)) continue;
 
             bool occluded = oe->query && oe->query->owner == oe && checkquery(oe->query);
             if(occluded)
@@ -518,9 +523,10 @@ static inline bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ive
 
 bool bboccluded(const ivec &bo, const ivec &br)
 {
-    int diff = (bo.x^(bo.x+br.x)) | (bo.y^(bo.y+br.y)) | (bo.z^(bo.z+br.z)),
-        scale = worldscale-1;
-    if(diff&~((1<<scale)-1)) return false;
+    int diff = (bo.x^(bo.x+br.x)) | (bo.y^(bo.y+br.y)) | (bo.z^(bo.z+br.z));
+    if(diff&~((1<<worldscale)-1)) return false;
+    int scale = worldscale-1;
+    if(diff&(1<<scale)) return bboccluded(bo, br, worldroot, ivec(0, 0, 0), 1<<scale);
     cube *c = &worldroot[octastep(bo.x, bo.y, bo.z, scale)];
     if(c->ext && c->ext->va)
     {

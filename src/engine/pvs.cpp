@@ -615,13 +615,13 @@ struct pvsworker
     
     vector<uchar> pvsbuf;
 
-    void serializepvs(pvsnode &p, int storage = -1)
+    bool serializepvs(pvsnode &p, int storage = -1)
     {
         if(!p.children)
         {
             pvsbuf.add(0xFF);
             loopi(8) pvsbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
-            return;
+            return true;
         }
         int index = pvsbuf.length();
         pvsnode *children = &pvsnodes[p.children];
@@ -635,7 +635,7 @@ struct pvsworker
                 if(child.children) break;
                 else if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
             }
-            if(i==8) { pvsbuf[storage] = leafvalues; return; }
+            if(i==8) { pvsbuf[storage] = leafvalues; return false; }
             pvsbuf[storage] = (index - storage + 8)/9;
         }
         pvsbuf.add(0);
@@ -644,10 +644,11 @@ struct pvsworker
         for(; i < 8; i++)
         {
             pvsnode &child = children[i];
-            if(child.children) serializepvs(child, index+1+i);
+            if(child.children) { if(!serializepvs(child, index+1+i)) leafmask |= 1<<i; }
             else { leafmask |= 1<<i; pvsbuf[index+1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
         }
         pvsbuf[index] = leafmask;
+        return true;
     }
 
     int genviewcell(const ivec &co, int size)
@@ -829,17 +830,28 @@ void genviewcells(viewcellnode &p, cube *c, const ivec &co, int size, int thresh
         if(pvsthreads<=1)
         {
             if(genpvs_canceled) return;
-            p.children[i].pvs = pvsworkers[0]->genviewcell(co, size);
+            p.children[i].pvs = pvsworkers[0]->genviewcell(o, size);
             if(check_genpvs_progress) show_genpvs_progress();
         }
         else
         {
             viewcellrequest &req = viewcellrequests.add();
             req.result = &p.children[i].pvs;
-            req.o = co;
+            req.o = o;
             req.size = size;
         }
     }
+}
+
+viewcellnode *viewcells = NULL;
+uchar *curpvs = NULL;
+
+void clearpvs()
+{
+    DELETEP(viewcells);
+    loopv(pvs) delete[] pvs[i].buf;
+    pvs.setsizenodelete(0);
+    curpvs = NULL;
 }
 
 void genpvs(int *viewcellsize)
@@ -850,6 +862,7 @@ void genpvs(int *viewcellsize)
 
     show_out_of_renderloop_progress(0, "finding view cells");
 
+    clearpvs();
     calcpvsbounds();
 
     pvsnode &root = origpvsnodes.add();
@@ -868,8 +881,8 @@ void genpvs(int *viewcellsize)
         pvsworkers.add(new pvsworker);
         timer = SDL_AddTimer(500, genpvs_timer, NULL);
     }
-    viewcellnode *rootvc = new viewcellnode;
-    genviewcells(*rootvc, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
+    viewcells = new viewcellnode;
+    genviewcells(*viewcells, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
     if(pvsthreads<=1)
     {
         SDL_RemoveTimer(timer);
@@ -905,19 +918,20 @@ void genpvs(int *viewcellsize)
     pvscompress.clear();
 
     Uint32 end = SDL_GetTicks();
-    if(genpvs_canceled) conoutf("genpvs canceled");
+    if(genpvs_canceled) 
+    {
+        clearpvs();
+        conoutf("genpvs aborted");
+    }
     else conoutf("generated %d unique view cells out of %d (%.1f seconds)", 
         pvs.length(), totalviewcells, (end - start) / 1000.0f);
-
-    // FIXME: do something other than delete PVS data
-    delete rootvc;
-    loopv(pvs) delete[] pvs[i].buf;
-    pvs.setsizenodelete(0);
 }
 
 COMMAND(genpvs, "i");
 
-bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
+VARN(pvs, usepvs, 0, 1, 1);
+
+static inline bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
 {
     uchar leafmask = buf[0];
     loopoctabox(co, size, bborigin, bbsize)
@@ -926,35 +940,157 @@ bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, con
         if(leafmask&(1<<i))
         {
             uchar leafvalues = buf[1+i];
-            if(!leafvalues || (leafvalues!=0xFF && leafvalues&~octantrectangleoverlap(o, size>>1, bborigin, bbsize)))
+            if(!leafvalues || (leafvalues!=0xFF && octantrectangleoverlap(o, size>>1, bborigin, bbsize)&~leafvalues))
                 return false;
-            continue;
         }
-        if(!pvsoccluded(buf+9*buf[1+i], o, size>>1, bborigin, bbsize)) return false;
+        else if(!pvsoccluded(buf+9*buf[1+i], o, size>>1, bborigin, bbsize)) return false;
     }
     return true;
 }
 
-bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
+static inline bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
 {
-    int diff = (bborigin.x^(bborigin.x+bbsize.x)) | (bborigin.y^(bborigin.y+bbsize.y)) | (bborigin.z^(bborigin.z+bbsize.z)),
-        scale = worldscale-1;
-    if(diff&~((1<<scale)-1)) return pvsoccluded(buf, ivec(0, 0, 0), 1<<scale, bborigin, bbsize);
-    uchar leafmask = buf[0];
-    int i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
-    scale--;
-    while(!(leafmask&(1<<i)) && !(diff&(1<<scale)))
+    int diff = (bborigin.x^(bborigin.x+bbsize.x)) | (bborigin.y^(bborigin.y+bbsize.y)) | (bborigin.z^(bborigin.z+bbsize.z));
+    if(diff&~((1<<worldscale)-1)) return false;
+    int scale = worldscale-1;
+    while(!(diff&(1<<scale)))
     {
-        buf += 9*buf[1+i];
-        leafmask = buf[0];
-        i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
+        int i = octastep(bborigin.x, bborigin.y, bborigin.z, scale);
         scale--;
-    }
-    if(leafmask&(1<<i))
-    {
-        uchar leafvalues = buf[1+i];
-        return leafvalues && (leafvalues==0xFF || leafvalues&~octantrectangleoverlap(ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize));
+        uchar leafmask = buf[0];
+        if(leafmask&(1<<i))
+        {
+            uchar leafvalues = buf[1+i];
+            return leafvalues && (leafvalues==0xFF || !(octantrectangleoverlap(ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize)&~leafvalues));
+        }
+        buf += 9*buf[1+i];
     }
     return pvsoccluded(buf, ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize);
 }
+
+bool pvsoccluded(const ivec &bborigin, const ivec &bbsize)
+{
+    return curpvs!=NULL && pvsoccluded(curpvs, bborigin, bbsize);
+}
+
+void setviewcell(const vec &p)
+{
+    uint x = uint(p.x), y = uint(p.y), z = uint(p.z);
+    if(!usepvs || !viewcells || (x|y|z)>=uint(hdr.worldsize))
+    { 
+        curpvs = NULL; 
+        return; 
+    }
+    viewcellnode *vc = viewcells;
+    for(int scale = worldscale-1; scale>=0; scale--)
+    {
+        int i = octastep(x, y, z, scale);
+        if(vc->leafmask&(1<<i))
+        {
+            curpvs = vc->children[i].pvs>=0 ? pvs[vc->children[i].pvs].buf : NULL;
+            return;
+        }
+        vc = vc->children[i].node;
+    }
+    curpvs = NULL;
+}
+
+#define PVSVERSION 1
+
+struct pvsheader
+{
+    uchar magic[4];
+    int version;
+    int numpvs;
+};
+
+void saveviewcells(gzFile f, viewcellnode &p)
+{
+    gzputc(f, p.leafmask);
+    loopi(8)
+    {
+        if(p.leafmask&(1<<i))
+        {
+            int pvsindex = p.children[i].pvs;
+            endianswap(&pvsindex, sizeof(int), 1);
+            gzwrite(f, &pvsindex, sizeof(int));
+        }
+        else saveviewcells(f, *p.children[i].node);
+    }
+}
+
+void savepvs(const char *filename)
+{
+    if(!pvs.length() || !viewcells) { conoutf("no PVS available to write"); return; }
+    gzFile f = opengzfile(path(filename, true), "wb9");
+    if(!f) { conoutf("could not write PVS to %s", filename); return; }
+    pvsheader h;
+    memcpy(h.magic, "PVS", 4);
+    h.version = PVSVERSION;
+    h.numpvs = pvs.length();
+    endianswap(&h.version, sizeof(int), 2);
+    gzwrite(f, &h, sizeof(pvsheader));
+    loopv(pvs)
+    {
+        ushort len = pvs[i].len;
+        endianswap(&len, sizeof(ushort), 1);
+        gzwrite(f, &len, sizeof(ushort));
+        gzwrite(f, pvs[i].buf, pvs[i].len);
+    }
+    saveviewcells(f, *viewcells);
+    gzclose(f);
+    conoutf("wrote PVS to %s", filename);
+}
+
+viewcellnode *loadviewcells(gzFile f)
+{
+    viewcellnode *p = new viewcellnode;
+    p->leafmask = gzgetc(f);
+    loopi(8)
+    {
+        if(p->leafmask&(1<<i))
+        {
+            gzread(f, &p->children[i].pvs, sizeof(int));
+            endianswap(&p->children[i].pvs, sizeof(int), 1);
+        }
+        else p->children[i].node = loadviewcells(f);
+    }
+    return p;
+}
+
+void loadpvs(const char *filename, bool msg)
+{
+    gzFile f = opengzfile(path(filename, true), "rb9");
+    if(!f) { if(msg) conoutf("could not read PVS from %s", filename); return; }
+    pvsheader h;
+    gzread(f, &h, sizeof(pvsheader));
+    endianswap(&h.version, sizeof(int), 2);
+    if(memcmp(h.magic, "PVS", 4)) { conoutf("PVS %s has malformatted header", filename); gzclose(f); return; }
+    if(h.version>PVSVERSION) { conoutf("PVS %s requires a newer version of cube 2", filename); gzclose(f); return; }
+    clearpvs();
+    loopi(h.numpvs)
+    {
+        pvsdata &d = pvs.add();
+        ushort len;
+        gzread(f, &len, sizeof(ushort));
+        endianswap(&len, sizeof(ushort), 1);
+        d.len = len;
+        d.buf = new uchar[len];
+        gzread(f, d.buf, len);
+    }
+    viewcells = loadviewcells(f);
+    gzclose(f);
+}
+
+static const char *pvsfilename(const char *pvsname)
+{
+    static string filename;
+    s_sprintf(filename)(strpbrk(pvsname, "/\\") ? "packages/%s" : "packages/base/%s", pvsname);
+    int len = strlen(filename);
+    if(len<4 || memcmp(filename+len-4, ".pvs", 4)) s_strcat(filename, ".pvs");
+    return filename;
+}
+
+ICOMMAND(savepvs, "s", (char *pvsname), savepvs(pvsfilename(pvsname)));
+ICOMMAND(loadpvs, "s", (char *pvsname), loadpvs(pvsfilename(pvsname), true));
 

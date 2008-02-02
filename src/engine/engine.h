@@ -145,6 +145,18 @@ extern void adjustshadowmatrix(const ivec &o, float scale);
 extern void rendershadowmapreceivers();
 extern void guessshadowdir();
 
+// pvs
+extern void clearpvs();
+extern bool pvsoccluded(const ivec &bborigin, const ivec &bbsize);
+extern void setviewcell(const vec &p);
+extern void savepvs(const char *filename);
+extern void loadpvs(const char *filename, bool msg = true);
+
+static inline bool pvsoccluded(const ivec &bborigin, int size)
+{
+    return pvsoccluded(bborigin, ivec(size, size, size));
+}
+
 // rendergl
 extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF, hasVP2, hasVP3, hasPP;
 

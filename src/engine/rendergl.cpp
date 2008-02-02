@@ -426,6 +426,8 @@ void findorientation()
 
     if(raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
         worldpos = dir.mul(2*hdr.worldsize).add(camera1->o); //otherwise 3dgui won't work when outside of map
+
+    setviewcell(camera1->o);
 }
 
 void transplayer()

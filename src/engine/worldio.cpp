@@ -11,7 +11,7 @@ void backup(char *name, char *backupname)
     rename(findfile(name, "wb"), backupfile);
 }
 
-string cgzname, bakname, pcfname, mcfname, picname;
+string cgzname, bakname, pcfname, mcfname, picname, pvsname;
 
 VARP(savebak, 0, 2, 2);
 
@@ -48,10 +48,12 @@ void setnames(const char *fname, const char *cname = 0)
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
     s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, cfgname);
     s_sprintf(picname)("packages/%s.jpg", mapname);
+    s_sprintf(pvsname)("packages/%s.pvs", mapname);
 
     path(cgzname);
     path(bakname);
     path(picname);
+    path(pvsname);
 }
 
 ushort readushort(gzFile f)
@@ -482,6 +484,8 @@ void load_world(const char *mname, const char *cname)        // still supports a
     }
 
     gzclose(f);
+
+    loadpvs(pvsname, false);
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);
