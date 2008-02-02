@@ -5,8 +5,7 @@ enum
 {
     PVS_HIDE_GEOM = 1<<0,
     PVS_HIDE_BB   = 1<<1,
-    PVS_NOVIS     = 1<<2,
-    PVS_COMPACTED = 1<<3
+    PVS_COMPACTED = 1<<2
 };
 
 struct pvsnode
@@ -16,7 +15,8 @@ struct pvsnode
     uint children;
 };
 
-vector<pvsnode> pvsnodes;
+vector<pvsnode> origpvsnodes;
+pvsnode *pvsnodes = NULL;
 
 bool mergepvsnodes(pvsnode &p, pvsnode *children)
 {
@@ -71,35 +71,29 @@ bool mergepvsnodes(pvsnode &p, pvsnode *children)
 
 void genpvsnodes(cube *c, int parent = 0, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize/2)
 {
-    int index = pvsnodes.length();
+    int index = origpvsnodes.length();
     loopi(8)
     {
         ivec o(i, co.x, co.y, co.z, size);
-        pvsnode &n = pvsnodes.add();
+        pvsnode &n = origpvsnodes.add();
         n.flags = 0;
         n.children = 0;
         if(c[i].children || isempty(c[i])) memset(n.edges.v, 0xFF, 3);
-        else
+        else loopk(3)
         {
-            int vis = 0;
-            loopk(6) if(visibleface(c[i], k, o.x, o.y, o.z, size)) { vis++; break; }
-            if(!vis) n.flags = PVS_HIDE_BB | PVS_HIDE_GEOM | PVS_NOVIS;
-            loopk(3)
+            uint face = c[i].faces[k];
+            if(face==F_SOLID) n.edges[k] = 0x80;
+            else
             {
-                uint face = c[i].faces[k];
-                if(face==F_SOLID) n.edges[k] = 0x80;
-                else
+                uchar low = max(max(face&0xF, (face>>8)&0xF), max((face>>16)&0xF, (face>>24)&0xF)),
+                      high = min(min((face>>4)&0xF, (face>>12)&0xF), min((face>>20)&0xF, (face>>28)&0xF));
+                if(size<8)
                 {
-                    uchar low = max(max(face&0xF, (face>>8)&0xF), max((face>>16)&0xF, (face>>24)&0xF)),
-                          high = min(min((face>>4)&0xF, (face>>12)&0xF), min((face>>20)&0xF, (face>>28)&0xF));
-                    if(size<8)
-                    {
-                        if(low&((8/size)-1)) { low += 8/size - (low&((8/size)-1)); }
-                        if(high&((8/size)-1)) high &= ~(8/size-1);
-                    }
-                    if(low >= high) { memset(n.edges.v, 0xFF, 3); break; }
-                    n.edges[k] = low | (high<<4);
+                    if(low&((8/size)-1)) { low += 8/size - (low&((8/size)-1)); }
+                    if(high&((8/size)-1)) high &= ~(8/size-1);
                 }
+                if(low >= high) { memset(n.edges.v, 0xFF, 3); break; }
+                n.edges[k] = low | (high<<4);
             }
         }
     }
@@ -108,10 +102,10 @@ void genpvsnodes(cube *c, int parent = 0, const ivec &co = ivec(0, 0, 0), int si
     {
         ivec o(i, co.x, co.y, co.z, size);
         genpvsnodes(c[i].children, index+i, o, size>>1);
-        if(pvsnodes[index+i].children) branches++;
+        if(origpvsnodes[index+i].children) branches++;
     }
-    if(!branches && mergepvsnodes(pvsnodes[parent], &pvsnodes[index])) pvsnodes.setsizenodelete(index);
-    else pvsnodes[parent].children = index;
+    if(!branches && mergepvsnodes(origpvsnodes[parent], &origpvsnodes[index])) origpvsnodes.setsizenodelete(index);
+    else origpvsnodes[parent].children = index;
 }
 
 static pvsnode *levels[32];
@@ -122,18 +116,18 @@ static inline void resetlevels()
 {
     curlevel = worldscale;
     levels[curlevel] = &pvsnodes[0];
+    origin = ivec(0, 0, 0);
 }
 
 static int hasvoxel(const ivec &p, int coord, int dir, int ocoord = 0, int odir = 0, int *omin = NULL)
 {
-    if(curlevel < worldscale)
+    uint diff = (origin.x^p.x)|(origin.y^p.y)|(origin.z^p.z);
+    if(diff >= uint(hdr.worldsize)) return 0;
+    diff >>= curlevel;
+    while(diff)
     {
-        int diff = (((origin.x^p.x)|(origin.y^p.y)|(origin.z^p.z))&(hdr.worldsize-1)) >> curlevel;
-        while(diff)
-        {
-            curlevel++;
-            diff >>= 1;
-        }
+        curlevel++;
+        diff >>= 1;
     }
 
     pvsnode *cur = levels[curlevel];
@@ -151,7 +145,7 @@ static int hasvoxel(const ivec &p, int coord, int dir, int ocoord = 0, int odir 
     if(cur->flags&PVS_HIDE_BB)
     {
         if(p.x < origin.x || p.y < origin.y || p.z < origin.z ||
-           p.x >= origin.x+size || p.y >= origin.y+size || p.z>=origin.z+size)
+           p.x >= origin.x+size || p.y >= origin.y+size || p.z >= origin.z+size)
             return 0;
         if(omin)
         {
@@ -251,6 +245,12 @@ struct shaftbb
     {
         return min.x<=o.min.x && min.y<=o.min.y && min.z<=o.min.z &&
                max.x>=o.max.x && max.y>=o.max.y && max.z>=o.max.z;
+    }
+
+    bool outside(const ivec &o, int size) const
+    {
+        return o.x>=max.x || o.y>=max.y || o.z>=max.z ||
+               o.x+size<=min.x || o.y+size<=min.y || o.z+size<=min.z;
     }
 
     bool outside(const shaftbb &o) const
@@ -363,9 +363,11 @@ static ivec viewcellcenter;
 
 VAR(maxpvsblocker, 1, 512, 1<<16);
 
+bool genpvs_canceled = false;
+
 void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
 {
-    if(p.flags&(PVS_HIDE_BB | PVS_HIDE_GEOM)) return;
+    if(p.flags&(PVS_HIDE_BB | PVS_HIDE_GEOM) || genpvs_canceled) return;
     bvec edges = p.children ? bvec(0x80, 0x80, 0x80) : p.edges;
     if(p.children && !(p.flags&PVS_HIDE_BB))
     {
@@ -519,10 +521,11 @@ void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsiz
                     }
                     dlimit = min(dlimit, ddir*(dmax[dim] - (int)bb.min[dim]));
                     if(!dstep) dmax[dim] -= ddir;
-                    dval = dmax[dim];
-                    if(ddir>0) bb.max[dim] = min(bb.max[dim], ushort(dmax[dim]+1));
-                    else bb.min[dim] = max(bb.min[dim], ushort(dmax[dim]));
+                    if(ddir>0) dval = min(dval, dmax[dim]);
+                    else dval = max(dval, dmax[dim]);
                 }
+                if(ddir>0) bb.max[dim] = dval+1;
+                else bb.min[dim] = dval;
             }
             shaft s(viewcellbb, bb);
             s.cullpvs(pvsnodes[0]);
@@ -534,19 +537,10 @@ void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsiz
 
 bool compresspvsnode(pvsnode &p, pvsnode *children)
 {
-    int lastvis = 7;
-    while(lastvis>=0 && children[lastvis].flags&PVS_NOVIS) lastvis--;
-    if(lastvis<0)
-    {
-        p.flags = PVS_HIDE_BB | PVS_HIDE_GEOM | PVS_NOVIS;
-        p.children = 0;
-        return true;
-    }
-
     if(!(p.flags&PVS_HIDE_BB))
     {
-        int hide = children[lastvis].flags&PVS_HIDE_BB;
-        loopi(lastvis)  if((children[i].flags&PVS_HIDE_BB)!=hide) return false;
+        int hide = children[7].flags&PVS_HIDE_BB;
+        loopi(8)  if((children[i].flags&PVS_HIDE_BB)!=hide) return false;
         p.flags = (p.flags & ~PVS_HIDE_BB) | hide;
     }
     p.children = 0;
@@ -597,7 +591,7 @@ void serializepvs(pvsnode &p, int storage)
     for(; i < 8; i++)
     {
         pvsnode &child = children[i];
-        if(child.children) serializepvs(p, index+1+i);
+        if(child.children) serializepvs(child, index+1+i);
         else { leafmask |= 1<<i; pvsbuf[index+1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
     }
     pvsbuf[index] = leafmask; 
@@ -617,7 +611,7 @@ void serializepvs(pvsnode &p)
     loopi(8)
     {
         pvsnode &child = children[i];
-        if(child.children) serializepvs(p, 1+i);
+        if(child.children) serializepvs(child, 1+i);
         else { leafmask |= 1<<i; pvsbuf[1+i] = child.flags&PVS_HIDE_BB ? 0xFF : 0; }
     }
     pvsbuf[0] = leafmask;
@@ -663,4 +657,243 @@ bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbsize)
     }
     return pvsoccluded(buf, ivec(bborigin).mask(~((2<<scale)-1)), 1<<scale, bborigin, bbsize);
 }
+
+#if 0
+void testpvs(int *vcsize)
+{
+    origpvsnodes.setsizenodelete(0);
+    pvsnode &root = origpvsnodes.add();
+    memset(root.edges.v, 0xFF, 3);
+    root.flags = 0;
+    root.children = 0;
+    genpvsnodes(worldroot);
+    int viewcellsize = 1<<(*vcsize > 0 ? *vcsize : 5);
+    ivec viewcell = camera1->o;
+    viewcell.mask(~(viewcellsize-1));
+    viewcellbb.min.x = viewcell.x;
+    viewcellbb.min.y = viewcell.y;
+    viewcellbb.min.z = viewcell.z;
+    viewcellbb.max.x = viewcell.x + viewcellsize;
+    viewcellbb.max.y = viewcell.y + viewcellsize;
+    viewcellbb.max.z = viewcell.z + viewcellsize;
+    viewcellcenter = ivec(viewcell).add(viewcellsize/2);
+    cullpvs(pvsnodes[0]);
+    compresspvsnodes(pvsnodes[0], hdr.worldsize, viewcellsize);
+    pvsbuf.setsizenodelete(0);
+    serializepvs(pvsnodes[0]);
+}
+
+COMMAND(testpvs, "i");
+#endif
+
+struct pvsdata
+{
+    uchar *buf;
+    int len;
+
+    pvsdata() {}
+    pvsdata(uchar *buf, int len) : buf(buf), len(len) {}
+};
+
+static inline uint hthash(const pvsdata &k)
+{
+    uint h = 5381;
+    loopi(k.len) h = ((h<<5)+h)^k.buf[i];
+    return h;
+}
+
+static inline bool htcmp(const pvsdata &x, const pvsdata &y)
+{
+    return x.len==y.len && !memcmp(x.buf, y.buf, x.len);
+}
+
+hashtable<pvsdata, int> pvscompress;
+vector<pvsdata> pvs;
+
+struct viewcellnode
+{
+    uchar leafmask;
+    union viewcellchild
+    {
+        int pvs;
+        viewcellnode *node;
+    } children[8];
+
+    viewcellnode() : leafmask(0xFF)
+    {
+        loopi(8) children[i].pvs = -1;
+    }
+    ~viewcellnode()
+    {
+        loopi(8) if(!(leafmask&(1<<i))) delete children[i].node;
+    }
+};
+
+shaftbb pvsbounds;
+
+void calcpvsbounds()
+{
+    loopk(3) pvsbounds.min[k] = USHRT_MAX;
+    loopk(3) pvsbounds.max[k] = 0;
+    extern vector<vtxarray *> valist;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        loopk(3)
+        {
+            if(va->min[k]>va->max[k]) continue;
+            pvsbounds.min[k] = min(pvsbounds.min[k], (ushort)va->min[k]);
+            pvsbounds.max[k] = max(pvsbounds.max[k], (ushort)va->max[k]);
+        }
+    }
+}
+        
+static inline bool isallclip(cube *c)
+{
+    loopi(8)
+    {
+        cube &h = c[i];
+        if(h.children ? !isallclip(h.children) : (!isentirelysolid(h) && (!h.ext || !isclipped(h.ext->material)))) 
+            return false;
+    }
+    return true;
+}
+
+int numviewcells = 0, totalviewcells = 0;
+
+void show_genpvs_progress()
+{
+    float bar1 = float(numviewcells) / float(totalviewcells>0 ? totalviewcells : 1),
+          bar2 = float(pvs.length()) / float(totalviewcells>0 ? totalviewcells : 1);
+
+    s_sprintfd(text1)("%d%% - %d of %d view cells", int(bar1 * 100), numviewcells, totalviewcells);
+    s_sprintfd(text2)("%d unique view cells", pvs.length());
+
+    show_out_of_renderloop_progress(bar1, text1, bar2, text2);
+
+    SDL_Event event;
+    while(SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+        case SDL_KEYDOWN:
+            if(event.key.keysym.sym == SDLK_ESCAPE)
+                genpvs_canceled = true;
+            break;
+        }
+    }
+}
+   
+VAR(pvsleafsize, 1, 64, 1024);
+ 
+void genviewcell(viewcellnode &p, int i, const ivec &co, int size)
+{
+    loopk(3) 
+    {
+        viewcellbb.min[k] = co[k];
+        viewcellbb.max[k] = co[k]+size;
+        viewcellcenter[k] = co[k]+size/2;
+    }
+    memcpy(pvsnodes, origpvsnodes.getbuf(), origpvsnodes.length()*sizeof(pvsnode));
+    cullpvs(pvsnodes[0]);
+    compresspvsnodes(pvsnodes[0], hdr.worldsize, pvsleafsize);
+    serializepvs(pvsnodes[0]);
+    int *shared = pvscompress.access(pvsdata(pvsbuf.getbuf(), pvsbuf.length()));
+    if(shared) p.children[i].pvs = *shared;
+    else
+    {
+        pvsdata &vcpvs = pvs.add();
+        vcpvs.buf = new uchar[pvsbuf.length()];
+        memcpy(vcpvs.buf, pvsbuf.getbuf(), pvsbuf.length());
+        vcpvs.len = pvsbuf.length();
+        pvscompress[vcpvs] = pvs.length()-1;
+        p.children[i].pvs = pvs.length()-1;
+    }
+    pvsbuf.setsizenodelete(0);
+    numviewcells++;
+
+    show_genpvs_progress();
+}
+
+int countviewcells(cube *c, const ivec &co, int size, int threshold)
+{
+    int count = 0;
+    loopi(8)
+    {
+        ivec o(i, co.x, co.y, co.z, size);
+        if(pvsbounds.outside(o, size)) continue;
+        cube &h = c[i];
+        if(h.children)
+        {
+            if(size>threshold)
+            {
+                count += countviewcells(h.children, o, size>>1, threshold);
+                continue;
+            }
+            if(isallclip(h.children)) continue;
+        }
+        else if(isentirelysolid(h) || (h.ext && isclipped(h.ext->material))) continue;
+        count++;
+    }
+    return count;
+}
+
+void genviewcells(viewcellnode &p, cube *c, const ivec &co, int size, int threshold)
+{
+    if(genpvs_canceled) return;
+    loopi(8)
+    {
+        ivec o(i, co.x, co.y, co.z, size);
+        if(pvsbounds.outside(o, size)) continue;
+        cube &h = c[i];
+        if(h.children)
+        {
+            if(size>threshold)
+            {
+                p.leafmask &= ~(1<<i);
+                p.children[i].node = new viewcellnode;
+                genviewcells(*p.children[i].node, h.children, o, size>>1, threshold);
+                continue;
+            }
+            if(isallclip(h.children)) continue;
+        }
+        else if(isentirelysolid(h) || (h.ext && isclipped(h.ext->material))) continue;
+        genviewcell(p, i, co, size);      
+    }
+}
+
+void genpvs(int *viewcellsize)
+{
+    computescreen("generating PVS (esc to abort)");
+    genpvs_canceled = false;
+    Uint32 start = SDL_GetTicks();
+
+    calcpvsbounds();
+
+    pvsnode &root = origpvsnodes.add();
+    memset(root.edges.v, 0xFF, 3);
+    root.flags = 0;
+    root.children = 0;
+    genpvsnodes(worldroot);
+    pvsnodes = new pvsnode[origpvsnodes.length()];
+
+    totalviewcells = countviewcells(worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
+    numviewcells = 0;
+    viewcellnode *rootvc = new viewcellnode;
+    genviewcells(*rootvc, worldroot, ivec(0, 0, 0), hdr.worldsize>>1, *viewcellsize>0 ? *viewcellsize : 32);
+    delete rootvc;
+    loopv(pvs) delete[] pvs[i].buf;
+    pvs.setsizenodelete(0);
+
+    delete[] pvsnodes;
+    origpvsnodes.setsizenodelete(0);
+    pvscompress.clear();
+
+    Uint32 end = SDL_GetTicks();
+    if(genpvs_canceled) conoutf("genpvs canceled");
+    else conoutf("generated %d unique view cells out of %d (%.1f seconds)", 
+        pvs.length(), totalviewcells, (end - start) / 1000.0f);
+}
+
+COMMAND(genpvs, "i");
 
