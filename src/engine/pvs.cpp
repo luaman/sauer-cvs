@@ -336,13 +336,9 @@ struct pvsworker
         }
 
         origin = ivec(p.x&(~0<<curlevel), p.y&(~0<<curlevel), p.z&(~0<<curlevel));
-        int size = 1<<curlevel;
 
-        if(cur->flags&PVS_HIDE_BB)
+        if(cur->flags&PVS_HIDE_BB || cur->edges==bvec(0x80, 0x80, 0x80))
         {
-            if(p.x < origin.x || p.y < origin.y || p.z < origin.z ||
-               p.x >= origin.x+size || p.y >= origin.y+size || p.z >= origin.z+size)
-                return 0;
             if(omin)
             {
                 int step = origin[ocoord] + (odir<<curlevel) - p[ocoord] + odir - 1;
@@ -416,7 +412,6 @@ struct pvsworker
     void cullpvs(pvsnode &p, const ivec &co = ivec(0, 0, 0), int size = hdr.worldsize)
     {
         if(p.flags&(PVS_HIDE_BB | PVS_HIDE_GEOM) || genpvs_canceled) return;
-        bvec edges = p.children ? bvec(0x80, 0x80, 0x80) : p.edges;
         if(p.children && !(p.flags&PVS_HIDE_BB))
         {
             pvsnode *children = &pvsnodes[p.children];
@@ -427,6 +422,7 @@ struct pvsworker
             }
             if(!(p.flags & PVS_HIDE_BB)) return;
         }
+        bvec edges = p.children ? bvec(0x80, 0x80, 0x80) : p.edges;
         if(edges.x==0xFF) return;
         shaftbb geom(co, size, edges);
         loopi(6)
