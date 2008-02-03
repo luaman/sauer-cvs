@@ -245,6 +245,7 @@ struct fpsserver : igameserver
     string masterpass;
     FILE *mapdata;
 
+    vector<uint> allowedips;
     vector<ban> bannedips;
     vector<clientinfo *> clients;
     vector<worldstate *> worldstates;
@@ -1313,6 +1314,8 @@ struct fpsserver : igameserver
                     if(ci->privilege>=PRIV_ADMIN || (mastermask&(1<<mm)))
                     {
                         mastermode = mm;
+                        allowedips.setsize(0);
+                        if(mm>=MM_PRIVATE) loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
                         s_sprintfd(s)("mastermode is now %d", mastermode);
                         sendservmsg(s);
                     }
@@ -1343,6 +1346,7 @@ struct fpsserver : igameserver
                     ban &b = bannedips.add();
                     b.time = totalmillis;
                     b.ip = getclientip(victim);
+                    allowedips.removeobj(b.ip);
                     disconnect_client(victim, DISC_KICK);
                 }
                 break;
@@ -1862,6 +1866,7 @@ struct fpsserver : igameserver
             ci->privilege = 0;
         }
         mastermode = MM_OPEN;
+        allowedips.setsize(0);
         s_sprintfd(msg)("%s %s %s", colorname(ci), val ? (approved ? "approved for" : "claimed") : "relinquished", name);
         sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
@@ -1890,7 +1895,10 @@ struct fpsserver : igameserver
         ci->clientnum = n;
         clients.add(ci);
         loopv(bannedips) if(bannedips[i].ip==ip) return DISC_IPBAN;
-        if(mastermode>=MM_PRIVATE) return DISC_PRIVATE;
+        if(mastermode>=MM_PRIVATE) 
+        {
+            if(allowedips.find(ip)<0) return DISC_PRIVATE;
+        }
         if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
         if(currentmaster>=0) masterupdate = true;
         ci->state.lasttimeplayed = lastmillis;
