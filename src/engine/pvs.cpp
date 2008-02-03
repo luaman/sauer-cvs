@@ -5,8 +5,7 @@
 enum
 {
     PVS_HIDE_GEOM = 1<<0,
-    PVS_HIDE_BB   = 1<<1,
-    PVS_COMPACTED = 1<<2
+    PVS_HIDE_BB   = 1<<1
 };
 
 struct pvsnode
