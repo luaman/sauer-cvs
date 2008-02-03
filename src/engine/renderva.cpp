@@ -126,7 +126,7 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
             if(v.children->length()) findvisiblevas(*v.children, prevvfc==VFC_NOT_VISIBLE);
             if(prevvfc==VFC_NOT_VISIBLE)
             {
-                v.occluded = OCCLUDE_NOTHING;
+                v.occluded = !(v.curlod ? v.l1.texs : v.l0.texs) || pvsoccluded(v.min, v.max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                 v.query = NULL;
             }
         }
