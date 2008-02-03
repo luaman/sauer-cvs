@@ -760,7 +760,7 @@ int limitdynlights()
         float radius = d.calcradius();
         if(d.radius<=0) continue;
         d.dist = camera1->o.dist(d.o) - radius;
-        if(d.dist>dynlightdist || isvisiblesphere(d.radius, d.o) >= VFC_FOGGED) continue;
+        if(d.dist>dynlightdist || isvisiblesphere(d.radius, d.o) >= VFC_FOGGED || pvsoccluded(d.o, 2*int(radius+1))) continue;
         int insert = 0;
         loopvrev(closedynlights) if(d.dist >= closedynlights[i]->dist) { insert = i+1; break; }
 #if 0
