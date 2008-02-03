@@ -858,6 +858,8 @@ void clearpvs()
     curpvs = NULL;
 }
 
+COMMAND(clearpvs, "");
+
 void testpvs(int *vcsize)
 {
     clearpvs();
