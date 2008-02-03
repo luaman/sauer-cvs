@@ -304,7 +304,6 @@ struct pvsworker
     pvsnode *pvsnodes;
 
     shaftbb viewcellbb;
-    ivec viewcellcenter;
 
     pvsnode *levels[32];
     int curlevel;
@@ -369,6 +368,7 @@ struct pvsworker
         if(bbp.z < bbmin.z) return 0;
         bbmax.z = ((cur->edges.z>>4)<<curlevel)/8;
         if(bbp.z >= bbmax.z) return 0;
+
         if(omin)
         {
             int step = (odir ? bbmax[ocoord] : bbmin[ocoord]) - bbp[ocoord] + (odir - 1);
@@ -429,7 +429,7 @@ struct pvsworker
             if(!(p.flags & PVS_HIDE_BB)) return;
         }
         if(edges.x==0xFF) return;
-        shaftbb geom(co, size, p.edges);
+        shaftbb geom(co, size, edges);
         loopi(6)
         {
             int dim = dimension(i), dc = dimcoord(i), r = R[dim], c = C[dim];
@@ -538,7 +538,8 @@ struct pvsworker
                 {
                     int ddir = bb.min[dim] >= viewcellbb.max[dim] ? 1 : -1,
                         dval = ddir>0 ? USHRT_MAX-1 : 0,
-                        dlimit = maxpvsblocker;
+                        dlimit = maxpvsblocker,
+                        numsides = 0;
                     loopj(4)
                     {
                         ivec dmax;
@@ -546,13 +547,14 @@ struct pvsworker
                         if(j&1)
                         {
                             if(bb.max[odim] >= viewcellbb.max[odim]) continue;
-                            dmax[odim] = viewcellbb.max[odim];
+                            dmax[odim] = bb.max[odim]-1;
                         }
                         else
                         {
                             if(bb.min[odim] <= viewcellbb.min[odim]) continue;
-                            dmax[odim] = viewcellbb.min[odim];
+                            dmax[odim] = bb.min[odim];
                         }
+                        numsides++;
                         dmax[dim] = bb.min[dim];
                         int stepdim = j < 2 ? r : c, stepstart = bb.min[stepdim], stepend = bb.max[stepdim];
                         int dstep = ddir;
@@ -564,7 +566,7 @@ struct pvsworker
                             for(int step = 1; step && dmax[stepdim] < stepend;)
                             {
                                 step = hasvoxel(dmax, stepdim, 1, dim, (ddir+1)/2, &dstep);
-                                dmax[r] += step;
+                                dmax[stepdim] += step;
                             }
                             if(dmax[stepdim] < stepend) dstep = 0;
                         }
@@ -573,8 +575,11 @@ struct pvsworker
                         if(ddir>0) dval = min(dval, dmax[dim]);
                         else dval = max(dval, dmax[dim]);
                     }
-                    if(ddir>0) bb.max[dim] = dval+1;
-                    else bb.min[dim] = dval;
+                    if(numsides>0)
+                    {
+                        if(ddir>0) bb.max[dim] = dval+1;
+                        else bb.min[dim] = dval;
+                    }
                 }
                 shaft s(viewcellbb, bb);
                 shaftcullpvs(s, pvsnodes[0]);
@@ -597,7 +602,7 @@ struct pvsworker
         if(canreduce)
         {
             int hide = children[7].flags&PVS_HIDE_BB;
-            loopi(8) if((children[i].flags&PVS_HIDE_BB)!=hide) canreduce = false;
+            loopi(7) if((children[i].flags&PVS_HIDE_BB)!=hide) canreduce = false;
             if(canreduce) 
             {
                 p.flags = (p.flags & ~PVS_HIDE_BB) | hide;
@@ -632,8 +637,8 @@ struct pvsworker
             for(; i < 8; i++)
             {   
                 pvsnode &child = children[i];
-                if(child.children) break;
-                else if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
+                if(child.flags&PVS_HIDE_BB) leafvalues |= 1<<i;
+                else if(child.children) break;
             }
             if(i==8) { pvsbuf[storage] = leafvalues; return false; }
             pvsbuf[storage] = (index - storage + 8)/9;
@@ -657,14 +662,13 @@ struct pvsworker
         {
             viewcellbb.min[k] = co[k];
             viewcellbb.max[k] = co[k]+size;
-            viewcellcenter[k] = co[k]+size/2;
         }
         memcpy(pvsnodes, origpvsnodes.getbuf(), origpvsnodes.length()*sizeof(pvsnode));
         cullpvs(pvsnodes[0]);
         compresspvs(pvsnodes[0], hdr.worldsize, pvsleafsize);
         pvsbuf.setsizenodelete(0);
         serializepvs(pvsnodes[0]);
-        
+
         SDL_LockMutex(pvsmutex);
         numviewcells++;
         int *val = pvscompress.access(pvsdata(pvsbuf.getbuf(), pvsbuf.length()));
@@ -854,6 +858,40 @@ void clearpvs()
     curpvs = NULL;
 }
 
+void testpvs(int *vcsize)
+{
+    clearpvs();
+
+    pvsnode &root = origpvsnodes.add();
+    memset(root.edges.v, 0xFF, 3);
+    root.flags = 0;
+    root.children = 0;
+    genpvsnodes(worldroot);
+
+    numviewcells = 0;
+    genpvs_canceled = false;
+    check_genpvs_progress = false;
+
+    int oldthreads = pvsthreads;
+    pvsthreads = 1;
+
+    pvsworkers.add(new pvsworker);
+    viewcells = new viewcellnode;
+    int size = 1<<(*vcsize > 0 ? *vcsize : 5);
+    ivec o = camera1->o;
+    o.mask(~(size-1));
+    int pvsindex = pvsworkers[0]->genviewcell(o, size);
+    loopi(8) viewcells->children[i].pvs = pvsindex;
+    pvsworkers.deletecontentsp();
+
+    pvsthreads = oldthreads;
+
+    origpvsnodes.setsizenodelete(0);
+
+}
+
+COMMAND(testpvs, "i");
+
 void genpvs(int *viewcellsize)
 {
     computescreen("generating PVS (esc to abort)");
@@ -975,7 +1013,7 @@ bool pvsoccluded(const ivec &bborigin, const ivec &bbsize)
 
 void setviewcell(const vec &p)
 {
-    uint x = uint(p.x), y = uint(p.y), z = uint(p.z);
+    uint x = uint(floor(p.x)), y = uint(floor(p.y)), z = uint(floor(p.z));
     if(!usepvs || !viewcells || (x|y|z)>=uint(hdr.worldsize))
     { 
         curpvs = NULL; 
