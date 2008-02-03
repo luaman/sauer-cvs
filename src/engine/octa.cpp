@@ -1227,7 +1227,7 @@ void freemergeinfo(cube &c)
     DELETEA(c.ext->merges);
 }
 
-VAR(maxmerge, 0, 8, VVEC_INT-1);
+VAR(maxmerge, 0, 6, VVEC_INT-1);
 
 static int genmergeprogress = 0; 
 

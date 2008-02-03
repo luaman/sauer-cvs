@@ -205,7 +205,11 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     if(!hasOQ)
     {
         conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
-        if(renderpath==R_FIXEDFUNCTION) zpass = 0;
+        /*if(renderpath==R_FIXEDFUNCTION)*/ zpass = 0;
+        extern int vacubesize, vacubemin;
+        vacubesize = 64;
+        vacubemin = 64;
+        waterreflect = 0;
     }
 
     bool avoidshaders = false;
@@ -228,7 +232,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         extern int maxtexsize;
         maxtexsize = 256;
 
-        if(!hasOQ) waterreflect = waterrefract = 0;
+        if(!hasOQ) waterrefract = 0;
         if(hasDRE) mesa_dre_bug = 1;
     }
     else if(strstr(vendor, "Intel"))
@@ -239,13 +243,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         extern int maxtexsize;
         maxtexsize = 256;
 
-        if(!hasOQ) waterreflect = waterrefract = 0;
+        if(!hasOQ) waterrefract = 0;
     } 
     else if(strstr(vendor, "NVIDIA"))
     {
         reservevpparams = 10;
     }
-    if(!hasOQ) waterreflect = 0;
     //if(floatvtx) conoutf("WARNING: Using floating point vertexes. (use \"/floatvtx 0\" to disable)");
 
     extern int useshaders;
