@@ -151,6 +151,7 @@ extern bool pvsoccluded(const ivec &bborigin, const ivec &bbsize);
 extern void setviewcell(const vec &p);
 extern void savepvs(const char *filename);
 extern void loadpvs(const char *filename, bool msg = true);
+extern int getnumviewcells();
 
 static inline bool pvsoccluded(const ivec &bborigin, int size)
 {

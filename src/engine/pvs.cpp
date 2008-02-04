@@ -843,14 +843,17 @@ void genviewcells(viewcellnode &p, cube *c, const ivec &co, int size, int thresh
 }
 
 viewcellnode *viewcells = NULL;
-uchar *curpvs = NULL;
+uchar *curpvs = NULL, *lockedpvs = NULL;
+
+VARF(lockpvs, 0, 0, 1, lockedpvs = lockpvs ? curpvs : NULL);  
 
 void clearpvs()
 {
     DELETEP(viewcells);
     loopv(pvs) delete[] pvs[i].buf;
     pvs.setsizenodelete(0);
-    curpvs = NULL;
+    curpvs = lockedpvs = NULL;
+    lockpvs = 0;
 }
 
 COMMAND(clearpvs, "");
@@ -1010,6 +1013,11 @@ bool pvsoccluded(const ivec &bborigin, const ivec &bbsize)
 
 void setviewcell(const vec &p)
 {
+    if(lockedpvs)
+    {
+        curpvs = lockedpvs;
+        return;
+    }
     uint x = uint(floor(p.x)), y = uint(floor(p.y)), z = uint(floor(p.z));
     if(!usepvs || !viewcells || (x|y|z)>=uint(hdr.worldsize))
     { 
@@ -1128,4 +1136,6 @@ static const char *pvsfilename(const char *pvsname)
 
 ICOMMAND(savepvs, "s", (char *pvsname), savepvs(pvsfilename(pvsname)));
 ICOMMAND(loadpvs, "s", (char *pvsname), loadpvs(pvsfilename(pvsname), true));
+
+int getnumviewcells() { return pvs.length(); }
 
