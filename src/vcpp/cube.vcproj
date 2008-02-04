@@ -558,6 +558,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\pvs.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\world.cpp"
 					>
 					<FileConfiguration
