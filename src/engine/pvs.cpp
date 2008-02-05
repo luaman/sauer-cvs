@@ -651,7 +651,7 @@ struct pvsworker
         return true;
     }
 
-    int genviewcell(const ivec &co, int size)
+    void calcpvs(const ivec &co, int size)
     {
         loopk(3)
         {
@@ -663,6 +663,20 @@ struct pvsworker
         compresspvs(pvsnodes[0], hdr.worldsize, pvsleafsize);
         pvsbuf.setsizenodelete(0);
         serializepvs(pvsnodes[0]);
+    }
+
+    void genviewcell(const ivec &co, int size, pvsdata &d)
+    {
+        calcpvs(co, size);
+
+        d.buf = new uchar[pvsbuf.length()];
+        memcpy(d.buf, pvsbuf.getbuf(), pvsbuf.length());
+        d.len = pvsbuf.length();
+    }
+
+    int genviewcell(const ivec &co, int size)
+    {
+        calcpvs(co, size);
 
         SDL_LockMutex(pvsmutex);
         numviewcells++;
@@ -843,24 +857,72 @@ void genviewcells(viewcellnode &p, cube *c, const ivec &co, int size, int thresh
 }
 
 viewcellnode *viewcells = NULL;
-uchar *curpvs = NULL, *lockedpvs = NULL;
+pvsdata lockedpvs(NULL, 0);
+uchar *curpvs = NULL;
 
-VARF(lockpvs, 0, 0, 1, lockedpvs = lockpvs ? curpvs : NULL);  
+static inline pvsdata *lookupviewcell(const vec &p)
+{
+    uint x = uint(floor(p.x)), y = uint(floor(p.y)), z = uint(floor(p.z));
+    if(!viewcells || (x|y|z)>=uint(hdr.worldsize)) return NULL;
+    viewcellnode *vc = viewcells;
+    for(int scale = worldscale-1; scale>=0; scale--)
+    {
+        int i = octastep(x, y, z, scale);
+        if(vc->leafmask&(1<<i))
+        {
+            return vc->children[i].pvs>=0 ? &pvs[vc->children[i].pvs] : NULL;
+        }
+        vc = vc->children[i].node;
+    }
+    return NULL;
+}
+
+void lockpvs_(bool lock)
+{
+    if(lockedpvs.buf)
+    {
+        DELETEA(lockedpvs.buf);
+        lockedpvs.len = 0;
+    }
+    if(!lock) return;
+    pvsdata *d = lookupviewcell(camera1->o);
+    if(!d) return;
+    lockedpvs.buf = new uchar[d->len];
+    memcpy(lockedpvs.buf, d->buf, d->len);
+    lockedpvs.len = d->len;
+    conoutf("locked view cell at %.1f, %.1f, %.1f", camera1->o.x, camera1->o.y, camera1->o.z);
+}
+
+VARF(lockpvs, 0, 0, 1, lockpvs_(lockpvs!=0));
+
+VARN(pvs, usepvs, 0, 1, 1);
+
+void setviewcell(const vec &p)
+{
+    if(!usepvs) curpvs = NULL;
+    else if(lockedpvs.buf) curpvs = lockedpvs.buf;
+    else
+    {
+        pvsdata *d = lookupviewcell(p);
+        curpvs = d ? d->buf : NULL;
+    }
+}
 
 void clearpvs()
 {
     DELETEP(viewcells);
     loopv(pvs) delete[] pvs[i].buf;
     pvs.setsizenodelete(0);
-    curpvs = lockedpvs = NULL;
+    curpvs = NULL;
     lockpvs = 0;
+    lockpvs_(false);
 }
 
 COMMAND(clearpvs, "");
 
 void testpvs(int *vcsize)
 {
-    clearpvs();
+    lockpvs_(false);
 
     pvsnode &root = origpvsnodes.add();
     memset(root.edges.v, 0xFF, 3);
@@ -868,26 +930,18 @@ void testpvs(int *vcsize)
     root.children = 0;
     genpvsnodes(worldroot);
 
-    numviewcells = 0;
     genpvs_canceled = false;
     check_genpvs_progress = false;
 
-    int oldthreads = pvsthreads;
-    pvsthreads = 1;
-
-    pvsworkers.add(new pvsworker);
-    viewcells = new viewcellnode;
     int size = 1<<(*vcsize > 0 ? *vcsize : 5);
     ivec o = camera1->o;
     o.mask(~(size-1));
-    int pvsindex = pvsworkers[0]->genviewcell(o, size);
-    loopi(8) viewcells->children[i].pvs = pvsindex;
-    pvsworkers.deletecontentsp();
-
-    pvsthreads = oldthreads;
+    pvsworker w;
+    w.genviewcell(o, size, lockedpvs);
+    lockpvs = 1;
+    conoutf("generated test view cell of size %d at %.1f, %.1f, %.1f (%d bytes)", size, camera1->o.x, camera1->o.y, camera1->o.z, lockedpvs.len);
 
     origpvsnodes.setsizenodelete(0);
-
 }
 
 COMMAND(testpvs, "i");
@@ -961,13 +1015,26 @@ void genpvs(int *viewcellsize)
         clearpvs();
         conoutf("genpvs aborted");
     }
-    else conoutf("generated %d unique view cells out of %d (%.1f seconds)", 
-        pvs.length(), totalviewcells, (end - start) / 1000.0f);
+    else 
+    {
+        int totallen = 0;
+        loopv(pvs) totallen += pvs[i].len;
+        conoutf("generated %d unique view cells totaling %.1f kB and averaging %.1f B (%.1f seconds)", 
+            pvs.length(), totallen/1024.0f, float(totallen)/max(pvs.length(), 1), (end - start) / 1000.0f);
+    }
 }
 
 COMMAND(genpvs, "i");
 
-VARN(pvs, usepvs, 0, 1, 1);
+void pvsstats()
+{
+    int totallen = 0;
+    loopv(pvs) totallen += pvs[i].len;
+    conoutf("%d unique view cells totaling %.1f kB and averaging %d B",          
+        pvs.length(), totallen/1024.0f, totallen/max(pvs.length(), 1));
+}
+
+COMMAND(pvsstats, "");
 
 static inline bool pvsoccluded(uchar *buf, const ivec &co, int size, const ivec &bborigin, const ivec &bbsize)
 {
@@ -1009,33 +1076,6 @@ static inline bool pvsoccluded(uchar *buf, const ivec &bborigin, const ivec &bbs
 bool pvsoccluded(const ivec &bborigin, const ivec &bbsize)
 {
     return curpvs!=NULL && pvsoccluded(curpvs, bborigin, bbsize);
-}
-
-void setviewcell(const vec &p)
-{
-    if(lockedpvs)
-    {
-        curpvs = lockedpvs;
-        return;
-    }
-    uint x = uint(floor(p.x)), y = uint(floor(p.y)), z = uint(floor(p.z));
-    if(!usepvs || !viewcells || (x|y|z)>=uint(hdr.worldsize))
-    { 
-        curpvs = NULL; 
-        return; 
-    }
-    viewcellnode *vc = viewcells;
-    for(int scale = worldscale-1; scale>=0; scale--)
-    {
-        int i = octastep(x, y, z, scale);
-        if(vc->leafmask&(1<<i))
-        {
-            curpvs = vc->children[i].pvs>=0 ? pvs[vc->children[i].pvs].buf : NULL;
-            return;
-        }
-        vc = vc->children[i].node;
-    }
-    curpvs = NULL;
 }
 
 #define PVSVERSION 1
