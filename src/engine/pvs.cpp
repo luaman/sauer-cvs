@@ -621,7 +621,7 @@ struct pvsworker
         if(!p.children)
         {
             outbuf.add(0xFF);
-            loopi(8) pvsbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
+            loopi(8) outbuf.add(p.flags&PVS_HIDE_BB ? 0xFF : 0);
             return true;
         }
         int index = outbuf.length();
@@ -637,7 +637,10 @@ struct pvsworker
                 else if(child.children) break;
             }
             if(i==8) { outbuf[storage] = leafvalues; return false; }
-            outbuf[storage] = (index - storage + 8)/9;
+            // if offset won't fit, just mark the space as a visible to avoid problems
+            int offset = (index - storage + 8)/9;
+            if(offset>255) { outbuf[storage] = 0; return false; }
+            outbuf[storage] = uchar(offset);
         }
         outbuf.add(0);
         loopj(8) outbuf.add(leafvalues&(1<<j) ? 0xFF : 0);
@@ -1012,23 +1015,16 @@ void genpvs(int *viewcellsize)
         clearpvs();
         conoutf("genpvs aborted");
     }
-    else 
-    {
-        int totallen = 0;
-        loopv(pvs) totallen += pvs[i].len;
-        conoutf("generated %d unique view cells totaling %.1f kB and averaging %.1f B (%.1f seconds)", 
-            pvs.length(), totallen/1024.0f, float(totallen)/max(pvs.length(), 1), (end - start) / 1000.0f);
-    }
+    else conoutf("generated %d unique view cells totaling %.1f kB and averaging %d B (%.1f seconds)", 
+            pvs.length(), pvsbuf.length()/1024.0f, pvsbuf.length()/max(pvs.length(), 1), (end - start) / 1000.0f);
 }
 
 COMMAND(genpvs, "i");
 
 void pvsstats()
 {
-    int totallen = 0;
-    loopv(pvs) totallen += pvs[i].len;
     conoutf("%d unique view cells totaling %.1f kB and averaging %d B",          
-        pvs.length(), totallen/1024.0f, totallen/max(pvs.length(), 1));
+        pvs.length(), pvsbuf.length()/1024.0f, pvsbuf.length()/max(pvs.length(), 1));
 }
 
 COMMAND(pvsstats, "");
