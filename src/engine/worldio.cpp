@@ -11,7 +11,7 @@ void backup(char *name, char *backupname)
     rename(findfile(name, "wb"), backupfile);
 }
 
-string cgzname, bakname, pcfname, mcfname, picname, pvsname;
+string cgzname, bakname, pcfname, mcfname, picname;
 
 VARP(savebak, 0, 2, 2);
 
@@ -48,12 +48,10 @@ void setnames(const char *fname, const char *cname = 0)
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
     s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, cfgname);
     s_sprintf(picname)("packages/%s.jpg", mapname);
-    s_sprintf(pvsname)("packages/%s.pvs", mapname);
 
     path(cgzname);
     path(bakname);
     path(picname);
-    path(pvsname);
 }
 
 ushort readushort(gzFile f)
@@ -256,6 +254,7 @@ void save_world(char *mname, bool nolms)
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
     loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
+    hdr.numpvs = nolms ? 0 : getnumviewcells();
     hdr.lightmaps = nolms ? 0 : lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 9);
@@ -288,16 +287,20 @@ void save_world(char *mname, bool nolms)
     delete[] ebuf;
 
     savec(worldroot, f, nolms);
-    if(!nolms) loopv(lightmaps)
+    if(!nolms) 
     {
-        LightMap &lm = lightmaps[i];
-        gzputc(f, lm.type | (lm.unlitx>=0 ? 0x80 : 0));
-        if(lm.unlitx>=0)
+        loopv(lightmaps)
         {
-            writeushort(f, ushort(lm.unlitx));
-            writeushort(f, ushort(lm.unlity));
+            LightMap &lm = lightmaps[i];
+            gzputc(f, lm.type | (lm.unlitx>=0 ? 0x80 : 0));
+            if(lm.unlitx>=0)
+            {
+                writeushort(f, ushort(lm.unlitx));
+                writeushort(f, ushort(lm.unlity));
+            }
+            gzwrite(f, lm.data, sizeof(lm.data));
         }
-        gzwrite(f, lm.data, sizeof(lm.data));
+        if(getnumviewcells()>0) savepvs(f);
     }
 
     gzclose(f);
@@ -483,9 +486,9 @@ void load_world(const char *mname, const char *cname)        // still supports a
         lm.finalize();
     }
 
-    gzclose(f);
+    if(hdr.version >= 25 && hdr.numpvs > 0) loadpvs(f);
 
-    loadpvs(pvsname, false);
+    gzclose(f);
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     conoutf("%s", hdr.maptitle);

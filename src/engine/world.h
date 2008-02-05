@@ -8,7 +8,7 @@ enum                            // hardcoded texture numbers
     DEFAULT_CEIL
 };
 
-#define MAPVERSION 24           // bump if map format changes, see worldio.cpp
+#define MAPVERSION 25           // bump if map format changes, see worldio.cpp
 
 struct header                   // map file format header
 {
@@ -17,7 +17,7 @@ struct header                   // map file format header
     int headersize;             // sizeof(header)
     int worldsize;
     int numents;
-    int waterlevel;
+    int numpvs;
     int lightmaps;
     int mapprec, maple, mapllod;
     uchar ambient;

@@ -169,6 +169,14 @@ struct databuf
         len += min(maxlen-len, numvals);
     }
 
+    int advance(int numvals)
+    {
+        if(maxlen-len<numvals) flags |= OVERWROTE;
+        numvals = min(maxlen-len, numvals);
+        len += numvals;
+        return numvals;
+    }
+
     int get(T *vals, int numvals)
     {
         int read = min(maxlen-len, numvals);
@@ -304,9 +312,14 @@ template <class T> struct vector
         return databuf<T>(&buf[ulen], sz);
     }
 
+    void advance(int sz)
+    {
+        ulen += sz;
+    }
+
     void addbuf(const databuf<T> &p)
     {
-        ulen += p.length();
+        advance(p.length());
     }
 
     void put(const T *v, int n)
