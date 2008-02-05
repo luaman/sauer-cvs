@@ -206,9 +206,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         conoutf("WARNING: No occlusion query support! (large maps may be SLOW)");
         /*if(renderpath==R_FIXEDFUNCTION)*/ zpass = 0;
-        extern int vacubesize, vacubemin;
+        extern int vacubesize;
         vacubesize = 64;
-        vacubemin = 64;
         waterreflect = 0;
     }
 
