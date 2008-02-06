@@ -1113,11 +1113,8 @@ void allchanged(bool load)
     if(load) precacheall();
     setupmaterials();
     invalidatereflections();
-    if(load) 
-    {
-        entitiesinoctanodes();
-        genenvmaps();
-    }
+    entitiesinoctanodes();
+    if(load) genenvmaps();
     printcstats();
 }
 
