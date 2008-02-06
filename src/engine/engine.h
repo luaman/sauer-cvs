@@ -167,7 +167,7 @@ extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
 extern void cleangl();
 extern void gl_drawframe(int w, int h);
 extern void setfogplane(const plane &p, bool flush = false);
-extern void setfogplane(float scale = 0, float z = 0, bool flush = false);
+extern void setfogplane(float scale = 0, float z = 0, bool flush = false, float fadescale = 0, float fadeoffset = 0);
 extern void findorientation();
 extern void writecrosshairs(FILE *f);
 
@@ -309,6 +309,7 @@ extern int visiblematerial(cube &c, int orient, int x, int y, int z, int size);
 
 // water
 extern float reflecting, refracting;
+extern bool fading;
 extern int reflectdist, vertwater, refractfog, waterrefract, waterreflect, waterfade, caustics, waterfog, lavafog;
 
 extern void invalidatereflections();

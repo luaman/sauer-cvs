@@ -1071,15 +1071,6 @@ bool pvsoccluded(const ivec &bborigin, const ivec &bbsize)
     return curpvs!=NULL && pvsoccluded(curpvs, bborigin, bbsize);
 }
 
-#define PVSVERSION 1
-
-struct pvsheader
-{
-    uchar magic[4];
-    int version;
-    int numpvs;
-};
-
 void saveviewcells(gzFile f, viewcellnode &p)
 {
     gzputc(f, p.leafmask);
@@ -1108,29 +1099,6 @@ void savepvs(gzFile f)
     }
     gzwrite(f, pvsbuf.getbuf(), pvsbuf.length());
     saveviewcells(f, *viewcells);
-}
-
-void savepvs(const char *filename)
-{
-    if(!pvs.length() || !viewcells) { conoutf("no PVS available to write"); return; }
-    gzFile f = opengzfile(path(filename, true), "wb9");
-    if(!f) { conoutf("could not write PVS to %s", filename); return; }
-    pvsheader h;
-    memcpy(h.magic, "PVS", 4);
-    h.version = PVSVERSION;
-    h.numpvs = pvs.length();
-    endianswap(&h.version, sizeof(int), 2);
-    gzwrite(f, &h, sizeof(pvsheader));
-    loopv(pvs)
-    {
-        ushort len = pvs[i].len;
-        endianswap(&len, sizeof(ushort), 1);
-        gzwrite(f, &len, sizeof(ushort));
-        gzwrite(f, &pvsbuf[pvs[i].offset], pvs[i].len);
-    }
-    saveviewcells(f, *viewcells);
-    gzclose(f);
-    conoutf("wrote PVS to %s", filename);
 }
 
 viewcellnode *loadviewcells(gzFile f)
@@ -1167,43 +1135,6 @@ void loadpvs(gzFile f)
     pvsbuf.advance(totallen);
     viewcells = loadviewcells(f);
 }
-
-void loadpvs(const char *filename, bool msg)
-{
-    gzFile f = opengzfile(path(filename, true), "rb9");
-    if(!f) { if(msg) conoutf("could not read PVS from %s", filename); return; }
-    pvsheader h;
-    gzread(f, &h, sizeof(pvsheader));
-    endianswap(&h.version, sizeof(int), 2);
-    if(memcmp(h.magic, "PVS", 4)) { conoutf("PVS %s has malformatted header", filename); gzclose(f); return; }
-    if(h.version>PVSVERSION) { conoutf("PVS %s requires a newer version of cube 2", filename); gzclose(f); return; }
-    clearpvs();
-    loopi(h.numpvs)
-    {
-        pvsdata &d = pvs.add();
-        ushort len;
-        gzread(f, &len, sizeof(ushort));
-        endianswap(&len, sizeof(ushort), 1);
-        d.len = len;
-        d.offset = pvsbuf.length();
-        gzread(f, pvsbuf.reserve(len).buf, len);
-        pvsbuf.advance(len);
-    }
-    viewcells = loadviewcells(f);
-    gzclose(f);
-}
-
-static const char *pvsfilename(const char *pvsname)
-{
-    static string filename;
-    s_sprintf(filename)(strpbrk(pvsname, "/\\") ? "packages/%s" : "packages/base/%s", pvsname);
-    int len = strlen(filename);
-    if(len<4 || memcmp(filename+len-4, ".pvs", 4)) s_strcat(filename, ".pvs");
-    return filename;
-}
-
-ICOMMAND(savepvs, "s", (char *pvsname), savepvs(pvsfilename(pvsname)));
-ICOMMAND(loadpvs, "s", (char *pvsname), loadpvs(pvsfilename(pvsname), true));
 
 int getnumviewcells() { return pvs.length(); }
 

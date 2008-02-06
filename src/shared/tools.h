@@ -169,14 +169,6 @@ struct databuf
         len += min(maxlen-len, numvals);
     }
 
-    int advance(int numvals)
-    {
-        if(maxlen-len<numvals) flags |= OVERWROTE;
-        numvals = min(maxlen-len, numvals);
-        len += numvals;
-        return numvals;
-    }
-
     int get(T *vals, int numvals)
     {
         int read = min(maxlen-len, numvals);

@@ -315,7 +315,7 @@ COMMAND(lavacolour, "iii");
 
 Shader *watershader = NULL, *waterreflectshader = NULL, *waterrefractshader = NULL, *waterfadeshader = NULL,
        *waterenvshader = NULL, *waterenvrefractshader = NULL, *waterenvfadeshader = NULL,
-       *underwatershader = NULL, *underwaterrefractshader = NULL;
+       *underwatershader = NULL, *underwaterrefractshader = NULL, *underwaterfadeshader = NULL;
 
 void setprojtexmatrix(Reflection &ref, bool init = true)
 {
@@ -550,7 +550,7 @@ void renderwater()
     {
         glActiveTexture_(GL_TEXTURE3_ARB);
         glEnable(GL_TEXTURE_2D);
-        if(hasFBO && renderpath!=R_FIXEDFUNCTION && waterfade)
+        if(waterfade && hasFBO)
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -574,62 +574,68 @@ void renderwater()
     setenvparamf("camera", SHPARAM_VERTEX, 0, camera1->o.x, camera1->o.y, camera1->o.z);
     setenvparamf("millis", SHPARAM_VERTEX, 1, lastmillis/1000.0f, lastmillis/1000.0f, lastmillis/1000.0f);
 
-    if(!watershader) watershader = lookupshaderbyname("water");
-    if(!waterreflectshader) waterreflectshader = lookupshaderbyname("waterreflect");
-    if(!waterrefractshader) waterrefractshader = lookupshaderbyname("waterrefract");
-    if(!waterfadeshader) waterfadeshader = lookupshaderbyname("waterfade");
-    if(hasCM)
-    {
-        if(!waterenvshader) waterenvshader = lookupshaderbyname("waterenv");
-        if(!waterenvrefractshader) waterenvrefractshader = lookupshaderbyname("waterenvrefract");
-        if(!waterenvfadeshader) waterenvfadeshader = lookupshaderbyname("waterenvfade");
-    }
-    if(!underwatershader) underwatershader = lookupshaderbyname("underwater");
-    if(!underwaterrefractshader) underwaterrefractshader = lookupshaderbyname("underwaterrefract");
+    #define SETWATERSHADER(which, name) \
+    do { \
+        if(!name##shader) name##shader = lookupshaderbyname(#name); \
+        which##shader = name##shader; \
+    } while(0)
 
-    Shader *aboveshader = NULL, *belowshader = waterrefract ? underwaterrefractshader : underwatershader;
+    Shader *aboveshader = NULL;
     if(waterenvmap && !waterreflect && hasCM)
     {
-        if(waterrefract) aboveshader = waterfade && hasFBO ? waterenvfadeshader : waterenvrefractshader;
-        else aboveshader = waterenvshader;
+        if(waterrefract)
+        {
+            if(waterfade && hasFBO) SETWATERSHADER(above, waterenvfade);
+            else SETWATERSHADER(above, waterenvrefact);
+        }
+        else SETWATERSHADER(above, waterenv);
     }
-    else if(waterrefract) aboveshader = waterfade && hasFBO ? waterfadeshader : waterrefractshader;
-    else if(waterreflect) aboveshader = waterreflectshader;
-    else aboveshader = watershader;
+    else if(waterrefract) 
+    {
+        if(waterfade && hasFBO) SETWATERSHADER(above, waterfade);
+        else SETWATERSHADER(above, waterrefract);
+    }
+    else if(waterreflect) SETWATERSHADER(above, waterreflect);
+    else SETWATERSHADER(above, water);
+
+    Shader *belowshader = NULL;
+    if(waterrefract)
+    {
+        if(waterfade && hasFBO) SETWATERSHADER(below, underwaterfade);
+        else SETWATERSHADER(below, underwaterrefract);
+    }
+    else SETWATERSHADER(below, underwater);
 
     if(waterreflect || waterrefract) glMatrixMode(GL_TEXTURE);
 
     vec ambient(max(hdr.skylight[0], hdr.ambient), max(hdr.skylight[1], hdr.ambient), max(hdr.skylight[2], hdr.ambient));
     float offset = -WATER_OFFSET;
-    bool wasbelow = false;
     loopi(MAXREFLECTIONS)
     {
         Reflection &ref = reflections[i];
         if(ref.height<0 || ref.lastused<totalmillis || ref.matsurfs.empty()) continue;
-
-        if(waterreflect || waterrefract)
-        {
-            if(hasOQ && oqfrags && oqwater && ref.query && ref.query->owner==&ref && checkquery(ref.query)) continue;
-            if(waterreflect || !waterenvmap || !hasCM) glBindTexture(GL_TEXTURE_2D, waterreflect ? ref.tex : ref.refracttex);
-            setprojtexmatrix(ref);
-        }
+        if(hasOQ && oqfrags && oqwater && ref.query && ref.query->owner==&ref && checkquery(ref.query)) continue;
 
         bool below = camera1->o.z < ref.height+offset;
         if(below) belowshader->set();
         else aboveshader->set();
 
+        if(waterreflect || waterrefract)
+        {
+            if(waterreflect || !waterenvmap || !hasCM) glBindTexture(GL_TEXTURE_2D, waterreflect ? ref.tex : ref.refracttex);
+            setprojtexmatrix(ref);
+        }
+
         if(waterrefract)
         {
-            if(hasFBO && renderpath!=R_FIXEDFUNCTION && waterfade)
-            {
-                if(below) { if(!wasbelow) { wasbelow = true; glDisable(GL_BLEND); } }
-                else if(wasbelow) { wasbelow = false; glEnable(GL_BLEND); }
-            }
-
             glActiveTexture_(GL_TEXTURE3_ARB);
             glBindTexture(GL_TEXTURE_2D, ref.refracttex);
             glActiveTexture_(GL_TEXTURE0_ARB);
-            if(waterfade) setlocalparamf("waterheight", SHPARAM_VERTEX, 7, ref.height+offset+2, ref.height+offset+2, ref.height+offset+2);
+            if(waterfade) 
+            {
+                float fadeheight = ref.height+offset+(below ? -2 : 2);
+                setlocalparamf("waterheight", SHPARAM_VERTEX, 7, fadeheight, fadeheight, fadeheight);
+            }
         }
 
         entity *lastlight = (entity *)-1;
@@ -722,6 +728,7 @@ void cleanreflections()
         Reflection &ref = reflections[i];
         ref.height = -1;
         ref.lastupdate = 0;
+        ref.query = NULL;
         if(ref.fb)
         {
             glDeleteFramebuffers_(1, &ref.fb);
@@ -936,6 +943,7 @@ void queryreflections()
 VARP(maxreflect, 1, 1, 8);
 
 float reflecting = 0, refracting = 0;
+bool fading = false;
 
 VAR(maskreflect, 0, 2, 16);
 

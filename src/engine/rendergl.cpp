@@ -614,13 +614,12 @@ void setfogplane(const plane &p, bool flush)
     }
 }
 
-void setfogplane(float scale, float z, bool flush)
+void setfogplane(float scale, float z, bool flush, float fadescale, float fadeoffset)
 {
-    float fogselect[4] = {1, 1, 1, 1}, fogplane[4] = {0, 0, 0, 0};
+    float fogselect[4] = {1, fadescale, fadeoffset, 0}, fogplane[4] = {0, 0, 0, 0};
     if(scale || z)
     {
-        loopk(4) fogselect[k] = 0;
-
+        fogselect[0] = 0;
         fogplane[2] = scale;
         fogplane[3] = -z;
     }  
@@ -651,6 +650,7 @@ void drawreflection(float z, bool refract, bool clear)
 
     reflecting = z;
     if(refract) refracting = z;
+    fading = renderpath!=R_FIXEDFUNCTION && waterrefract && waterfade && hasFBO;
 
     float oldfogstart, oldfogend, oldfogcolor[4];
     if(renderpath==R_FIXEDFUNCTION && refract && refractfog) glDisable(GL_FOG);
@@ -715,7 +715,7 @@ void drawreflection(float z, bool refract, bool clear)
 
     renderreflectedgeom(z, refract, caustics && refract, (renderpath!=R_FIXEDFUNCTION || refractfog) && refract);
 
-    if(refract && renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    if(fading) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
     if(reflectmms) renderreflectedmapmodels(z, refract);
     cl->rendergame();
@@ -734,7 +734,7 @@ void drawreflection(float z, bool refract, bool clear)
     rendermaterials(z, refract);
     render_particles(0);
 
-    if(refract && renderpath!=R_FIXEDFUNCTION) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    if(fading) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     setfogplane();
 

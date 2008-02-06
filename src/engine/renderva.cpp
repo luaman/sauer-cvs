@@ -501,7 +501,7 @@ void rendermapmodels()
     if(!colormask)
     {
         glDepthMask(GL_TRUE);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, refracting && renderpath!=R_FIXEDFUNCTION ? GL_FALSE : GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, fading ? GL_FALSE : GL_TRUE);
     }
 }
 
@@ -973,13 +973,14 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
         return;
     }
 
-    if(refracting && renderpath!=R_FIXEDFUNCTION)
+    if(reflecting && renderpath!=R_FIXEDFUNCTION)
     {
-        float fogplane = refracting - (va->z & ~VVEC_INT_MASK);
+        float fogplane = reflecting - (va->z & ~VVEC_INT_MASK);
         if(cur.fogplane!=fogplane)
         {
             cur.fogplane = fogplane;
-            setfogplane(1.0f/(1<<VVEC_FRAC), fogplane);
+            if(refracting) setfogplane(1.0f/(1<<VVEC_FRAC), fogplane, false, -0.25f/(1<<VVEC_FRAC), 0.5f + 0.25f*fogplane);
+            else setfogplane(0, 0, false, 0.25f/(1<<VVEC_FRAC), 0.5f - 0.25f*fogplane);
         }
     }
     if(!cur.colormask) { cur.colormask = true; glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); }
@@ -1215,7 +1216,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
 
             if(pass==RENDERPASS_LIGHTMAP && s && (lastshader!=s || shadowmapped!=(k!=0)))
             {
-                if(refracting && hasFBO && waterrefract && waterfade)
+                if(fading)
                 {
                     if(k) s->variant(min(s->variants[3].length()-1, visibledynlights.length()), 3)->set(&slot);
                     else s->variant(min(s->variants[2].length()-1, visibledynlights.length()), 2)->set(&slot);
@@ -1769,9 +1770,9 @@ void rendergeom(bool causticspass, bool fogpass)
             setupcaustics(0);
             glBlendFunc(GL_ZERO, GL_SRC_COLOR);
             glFogfv(GL_FOG_COLOR, onefog);
-            if(renderpath!=R_FIXEDFUNCTION && refracting) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+            if(fading) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
             rendergeommultipass(cur, RENDERPASS_CAUSTICS, fogpass);
-            if(renderpath!=R_FIXEDFUNCTION && refracting) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            if(fading) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             loopi(2)
             {
                 glActiveTexture_(GL_TEXTURE0_ARB+i);
