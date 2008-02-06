@@ -586,7 +586,7 @@ void renderwater()
         if(waterrefract)
         {
             if(waterfade && hasFBO) SETWATERSHADER(above, waterenvfade);
-            else SETWATERSHADER(above, waterenvrefact);
+            else SETWATERSHADER(above, waterenvrefract);
         }
         else SETWATERSHADER(above, waterenv);
     }
