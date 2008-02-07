@@ -187,20 +187,21 @@ machine gun, rifle, grenade launcher, pistol, fist.
 in multiplayer, coop edit).
 </li>
 <li>
-Rendering engine optimized for high geometry throughput, supporting hardware occlusion culling.
+Rendering engine optimized for high geometry throughput, supporting hardware occlusion culling and software precomputed PVS withe occluder fusion.
 </li>
 <li>
 Lightmap based lighting with accurate shadows from everything including mapmodels,
-smooth lighting for faceted geometry, and fast compiles.
+smooth lighting for faceted geometry, and fast compiles. Soft shadowmap based shadows
+that integrate cleanly with lightmaps for dynamic entities. 
 </li>
 <li>
-Pixel and vertex shader support, each model and world texture can have its own shader assigned.
+Pixel and vertex shader support, each model and world texture can have its own shader assigned. Supports normal & parallax mapping, specular/dynamic lighting, environment-mapped and planar reflections/refractions, and post-process effects.
 </li>
 <li>
 Robust physics written specifically for this world structure.
 </li>
 <li>
-Loading of md2/md3 models for animated characters, weapons, items, world objects.
+Loading of md2/md3/md5 models for skeletal and vertex animated characters, weapons, items, world objects.
 </li>
 <li>
 Network library designed for high speed games, client/server network system.
@@ -212,7 +213,7 @@ Small but complete configuration/scripting language.
 Simple stereo positional sound system.
 </li>
 <li>
-Particle engine, supporting text particles.
+Particle engine, supporting text particles, volumetric explosions, and decals.
 </li>
 <li>
 3d menu/gui system, for in-world representation of choices.
