@@ -209,17 +209,14 @@ static float shadowent(octaentities *oc, octaentities *last, const vec &o, const
         loopi(3) \
         { \
             float c = v[i]; \
-            if(c>=0 && c<hdr.worldsize) \
-            { \
-                float d = ((invray[i]>0?hdr.worldsize:0)-c)*invray[i]; \
-                exitworld = min(exitworld, d); \
-            } \
-            else \
+            if(c<0 || c>=hdr.worldsize) \
             { \
                 float d = ((invray[i]>0?0:hdr.worldsize)-c)*invray[i]; \
                 if(d<0) return (radius>0?radius:-1); \
                 disttoworld = max(disttoworld, 0.1f + d); \
             } \
+            float e = ((invray[i]>0?hdr.worldsize:0)-c)*invray[i]; \
+            exitworld = min(exitworld, e); \
         } \
         if(disttoworld > exitworld) return (radius>0?radius:-1); \
         pushvec(v, ray, disttoworld); \
