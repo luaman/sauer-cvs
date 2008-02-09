@@ -505,7 +505,7 @@ struct weaponstate
                 //particle_trail(1, 10, from, to);
                 particle_flare(hudgunorigin(gun, from, to, d), to, 600, 10);
                 if(!local) adddecal(DECAL_BULLET, to, vec(from).sub(to).normalize(), 2.0f);
-                if(gun==GUN_CG) adddynlight(d->o, 30, vec(1, 0.75f, 0.5f), 100, 0, DL_FLASH); 
+                if(gun==GUN_CG) adddynlight(d->o, 30, vec(1, 0.75f, 0.5f), 50, 0, DL_FLASH); 
                 break;
             }
 
