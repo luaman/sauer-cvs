@@ -533,8 +533,8 @@ void renderwater()
 
     glDisable(GL_CULL_FACE);
 
-    uchar wcol[3] = { 20, 70, 80 };
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    uchar wcol[3];
+    getwatercolour(wcol);
     glColor3ubv(wcol);
 
     Slot &s = lookuptexture(-MAT_WATER);

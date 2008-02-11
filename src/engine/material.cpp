@@ -547,8 +547,9 @@ void rendermaterials(float zclip, bool refract)
     glDisable(GL_CULL_FACE);
 
     Slot &wslot = lookuptexture(-MAT_WATER), &lslot = lookuptexture(-MAT_LAVA);
-    uchar wcol[4] = { 128, 128, 128, 192 };
-    if(hdr.watercolour[0] || hdr.watercolour[1] || hdr.watercolour[2]) memcpy(wcol, hdr.watercolour, 3);
+    uchar wcol[4];
+    getwatercolour(wcol);
+    wcol[3] = 192;
     int lastorient = -1, lastmat = -1;
     GLenum textured = GL_TEXTURE_2D;
     bool begin = false, depth = true, blended = false, overbright = false;
