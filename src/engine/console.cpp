@@ -125,6 +125,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 }
 
 VARP(consize, 0, 5, 100);
+VARP(confade, 0, 20, 60);
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
@@ -140,7 +141,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
     {
         static vector<char *> refs;
         refs.setsizenodelete(0);
-        if(consize) loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : totalmillis-conlines[i].outtime<20000)
+        if(consize) loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : (!confade || totalmillis-conlines[i].outtime<confade*1000))
         {
             refs.add(conlines[i].cref);
             if(refs.length()>=consize) break;
