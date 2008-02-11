@@ -1130,6 +1130,7 @@ COMMAND(mergenormalmaps, "sss");
 
 void cleanuptextures()
 {
+    clearenvmaps();
     loopv(slots) slots[i].cleanup();
     loopi(MAT_EDIT) materialslots[i].cleanup();
     vector<Texture *> transient;

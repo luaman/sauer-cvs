@@ -1026,6 +1026,7 @@ struct animmodel : model
     void cleanup()
     {
         loopv(parts) parts[i]->cleanup();
+        enablelight0 = false;
     }
 
     void gentris(int frame, vector<BIH::tri> &tris)
@@ -1141,7 +1142,7 @@ struct animmodel : model
         center.add(radius);
     }
 
-    static bool enabletc, enablemtc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablelighting, enablecullface, enablefog, enabletangents, enablebones;
+    static bool enabletc, enablemtc, enablealphatest, enablealphablend, enableenvmap, enableglow, enablelighting, enablelight0, enablecullface, enablefog, enabletangents, enablebones;
     static vec lightcolor;
     static plane refractfogplane;
     static float lastalphatest;
@@ -1160,8 +1161,7 @@ struct animmodel : model
         lasttex = lastmasks = lastnormalmap = NULL;
         envmaptmu = fogtmu = -1;
 
-        static bool initlights = false;
-        if(renderpath==R_FIXEDFUNCTION && lightmodels && !initlights)
+        if(renderpath==R_FIXEDFUNCTION && lightmodels && !enablelight0)
         {
             glEnable(GL_LIGHT0);
             static const GLfloat zero[4] = { 0, 0, 0, 0 };
@@ -1169,7 +1169,7 @@ struct animmodel : model
             glLightfv(GL_LIGHT0, GL_SPECULAR, zero);
             glMaterialfv(GL_FRONT, GL_SPECULAR, zero);
             glMaterialfv(GL_FRONT, GL_EMISSION, zero);
-            initlights = true;
+            enablelight0 = true;
         }
     }
 
@@ -1271,7 +1271,7 @@ struct animmodel : model
 };
 
 bool animmodel::enabletc = false, animmodel::enablemtc = false, animmodel::enablealphatest = false, animmodel::enablealphablend = false,
-     animmodel::enableenvmap = false, animmodel::enableglow = false, animmodel::enablelighting = false, animmodel::enablecullface = true,
+     animmodel::enableenvmap = false, animmodel::enableglow = false, animmodel::enablelighting = false, animmodel::enablelight0 = false, animmodel::enablecullface = true,
      animmodel::enablefog = false, animmodel::enabletangents = false, animmodel::enablebones = false;
 vec animmodel::lightcolor;
 plane animmodel::refractfogplane;
