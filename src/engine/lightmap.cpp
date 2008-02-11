@@ -1156,9 +1156,16 @@ VARF(fullbright, 0, 0, 1, initlights());
 
 vector<GLuint> lmtexids;
 
-void alloctexids()
+static void alloctexids()
 {
     for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
+}
+
+void cleanuplightmaps()
+{
+    loopv(lightmaps) DELETEA(lightmaps[i].converted);
+    glDeleteTextures(lmtexids.length(), lmtexids.getbuf());
+    lmtexids.setsize(0);
 }
 
 void clearlights()

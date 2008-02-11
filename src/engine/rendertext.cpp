@@ -125,7 +125,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     if(!curfont) return;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, curfont->tex->gl);
+    glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
 
     static bvec colorstack[8];
     bvec color(r, g, b);
@@ -179,5 +179,12 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         x += info.w + 1;
     }
     glEnd();
+}
+
+void reloadfonts()
+{
+    enumerate(fonts, font, f,
+        if(!reloadtexture(*f.tex)) fatal("failed to reload font texture");
+    );
 }
 

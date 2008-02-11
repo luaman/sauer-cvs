@@ -598,7 +598,7 @@ void rendermaterials(float zclip, bool refract)
                     }
                     {
                         int subslot = m.orient==O_TOP ? 0 : 1;
-                        glBindTexture(GL_TEXTURE_2D, wslot.sts.inrange(subslot) ? wslot.sts[subslot].t->gl : notexture->gl);
+                        glBindTexture(GL_TEXTURE_2D, wslot.sts.inrange(subslot) ? wslot.sts[subslot].t->id : notexture->id);
                     }
                     break;
 
@@ -627,7 +627,7 @@ void rendermaterials(float zclip, bool refract)
                     }
                     {
                         int subslot = m.orient==O_TOP ? 0 : 1;
-                        glBindTexture(GL_TEXTURE_2D, lslot.sts.inrange(subslot) ? lslot.sts[subslot].t->gl : notexture->gl);
+                        glBindTexture(GL_TEXTURE_2D, lslot.sts.inrange(subslot) ? lslot.sts[subslot].t->id : notexture->id);
                     }
                     break;
 

@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3, hasstencil = false, hasAF = false, hasVP2 = false, hasVP3 = false, hasPP = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3 = false, hasstencil = false, hasAF = false, hasVP2 = false, hasVP3 = false, hasPP = false;
 int renderpath;
 
 // GL_ARB_vertex_buffer_object
@@ -320,7 +320,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
             //conoutf("Using GL_ARB_texture_rectangle extension.");
         }
         else conoutf("WARNING: No texture rectangle support. (no full screen shaders)");
-
     }
 
     if(strstr(exts, "GL_EXT_framebuffer_object"))
@@ -411,6 +410,16 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     hwtexsize = val;
 
     inittmus();
+}
+
+void cleanupgl()
+{
+    if(glIsEnabled(GL_MULTISAMPLE)) glDisable(GL_MULTISAMPLE);
+
+    hasVBO = hasDRE = hasOQ = hasTR = hasFBO = hasDS = hasTF = hasBE = hasCM = hasNP2 = hasTC = hasTE = hasMT = hasD3 = hasstencil = hasAF = hasVP2 = hasVP3 = hasPP = false;
+
+    extern int nomasks, nolights, nowater;
+    nomasks = nolights = nowater = 0;
 }
 
 VAR(wireframe, 0, 0, 1);
@@ -995,7 +1004,7 @@ void drawcrosshair(int w, int h)
     if(windowhit) g3d_cursorpos(cx, cy);
     float x = cx*w*3.0f - (windowhit ? 0 : chsize/2.0f);
     float y = cy*h*3.0f - (windowhit ? 0 : chsize/2.0f);
-    glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->gl);
+    glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->id);
     glBegin(GL_QUADS);
     glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);
     glTexCoord2d(1.0, 0.0); glVertex2f(x + chsize, y);
