@@ -211,10 +211,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         waterreflect = 0;
     }
 
-    extern int reservedynlighttc, reserveshadowmaptc;
+    extern int reservedynlighttc, reserveshadowmaptc, maxtexsize;
     bool avoidshaders = false;
-    reserveshadowmaptc = reservedynlighttc = 1; // just in case fogging uses a texture coordinate
-    emulatefog = 1;
     if(strstr(vendor, "ATI"))
     {
         floatvtx = 1;
@@ -223,13 +221,12 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         reservedynlighttc = 2;
         reserveshadowmaptc = 3;
         minimizetcusage = 1;
+        emulatefog = 1;
     }
     else if(strstr(vendor, "Tungsten"))
     {
         avoidshaders = true;
         floatvtx = 1;
-
-        extern int maxtexsize;
         maxtexsize = 256;
 
         if(!hasOQ) waterrefract = 0;
@@ -239,8 +236,6 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
     {
         avoidshaders = true;
         intel_quadric_bug = 1;
-
-        extern int maxtexsize;
         maxtexsize = 256;
 
         if(!hasOQ) waterrefract = 0;
