@@ -1475,6 +1475,8 @@ void cleanupshaders()
         fs_w = fs_h = 0;
     }
     fsshader = NULL;
+
+    defaultshader = notextureshader = nocolorshader = foggedshader = foggednotextureshader = NULL;
     enumerate(shaders, Shader, s, s.cleanup());
     Shader::lastshader = NULL;
     if(renderpath!=R_FIXEDFUNCTION)
@@ -1490,6 +1492,7 @@ void cleanupshaders()
         vertexparamstate[i].dirty = ShaderParamState::INVALID;
         pixelparamstate[i].dirty = ShaderParamState::INVALID;
     }
+
     tmu invalidtmu = INVALIDTMU;
     loopi(MAXTMUS) tmus[i] = invalidtmu;
 }
