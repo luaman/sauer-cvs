@@ -766,7 +766,7 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle)
         wdir.mul(-npush.dot(dir));
         wdir.add(dir);
 
-        if(i==4)
+        if(obstacle.z<=0 || obstacle.z>=SLOPEZ || i==4)
         {
             dir = wdir;
             push = npush;
@@ -774,7 +774,7 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle)
         } 
 
         d->o.add(wdir);
-        bool collided = !collide(d, wdir) && wall!=obstacle && wall!=lastobstacle;
+        bool collided = !collide(d, wdir) && wall.z>0 && wall.z<SLOPEZ && wall.dot(obstacle)<0 && wall!=lastobstacle;
         d->o = old;
 
         if(!collided)
@@ -815,9 +815,8 @@ void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
                     slopegravity(-d->gravity.z, floor, g);
                     if(d->physstate == PHYS_FALL || d->floor != floor)
                     {
-                        float c = floor.z>=SLOPEZ ? min(d->gravity.dot(floor)/gmag, 0.0f) : 0;
                         g.normalize();
-                        g.mul((1.0f+c)*gmag);
+                        g.mul(gmag);
                     }
                     d->gravity = g;
                 }
