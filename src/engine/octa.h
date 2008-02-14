@@ -144,6 +144,7 @@ struct vtxarray
     GLuint vbufGL;          // VBO buffer ID
     int x, y, z, size;      // location and size of cube.
     ivec min, max;          // BB
+    ivec sortmin, sortmax; // BB including all children
     ivec shadowmapmin, shadowmapmax;      // BB of shadowmapped surfaces
     uchar curvfc, occluded;
     occludequery *query, *rquery;
