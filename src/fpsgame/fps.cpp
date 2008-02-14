@@ -345,6 +345,7 @@ struct fpsclient : igameclient
         if(d==player1)
         {
             damageblend(damage);
+            damagecompass(actor->o);
             d->damageroll(damage);
             if(m_slowmo && player1->health<1) player1->health = 1;
         }

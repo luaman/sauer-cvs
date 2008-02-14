@@ -959,15 +959,59 @@ void gl_drawframe(int w, int h)
     glEnable(GL_FOG);
 }
 
-VARP(crosshairsize, 0, 15, 50);
-VARP(cursorsize, 0, 30, 50);
+VARNP(damagecompass, usedamagecompass, 0, 1, 1);
+VARP(damagecompassfade, 1, 500, 1000);
+
+int dcompass[4] = { -1000, -1000, -1000, -1000 };
+void damagecompass(const vec &loc)
+{
+    if(!usedamagecompass) return;
+    vec delta(loc);
+    delta.sub(camera1->o); 
+    float yaw, pitch;
+    if(delta.magnitude()<4) yaw = camera1->yaw;
+    else vectoyawpitch(delta, yaw, pitch);
+    yaw -= camera1->yaw;
+    if(yaw<0) yaw += 360;
+    int dir = ((int(yaw)+45)%360)/90;
+    dcompass[dir] = lastmillis + damagecompassfade;
+}
+void drawdamagecompass()
+{
+    if(max(max(dcompass[0], dcompass[1]), max(dcompass[2], dcompass[3])) <= lastmillis) return;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1, 0, 0, 0.5f);
+    float size = min(screen->h, screen->w)/8.0f;
+    loopi(4)
+    {
+        if(dcompass[i] <= lastmillis) continue;
+        glPushMatrix();
+        glTranslatef(screen->w/2, screen->h/2, 0);
+        glRotatef(i*90, 0, 0, 1);
+        glTranslatef(0, -2*size, 0);
+        float scale = size*cosf(M_PI/2.0f*(1.0f - float(dcompass[i] - lastmillis)/damagecompassfade));
+        glScalef(scale, scale, 0);
+
+        glBegin(GL_TRIANGLES);
+        glVertex3f(1, 1, 0);
+        glVertex3f(-1, 1, 0);
+        glVertex3f(0, 0, 0);
+        glEnd();
+        glPopMatrix();
+    }
+}
+
+VARNP(damageblend, usedamageblend, 0, 1, 1);
 VARP(damageblendfactor, 0, 300, 1000);
 
 int dblend = 0;
-void damageblend(int n) { dblend += n; }
+void damageblend(int n) { if(usedamageblend) dblend += n; }
 
 VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
+
+VARP(crosshairsize, 0, 15, 50);
+VARP(cursorsize, 0, 30, 50);
 VARP(crosshairfx, 0, 1, 1);
 
 static Texture *crosshair = NULL;
@@ -1074,6 +1118,8 @@ void gl_drawhud(int w, int h, int fogmat)
         dblend -= curtime*100/damageblendfactor;
         if(dblend<0) dblend = 0;
     }
+
+    drawdamagecompass();
 
     glEnable(GL_TEXTURE_2D);
     defaultshader->set();

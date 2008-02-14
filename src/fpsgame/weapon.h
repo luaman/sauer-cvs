@@ -297,6 +297,7 @@ struct weaponstate
                 h.dir = ivec(0, 0, 0);
                 f->damageroll(damage);
                 damageblend(damage);
+                damagecompass(at ? at->o : f->o);
                 playsound(S_PAIN6);
             }
             else 
