@@ -127,7 +127,7 @@ extern void dynlightreaching(const vec &target, vec &color, vec &dir);
 // rendergl
 extern vec worldpos, camright, camup;
 extern void damageblend(int n);
-extern void damagecompass(const vec &loc);
+extern void damagecompass(int n, const vec &loc);
 
 // renderparticles
 extern void render_particles(int time);
