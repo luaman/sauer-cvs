@@ -978,9 +978,7 @@ void damagecompass(int n, const vec &loc)
     yaw -= camera1->yaw;
     if(yaw<0) yaw += 360;
     int dir = ((int(yaw)+45)%360)/90;
-    float logscale = 32,
-          val = log(1 + (logscale - 1)*min(damagecompassmax, max(n, damagecompassmin))/float(damagecompassmax)) / log(logscale);
-    dcompass[dir] += val;
+    dcompass[dir] += max(n, damagecompassmin)/float(damagecompassmax);
     if(dcompass[dir]>1) dcompass[dir] = 1;
 
 }
@@ -1001,7 +999,9 @@ void drawdamagecompass()
         glTranslatef(screen->w/2, screen->h/2, 0);
         glRotatef(i*90, 0, 0, 1);
         glTranslatef(0, -size/2.0f-min(screen->h, screen->w)/4.0f, 0);
-        glScalef(size*dcompass[i], size*dcompass[i], 0);
+        float logscale = 32,
+              scale = log(1 + (logscale - 1)*dcompass[i]) / log(logscale);
+        glScalef(size*scale, size*scale, 0);
 
         glBegin(GL_TRIANGLES);
         glVertex3f(1, 1, 0);
@@ -1010,8 +1010,9 @@ void drawdamagecompass()
         glEnd();
         glPopMatrix();
 
-        dcompass[i] -= float(curtime)/damagecompassfade;
-        if(dcompass[i]<0) dcompass[i] = 0;
+        // fade in log space so short blips don't disappear too quickly
+        scale -= float(curtime)/damagecompassfade;
+        dcompass[i] = scale > 0 ? (pow(logscale, scale) - 1) / (logscale - 1) : 0;
     }
 }
 
