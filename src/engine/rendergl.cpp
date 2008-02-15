@@ -962,6 +962,7 @@ void gl_drawframe(int w, int h)
 VARNP(damagecompass, usedamagecompass, 0, 1, 1);
 VARP(damagecompassfade, 1, 500, 1000);
 VARP(damagecompasssize, 1, 15, 100);
+VARP(damagecompassalpha, 1, 25, 100);
 
 int dcompass[4] = { -1000, -1000, -1000, -1000 };
 void damagecompass(const vec &loc)
@@ -981,7 +982,7 @@ void drawdamagecompass()
 {
     if(max(max(dcompass[0], dcompass[1]), max(dcompass[2], dcompass[3])) <= lastmillis) return;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1, 0, 0, 0.5f);
+    glColor4f(1, 0, 0, damagecompassalpha/100.0f);
     float size = damagecompasssize/100.0f*min(screen->h, screen->w)/2.0f;
     loopi(4)
     {
