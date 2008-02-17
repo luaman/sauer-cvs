@@ -228,6 +228,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         avoidshaders = true;
         floatvtx = 1;
         maxtexsize = 256;
+        reservevpparams = 20;
 
         if(!hasOQ) waterrefract = 0;
         if(hasDRE) mesa_dre_bug = 1;
@@ -237,6 +238,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         avoidshaders = true;
         intel_quadric_bug = 1;
         maxtexsize = 256;
+        reservevpparams = 20;
 
         if(!hasOQ) waterrefract = 0;
     } 
