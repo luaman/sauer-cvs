@@ -755,6 +755,7 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle)
         dir.rescale(dmag);
         d->vel.rescale(vmag);
     }
+
     if(d->gravity.dot(obstacle) < 0) 
     {
         float gmag = d->gravity.magnitude();
@@ -768,7 +769,7 @@ void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &f
 {
     if(landing && (d->physstate == PHYS_FALL || (collided ? dir.z <= 0 : d->floor.z < FLOORZ && d->floor!=floor)))
     {
-        if(d->timesincecollide >= 3*minframetime)
+        if(d->timesincecollide > 3*minframetime)
         {
             d->timesincecollide = 0;
             d->gravity.project(floor);
@@ -778,7 +779,7 @@ void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &f
         }
 
         float oldmag = d->gravity.magnitude();
-        if(collided || floor.z >= WALLZ) d->gravity.projectxy(floor); else d->gravity.project(floor);
+        d->gravity.project(floor);
         d->gravity.rescale(oldmag);
     }
 
