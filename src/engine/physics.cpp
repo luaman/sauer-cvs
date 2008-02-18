@@ -744,15 +744,33 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
 
 void slideagainst(physent *d, vec &dir, const vec &obstacle)
 {
-    float dmag = dir.magnitude(),
-          vmag = d->vel.magnitude(),
-          gmag = d->gravity.magnitude();
-    dir.project(obstacle);
-    d->vel.project(obstacle);
-    d->gravity.project(obstacle);
-    dir.rescale(dmag);
-    d->vel.rescale(vmag);
-    d->gravity.rescale(gmag);
+    if(obstacle.z < 0)
+    {
+        if(dir.z > 0) dir.z = 0;
+        dir.reflect(obstacle);
+        if(d->vel.z > 0) d->vel.z = 0;
+        d->vel.reflect(obstacle);
+        if(d->gravity.dot(obstacle) < 0) 
+        {
+            if(d->gravity.z > 0) d->gravity.z = 0;
+            d->gravity.reflect(obstacle);
+        }
+    }
+    else
+    {
+        float dmag = dir.magnitude(),
+              vmag = d->vel.magnitude();
+        dir.project(obstacle);
+        dir.rescale(dmag);
+        d->vel.project(obstacle);
+        d->vel.rescale(vmag);
+        if(d->gravity.dot(obstacle) < 0) 
+        {
+            float gmag = d->gravity.magnitude();
+            d->gravity.project(obstacle);
+            d->gravity.rescale(gmag);
+        }
+    }
 }
 
 void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &floor)
