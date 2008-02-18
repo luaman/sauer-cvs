@@ -742,68 +742,45 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
     return !playercol || plcollide(d, dir);
 }
 
-void slopegravity(float g, const vec &slope, vec &gvec)
-{
-    float k = slope.z*g/(slope.x*slope.x + slope.y*slope.y);
-    gvec.x = slope.x*k;
-    gvec.y = slope.y*k;
-    gvec.z = -g;
-}
-
 void slideagainst(physent *d, vec &dir, const vec &obstacle)
 {
-    vec wdir(obstacle), wvel(obstacle);
-    wdir.z = wvel.z = d->physstate >= PHYS_SLOPE ? 0.0f : min(obstacle.z, 0.0f);
-    wdir.mul(obstacle.dot(dir));
-    wvel.mul(obstacle.dot(d->vel));
-    dir.sub(wdir);
-    d->vel.sub(wvel);
+    float dmag = dir.magnitude(),
+          vmag = d->vel.magnitude(),
+          gmag = d->gravity.magnitude();
+    dir.project(obstacle);
+    d->vel.project(obstacle);
+    d->gravity.project(obstacle);
+    dir.rescale(dmag);
+    d->vel.rescale(vmag);
+    d->gravity.rescale(gmag);
 }
 
-void switchfloor(physent *d, vec &dir, bool landing, const vec &floor)
+void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &floor)
 {
-    if(d->physstate == PHYS_FALL || d->floor.z < FLOORZ)
+    if(landing && (d->physstate == PHYS_FALL || (collided ? dir.z <= 0 : d->floor.z < FLOORZ && d->floor!=floor)))
     {
-        if(landing)
+        if(d->physstate == PHYS_FALL && d->timeinair >= 50)
         {
-            if(floor.z >= FLOORZ)
-            {
-                if(d->vel.z + d->gravity.z > 0) d->vel.add(d->gravity);
-                else if(d->vel.z > 0) d->vel.z = 0.0f;
-                d->gravity = vec(0, 0, 0);
-            }
-            else
-            {
-                float gmag = d->gravity.magnitude();
-                if(gmag > 1e-4f)
-                {
-                    vec g;
-                    slopegravity(-d->gravity.z, floor, g);
-                    if(d->physstate == PHYS_FALL || d->floor != floor)
-                    {
-                        g.normalize();
-                        g.mul(gmag);
-                    }
-                    d->gravity = g;
-                }
-            }
+            d->gravity.project(floor);
+            dir.project(floor);
+            d->vel.project(floor);
+            return;
         }
+
+        float oldmag = d->gravity.magnitude();
+        if(collided) d->gravity.projectxy(floor); else d->gravity.project(floor);
+        d->gravity.rescale(oldmag);
     }
 
     if(((d->physstate == PHYS_SLIDE || (d->physstate == PHYS_FALL && floor.z < 1.0f)) && landing) ||
-        (d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f))
+        (d->physstate >= PHYS_SLOPE && (collided ? dir.z <= 0 : fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)))
     {
-        if(floor.z > 0 && floor.z < WALLZ) { slideagainst(d, dir, floor); return; }
-
-        float dmag = dir.magnitude(), dz = -(dir.x*floor.x + dir.y*floor.y)/floor.z;
-        dir.z = dz;
-        float dfmag = dir.magnitude();
-        if(dfmag > 0) dir.mul(dmag/dfmag);
-
-        float vmag = d->vel.magnitude(), vz = -(d->vel.x*floor.x + d->vel.y*floor.y)/floor.z;
-        d->vel.z = vz;
-        float vfmag = d->vel.magnitude();
-        if(vfmag > 0) d->vel.mul(vmag/vfmag);
+        float dmag = dir.magnitude();
+        if(collided) dir.projectxy(floor); else dir.project(floor);
+        dir.rescale(dmag);
+        float vmag = d->vel.magnitude();
+        if(collided) d->vel.projectxy(floor); else d->vel.project(floor);
+        d->vel.rescale(vmag);
     }
 }
 
@@ -830,7 +807,7 @@ bool trystepup(physent *d, vec &dir, float maxstep)
         {
             d->timeinair = 0;
             d->floor = vec(0, 0, 1);
-            switchfloor(d, dir, true, d->floor);
+            switchfloor(d, dir, false, true, d->floor);
         }
         d->physstate = PHYS_STEP_UP;
         return true;
@@ -857,7 +834,7 @@ bool trystepdown(physent *d, vec &dir, float step, float a, float b)
 }
 #endif
 
-void falling(physent *d, vec &dir, const vec &floor)
+void falling(physent *d, vec &dir, bool collided, const vec &floor)
 {
 #if 0
     if(d->physstate >= PHYS_FLOOR && (floor.z == 0.0f || floor.z == 1.0f))
@@ -874,24 +851,27 @@ void falling(physent *d, vec &dir, const vec &floor)
     }
 #endif
     bool sliding = floor.z > 0.0f && floor.z < SLOPEZ;
-    switchfloor(d, dir, sliding, sliding ? floor : vec(0, 0, 1));
+    switchfloor(d, dir, collided, sliding, sliding ? floor : vec(0, 0, 1));
     if(sliding)
     {
-        if(d->timeinair > 0) d->timeinair = 0;
+        d->timeinair = 0;
         d->physstate = PHYS_SLIDE;
         d->floor = floor;
     }
     else d->physstate = PHYS_FALL;
 }
 
-void landing(physent *d, vec &dir, const vec &floor)
+void landing(physent *d, vec &dir, bool collided, const vec &floor)
 {
+#if 0
     if(d->physstate == PHYS_FALL)
     {
         d->timeinair = 0;
         if(dir.z < 0.0f) dir.z = d->vel.z = 0.0f;
     }
-    switchfloor(d, dir, true, floor);
+#endif
+    switchfloor(d, dir, collided, true, floor);
+    d->timeinair = 0;
     if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
     else d->physstate = PHYS_SLOPE;
     d->floor = floor;
@@ -932,7 +912,11 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
                 if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
             }
         }
-        if(collided && (!found || obstacle.z > floor.z)) floor = obstacle;
+    }
+    if(collided && (!found || obstacle.z > floor.z)) 
+    {
+        floor = obstacle;
+        slide = !found && (floor.z <= 0.0f || floor.z >= SLOPEZ);
     }
     d->o = moved;
     return found;
@@ -959,8 +943,8 @@ bool move(physent *d, vec &dir)
     if(!collide(d, d->type!=ENT_CAMERA ? dir : vec(0, 0, 0)) || ((d->type==ENT_AI || d->type==ENT_INANIMATE) && !collide(d)))
     {
         obstacle = wall;
-        /* check to see if there is an obstacle that would prevent this one from being used as a floor */
-        if(d->type==ENT_PLAYER && wall.z>=SLOPEZ && dir.z<0 && (dir.x || dir.y) && !collide(d, vec(dir.x, dir.y, 0)))
+        /* check to see if there is an obstacle that would prevent this one from being used as a floor (or ceiling bump) */
+        if(d->type==ENT_PLAYER && ((wall.z>=SLOPEZ && dir.z<0) || (wall.z<=-SLOPEZ && dir.z>0)) && (dir.x || dir.y) && !collide(d, vec(dir.x, dir.y, 0)))
             obstacle = wall;
         d->o = old;
         if(d->type == ENT_CAMERA) return false;
@@ -976,7 +960,7 @@ bool move(physent *d, vec &dir)
         collided = true;
     }
     vec floor(0, 0, 0);
-    bool slide = collided && obstacle.z < 1.0f,
+    bool slide = collided,
          found = findfloor(d, collided, obstacle, slide, floor);
     if(slide)
     {
@@ -986,9 +970,9 @@ bool move(physent *d, vec &dir)
     if(found)
     {
         if(d->type == ENT_CAMERA) return false;
-        landing(d, dir, floor);
+        landing(d, dir, slide, floor);
     }
-    else falling(d, dir, floor);
+    else falling(d, dir, slide, floor);
     return !collided;
 }
 
@@ -1135,14 +1119,9 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             pl->vel.z = JUMPVEL;
         }
     }
-    else
-    if(pl->physstate >= PHYS_SLOPE || water)
+    else if(pl->physstate >= PHYS_SLOPE || water)
     {
-        if(water && pl->timeinair > 0)
-        {
-            pl->timeinair = 0;
-            pl->vel.z = 0;
-        }
+        if(water && pl->timeinair > 0) pl->timeinair = 0;
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
@@ -1153,10 +1132,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             cl->physicstrigger(pl, local, 1, 0);
         }
     }
-    else
-    {
-        pl->timeinair += curtime;
-    }
+    else if(pl->physstate == PHYS_FALL) pl->timeinair += curtime;
 
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->type==ENT_AI)
@@ -1214,17 +1190,26 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     pl->vel.div(fpsfric);
 }
 
-void modifygravity(physent *pl, bool water, float secs)
+void modifygravity(physent *pl, bool water, int curtime)
 {
+    float secs = curtime/1000.0f;
     vec g(0, 0, 0);
     if(pl->physstate == PHYS_FALL) g.z -= GRAVITY*secs;
     else if(!pl->floor.iszero() && pl->floor.z < FLOORZ)
     {
-        float c = min(FLOORZ - pl->floor.z, FLOORZ-SLOPEZ)/(FLOORZ-SLOPEZ);
-        slopegravity(GRAVITY*secs*c, pl->floor, g);
+        g.z = -1;
+        g.project(pl->floor);
+        g.normalize();
+        g.mul(GRAVITY*secs);
     }
-    if(water) pl->gravity = pl->move || pl->strafe ? vec(0, 0, 0) : g.mul(4.0f);
-    else pl->gravity.add(g);
+    if(!water || !cl->allowmove(pl) || (!pl->move && !pl->strafe)) pl->gravity.add(g);
+
+    if(!water && pl->physstate < PHYS_SLOPE) return;
+
+    float friction = water ? 2.0f : 6.0f, 
+          fpsfric = friction/curtime*20.0f, 
+          c = water ? 1.0f : clamp((pl->floor.z - SLOPEZ)/(FLOORZ-SLOPEZ), 0.0f, 1.0f);
+    pl->gravity.mul(1 - c/fpsfric);
 }
 
 // main physics routine, moves a player/monster for a curtime step
@@ -1241,7 +1226,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     // apply any player generated changes in velocity
     modifyvelocity(pl, local, water, floating, curtime);
     // apply gravity
-    if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, secs);
+    if(!floating && pl->type!=ENT_CAMERA) modifygravity(pl, water, curtime);
 
     vec d(pl->vel), oldpos(pl->o);
     if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
