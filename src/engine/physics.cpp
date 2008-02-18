@@ -742,45 +742,35 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
     return !playercol || plcollide(d, dir);
 }
 
+VARP(minframetime, 5, 10, 20);
+
 void slideagainst(physent *d, vec &dir, const vec &obstacle)
 {
-    if(obstacle.z < 0)
+    float dmag = dir.magnitude(),
+          vmag = d->vel.magnitude();
+    dir.project(obstacle);
+    d->vel.project(obstacle);
+    if(d->timesincecollide <= 3*minframetime) 
     {
-        float dz = dir.z, vz = d->vel.z;
-        dir.reflect(obstacle);
-        if(dz > 0) dir.z = 0;
-        d->vel.reflect(obstacle);
-        if(vz > 0) d->vel.z = 0;
-        if(d->gravity.dot(obstacle) < 0) 
-        {
-            float gz = d->gravity.z;
-            d->gravity.reflect(obstacle);
-            if(gz > 0) d->gravity.z = 0;
-        }
-    }
-    else
-    {
-        float dmag = dir.magnitude(),
-              vmag = d->vel.magnitude();
-        dir.project(obstacle);
         dir.rescale(dmag);
-        d->vel.project(obstacle);
         d->vel.rescale(vmag);
-        if(d->gravity.dot(obstacle) < 0) 
-        {
-            float gmag = d->gravity.magnitude();
-            d->gravity.project(obstacle);
-            d->gravity.rescale(gmag);
-        }
     }
+    if(d->gravity.dot(obstacle) < 0) 
+    {
+        float gmag = d->gravity.magnitude();
+        d->gravity.project(obstacle);
+        if(d->timesincecollide <= 3*minframetime) d->gravity.rescale(gmag);
+    }
+    d->timesincecollide = 0;
 }
 
 void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &floor)
 {
     if(landing && (d->physstate == PHYS_FALL || (collided ? dir.z <= 0 : d->floor.z < FLOORZ && d->floor!=floor)))
     {
-        if(d->physstate == PHYS_FALL && d->timeinair >= 50)
+        if(d->timesincecollide >= 3*minframetime)
         {
+            d->timesincecollide = 0;
             d->gravity.project(floor);
             dir.project(floor);
             d->vel.project(floor);
@@ -825,7 +815,7 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     {
         if(d->physstate == PHYS_FALL)
         {
-            d->timeinair = 0;
+            d->timesincecollide = d->timeinair = 0;
             d->floor = vec(0, 0, 1);
             switchfloor(d, dir, false, true, d->floor);
         }
@@ -874,7 +864,7 @@ void falling(physent *d, vec &dir, bool collided, const vec &floor)
     switchfloor(d, dir, collided, sliding, sliding ? floor : vec(0, 0, 1));
     if(sliding)
     {
-        d->timeinair = 0;
+        d->timesincecollide = d->timeinair = 0;
         d->physstate = PHYS_SLIDE;
         d->floor = floor;
     }
@@ -891,7 +881,7 @@ void landing(physent *d, vec &dir, bool collided, const vec &floor)
     }
 #endif
     switchfloor(d, dir, collided, true, floor);
-    d->timeinair = 0;
+    d->timesincecollide = d->timeinair = 0;
     if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
     else d->physstate = PHYS_SLOPE;
     d->floor = floor;
@@ -1141,7 +1131,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
     else if(pl->physstate >= PHYS_SLOPE || water)
     {
-        if(water && pl->timeinair > 0) pl->timeinair = 0;
+        if(water && pl->timeinair > 0) pl->timesincecollide = pl->timeinair = 0;
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
@@ -1152,7 +1142,11 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
             cl->physicstrigger(pl, local, 1, 0);
         }
     }
-    else if(pl->physstate == PHYS_FALL) pl->timeinair += curtime;
+    else if(pl->physstate == PHYS_FALL) 
+    {
+        pl->timeinair += curtime;
+        pl->timesincecollide += curtime;
+    }
 
     vec m(0.0f, 0.0f, 0.0f);
     if(pl->type==ENT_AI)
@@ -1262,7 +1256,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         if(pl->physstate != PHYS_FLOAT)
         {
             pl->physstate = PHYS_FLOAT;
-            pl->timeinair = 0;
+            pl->timesincecollide = pl->timeinair = 0;
             pl->gravity = vec(0, 0, 0);
         }
         pl->o.add(d);
@@ -1317,8 +1311,6 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     return true;
 }
 
-VARP(minframetime, 5, 10, 20);
-
 int physicsfraction = 0, physicsrepeat = 0;
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
@@ -1345,7 +1337,7 @@ void moveplayer(physent *pl, int moveres, bool local)
 void updatephysstate(physent *d)
 {
     if(d->physstate == PHYS_FALL) return;
-    d->timeinair = 0;
+    d->timesincecollide = d->timeinair = 0;
     vec old(d->o);
     /* Attempt to reconstruct the floor state.
      * May be inaccurate since movement collisions are not considered.
