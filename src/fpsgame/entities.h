@@ -183,7 +183,7 @@ struct entities : icliententities
                 d->lastpickup = ents[n]->type;
                 d->lastpickupmillis = cl.lastmillis;
                 vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
-                d->timesincecollide = d->timeinair = 0;
+                d->timeinair = 0;
                 d->gravity = vec(0, 0, 0);
                 d->vel = v;
 //                d->vel.z = 0;
