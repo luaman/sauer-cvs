@@ -744,17 +744,17 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
 
 VARP(minframetime, 5, 10, 20);
 
-void slideagainst(physent *d, vec &dir, const vec &obstacle)
+void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
 {
     vec wall(obstacle);
-    if(wall.z > 0) 
+    if(foundfloor && wall.z)
     {
         wall.z = 0;
         if(!wall.iszero()) wall.normalize();
     }
     dir.project(wall);
     d->vel.project(wall);
-    if(d->gravity.dot(obstacle) < 0) d->gravity.project(wall); 
+    if(d->gravity.dot(wall) < 0) d->gravity.project(wall); 
 }
 
 void switchfloor(physent *d, vec &dir, const vec &floor)
@@ -833,7 +833,7 @@ void falling(physent *d, vec &dir, const vec &floor)
 #endif
     if(floor.z > 0.0f && floor.z < SLOPEZ)
     {
-        switchfloor(d, dir, floor);
+        if(floor.z >= WALLZ) switchfloor(d, dir, floor);
         d->timeinair = 0;
         d->physstate = PHYS_SLIDE;
         d->floor = floor;
@@ -880,7 +880,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
             if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
             {
                 floor = wall;
-                if(floor.z > SLOPEZ) found = true;
+                if(floor.z >= SLOPEZ) found = true;
             }
         }
         else
@@ -896,7 +896,7 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     if(collided && (!found || obstacle.z > floor.z)) 
     {
         floor = obstacle;
-        slide = !found && (floor.z <= 0.0f || floor.z >= SLOPEZ);
+        slide = !found && (floor.z < WALLZ || floor.z >= SLOPEZ);
     }
     d->o = moved;
     return found;
@@ -942,9 +942,9 @@ bool move(physent *d, vec &dir)
     vec floor(0, 0, 0);
     bool slide = collided,
          found = findfloor(d, collided, obstacle, slide, floor);
-    if(slide)
+    if(slide || (!collided && floor.z > 0 && floor.z < WALLZ))
     {
-        slideagainst(d, dir, obstacle);
+        slideagainst(d, dir, slide ? obstacle : floor, found);
         if(d->type == ENT_AI || d->type == ENT_INANIMATE) d->blocked = true;
     }
     if(found)
