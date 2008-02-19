@@ -779,7 +779,7 @@ void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &f
         }
 
         float oldmag = d->gravity.magnitude();
-        d->gravity.project(floor);
+        if(collided || (d->physstate >= PHYS_SLOPE && floor.z >= WALLZ)) d->gravity.projectxy(floor); else d->gravity.project(floor);
         d->gravity.rescale(oldmag);
     }
 
