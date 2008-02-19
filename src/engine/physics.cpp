@@ -760,9 +760,9 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
 void switchfloor(physent *d, vec &dir, const vec &floor)
 {
     if(d->gravity.dot(floor) < 0) d->gravity.projectxy(floor);
-    if(d->physstate >= PHYS_SLOPE)
+    if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) > 0.01f) return;
+    if(dir.dot(floor) > 0)
     {
-        if(fabs(dir.dot(d->floor)/dir.magnitude()) > 0.01f) return;
         dir.projectxy(floor, 0.0f);
         d->vel.projectxy(floor, 0.0f);
     }
