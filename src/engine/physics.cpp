@@ -989,7 +989,7 @@ bool move(physent *d, vec &dir)
 
 bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
-    int mat = lookupmaterial(d->o);
+    int mat = lookupmaterial(vec(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2));
     bool water = isliquid(mat);
     if(water)
     {
@@ -1233,7 +1233,7 @@ void modifygravity(physent *pl, bool water, int curtime)
 
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
-    int material = lookupmaterial(pl->o);
+    int material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (pl->aboveeye - pl->eyeheight)/2));
     bool water = isliquid(material);
     bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
     float secs = curtime/1000.f;
@@ -1300,13 +1300,13 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
     if(pl->type!=ENT_CAMERA)
     {
-        int mat = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z+1));
+        int mat = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (pl->aboveeye - 2*pl->eyeheight)/3));
         bool inwater = isliquid(mat);
         if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
         else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = inwater;
 
-        if(pl->state==CS_ALIVE && material==MAT_LAVA) cl->suicide(pl);
+        if(pl->state==CS_ALIVE && mat==MAT_LAVA) cl->suicide(pl);
     }
 
     return true;
