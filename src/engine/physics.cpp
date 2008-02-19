@@ -772,14 +772,14 @@ void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &f
         if(d->timesincecollide > 3*minframetime)
         {
             d->timesincecollide = 0;
-            d->gravity.project(floor);
-            dir.project(floor);
-            d->vel.project(floor);
+            d->gravity.projectxy(floor);
+            dir.projectxy(floor);
+            d->vel.projectxy(floor);
             return;
         }
 
         float oldmag = d->gravity.magnitude();
-        if(collided || (d->physstate >= PHYS_SLOPE && floor.z >= WALLZ)) d->gravity.projectxy(floor); else d->gravity.project(floor);
+        if(collided || (d->physstate >= PHYS_SLOPE && floor.z >= WALLZ)) d->gravity.projectxydir(floor); else d->gravity.project(floor);
         d->gravity.rescale(oldmag);
     }
 
@@ -787,10 +787,10 @@ void switchfloor(physent *d, vec &dir, bool collided, bool landing, const vec &f
         (d->physstate >= PHYS_SLOPE && (collided ? dir.z <= 0 : fabs(dir.dot(d->floor)/dir.magnitude()) < 0.01f)))
     {
         float dmag = dir.magnitude();
-        if(collided || floor.z >= WALLZ) dir.projectxy(floor); else dir.project(floor);
+        if(collided || floor.z >= WALLZ) dir.projectxydir(floor); else dir.project(floor);
         dir.rescale(dmag);
         float vmag = d->vel.magnitude();
-        if(collided || floor.z >= WALLZ) d->vel.projectxy(floor); else d->vel.project(floor);
+        if(collided || floor.z >= WALLZ) d->vel.projectxydir(floor); else d->vel.project(floor);
         d->vel.rescale(vmag);
     }
 }
