@@ -968,19 +968,19 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
     int mat = lookupmaterial(vec(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2));
     bool water = isliquid(mat);
-    if(water)
+    d->vel.z -= GRAVITY*secs;
+    if(water) 
     {
-        if(d->vel.z > 0 && d->vel.z + d->gravity.z < 0) d->vel.z = 0.0f;
-        d->vel.mul(1.0f - secs/waterfric);
-        d->gravity.z = -4.0f*GRAVITY*secs;
-    } 
-    else d->gravity.z -= GRAVITY*secs;
+        float xyk = max(1.0f - secs/waterfric, 0.0f),
+              zk = max(1.0f - (d->vel.z < 0 ? 8 : 1)*secs/waterfric, 0.0f);
+        d->vel.x *= xyk;
+        d->vel.y *= xyk;
+        d->vel.z *= zk;
+    }
     vec old(d->o);
     loopi(2)
     {
         vec dir(d->vel);
-        if(water) dir.mul(0.5f);
-        dir.add(d->gravity);
         dir.mul(secs);
         d->o.add(dir);
         if(collide(d, dir))
@@ -995,14 +995,10 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
         }
         else if(hitplayer) break;
         d->o = old;
-        vec dvel(d->vel), wvel(wall);
-        dvel.add(d->gravity);
-        float c = wall.dot(dvel),
-              k = 1.0f + (1.0f-elasticity)*c/dvel.magnitude();
-        wvel.mul(elasticity*2.0f*c);
-        d->gravity.mul(k);
+        float c = wall.dot(d->vel),
+              k = 1.0f + (1.0f-elasticity)*c/d->vel.magnitude();
         d->vel.mul(k);
-        d->vel.sub(wvel);
+        d->vel.sub(vec(wall).mul(elasticity*2.0f*c));
     }
     if(d->physstate!=PHYS_BOUNCE)
     {
