@@ -968,15 +968,12 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
 {
     int mat = lookupmaterial(vec(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2));
     bool water = isliquid(mat);
-    d->vel.z -= GRAVITY*secs;
     if(water) 
     {
-        float xyk = max(1.0f - secs/waterfric, 0.0f),
-              zk = max(1.0f - (d->vel.z < 0 ? 8 : 1)*secs/waterfric, 0.0f);
-        d->vel.x *= xyk;
-        d->vel.y *= xyk;
-        d->vel.z *= zk;
+        d->vel.z -= GRAVITY/16*secs;
+        d->vel.mul(max(1.0f - secs/waterfric, 0.0f));
     }
+    else d->vel.z -= GRAVITY*secs;
     vec old(d->o);
     loopi(2)
     {
