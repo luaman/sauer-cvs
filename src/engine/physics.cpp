@@ -1265,13 +1265,16 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
     if(pl->type!=ENT_CAMERA)
     {
-        int mat = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (2*pl->aboveeye - pl->eyeheight)/3));
-        bool inwater = isliquid(mat);
-        if(!pl->inwater && inwater) cl->physicstrigger(pl, local, 0, -1);
-        else if(pl->inwater && !inwater) cl->physicstrigger(pl, local, 0, 1);
-        pl->inwater = inwater;
+        if(pl->inwater && !water)
+        {
+            material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (pl->aboveeye - pl->eyeheight)/2));
+            water = isliquid(material);
+        }
+        if(!pl->inwater && water) cl->physicstrigger(pl, local, 0, -1);
+        else if(pl->inwater && !water) cl->physicstrigger(pl, local, 0, 1);
+        pl->inwater = water;
 
-        if(pl->state==CS_ALIVE && mat==MAT_LAVA) cl->suicide(pl);
+        if(pl->state==CS_ALIVE && material==MAT_LAVA) cl->suicide(pl);
     }
 
     return true;
