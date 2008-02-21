@@ -1141,8 +1141,8 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
             s = stdworldshader;
         }
 
-        extern vector<GLuint> lmtexids;
-        int lmid = es.lmid, curlm = pass==RENDERPASS_LIGHTMAP ? (lmtexids.inrange(lmid) ? (int)lmtexids[lmid] : notexture->id) : -1;
+        extern bool brightengeom;
+        int lmid = brightengeom ? LMID_BRIGHT : es.lmid, curlm = pass==RENDERPASS_LIGHTMAP ? (lightmaptexs.inrange(lmid) ? (int)lightmaptexs[lmid].id : notexture->id) : -1;
         if(s && renderpath!=R_FIXEDFUNCTION && pass==RENDERPASS_LIGHTMAP)
         {
             int tmu = cur.lightmaptmu+1;
@@ -1151,7 +1151,7 @@ void renderva(renderstate &cur, vtxarray *va, lodlevel &lod, int pass = RENDERPA
                 if((!lastslot || s->type!=lastslot->shader->type || curlm!=lastlm) && (lmid<LMID_RESERVED || lightmaps[lmid-LMID_RESERVED].type==LM_BUMPMAP0))
                 {
                     glActiveTexture_(GL_TEXTURE0_ARB+tmu);
-                    glBindTexture(GL_TEXTURE_2D, lmtexids[lmid+1]);
+                    glBindTexture(GL_TEXTURE_2D, lightmaptexs.inrange(lmid+1) ? lightmaptexs[lmid+1].id : notexture->id);
                 }
                 tmu++;
             }

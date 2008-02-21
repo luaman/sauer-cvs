@@ -1025,9 +1025,20 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
     } 
 }
 
+void cleanuplightmaps()
+{
+    loopv(lightmaps)
+    {
+        LightMap &lm = lightmaps[i];
+        lm.tex = lm.offsetx = lm.offsety = -1;
+    }
+    loopv(lightmaptexs) glDeleteTextures(1, &lightmaptexs[i].id);
+    lightmaptexs.setsize(0);
+}
+
 void resetlightmaps()
 {
-    loopv(lightmaps) DELETEA(lightmaps[i].converted);
+    cleanuplightmaps();
     lightmaps.setsize(0);
     compressed.clear();
 }
@@ -1152,92 +1163,79 @@ void patchlight(int *quality)
 
 COMMAND(patchlight, "i");
 
-VARF(fullbright, 0, 0, 1, initlights());
-
-vector<GLuint> lmtexids;
-
-static void alloctexids()
+void setfullbrightlevel(int fullbrightlevel)
 {
-    for(int i = lmtexids.length(); i<lightmaps.length()+LMID_RESERVED; i++) glGenTextures(1, &lmtexids.add());
-}
-
-void cleanuplightmaps()
-{
-    loopv(lightmaps) DELETEA(lightmaps[i].converted);
-    glDeleteTextures(lmtexids.length(), lmtexids.getbuf());
-    lmtexids.setsize(0);
-}
-
-void clearlights()
-{
-    clearlightcache();
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents)
+    if(lightmaptexs.length() > LMID_BRIGHT)
     {
-        extentity &e = *ents[i];
-        e.light.color = vec(1, 1, 1);
-        e.light.dir = vec(0, 0, 1);
+        uchar bright[3] = { fullbrightlevel, fullbrightlevel, fullbrightlevel };
+        createtexture(lightmaptexs[LMID_BRIGHT].id, 1, 1, bright, 0, false);
     }
-    if(nolights) return;
+    initlights();
+}
 
-    uchar bright[3] = { 128, 128, 128 };
-    bvec front(128, 128, 255);
-    alloctexids();
-    loopi(lightmaps.length() + LMID_RESERVED)
+VARF(fullbright, 0, 0, 1, if(lightmaptexs.length()) initlights());
+VARF(fullbrightlevel, 0, 128, 255, setfullbrightlevel(fullbrightlevel));
+
+vector<LightMapTexture> lightmaptexs;
+
+static void convertlightmap(LightMap &lmc, LightMap &lmlv, uchar *dst, size_t stride)
+{
+    const uchar *c = lmc.data;
+    const bvec *lv = (const bvec *)lmlv.data;
+    loopi(LM_PACKH)
     {
-        switch(i < LMID_RESERVED ? (i&1 ? LM_BUMPMAP1 : LM_DIFFUSE) : lightmaps[i-LMID_RESERVED].type)
+        uchar *dstrow = dst;
+        loopj(LM_PACKW)
         {
-            case LM_DIFFUSE:
-            case LM_BUMPMAP0:
-                createtexture(lmtexids[i], 1, 1, bright, 0, false);
-                break;
-            case LM_BUMPMAP1:
-                createtexture(lmtexids[i], 1, 1, &front, 0, false);
-                break;
+            int z = int(lv->z)*2 - 255,
+                r = (int(c[0]) * z) / 255,
+                g = (int(c[1]) * z) / 255,
+                b = (int(c[2]) * z) / 255;
+            dstrow[0] = max(r, ambient);
+            dstrow[1] = max(g, ambient);
+            dstrow[2] = max(b, ambient);
+            c += 3;
+            lv++;
+            dstrow += 3;
         }
-    }            
-}
-
-void lightent(extentity &e, float height)
-{
-    if(e.type==ET_LIGHT) return;
-    float ambient = hdr.ambient/255.0f;
-    if(e.type==ET_MAPMODEL)
-    {
-        model *m = loadmodel(NULL, e.attr2);
-        if(m) height = m->above()*0.75f;
-    }
-    else if(e.type>=ET_GAMESPECIFIC) ambient = 0.4f;
-    vec target(e.o.x, e.o.y, e.o.z + height);
-    lightreaching(target, e.light.color, e.light.dir, &e, ambient);
-}
-
-void updateentlighting()
-{
-    const vector<extentity *> &ents = et->getents();
-    loopv(ents) lightent(*ents[i]);
-}
-
-void convert_lightmap(LightMap &lmc, LightMap &lml)
-{
-    lmc.converted = new uchar[3 * LM_PACKW * LM_PACKH];
-    uchar *conv = lmc.converted;
-    const bvec *l = (const bvec *)lml.data;
-    for(const uchar *c = lmc.data, *end = &lmc.data[sizeof(lmc.data)]; c < end; c += 3, l++, conv += 3)
-    {
-        int z = int(l->z)*2 - 255,
-            r = (int(c[0]) * z) / 255,
-            g = (int(c[1]) * z) / 255,
-            b = (int(c[2]) * z) / 255;
-        conv[0] = max(r, ambient);
-        conv[1] = max(g, ambient);
-        conv[2] = max(b, ambient);
+        dst += stride;
     }
 }
 
-VARF(convertlms, 0, 1, 1, initlights());
+static void copylightmap(LightMap &lm, uchar *dst, size_t stride)
+{
+    const uchar *c = lm.data;
+    loopi(LM_PACKH)
+    {
+        memcpy(dst, c, 3*LM_PACKW);
+        c += 3*LM_PACKW;
+        dst += stride;
+    }
+}
 
-static void find_unlit(int i)
+VARF(convertlms, 0, 1, 1, { cleanuplightmaps(); initlights(); allchanged(); });
+
+void genreservedlightmaptexs()
+{
+    while(lightmaptexs.length() < LMID_RESERVED)
+    {
+        LightMapTexture &tex = lightmaptexs.add();
+        tex.type = renderpath != R_FIXEDFUNCTION && lightmaptexs.length()&1 ? LM_DIFFUSE : LM_BUMPMAP1;
+        glGenTextures(1, &tex.id);
+    }
+    uchar unlit[3] = { ambient, ambient, ambient };
+    createtexture(lightmaptexs[LMID_AMBIENT].id, 1, 1, unlit, 0, false);
+    bvec front(128, 128, 255);
+    createtexture(lightmaptexs[LMID_AMBIENT1].id, 1, 1, &front, 0, false);
+    uchar bright[3] = { 128, 128, 128 };
+    createtexture(lightmaptexs[LMID_BRIGHT].id, 1, 1, bright, 0, false);
+    createtexture(lightmaptexs[LMID_BRIGHT1].id, 1, 1, &front, 0, false);
+    uchar dark[3] = { 0, 0, 0 };
+    createtexture(lightmaptexs[LMID_DARK].id, 1, 1, dark, 0, false);
+    createtexture(lightmaptexs[LMID_DARK1].id, 1, 1, &front, 0, false);
+}
+
+static void findunlit(int i)
 {
     LightMap &lm = lightmaps[i];
     if(lm.unlitx>=0) return;
@@ -1270,6 +1268,135 @@ static void find_unlit(int i)
     }
 }
 
+VARF(roundlightmaptex, 0, 4, 16, { cleanuplightmaps(); initlights(); allchanged(); });
+VARF(batchlightmaps, 0, 64, 256, { cleanuplightmaps(); initlights(); allchanged(); });
+
+void genlightmaptexs()
+{
+    if(lightmaptexs.length() < LMID_RESERVED) genreservedlightmaptexs();
+
+    int remaining[3] = { 0, 0, 0 }; 
+    loopv(lightmaps) 
+    {
+        LightMap &lm = lightmaps[i];
+        if(lm.tex >= 0) continue;
+        remaining[lm.type]++; 
+        if(lm.unlitx < 0) findunlit(i);
+    }
+
+    if(renderpath==R_FIXEDFUNCTION)
+    {
+        remaining[LM_DIFFUSE] += remaining[LM_BUMPMAP0];
+        remaining[LM_BUMPMAP0] = remaining[LM_BUMPMAP1] = 0;
+    }
+
+    extern int maxtexsize;
+    int sizelimit = min(batchlightmaps, (maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize)/max(LM_PACKW, LM_PACKH));
+    while(remaining[LM_DIFFUSE] || remaining[LM_BUMPMAP0] || remaining[LM_BUMPMAP1])
+    {
+        int type = LM_DIFFUSE;
+        LightMap *firstlm = NULL;
+        loopv(lightmaps)
+        {
+            LightMap &lm = lightmaps[i];
+            if(lm.tex >= 0) continue;
+            if(renderpath != R_FIXEDFUNCTION) type = lm.type;
+            else if(lm.type != LM_DIFFUSE && lm.type != LM_BUMPMAP0) continue;
+            firstlm = &lm; 
+            break; 
+        }
+        if(!firstlm) break;
+        int used = 0, uselimit = min(remaining[type], sizelimit);
+        do used++; while((1<<used) <= uselimit);
+        used--;
+        remaining[type] -= 1<<used;
+        if(remaining[type] && (2<<used) <= min(roundlightmaptex, sizelimit))
+        {
+            remaining[type] -= min(remaining[type], 1<<used);
+            used++;
+        }
+        LightMapTexture &tex = lightmaptexs.add();
+        tex.type = type;
+        tex.w = LM_PACKW<<((used+1)/2);
+        tex.h = LM_PACKH<<(used/2);
+        uchar *data = used || (renderpath == R_FIXEDFUNCTION && firstlm->type == LM_BUMPMAP0 && convertlms) ? 
+            new uchar[3*tex.w*tex.h] : 
+            NULL;
+        int offsetx = 0, offsety = 0;
+        loopv(lightmaps)
+        {
+            LightMap &lm = lightmaps[i];
+            if(lm.tex >= 0 ||
+               (renderpath == R_FIXEDFUNCTION ? 
+                    lm.type != LM_DIFFUSE && lm.type != LM_BUMPMAP0 : 
+                    lm.type != type))
+                continue;
+
+            lm.tex = lightmaptexs.length()-1;
+            lm.offsetx = offsetx;
+            lm.offsety = offsety;
+            if(tex.unlitx < 0 && lm.unlitx >= 0) 
+            { 
+                tex.unlitx = offsetx + lm.unlitx; 
+                tex.unlity = offsety + lm.unlity;
+            }
+
+            if(data)
+            {
+                if(renderpath == R_FIXEDFUNCTION && lm.type == LM_BUMPMAP0 && convertlms)
+                    convertlightmap(lm, lightmaps[i+1], &data[3*(offsety*tex.w + offsetx)], 3*tex.w);
+                else copylightmap(lm, &data[3*(offsety*tex.w + offsetx)], 3*tex.w);
+            }
+
+            offsetx += LM_PACKW;
+            if(offsetx >= tex.w) { offsetx = 0; offsety += LM_PACKH; }
+            if(offsety >= tex.h) break;
+        }
+        
+        glGenTextures(1, &tex.id);
+        createtexture(tex.id, tex.w, tex.h, data ? data : firstlm->data, 3, false);
+        if(data) delete[] data;
+    }        
+}
+
+bool brightengeom = false;
+
+void clearlights()
+{
+    clearlightcache();
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents)
+    {
+        extentity &e = *ents[i];
+        e.light.color = vec(1, 1, 1);
+        e.light.dir = vec(0, 0, 1);
+    }
+    if(nolights) return;
+
+    genlightmaptexs();
+    brightengeom = true;
+}
+
+void lightent(extentity &e, float height)
+{
+    if(e.type==ET_LIGHT) return;
+    float ambient = hdr.ambient/255.0f;
+    if(e.type==ET_MAPMODEL)
+    {
+        model *m = loadmodel(NULL, e.attr2);
+        if(m) height = m->above()*0.75f;
+    }
+    else if(e.type>=ET_GAMESPECIFIC) ambient = 0.4f;
+    vec target(e.o.x, e.o.y, e.o.z + height);
+    lightreaching(target, e.light.color, e.light.dir, &e, ambient);
+}
+
+void updateentlighting()
+{
+    const vector<extentity *> &ents = et->getents();
+    loopv(ents) lightent(*ents[i]);
+}
+
 void initlights()
 {
     if(nolights || (fullbright && editmode) || lightmaps.empty())
@@ -1280,30 +1407,8 @@ void initlights()
 
     clearlightcache();
     updateentlighting();
-
-    alloctexids();
-    uchar unlit[3] = { ambient, ambient, ambient };
-    createtexture(lmtexids[LMID_AMBIENT], 1, 1, unlit, 0, false);
-    bvec front(128, 128, 255);
-    createtexture(lmtexids[LMID_AMBIENT1], 1, 1, &front, 0, false);
-    uchar bright[3] = { 128, 128, 128 };
-    createtexture(lmtexids[LMID_BRIGHT], 1, 1, bright, 0, false);
-    createtexture(lmtexids[LMID_BRIGHT1], 1, 1, &front, 0, false);
-    uchar dark[3] = { 0, 0, 0 };
-    createtexture(lmtexids[LMID_DARK], 1, 1, dark, 0, false);
-    createtexture(lmtexids[LMID_DARK1], 1, 1, &front, 0, false);
-    loopv(lightmaps)
-    {
-        LightMap &lm = lightmaps[i];
-        if(lm.unlitx<0) find_unlit(i);
-        uchar *data = lm.data;
-        if(convertlms && renderpath == R_FIXEDFUNCTION && lm.type == LM_BUMPMAP0)
-        {
-            if(!lm.converted) convert_lightmap(lm, lightmaps[i+1]);
-            data = lm.converted;
-        }
-        createtexture(lmtexids[i+LMID_RESERVED], LM_PACKW, LM_PACKH, data, 0, false);
-    }
+    genlightmaptexs();
+    brightengeom = false;
 }
 
 void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float ambient)
