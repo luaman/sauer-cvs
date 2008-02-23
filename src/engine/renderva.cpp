@@ -766,10 +766,13 @@ struct geombatch
         if(va->vbuf > b.va->vbuf) return 1;
         if(va->dynlightmask < b.va->dynlightmask) return -1;
         if(va->dynlightmask > b.va->dynlightmask) return 1;
-        if(slot.shader < b.slot.shader) return -1;
-        if(slot.shader > b.slot.shader) return 1;
-        if(slot.params.length() < b.slot.params.length()) return -1;
-        if(slot.params.length() > b.slot.params.length()) return 1;
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            if(slot.shader < b.slot.shader) return -1;
+            if(slot.shader > b.slot.shader) return 1;
+            if(slot.params.length() < b.slot.params.length()) return -1;
+            if(slot.params.length() > b.slot.params.length()) return 1;
+        }
         if(es.texture < b.es.texture) return -1;
         if(es.texture > b.es.texture) return 1;
         if(es.lmid < b.es.lmid) return -1;

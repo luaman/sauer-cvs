@@ -406,11 +406,14 @@ struct vacollect : verthash
             if(x->envmap > y->envmap) return 1;
             return 0;
         }
-        Slot &xs = lookuptexture(x->tex, false), &ys = lookuptexture(y->tex, false);
-        if(xs.shader < ys.shader) return -1;
-        if(xs.shader > ys.shader) return 1;
-        if(xs.params.length() < ys.params.length()) return -1;
-        if(xs.params.length() > ys.params.length()) return 1;
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            Slot &xs = lookuptexture(x->tex, false), &ys = lookuptexture(y->tex, false);
+            if(xs.shader < ys.shader) return -1;
+            if(xs.shader > ys.shader) return 1;
+            if(xs.params.length() < ys.params.length()) return -1;
+            if(xs.params.length() > ys.params.length()) return 1;
+        }
         if(x->tex < y->tex) return -1;
         else return 1;
     }
