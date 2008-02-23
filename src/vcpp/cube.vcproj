@@ -902,6 +902,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\dynlight.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\grass.cpp"
 					>
 					<FileConfiguration
