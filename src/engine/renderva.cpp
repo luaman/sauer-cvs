@@ -930,10 +930,12 @@ static void changevbuf(renderstate &cur, int pass, vtxarray *va)
 static void changebatchtmus(renderstate &cur, int pass, geombatch &b)
 {
     bool changed = false;
-    if(cur.textures[cur.lightmaptmu]!=lightmaptexs[b.es.lmid].id)
+    extern bool brightengeom;
+    int lmid = brightengeom ? LMID_BRIGHT : b.es.lmid; 
+    if(cur.textures[cur.lightmaptmu]!=lightmaptexs[lmid].id)
     {
         glActiveTexture_(GL_TEXTURE0_ARB+cur.lightmaptmu);
-        glBindTexture(GL_TEXTURE_2D, cur.textures[cur.lightmaptmu] = lightmaptexs[b.es.lmid].id);
+        glBindTexture(GL_TEXTURE_2D, cur.textures[cur.lightmaptmu] = lightmaptexs[lmid].id);
         changed = true;
     }
     if(renderpath!=R_FIXEDFUNCTION)
