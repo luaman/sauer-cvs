@@ -22,13 +22,14 @@ extern PFNGLMULTITEXCOORD3FARBPROC     glMultiTexCoord3f_;
 extern PFNGLMULTITEXCOORD4FARBPROC     glMultiTexCoord4f_;
 
 // GL_ARB_vertex_buffer_object
-extern PFNGLGENBUFFERSARBPROC    glGenBuffers_;
-extern PFNGLBINDBUFFERARBPROC    glBindBuffer_;
-extern PFNGLMAPBUFFERARBPROC     glMapBuffer_;
-extern PFNGLUNMAPBUFFERARBPROC   glUnmapBuffer_;
-extern PFNGLBUFFERDATAARBPROC    glBufferData_;
-extern PFNGLBUFFERSUBDATAARBPROC glBufferSubData_;
-extern PFNGLDELETEBUFFERSARBPROC glDeleteBuffers_;
+extern PFNGLGENBUFFERSARBPROC       glGenBuffers_;
+extern PFNGLBINDBUFFERARBPROC       glBindBuffer_;
+extern PFNGLMAPBUFFERARBPROC        glMapBuffer_;
+extern PFNGLUNMAPBUFFERARBPROC      glUnmapBuffer_;
+extern PFNGLBUFFERDATAARBPROC       glBufferData_;
+extern PFNGLBUFFERSUBDATAARBPROC    glBufferSubData_;
+extern PFNGLDELETEBUFFERSARBPROC    glDeleteBuffers_;
+extern PFNGLGETBUFFERSUBDATAARBPROC glGetBufferSubData_;
 
 // GL_ARB_occlusion_query
 extern PFNGLGENQUERIESARBPROC        glGenQueries_;
@@ -58,6 +59,10 @@ extern PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_;
 // GL_EXT_blend_minmax
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquation_;
 
+// GL_EXT_multi_draw_arrays
+extern PFNGLMULTIDRAWARRAYSEXTPROC   glMultiDrawArrays_;
+extern PFNGLMULTIDRAWELEMENTSEXTPROC glMultiDrawElements_;
+
 // GL_EXT_packed_depth_stencil
 #ifndef GL_DEPTH_STENCIL_EXT
 #define GL_DEPTH_STENCIL_EXT 0x84F9
@@ -73,7 +78,6 @@ extern header hdr;                      // current map header
 extern int worldscale;
 extern vector<ushort> texmru;
 extern int xtraverts, xtravertsva;
-extern vector<vertex> verts;            // the vertex array for all world rendering
 extern int curtexnum;
 extern const ivec cubecoords[8];
 extern const ushort fv[6][4];
@@ -161,7 +165,7 @@ static inline bool pvsoccluded(const ivec &bborigin, int size)
 }
 
 // rendergl
-extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF, hasVP2, hasVP3, hasPP;
+extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, hasNP2, hasTC, hasTE, hasMT, hasD3, hasstencil, hasAF, hasVP2, hasVP3, hasPP, hasMDA;
 
 extern bool envmapping;
 
@@ -199,14 +203,14 @@ extern int faceverts(cube &c, int orient, int vert);
 extern int faceconvexity(cube &c, int orient);
 extern void calcvert(cube &c, int x, int y, int z, int size, vvec &vert, int i, bool solid = false);
 extern void calcvert(cube &c, int x, int y, int z, int size, vec &vert, int i, bool solid = false);
-extern int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces, bool lodcube);
+extern int calcverts(cube &c, int x, int y, int z, int size, vvec *verts, bool *usefaces);
 extern uint faceedges(cube &c, int orient);
 extern bool collapsedface(uint cfe);
 extern bool touchingface(cube &c, int orient);
 extern bool flataxisface(cube &c, int orient);
 extern int genclipplane(cube &c, int i, vec *v, plane *clip);
 extern void genclipplanes(cube &c, int x, int y, int z, int size, clipplanes &p);
-extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, uchar nmat = MAT_AIR, bool lodcube = false);
+extern bool visibleface(cube &c, int orient, int x, int y, int z, int size, uchar mat = MAT_AIR, uchar nmat = MAT_AIR);
 extern int visibleorient(cube &c, int orient);
 extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void freemergeinfo(cube &c);
@@ -264,6 +268,7 @@ extern void allchanged(bool load = false);
 extern void vaclearc(cube *c);
 extern vtxarray *newva(int x, int y, int z, int size);
 extern void destroyva(vtxarray *va, bool reparent = true);
+extern bool readva(vtxarray *va, ushort *&edata, uchar *&vdata);
 
 // renderva
 extern GLuint fogtex;
@@ -294,6 +299,13 @@ extern void drawbb(const ivec &bo, const ivec &br, const vec &camera = camera1->
         extern int ati_oq_bug; \
         if(ati_oq_bug) glFlush(); \
     }
+
+// dynlight
+
+extern void updatedynlights();
+extern int finddynlights();
+extern void calcdynlightmask(vtxarray *va);
+extern int setdynlights(vtxarray *va);
 
 // material
 
@@ -427,6 +439,9 @@ extern void cleardecals();
 extern void renderdecals(int time);
 
 // rendersky
+extern int explicitsky;
+extern double skyarea;
+
 extern void drawskybox(int farplane, bool limited, float zreflect = 0);
 extern bool limitsky();
 

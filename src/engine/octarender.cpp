@@ -3,9 +3,6 @@
 #include "pch.h"
 #include "engine.h"
 
-vector<vertex> verts;
-vector<grasstri> grasstris;
-
 struct cstat { int size, nleaf, nnode, nface; } cstats[32];
 
 VAR(showcstats, 0, 0, 1);
@@ -36,7 +33,7 @@ VARF(floatvtx, 0, 0, 1, allchanged());
     }
 #define GENVERTSUV(type, ptr, body) GENVERTS(type, ptr, { f->u = v.u; f->v = v.v; body; })
 
-void genverts(void *buf)
+void genverts(vector<vertex> &verts, void *buf)
 {
     if(renderpath==R_FIXEDFUNCTION)
     {
@@ -54,6 +51,7 @@ void genverts(void *buf)
 struct vboinfo
 {
     int uses;
+    uchar *data;
 };
 
 static inline uint hthash(GLuint key)
@@ -69,41 +67,59 @@ static inline bool htcmp(GLuint x, GLuint y)
 hashtable<GLuint, vboinfo> vbos;
 
 VAR(printvbo, 0, 0, 1);
-VARF(vbosize, 0, 0, 1024*1024, allchanged());
+VARFN(vbosize, maxvbosize, 0, 1<<15, 1<<16, allchanged());
 
 enum
 {
     VBO_VBUF = 0,
-    VBO_EBUF_L0,
-    VBO_EBUF_L1,
-    VBO_SKYBUF_L0,
-    VBO_SKYBUF_L1,
+    VBO_EBUF,
+    VBO_SKYBUF,
     NUMVBO
 };
 
-static vector<char> vbodata[NUMVBO];
+static vector<uchar> vbodata[NUMVBO];
 static vector<vtxarray *> vbovas[NUMVBO];
+static int vbosize[NUMVBO];
 
 void destroyvbo(GLuint vbo)
 {
-    vboinfo &vbi = vbos[vbo];
+    vboinfo *exists = vbos.access(vbo);
+    if(!exists) return;
+    vboinfo &vbi = *exists;
     if(vbi.uses <= 0) return;
     vbi.uses--;
-    if(!vbi.uses) glDeleteBuffers_(1, &vbo);
+    if(!vbi.uses) 
+    {
+        if(hasVBO) glDeleteBuffers_(1, &vbo);
+        else if(vbi.data) delete[] vbi.data;
+        vbos.remove(vbo);
+    }
 }
 
 void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
 {
     GLuint vbo;
-    glGenBuffers_(1, &vbo);
-    GLenum target = type==VBO_VBUF ? GL_ARRAY_BUFFER_ARB : GL_ELEMENT_ARRAY_BUFFER_ARB;
-    glBindBuffer_(target, vbo);
-    glBufferData_(target, len, buf, GL_STATIC_DRAW_ARB);
-    glBindBuffer_(target, 0);
-    
+    uchar *data = NULL;
+    if(hasVBO)
+    {
+        glGenBuffers_(1, &vbo);
+        GLenum target = type==VBO_VBUF ? GL_ARRAY_BUFFER_ARB : GL_ELEMENT_ARRAY_BUFFER_ARB;
+        glBindBuffer_(target, vbo);
+        glBufferData_(target, len, buf, GL_STATIC_DRAW_ARB);
+        glBindBuffer_(target, 0);
+    }
+    else
+    {
+        static GLuint nextvbo = 0;
+        if(!nextvbo) nextvbo++; // just in case it ever wraps around
+        vbo = nextvbo++;
+        data = new uchar[len];
+        memcpy(data, buf, len);
+    }
     vboinfo &vbi = vbos[vbo]; 
     vbi.uses = numva;
-    
+    vbi.data = data;
+ 
     if(printvbo) conoutf("vbo %d: type %d, size %d, %d uses", vbo, type, len, numva);
 
     loopi(numva)
@@ -111,12 +127,45 @@ void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
         vtxarray *va = vas[i];
         switch(type)
         {
-            case VBO_VBUF: va->vbufGL = vbo; break;
-            case VBO_EBUF_L0: va->l0.ebufGL = vbo; break;
-            case VBO_EBUF_L1: va->l1.ebufGL = vbo; break;
-            case VBO_SKYBUF_L0: va->l0.skybufGL = vbo; break;
-            case VBO_SKYBUF_L1: va->l1.skybufGL = vbo; break;
+            case VBO_VBUF: 
+                va->vbuf = vbo; 
+                if(!hasVBO) va->vdata = (vertex *)(data + (size_t)va->vdata);
+                break;
+            case VBO_EBUF: 
+                va->ebuf = vbo; 
+                if(!hasVBO) va->edata = (ushort *)(data + (size_t)va->edata);
+                break;
+            case VBO_SKYBUF: 
+                va->skybuf = vbo; 
+                if(!hasVBO) va->skydata = (ushort *)(data + (size_t)va->skydata);
+                break;
         }
+    }
+}
+
+bool readva(vtxarray *va, ushort *&edata, uchar *&vdata)
+{
+    if(!va->vbuf || !va->ebuf) return false;
+
+    edata = new ushort[3*va->tris];
+    vdata = new uchar[va->verts*VTXSIZE];
+
+    if(hasVBO)
+    {
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, va->ebuf);
+        glGetBufferSubData_(GL_ELEMENT_ARRAY_BUFFER_ARB, (size_t)va->edata, 3*va->tris*sizeof(ushort), edata);
+        glBindBuffer_(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, va->vbuf);
+        glGetBufferSubData_(GL_ARRAY_BUFFER_ARB, va->voffset*VTXSIZE, va->verts*VTXSIZE, vdata);
+        glBindBuffer_(GL_ARRAY_BUFFER_ARB, 0);
+        return true;
+    }
+    else
+    {
+        memcpy(edata, va->edata, 3*va->tris*sizeof(ushort));
+        memcpy(vdata, (uchar *)va->vdata + va->voffset*VTXSIZE, va->verts*VTXSIZE);
+        return true;
     }
 }
 
@@ -128,58 +177,52 @@ void flushvbo(int type = -1)
         return;
     }
 
-    vector<char> &data = vbodata[type];
+    vector<uchar> &data = vbodata[type];
     if(data.empty()) return;
     vector<vtxarray *> &vas = vbovas[type];
     genvbo(type, data.getbuf(), data.length(), vas.getbuf(), vas.length());
     data.setsizenodelete(0);
     vas.setsizenodelete(0);
+    vbosize[type] = 0;
 }
 
-void *addvbo(vtxarray *va, int type, void *buf, int len)
+uchar *addvbo(vtxarray *va, int type, int numelems, int elemsize)
 {
-    int minsize = type==VBO_VBUF ? min(vbosize, int(VTXSIZE) << 16) : vbosize;
+    vbosize[type] += numelems;
 
-    if(len >= minsize)
-    {
-        genvbo(type, buf, len, &va, 1);
-        return 0;
-    }
-
-    vector<char> &data = vbodata[type];
+    vector<uchar> &data = vbodata[type];
     vector<vtxarray *> &vas = vbovas[type];
 
-    if(data.length() && data.length() + len > minsize) flushvbo(type);
+    vas.add(va);
 
-    data.reserve(len);
-
-    size_t offset = data.length();
-    data.reserve(len);
-    memcpy(&data.getbuf()[offset], buf, len);
-    data.ulen += len;
-
-    vas.add(va); 
-
-    if(data.length() >= minsize) flushvbo(type);
-
-    return (void *)offset;
+    int len = numelems*elemsize;
+    uchar *buf = data.reserve(len).buf;
+    data.advance(len);
+    return buf; 
 }
  
-struct vechash
+struct verthash
 {
-    static const int size = 1<<16;
-    int table[size];
+    static const int SIZE = 1<<16;
+    int table[SIZE];
+    vector<vertex> verts;
     vector<int> chain;
 
-    vechash() { clear(); }
-    void clear() { loopi(size) table[i] = -1; chain.setsizenodelete(0); }
+    verthash() { clearverts(); }
 
-    int access(const vvec &v, short tu, short tv, const bvec &n)
+    void clearverts() 
+    { 
+        loopi(SIZE) table[i] = -1; 
+        chain.setsizenodelete(0); 
+        verts.setsizenodelete(0);
+    }
+
+    int addvert(const vvec &v, short tu, short tv, const bvec &n)
     {
         const uchar *iv = (const uchar *)&v;
         uint h = 5381;
         loopl(sizeof(v)) h = ((h<<5)+h)^iv[l];
-        h = h&(size-1);
+        h = h&(SIZE-1);
         for(int i = table[h]; i>=0; i = chain[i])
         {
             const vertex &c = verts[i];
@@ -198,8 +241,6 @@ struct vechash
         return table[h] = verts.length()-1;
     }
 };
-
-vechash vh;
 
 struct sortkey
 {
@@ -230,54 +271,68 @@ static inline uint hthash(const sortkey &k)
     return k.tex + k.lmid*9741;
 }
 
-struct lodcollect
+struct vacollect : verthash
 {
     hashtable<sortkey, sortval> indices;
     vector<sortkey> texs;
+    vector<grasstri> grasstris;
     vector<materialsurface> matsurfs;
+    vector<octaentities *> mapmodels;
     usvector skyindices, explicitskyindices;
     int curtris;
-    uint offsetindices;
-
-    int size() { return texs.length()*sizeof(elementset) + (hasVBO ? 0 : (3*curtris+skyindices.length()+explicitskyindices.length())*sizeof(ushort)) + matsurfs.length()*sizeof(materialsurface); }
 
     void clear()
     {
+        clearverts();
         curtris = 0;
-        offsetindices = 0;
         indices.clear();
         skyindices.setsizenodelete(0);
         explicitskyindices.setsizenodelete(0);
         matsurfs.setsizenodelete(0);
+        mapmodels.setsizenodelete(0);
+        grasstris.setsizenodelete(0);
+        texs.setsizenodelete(0);
     }
 
     void remapunlit(vector<sortkey> &remap)
     {
-        uint lastlmid = LMID_AMBIENT, firstlmid = LMID_AMBIENT;
-        int firstlit = -1;
+        uint lastlmid[2] = { LMID_AMBIENT, LMID_AMBIENT }, firstlmid[2] = { LMID_AMBIENT, LMID_AMBIENT };
+        int firstlit[2] = { -1, -1 };
         loopv(texs)
         {
             sortkey &k = texs[i];
             if(k.lmid>=LMID_RESERVED) 
             {
-                lastlmid = lightmaptexs[k.lmid].unlitx>=0 ? k.lmid : LMID_AMBIENT;
-                if(firstlit<0)
+                LightMapTexture &lmtex = lightmaptexs[k.lmid];
+                int type = lmtex.type;
+                lastlmid[type] = lmtex.unlitx>=0 ? k.lmid : LMID_AMBIENT;
+                if(firstlmid[type]==LMID_AMBIENT && lastlmid[type]!=LMID_AMBIENT)
                 {
-                    firstlit = i;
-                    firstlmid = lastlmid;
+                    firstlit[type] = i;
+                    firstlmid[type] = lastlmid[type];
                 }
             }
-            else if(k.lmid==LMID_AMBIENT && lastlmid!=LMID_AMBIENT)
+            else if(k.lmid==LMID_AMBIENT)
             {
-                sortval &t = indices[k];
-                if(t.unlit<=0) t.unlit = lastlmid;
+                Shader *s = lookuptexture(k.tex, false).shader;
+                if(!s) continue;
+                int type = s->type&SHADER_NORMALSLMS ? LM_BUMPMAP0 : LM_DIFFUSE;
+                if(lastlmid[type]!=LMID_AMBIENT)
+                {
+                    sortval &t = indices[k];
+                    if(t.unlit<=0) t.unlit = lastlmid[type];
+                }
             }
         }
-        if(firstlmid!=LMID_AMBIENT) loopi(firstlit)
+        if(firstlmid[0]!=LMID_AMBIENT || firstlmid[1]!=LMID_AMBIENT) loopi(max(firstlit[0], firstlit[1]))
         {
             sortkey &k = texs[i];
             if(k.lmid!=LMID_AMBIENT) continue;
-            indices[k].unlit = firstlmid;
+            Shader *s = lookuptexture(k.tex, false).shader;
+            if(!s) continue;
+            int type = s->type&SHADER_NORMALSLMS ? LM_BUMPMAP0 : LM_DIFFUSE;
+            if(firstlmid[type]==LMID_AMBIENT) continue;
+            indices[k].unlit = firstlmid[type];
         } 
         loopv(remap)
         {
@@ -300,7 +355,7 @@ struct lodcollect
                     // necessary to copy these in case vechash reallocates verts before copying vtx
                     vvec vv = vtx;
                     bvec n = vtx.n;
-                    t.dims[l][j] = vh.access(vv, u, v, n);
+                    t.dims[l][j] = addvert(vv, u, v, n);
                 }
             }
             sortval *dst = indices.access(sortkey(k.tex, t.unlit, k.envmap));
@@ -311,8 +366,6 @@ struct lodcollect
     void optimize()
     {
         vector<sortkey> remap;
-
-        texs.setsizenodelete(0);
         enumeratekt(indices, sortkey, k, sortval, t,
             loopl(6) if(t.dims[l].length() && t.unlit<=0)
             {
@@ -345,7 +398,14 @@ struct lodcollect
 
     static int texsort(const sortkey *x, const sortkey *y)
     {
-        if(x->tex == y->tex) return 0;
+        if(x->tex == y->tex) 
+        {
+            if(x->lmid < y->lmid) return -1;
+            if(x->lmid > y->lmid) return 1;
+            if(x->envmap < y->envmap) return -1;
+            if(x->envmap > y->envmap) return 1;
+            return 0;
+        }
         Slot &xs = lookuptexture(x->tex, false), &ys = lookuptexture(y->tex, false);
         if(xs.shader < ys.shader) return -1;
         if(xs.shader > ys.shader) return 1;
@@ -355,54 +415,68 @@ struct lodcollect
         else return 1;
     }
 
-    char *setup(vtxarray *va, lodlevel &lod, char *buf)
+    void setupdata(vtxarray *va)
     {
-        lod.eslist = (elementset *)buf;
-
-        lod.sky = skyindices.length();
-        lod.explicitsky = explicitskyindices.length();
-
-        if(!hasVBO)
+        va->verts = verts.length();
+        va->tris = curtris;
+        va->vbuf = 0;
+        va->vdata = 0;
+        va->minvert = 0;
+        va->maxvert = va->verts-1;
+        va->voffset = 0;
+        if(va->verts)
         {
-            lod.ebufGL = lod.skybufGL = 0;
-            lod.ebuf = (ushort *)(lod.eslist + texs.length());
-            lod.skybuf = lod.ebuf + 3*curtris;
-            lod.matbuf = (materialsurface *)(lod.skybuf+lod.sky+lod.explicitsky);
-        }
-
-        ushort *skybuf = NULL;
-        if(lod.sky+lod.explicitsky)
-        {
-            skybuf = hasVBO ? new ushort[lod.sky+lod.explicitsky] : lod.skybuf;
-            memcpy(skybuf, skyindices.getbuf(), lod.sky*sizeof(ushort));
-            memcpy(skybuf+lod.sky, explicitskyindices.getbuf(), lod.explicitsky*sizeof(ushort));
-        }
- 
-        if(hasVBO)
-        {
-            lod.ebuf = lod.skybuf = 0;
-            lod.matbuf = (materialsurface *)(lod.eslist + texs.length());
-
-            if(skybuf)
+            if(vbovas[VBO_VBUF].length())
             {
-                if(offsetindices) loopi(lod.sky+lod.explicitsky) skybuf[i] += offsetindices;
-                lod.skybuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_SKYBUF_L0 : VBO_SKYBUF_L1, skybuf, (lod.sky+lod.explicitsky)*sizeof(ushort));
-                delete[] skybuf;
+                vtxarray *loc = vbovas[VBO_VBUF][0];
+                if(((va->o.x^loc->o.x)|(va->o.y^loc->o.y)|(va->o.z^loc->o.z))&~VVEC_INT_MASK)
+                    flushvbo();
             }
-            else lod.skybufGL = 0;
+            if(vbosize[VBO_VBUF] + va->verts > maxvbosize) flushvbo();
+
+            va->voffset = vbosize[VBO_VBUF];
+            uchar *vdata = addvbo(va, VBO_VBUF, va->verts, VTXSIZE);
+            if(VTXSIZE!=sizeof(vertex)) genverts(verts, vdata);
+            else memcpy(vdata, verts.getbuf(), va->verts*VTXSIZE);
+            va->minvert += va->voffset;
+            va->maxvert += va->voffset;
         }
 
-        lod.matsurfs = matsurfs.length();
-        if(lod.matsurfs) memcpy(lod.matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
-
-        if(texs.length())
+        va->matbuf = NULL;
+        va->matsurfs = matsurfs.length();
+        if(va->matsurfs) 
         {
-            ushort *ebuf = hasVBO ? new ushort[3*curtris] : lod.ebuf, *curbuf = ebuf;
+            va->matbuf = new materialsurface[matsurfs.length()];
+            memcpy(va->matbuf, matsurfs.getbuf(), matsurfs.length()*sizeof(materialsurface));
+        }
+
+        va->skybuf = 0;
+        va->skydata = 0;
+        va->sky = skyindices.length();
+        va->explicitsky = explicitskyindices.length();
+        if(va->sky+va->explicitsky)
+        {
+            va->skydata += vbosize[VBO_SKYBUF];
+            ushort *skydata = (ushort *)addvbo(va, VBO_SKYBUF, va->sky+va->explicitsky, sizeof(ushort));
+            memcpy(skydata, skyindices.getbuf(), va->sky*sizeof(ushort));
+            memcpy(skydata+va->sky, explicitskyindices.getbuf(), va->explicitsky*sizeof(ushort));
+            if(va->voffset) loopi(va->sky+va->explicitsky) skydata[i] += va->voffset; 
+        }
+
+        va->eslist = NULL;
+        va->texs = texs.length();
+        va->ebuf = 0;
+        va->edata = 0;
+        if(va->texs)
+        {
+            va->eslist = new elementset[va->texs];
+            va->edata += vbosize[VBO_EBUF];
+            ushort *edata = (ushort *)addvbo(va, VBO_EBUF, 3*curtris, sizeof(ushort)), *curbuf = edata;
             loopv(texs)
             {
                 const sortkey &k = texs[i];
                 const sortval &t = indices[k];
-                elementset &e = lod.eslist[i];
+                elementset &e = va->eslist[i];
                 e.texture = k.tex;
                 e.lmid = t.unlit>0 ? t.unlit : k.lmid;
                 e.envmap = k.envmap;
@@ -418,7 +492,7 @@ struct lodcollect
 
                         loopvj(t.dims[l])
                         {
-                            curbuf[j] += offsetindices;
+                            curbuf[j] += va->voffset;
                             e.minvert[l] = min(e.minvert[l], curbuf[j]);
                             e.maxvert[l] = max(e.maxvert[l], curbuf[j]);
                         }
@@ -428,21 +502,24 @@ struct lodcollect
                     e.length[l] = curbuf-startbuf;
                 }
             }
-            if(hasVBO)
-            {
-                lod.ebuf = (ushort *)addvbo(va, &lod==&va->l0 ? VBO_EBUF_L0 : VBO_EBUF_L1, ebuf, 3*curtris*sizeof(ushort));
-                delete[] ebuf;
-            }
         }
-        else if(hasVBO) lod.ebufGL = 0;
-        lod.texs = texs.length();
-        lod.tris = curtris;
-        return (char *)(lod.matbuf+lod.matsurfs);
-    }
-} l0, l1;
 
-int explicitsky = 0;
-double skyarea = 0;
+        va->texmask = 0;
+        loopi(va->texs)
+        {
+            Slot &slot = lookuptexture(va->eslist[i].texture, false);
+            loopvj(slot.sts) va->texmask |= 1<<slot.sts[j].type;
+        }
+
+        if(grasstris.length())
+        {
+            va->grasstris = new vector<grasstri>;
+            va->grasstris->move(grasstris);
+        }
+
+        if(mapmodels.length()) va->mapmodels = new vector<octaentities *>(mapmodels);
+    }
+} vc;
 
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
 VAR(loddistance, 0, 2000, 100000);
@@ -504,7 +581,7 @@ int calcshadowmask(vvec *vv)
     return mask;
 }
 
-void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals, ushort envmap = EMID_NONE)
+void addcubeverts(int orient, int size, vvec *vv, ushort texture, surfaceinfo *surface, surfacenormals *normals, ushort envmap = EMID_NONE)
 {
     int index[4];
     int shadowmask = texture==DEFAULT_SKY || renderpath==R_FIXEDFUNCTION ? 0 : calcshadowmask(vv);
@@ -513,51 +590,48 @@ void addcubeverts(int orient, int size, bool lodcube, vvec *vv, ushort texture, 
     if(!nolights && surface && lightmaps.inrange(surface->lmid-LMID_RESERVED))
     {
         lm = &lightmaps[surface->lmid-LMID_RESERVED];
-        lmtex = &lightmaptexs[lm->tex];
+        if(lm->type==LM_DIFFUSE || 
+            (lm->type==LM_BUMPMAP0 && 
+                lightmaps.inrange(surface->lmid+1-LMID_RESERVED) && 
+                lightmaps[surface->lmid+1-LMID_RESERVED].type==LM_BUMPMAP1))
+            lmtex = &lightmaptexs[lm->tex];
+        else lm = NULL;
     }
     loopk(4)
     {
         short u, v;
-        if(lm)
+        if(lmtex)
         {
             u = short((lm->offsetx + surface->x + (surface->texcoords[k*2] / 255.0f) * (surface->w - 1) + 0.5f) * SHRT_MAX/lmtex->w);
             v = short((lm->offsety + surface->y + (surface->texcoords[k*2 + 1] / 255.0f) * (surface->h - 1) + 0.5f) * SHRT_MAX/lmtex->h);
         }
         else u = v = 0;
-        index[k] = vh.access(vv[k], u, v, renderpath!=R_FIXEDFUNCTION && normals ? normals->normals[k] : bvec(128, 128, 128));
+        index[k] = vc.addvert(vv[k], u, v, renderpath!=R_FIXEDFUNCTION && normals ? normals->normals[k] : bvec(128, 128, 128));
     }
 
     int lmid = LMID_AMBIENT;
     if(surface)
     {
         if(surface->lmid < LMID_RESERVED) lmid = surface->lmid;
-        else if(lightmaps.inrange(surface->lmid-LMID_RESERVED)) lmid = lightmaps[surface->lmid-LMID_RESERVED].tex;
+        else if(lm) lmid = lm->tex;
     }
 
     int dim = dimension(orient);
     sortkey key(texture, lmid, envmap);
-    if(!lodcube)
+    if(texture == DEFAULT_SKY) explicitsky += addtriindexes(vc.explicitskyindices, index);
+    else
     {
-        if(texture == DEFAULT_SKY) explicitsky += addtriindexes(l0.explicitskyindices, index);
-        else
-        {
-            sortval &val = l0.indices[key];
-            l0.curtris += addtriindexes(val.dims[2*dim], index, shadowmask^3);
-            if(shadowmask) l0.curtris += addtriindexes(val.dims[2*dim+1], index, shadowmask); 
-        }
-    }
-    if(lodsize && size>=lodsize)
-    {
-        int tris = addtriindexes(texture == DEFAULT_SKY ? l1.explicitskyindices : l1.indices[key].dims[2*dim], index);
-        if(texture != DEFAULT_SKY) l1.curtris += tris;
+        sortval &val = vc.indices[key];
+        vc.curtris += addtriindexes(val.dims[2*dim], index, shadowmask^3);
+        if(shadowmask) vc.curtris += addtriindexes(val.dims[2*dim+1], index, shadowmask); 
     }
 }
 
-void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube, uchar &vismask, uchar &clipmask)
+void gencubeverts(cube &c, int x, int y, int z, int size, int csi, uchar &vismask, uchar &clipmask)
 {
     freeclipplanes(c);                          // physics planes based on rendering
 
-    loopi(6) if(visibleface(c, i, x, y, z, size, MAT_AIR, MAT_AIR, lodcube))
+    loopi(6) if(visibleface(c, i, x, y, z, size))
     {
         if(c.texture[i]!=DEFAULT_SKY) vismask |= 1<<i;
 
@@ -570,7 +644,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube,
             if(c.texture[i]!=DEFAULT_SKY && faceedges(c, i)==F_SOLID) clipmask |= 1<<i;
         }
 
-        if(!lodcube && e.merged&(1<<i)) continue;
+        if(e.merged&(1<<i)) continue;
 
         cstats[csi].nface++;
 
@@ -583,10 +657,10 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube,
             loopv(slot.sts) if(slot.sts[i].type==TEX_ENVMAP) { envmap = EMID_CUSTOM; break; }
             if(envmap==EMID_NONE) envmap = closestenvmap(i, x, y, z, size); 
         }
-        addcubeverts(i, size, lodcube, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
-        if(!lodcube && slot.autograss && i!=O_BOTTOM) 
+        addcubeverts(i, size, vv, c.texture[i], e.surfaces ? &e.surfaces[i] : NULL, e.normals ? &e.normals[i] : NULL, envmap);
+        if(slot.autograss && i!=O_BOTTOM) 
         {
-            grasstri &g = grasstris.add();
+            grasstri &g = vc.grasstris.add();
             memcpy(g.v, vv, sizeof(vv));
             g.surface = e.surfaces ? &e.surfaces[i] : NULL;
             g.texture = c.texture[i];
@@ -594,7 +668,7 @@ void gencubeverts(cube &c, int x, int y, int z, int size, int csi, bool lodcube,
     }
     else if(touchingface(c, i))
     {
-        if(visibleface(c, i, x, y, z, size, MAT_AIR, MAT_NOCLIP, lodcube)) ext(c).visible |= 1<<i;
+        if(visibleface(c, i, x, y, z, size, MAT_AIR, MAT_NOCLIP)) ext(c).visible |= 1<<i;
         if(faceedges(c, i)==F_SOLID) clipmask |= 1<<i;
     }
 }
@@ -619,7 +693,7 @@ int hasskyfaces(cube &c, int x, int y, int z, int size, int faces[6])
     return numfaces;
 }
 
-vector<cubeface> skyfaces[6][2];
+vector<cubeface> skyfaces[6];
  
 void minskyface(cube &cu, int orient, const ivec &co, int size, mergeinfo &orig)
 {   
@@ -635,7 +709,7 @@ void minskyface(cube &cu, int orient, const ivec &co, int size, mergeinfo &orig)
     orig.v2 = min(mincf.v2, orig.v2);
 }  
 
-void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
+void genskyfaces(cube &c, const ivec &o, int size)
 {
     if(isentirelysolid(c)) return;
 
@@ -654,12 +728,8 @@ void genskyfaces(cube &c, const ivec &o, int size, bool lodcube)
         m.v2 = ((o[R[dim]]&VVEC_INT_MASK)+size)<<VVEC_FRAC;
         minskyface(c, orient, o, size, m);
         if(m.u1 >= m.u2 || m.v1 >= m.v2) continue;
-        if(!lodcube) 
-        {
-            skyarea += (int(m.u2-m.u1)*int(m.v2-m.v1) + (1<<(2*VVEC_FRAC))-1)>>(2*VVEC_FRAC);
-            skyfaces[orient][0].add(m);
-        }
-        if(lodsize && size>=lodsize) skyfaces[orient][1].add(m);
+        skyarea += (int(m.u2-m.u1)*int(m.v2-m.v1) + (1<<(2*VVEC_FRAC))-1)>>(2*VVEC_FRAC);
+        skyfaces[orient].add(m);
     }
 }
 
@@ -668,29 +738,26 @@ void addskyverts(const ivec &o, int size)
     loopi(6)
     {
         int dim = dimension(i), c = C[dim], r = R[dim];
-        loopl(2)
+        vector<cubeface> &sf = skyfaces[i]; 
+        if(sf.empty()) continue;
+        sf.setsizenodelete(mergefaces(i, sf.getbuf(), sf.length()));
+        loopvj(sf)
         {
-            vector<cubeface> &sf = skyfaces[i][l]; 
-            if(sf.empty()) continue;
-            sf.setsizenodelete(mergefaces(i, sf.getbuf(), sf.length()));
-            loopvj(sf)
+            mergeinfo &m = sf[j];
+            int index[4];
+            loopk(4)
             {
-                mergeinfo &m = sf[j];
-                int index[4];
-                loopk(4)
-                {
-                    const ivec &coords = cubecoords[fv[i][3-k]];
-                    vvec vv;
-                    vv[dim] = (o[dim]&VVEC_INT_MASK)<<VVEC_FRAC;
-                    if(coords[dim]) vv[dim] += size<<VVEC_FRAC;
-                    vv[c] = coords[c] ? m.u2 : m.u1;
-                    vv[r] = coords[r] ? m.v2 : m.v1;
-                    index[k] = vh.access(vv, 0, 0, bvec(128, 128, 128));
-                }
-                addtriindexes((!l ? l0 : l1).skyindices, index);
+                const ivec &coords = cubecoords[fv[i][3-k]];
+                vvec vv;
+                vv[dim] = (o[dim]&VVEC_INT_MASK)<<VVEC_FRAC;
+                if(coords[dim]) vv[dim] += size<<VVEC_FRAC;
+                vv[c] = coords[c] ? m.u2 : m.u1;
+                vv[r] = coords[r] ? m.v2 : m.v1;
+                index[k] = vc.addvert(vv, 0, 0, bvec(128, 128, 128));
             }
-            sf.setsizenodelete(0);
+            addtriindexes(vc.skyindices, index);
         }
+        sf.setsizenodelete(0);
     }
 }
                     
@@ -702,93 +769,55 @@ vector<vtxarray *> valist, varoot;
 
 vtxarray *newva(int x, int y, int z, int size)
 {
-    l0.optimize();
-    l1.optimize();
-    int allocsize = sizeof(vtxarray) + l0.size() + l1.size();
-    int bufsize = verts.length()*VTXSIZE;
-    if(!hasVBO) allocsize += bufsize; // length of vertex buffer
+    vc.optimize();
 
-    vtxarray *va = (vtxarray *)new uchar[allocsize];
+    vtxarray *va = new vtxarray;
     va->parent = NULL;
-    va->children = new vector<vtxarray *>;
-    va->allocsize = allocsize;
-    va->x = x; va->y = y; va->z = z; va->size = size;
+    va->o = ivec(x, y, z);
+    va->size = size;
     va->explicitsky = explicitsky;
     va->skyarea = skyarea;
     va->curvfc = VFC_NOT_VISIBLE;
     va->occluded = OCCLUDE_NOTHING;
     va->query = NULL;
     va->mapmodels = NULL;
-    if(grasstris.empty()) va->grasstris = NULL;
-    else
-    {
-        va->grasstris = new vector<grasstri>;
-        va->grasstris->move(grasstris);
-    }
+    va->grasstris = NULL;
     va->grasssamples = NULL;
     va->hasmerges = 0;
 
-    va->verts = verts.length();
-    va->vbufGL = 0;
-    va->vbuf = 0; // Offset in VBO, or just null
-    va->minvert = 0;
-    va->maxvert = verts.length()-1;
-    if(hasVBO && verts.length())
-    {
-        void *vbuf;
-        if(VTXSIZE!=sizeof(vertex))
-        {
-            char *f = new char[bufsize];
-            genverts(f);
-            vbuf = (vertex *)addvbo(va, VBO_VBUF, f, bufsize); 
-            delete[] f;
-        }
-        else vbuf = (vertex *)addvbo(va, VBO_VBUF, verts.getbuf(), bufsize);
-        int offset = int(size_t(vbuf)) / VTXSIZE;
-        l0.offsetindices = offset;
-        l1.offsetindices = offset;
-        va->minvert += offset;
-        va->maxvert += offset;
-    }
-    char *buf = l1.setup(va, va->l1, l0.setup(va, va->l0, (char *)(va+1)));
-    if(!hasVBO)
-    {
-        va->vbuf = (vertex *)buf;
-        if(VTXSIZE!=sizeof(vertex)) genverts(buf);
-        else memcpy(va->vbuf, verts.getbuf(), bufsize);
-    }
+    vc.setupdata(va);
 
     wverts += va->verts;
-    wtris  += va->l0.tris;
+    wtris  += va->tris;
     allocva++;
     valist.add(va);
+
     return va;
 }
 
 void destroyva(vtxarray *va, bool reparent)
 {
-    if(va->vbufGL) destroyvbo(va->vbufGL);
-    if(va->l0.ebufGL) destroyvbo(va->l0.ebufGL);
-    if(va->l0.skybufGL) destroyvbo(va->l0.skybufGL);
-    if(va->l1.ebufGL) destroyvbo(va->l1.ebufGL);
-    if(va->l1.skybufGL) destroyvbo(va->l1.skybufGL);
     wverts -= va->verts;
-    wtris -= va->l0.tris;
+    wtris -= va->tris;
     allocva--;
     valist.removeobj(va);
     if(!va->parent) varoot.removeobj(va);
     if(reparent)
     {
-        if(va->parent) va->parent->children->removeobj(va);
-        loopv(*va->children)
+        if(va->parent) va->parent->children.removeobj(va);
+        loopv(va->children)
         {
-            vtxarray *child = (*va->children)[i];
+            vtxarray *child = va->children[i];
             child->parent = va->parent;
-            if(child->parent) child->parent->children->add(va);
+            if(child->parent) child->parent->children.add(va);
         }
     }
+    if(va->vbuf) destroyvbo(va->vbuf);
+    if(va->ebuf) destroyvbo(va->ebuf);
+    if(va->skybuf) destroyvbo(va->skybuf);
+    if(va->eslist) delete[] va->eslist;
+    if(va->matbuf) delete[] va->matbuf;
     if(va->mapmodels) delete va->mapmodels;
-    if(va->children) delete va->children;
     if(va->grasstris) delete va->grasstris;
     if(va->grasssamples) delete va->grasssamples;
     delete[] (uchar *)va;
@@ -806,8 +835,6 @@ void vaclearc(cube *c)
         if(c[i].children) vaclearc(c[i].children);
     }
 }
-
-static vector<octaentities *> vamms;
 
 struct mergedface
 {   
@@ -873,11 +900,11 @@ void addmergedverts(int level)
     loopv(mfl)
     {
         mergedface &mf = mfl[i];
-        addcubeverts(mf.orient, 1<<level, false, mf.v, mf.tex, mf.surface, mf.normals, mf.envmap);
+        addcubeverts(mf.orient, 1<<level, mf.v, mf.tex, mf.surface, mf.normals, mf.envmap);
         Slot &slot = lookuptexture(mf.tex, false);
         if(slot.autograss && mf.orient!=O_BOTTOM)
         {
-            grasstri &g = grasstris.add();
+            grasstri &g = vc.grasstris.add();
             memcpy(g.v, mf.v, sizeof(mf.v));
             g.surface = mf.surface;
             g.texture = mf.tex;
@@ -900,7 +927,6 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi, uchar &visma
         return;                            // don't re-render
     }
     cstats[csi].size = size;
-    bool lodcube = false;
 
     if(c.children)
     {
@@ -922,28 +948,23 @@ void rendercube(cube &c, int cx, int cy, int cz, int size, int csi, uchar &visma
 
         if(csi < VVEC_INT && vamerges[csi].length()) addmergedverts(csi);
 
-        if(size!=lodsize)
+        if(c.ext)
         {
-            if(c.ext)
-            {
-                if(c.ext->ents && c.ext->ents->mapmodels.length()) vamms.add(c.ext->ents);
-            }
-            return;
+            if(c.ext->ents && c.ext->ents->mapmodels.length()) vc.mapmodels.add(c.ext->ents);
         }
-        lodcube = true;
+        return;
     }
-    if(!c.children || lodcube) genskyfaces(c, ivec(cx, cy, cz), size, lodcube);
+    
+    genskyfaces(c, ivec(cx, cy, cz), size);
 
     vismask = clipmask = 0;
 
-    if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, lodcube, vismask, clipmask);
-
-    if(lodcube) return;
+    if(!isempty(c)) gencubeverts(c, cx, cy, cz, size, csi, vismask, clipmask);
 
     if(c.ext)
     {
-        if(c.ext->ents && c.ext->ents->mapmodels.length()) vamms.add(c.ext->ents);
-        if(c.ext->material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, l0.matsurfs, vismask, clipmask);
+        if(c.ext->ents && c.ext->ents->mapmodels.length()) vc.mapmodels.add(c.ext->ents);
+        if(c.ext->material != MAT_AIR) genmatsurfs(c, cx, cy, cz, size, vc.matsurfs, vismask, clipmask);
         if(c.ext->merges) genmergedfaces(c, ivec(cx, cy, cz), size);
         if(c.ext->merged & ~c.ext->mergeorigin) vahasmerges |= MERGE_PART;
     }
@@ -957,9 +978,9 @@ void calcvabb(int cx, int cy, int cz, int size, ivec &bbmin, ivec &bbmax)
 {
     vvec vmin(cx+size, cy+size, cz+size), vmax(cx, cy, cz);
 
-    loopv(verts)
+    loopv(vc.verts)
     {
-        vvec &v = verts[i];
+        vvec &v = vc.verts[i];
         loopj(3)
         {
             if(v[j]<vmin[j]) vmin[j] = v[j];
@@ -993,20 +1014,14 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
     ext(c).va = va;
     va->sortmin = va->min = bbmin;
     va->sortmax = va->max = bbmax;
-    va->shadowmapmin = shadowmapmin.toivec(va->x, va->y, va->z);
+    va->shadowmapmin = shadowmapmin.toivec(va->o);
     loopk(3) shadowmapmax[k] += (1<<VVEC_FRAC)-1;
-    va->shadowmapmax = shadowmapmax.toivec(va->x, va->y, va->z); 
-    if(vamms.length()) va->mapmodels = new vector<octaentities *>(vamms);
+    va->shadowmapmax = shadowmapmax.toivec(va->o);
     va->hasmerges = vahasmerges;
 
-    verts.setsizenodelete(0);
-    vamms.setsizenodelete(0);
-    grasstris.setsizenodelete(0);
     explicitsky = 0;
     skyarea = 0;
-    vh.clear(); 
-    l0.clear();
-    l1.clear();
+    vc.clear();
 }
 
 VARF(vacubemax, 64, 2048, 256*256, allchanged());
@@ -1044,7 +1059,7 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
                 while(varoot.length() > childpos)
                 {
                     vtxarray *child = varoot.pop();
-                    c[i].ext->va->children->add(child);
+                    c[i].ext->va->children.add(child);
                     child->parent = c[i].ext->va;
                     if(child->sortmin.x<=child->sortmax.x) loopk(3)
                     {
@@ -1073,30 +1088,9 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
     return ccount;
 }
 
-void genlod(cube &c, int size)
-{
-    if(!c.children || (c.ext && c.ext->va)) return;
-    progress("generating LOD...");
-
-    loopi(8) genlod(c.children[i], size/2);
-
-    if(size>lodsize) return;
-
-    if(c.ext) c.ext->material = MAT_AIR;
-
-    loopi(8) if(!isempty(c.children[i]))
-    {
-        forcemip(c);
-        return;
-    }
-
-    emptyfaces(c);
-}
-
 void octarender()                               // creates va s for all leaf cubes that don't already have them
 {
     recalcprogress = 0;
-    if(lodsize) loopi(8) genlod(worldroot[i], hdr.worldsize/2);
 
     int csi = 0;
     while(1<<csi < hdr.worldsize) csi++;
@@ -1116,8 +1110,8 @@ void octarender()                               // creates va s for all leaf cub
     }
 }
 
-void precachetextures(lodlevel &lod) { loopi(lod.texs) lookuptexture(lod.eslist[i].texture); }
-void precacheall() { loopv(valist) { precachetextures(valist[i]->l0); precachetextures(valist[i]->l1); } ; }
+void precachetextures(vtxarray *va) { loopi(va->texs) lookuptexture(va->eslist[i].texture); }
+void precacheall() { loopv(valist) precachetextures(valist[i]); }
 
 void allchanged(bool load)
 {

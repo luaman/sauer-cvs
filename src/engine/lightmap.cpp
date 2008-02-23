@@ -903,7 +903,7 @@ bool setup_surface(plane planes[2], const vec *p, const vec *n, const vec *n2, u
     return true;
 }
 
-void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
+void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
 {
     if(c.ext && c.ext->surfaces)
     {
@@ -916,7 +916,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
     }
     vvec vvecs[8];
     bool usefaces[6];
-    int vertused = calcverts(c, cx, cy, cz, size, vvecs, usefaces, lodcube);
+    int vertused = calcverts(c, cx, cy, cz, size, vvecs, usefaces);
     vec verts[8];
     loopi(8) if(vertused&(1<<i)) verts[i] = vvecs[i].tovec(cx, cy, cz);
     int mergeindex = 0;
@@ -930,7 +930,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         int numplanes;
 
         Shader *shader = lookupshader(c.texture[i]);
-        if(!lodcube && c.ext && c.ext->merged&(1<<i))
+        if(c.ext && c.ext->merged&(1<<i))
         {
             if(!(c.ext->mergeorigin&(1<<i))) continue;
             const mergeinfo &m = c.ext->merges[mergeindex++];
@@ -958,7 +958,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
             if(!numplanes) continue;
             if(!find_lights(cx, cy, cz, size, planes, numplanes))
             {
-                if(lodcube || !(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))) continue;
+                if(!(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))) continue;
             }
 
             loopj(4) n[j] = planes[0];
@@ -968,7 +968,6 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
                 int index = faceverts(c, i, j);
                 const vvec &vv = vvecs[index];
                 v[j] = verts[index];
-                if(lodcube) continue;
                 if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, vv, n[j]);
                 else
                 {
@@ -980,18 +979,15 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size, bool lodcube)
         }
         lmtype = LM_DIFFUSE;
         lmorient = i;
-        if(!lodcube)
+        if(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))
         {
-            if(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))
-            {
-                if(shader->type&SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
-                newnormals(c);
-                surfacenormals *cn = c.ext->normals;
-                cn[i].normals[0] = bvec(n[0]);
-                cn[i].normals[1] = bvec(n[1]);
-                cn[i].normals[2] = bvec(n[2]);
-                cn[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
-            }
+            if(shader->type&SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
+            newnormals(c);
+            surfacenormals *cn = c.ext->normals;
+            cn[i].normals[0] = bvec(n[0]);
+            cn[i].normals[1] = bvec(n[1]);
+            cn[i].normals[2] = bvec(n[2]);
+            cn[i].normals[3] = bvec(numplanes < 2 ? n[3] : n2[2]);
         }
         if(lights1.empty() && lights2.empty() && hdr.skylight[0]<=ambient && hdr.skylight[1]<=ambient && hdr.skylight[2]<=ambient) continue;
         uchar texcoords[8];
@@ -1019,9 +1015,8 @@ void generate_lightmaps(cube *c, int cx, int cy, int cz, int size)
         ivec o(i, cx, cy, cz, size);
         if(c[i].children)
             generate_lightmaps(c[i].children, o.x, o.y, o.z, size >> 1);
-        bool lodcube = c[i].children && hdr.mapwlod==size;
-        if((!c[i].children || lodcube) && !isempty(c[i]))
-            setup_surfaces(c[i], o.x, o.y, o.z, size, lodcube);
+        if(!c[i].children && !isempty(c[i]))
+            setup_surfaces(c[i], o.x, o.y, o.z, size);
     } 
 }
 
@@ -1123,6 +1118,7 @@ void patchlight(int *quality)
         return;
     }
     computescreen("patching lightmaps... (esc to abort)");
+    cleanuplightmaps();
     progress = 0;
     progresstexticks = 0;
     int total = 0, lumels = 0;

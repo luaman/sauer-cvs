@@ -79,16 +79,6 @@ struct grasstexture
     ushort texture, reserved;
 };
 
-struct lodlevel
-{
-    elementset *eslist;      // List of element indces sets (range) per texture
-    ushort *ebuf;            // packed element indices buffer
-    ushort *skybuf;          // skybox packed element indices buffer
-    materialsurface *matbuf; // buffer of material surfaces
-    GLuint ebufGL, skybufGL;  // element index VBO
-    int tris, texs, matsurfs, sky, explicitsky;
-};
-
 struct occludequery
 {
     void *owner;
@@ -133,16 +123,19 @@ enum
 struct vtxarray
 {
     vtxarray *parent;
-    vector<vtxarray *> *children;
-    lodlevel l0, l1;
-    vertex *vbuf;           // vertex buffer
-    ushort minvert, maxvert; // DRE info
+    vector<vtxarray *> children;
     vtxarray *next, *rnext; // linked list of visible VOBs
-    int allocsize;          // size of allocated memory for this va
-    int verts, explicitsky, curlod, distance;
+    vertex *vdata;           // vertex data
+    ushort voffset;          // offset into vertex data
+    ushort *edata, *skydata; // vertex indices
+    GLuint vbuf, ebuf, skybuf; // VBOs
+    ushort minvert, maxvert; // DRE info
+    elementset *eslist;      // List of element indices sets (range) per texture
+    materialsurface *matbuf; // buffer of material surfaces
+    int verts, tris, texs, texmask, sky, explicitsky, matsurfs, curlod, distance;
     double skyarea;
-    GLuint vbufGL;          // VBO buffer ID
-    int x, y, z, size;      // location and size of cube.
+    ivec o;
+    int size;      // location and size of cube.
     ivec min, max;          // BB
     ivec sortmin, sortmax; // BB including all children
     ivec shadowmapmin, shadowmapmax;      // BB of shadowmapped surfaces
@@ -152,6 +145,8 @@ struct vtxarray
     vector<grasstri> *grasstris;
     vector<grasssample> *grasssamples;
     int hasmerges;
+    uint dynlightmask;
+    bool shadowed;
 };
 
 struct cube;

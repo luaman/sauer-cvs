@@ -529,9 +529,6 @@ COMMAND(savecurrentmap, "");
 
 void writeobj(char *name)
 {
-    bool oldVBO = hasVBO;
-    hasVBO = false;
-    allchanged();
     s_sprintfd(fname)("%s.obj", name);
     FILE *f = openfile(path(fname), "w"); 
     if(!f) return;
@@ -540,32 +537,34 @@ void writeobj(char *name)
     loopv(valist)
     {
         vtxarray &va = *valist[i];
-        uchar *verts = (uchar *)va.vbuf;
-        if(!verts) continue;
+        ushort *edata = NULL;
+        uchar *vdata = NULL;
+        if(!readva(&va, edata, vdata)) continue;
         int vtxsize = VTXSIZE;
+        uchar *vert = vdata;
         loopj(va.verts) 
         {
             vvec vv;
-            if(floatvtx) { vec &f = *(vec *)verts; loopk(3) vv[k] = short(f[k]); }
-            else vv = *(vvec *)verts;
-            vec v = vv.tovec(va.x, va.y, va.z);
+            if(floatvtx) { vec &f = *(vec *)vert; loopk(3) vv[k] = short(f[k]); }
+            else vv = *(vvec *)vert;
+            vec v = vv.tovec(va.o);
             if(vv.x&((1<<VVEC_FRAC)-1)) fprintf(f, "v %.3f ", v.x); else fprintf(f, "v %d ", int(v.x));
             if(vv.y&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f ", v.y); else fprintf(f, "%d ", int(v.y));
             if(vv.z&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f\n", v.z); else fprintf(f, "%d\n", int(v.z));
-            verts += vtxsize;
+            vert += vtxsize;
         }
-        ushort *ebuf = va.l0.ebuf;
-        loopi(va.l0.tris)
+        ushort *tri = edata;
+        loopi(va.tris)
         {
             fprintf(f, "f");
-            for(int k = 0; k<3; k++) fprintf(f, " %d", ebuf[k]-va.verts);
-            ebuf += 3;
+            for(int k = 0; k<3; k++) fprintf(f, " %d", tri[k]-va.verts-va.voffset);
+            tri += 3;
             fprintf(f, "\n");
         }
+        delete[] edata;
+        delete[] vdata;
     }
     fclose(f);
-    hasVBO = oldVBO;
-    allchanged();
 }  
     
 COMMAND(writeobj, "s"); 
