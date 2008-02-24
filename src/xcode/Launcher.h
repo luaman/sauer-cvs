@@ -22,6 +22,7 @@
 @private	
     NSMutableDictionary *toolBarItems;
     pid_t server;
+    NSMutableDictionary *fileRoles;
 }
 
 - (IBAction)playAction:(id)sender;

@@ -20,11 +20,8 @@
 
 #define kMaxDisplays	16
 
-//define these in one place - if you make a MOD then please change these!
+//If you make a MOD then please change this, the bundle indentifier, the file extensions (.ogz, .dmo), and the url registration.
 #define kSauerbraten @"sauerbraten"
-#define kDemo @".dmo"
-#define kMap @".ogz"
-
 
 @interface NSString(Extras)
 @end
@@ -35,8 +32,6 @@
     [str replaceOccurrencesOfString:@":s" withString:kSauerbraten options:0 range:NSMakeRange(0, [str length])]; 
     return str;
 }
-- (BOOL)isDemo { return [self hasSuffix:kDemo]; }
-- (BOOL)isMap { return [self hasSuffix:kMap]; }
 @end
 
 
@@ -57,13 +52,13 @@
 }
 @end
 @implementation Map
-- (id)initWithPath:(NSString*)aPath user:(BOOL)aUser 
+- (id)initWithPath:(NSString*)aPath user:(BOOL)aUser demo:(BOOL)aDemo
 {
     if((self = [super init])) 
     {
-        demo = [aPath isDemo];
         path = [[aPath stringByDeletingPathExtension] retain];
         user = aUser;
+        demo = aDemo;
     }
     return self;
 }
@@ -380,7 +375,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (BOOL)launchGame:(NSArray *)args {
     NSString *cwd = [Launcher cwd];
-    NSString *exe = [[Launcher cwd] stringByAppendingPathComponent:[@":s.app/Contents/MacOS/:s" expand]];
+    //NSString *exe = [cwd stringByAppendingPathComponent:[@":s.app/Contents/MacOS/:s" expand]];
+    NSString *exe = [[NSBundle bundleWithPath:[cwd stringByAppendingPathComponent:[@":s.app" expand]]] executablePath];
+    
     BOOL okay = YES;
     
     if([args containsObject:@"-d"])
@@ -508,9 +505,10 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         NSString *file;
         while(file = [enumerator nextObject]) 
         {
-            if([file isMap] || [file isDemo]) 
+            NSString *role = [fileRoles objectForKey:[file pathExtension]];
+            if(role) 
             {   
-                Map *map = [[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file] user:(i==1)];
+                Map *map = [[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file] user:(i==1) demo:[role isEqual:@"Viewer"]];
                 [maps performSelectorOnMainThread:@selector(addObject:) withObject:map waitUntilDone:NO];
             }
         }
@@ -528,13 +526,38 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (void)awakeFromNib 
 {
+    //generate some pretty icons...
+    NSImage *image = [[NSImage imageNamed:@"NSApplicationIcon"] copy];
+    NSRect region = NSMakeRect(0, 0, 64, 64);
+    [image setSize:region.size];
+    [image setName:@"Main"]; //one less image to include
+    
+    NSImage *en = [image copy]; 
+    [en lockFocus];
+    [[NSColor cyanColor] set]; //greenish icon instead - as CGBlendMode is 10.4+, bitmap filters are too much code  
+	NSRectFillUsingOperation(region, NSCompositeSourceAtop);
+    [image drawInRect:region fromRect:region operation:NSCompositePlusDarker fraction:1.0];
+    [en unlockFocus];
+    [en setName:@"EisenStern"]; //one less image to include
+    
     [self initToolBar];
     [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
+
+    //from the plist we determine that dmo->Viewer, and ogz->Editor 
+    fileRoles = [[NSMutableDictionary dictionary] retain];
+    NSEnumerator *types = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDocumentTypes"] objectEnumerator];
+    NSDictionary *type;
+    while((type = [types nextObject])) {
+        NSString *role = [type objectForKey:@"CFBundleTypeRole"];
+        NSEnumerator *exts = [[type objectForKey:@"CFBundleTypeExtensions"] objectEnumerator];
+        NSString *ext;
+        while((ext = [exts nextObject])) [fileRoles setObject:role forKey:ext];
+    }
 	
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
     NSFileManager *fm = [NSFileManager defaultManager];
     
-    NSString *appVersion = [[[NSBundle bundleForClass:[self class]] infoDictionary] objectForKey:@"CFBundleVersion"];
+    NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
     NSString *version = [defs stringForKey:dkVERSION];
     if(!version || ![version isEqual:appVersion]) 
     {
@@ -599,8 +622,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 //we register 'ogz' and 'dmo' as doc types
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename 
 {
-    BOOL demo = [filename isDemo];
-    if(!demo && ![filename isMap]) return NO;
+    NSString *role = [fileRoles objectForKey:[filename pathExtension]];
+    if(!role) return NO;
+    BOOL demo = [role isEqual:@"Viewer"];
     filename = [filename stringByDeletingPathExtension]; //chop off extension
     int len = [Launcher hasUserdir] ? 2 : 1;
     int i;
