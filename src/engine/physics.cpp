@@ -406,22 +406,26 @@ bool ellipsecollide(physent *d, const vec &dir, const vec &o, float yaw, float x
     float dist = sqrtf(x*x + y*y) - sqrtf(dx*dx + dy*dy) - sqrtf(ex*ex + ey*ey);
     if(dist < 0)
     {
-        if(dir.iszero() || ((d->type>=ENT_INANIMATE || below >= -(d->eyeheight+d->aboveeye)/4.0f) && dir.z > 0))
-        {
-            wall = vec(0, 0, -1);
-            return false;
-        }
-        if(dir.iszero() || ((d->type>=ENT_INANIMATE || above >= -(d->eyeheight+d->aboveeye)/3.0f) && dir.z < 0))
-        {
-            wall = vec(0, 0, 1);
-            return false;
-        }
-        if(dir.iszero() || -x*dir.x + -y*dir.y < 0)
+        if(dist > (d->o.z < o.z ? below : above) && (dir.iszero() || x*dir.x + y*dir.y > 0))
         {
             wall = vec(-x, -y, 0);
             wall.normalize();
             return false;
         }
+        if(d->o.z < o.z)
+        {
+            if(dir.iszero() || (dir.z > 0 && (d->type>=ENT_INANIMATE || below >= d->zmargin-(d->eyeheight+d->aboveeye)/4.0f)))
+            {
+                wall = vec(0, 0, -1);
+                return false;
+            }
+        }
+        else if(dir.iszero() || (dir.z < 0 && (d->type>=ENT_INANIMATE || above >= d->zmargin-(d->eyeheight+d->aboveeye)/3.0f)))
+        {
+            wall = vec(0, 0, 1);
+            return false;
+        }
+        inside = true;
     }
     return true;
 }
@@ -449,8 +453,8 @@ bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  
     if(ax>ay && ax>az) TRYCOLLIDE(x, O_LEFT, O_RIGHT, ax > -dxr, ax > -dxr);
     if(ay>az) TRYCOLLIDE(y, O_BACK, O_FRONT, ay > -dyr, ay > -dyr);
     TRYCOLLIDE(z, O_BOTTOM, O_TOP,
-         az >= -(d->eyeheight+d->aboveeye)/4.0f,
-         az >= -(d->eyeheight+d->aboveeye)/3.0f);
+         az >= d->zmargin-(d->eyeheight+d->aboveeye)/4.0f,
+         az >= d->zmargin-(d->eyeheight+d->aboveeye)/3.0f);
     if(collideonly) inside = true;
     return collideonly;
 }
@@ -654,12 +658,22 @@ bool cubecollide(physent *d, const vec &dir, float cutoff, cube &c, int x, int y
             {
                 if(!dir.iszero())
                 {
-                    if(f.dot(dir) >= -cutoff) continue;
-                    if(d->type<ENT_CAMERA && dist < (dir.z*f.z < 0 ? -(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) : ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) continue;
+                    if(f.dot(dir) >= -cutoff*dir.magnitude()) continue;
+                    if(d->type<ENT_CAMERA && 
+                        dist < (dir.z*f.z < 0 ? 
+                            d->zmargin-(d->eyeheight+d->aboveeye)/(dir.z < 0 ? 3.0f : 4.0f) : 
+                            ((dir.x*f.x < 0 || dir.y*f.y < 0) ? -r : 0))) 
+                        continue;
                 }
-                if(f.x && (f.x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist && f.dist(vec(p.o.x + (f.x>0 ? -p.r.x : p.r.x), o.y, o.z)) >= vec(0, f.y*r, f.z*zr).magnitude()) continue;
-                if(f.y && (f.y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist && f.dist(vec(o.x, p.o.y + (f.y>0 ? -p.r.y : p.r.y), o.z)) >= vec(f.x*r, 0, f.z*zr).magnitude()) continue;
-                if(f.z && (f.z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist && f.dist(vec(o.x, o.y, p.o.z + (f.z>0 ? -p.r.z : p.r.z))) >= vec(f.x*r, f.y*r, 0).magnitude()) continue;
+                if(f.x && (f.x>0 ? o.x-p.o.x : p.o.x-o.x) + p.r.x - r < dist && 
+                    f.dist(vec(p.o.x + (f.x>0 ? -p.r.x : p.r.x), o.y, o.z)) >= vec(0, f.y*r, f.z*zr).magnitude()) 
+                    continue;
+                if(f.y && (f.y>0 ? o.y-p.o.y : p.o.y-o.y) + p.r.y - r < dist && 
+                    f.dist(vec(o.x, p.o.y + (f.y>0 ? -p.r.y : p.r.y), o.z)) >= vec(f.x*r, 0, f.z*zr).magnitude()) 
+                    continue;
+                if(f.z && (f.z>0 ? o.z-p.o.z : p.o.z-o.z) + p.r.z - zr < dist && 
+                    f.dist(vec(o.x, o.y, p.o.z + (f.z>0 ? -p.r.z : p.r.z))) >= vec(f.x*r, f.y*r, 0).magnitude()) 
+                    continue;
                 w = &f;
                 m = dist;
             }
@@ -744,6 +758,18 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
 
 VARP(minframetime, 5, 10, 20);
 
+void recalcdir(physent *d, const vec &oldvel, vec &dir)
+{
+    float speed = oldvel.magnitude();
+    if(speed)
+    {
+        float step = dir.magnitude();
+        dir = d->vel;
+        dir.add(d->gravity);
+        dir.mul(step/speed);
+    }
+}
+
 void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
 {
     vec wall(obstacle);
@@ -752,25 +778,25 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
         wall.z = 0;
         if(!wall.iszero()) wall.normalize();
     }
-    dir.project(wall);
+    vec oldvel(d->vel);
+    oldvel.add(d->gravity);
     d->vel.project(wall);
-    if(d->gravity.dot(wall) < 0) d->gravity.project(wall); 
+    d->gravity.project(wall); 
+    recalcdir(d, oldvel, dir);
 }
 
 void switchfloor(physent *d, vec &dir, const vec &floor)
 {
-    if(d->gravity.dot(floor) < 0) d->gravity.projectxy(floor);
-    if(d->physstate >= PHYS_SLOPE && fabs(dir.dot(d->floor)/dir.magnitude()) > 0.01f) return;
-    if(dir.dot(floor) > 0)
+    vec oldvel(d->vel);
+    oldvel.add(d->gravity);
+    if(dir.dot(floor) >= 0)
     {
-        dir.projectxy(floor, 0.0f);
+        if(d->physstate < PHYS_SLIDE || fabs(dir.dot(d->floor)) > 0.01f*dir.magnitude()) return;
         d->vel.projectxy(floor, 0.0f);
     }
-    else
-    {
-        dir.projectxy(floor);
-        d->vel.projectxy(floor);
-    }
+    else d->vel.projectxy(floor);
+    d->gravity.project(floor);
+    recalcdir(d, oldvel, dir);
 }
 
 bool trystepup(physent *d, vec &dir, float maxstep)
@@ -881,24 +907,21 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
         found = true;
         slide = false;
     }
-    else
+    else if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
     {
-        if(d->physstate == PHYS_STEP_UP || d->physstate == PHYS_SLIDE)
+        if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
         {
-            if(!collide(d, vec(0, 0, -1)) && wall.z > 0.0f)
-            {
-                floor = wall;
-                if(floor.z >= SLOPEZ) found = true;
-            }
+            floor = wall;
+            if(floor.z >= SLOPEZ) found = true;
         }
-        else
+    }
+    else if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f)
+    {
+        d->o.z -= d->radius;
+        if(!collide(d, vec(0, 0, -1), SLOPEZ) || !collide(d, vec(0, 0, -1)))
         {
-            d->o.z -= d->radius;
-            if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f && !collide(d, vec(0, 0, -1)))
-            {
-                floor = wall;
-                if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
-            }
+            floor = wall;
+            if(floor.z >= SLOPEZ && floor.z < 1.0f) found = true;
         }
     }
     if(collided && (!found || obstacle.z > floor.z)) 
@@ -936,14 +959,21 @@ bool move(physent *d, vec &dir)
             obstacle = wall;
         d->o = old;
         if(d->type == ENT_CAMERA) return false;
-        d->o.z -= (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-        if((d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR) || (!collide(d, vec(0, 0, -1), SLOPEZ) && (d->physstate == PHYS_STEP_UP || wall.z == 1.0f)))
+        float stepdist = (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
+        d->o.z -= stepdist;
+        d->zmargin = -stepdist;
+        if(d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR || (!collide(d, vec(0, 0, -1), SLOPEZ) && (d->physstate==PHYS_STEP_UP || wall.z>=FLOORZ)))
         {
             d->o = old;
+            d->zmargin = 0;
             float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
             if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
         }
-        else d->o = old;
+        else 
+        {
+            d->o = old; 
+            d->zmargin = 0;
+        }
         /* can't step over the obstacle, so just slide against it */
         collided = true;
     }
@@ -985,7 +1015,6 @@ bool bounce(physent *d, float secs, float elasticity, float waterfric)
             if(inside)
             {
                 d->o = old;
-                d->gravity.mul(-elasticity);
                 d->vel.mul(-elasticity);
             }
             break;
