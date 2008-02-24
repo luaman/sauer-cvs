@@ -18,14 +18,31 @@
 #define dkPASSWORD @"server_password"
 #define dkMAXCLIENTS @"server_maxclients"
 
-
 #define kMaxDisplays	16
 
-// unless you want strings with "(null)" in them :-/
-@interface NSUserDefaults(Extras)
-- (NSString*)nonNullStringForKey:(NSString*)key;
+//define these in one place - if you make a MOD then please change these!
+#define kSauerbraten @"sauerbraten"
+#define kDemo @".dmo"
+#define kMap @".ogz"
+
+
+@interface NSString(Extras)
+@end
+@implementation NSString(Extras)
+- (NSString*)expand {
+    NSMutableString *str = [NSMutableString string];
+    [str setString:self];
+    [str replaceOccurrencesOfString:@":s" withString:kSauerbraten options:0 range:NSMakeRange(0, [str length])]; 
+    return str;
+}
+- (BOOL)isDemo { return [self hasSuffix:kDemo]; }
+- (BOOL)isMap { return [self hasSuffix:kMap]; }
 @end
 
+
+@interface NSUserDefaults(Extras) // unless you want strings with "(null)" in them :-/
+- (NSString*)nonNullStringForKey:(NSString*)key;
+@end
 @implementation NSUserDefaults(Extras)
 - (NSString*)nonNullStringForKey:(NSString*)key {
     NSString *result = [self stringForKey:key];
@@ -33,18 +50,18 @@
 }
 @end
 
+
 @interface Map : NSObject {
     NSString *path;
     BOOL demo, user;
 }
 @end
-
 @implementation Map
 - (id)initWithPath:(NSString*)aPath user:(BOOL)aUser 
 {
     if((self = [super init])) 
     {
-        demo = [aPath hasSuffix:@".dmo"];
+        demo = [aPath isDemo];
         path = [[aPath stringByDeletingPathExtension] retain];
         user = aUser;
     }
@@ -72,11 +89,11 @@
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
     else
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
-    if(!text && (demo || user)) {
+    if(!text)
+    {
         text = user ? @"user " : @"";
         if(demo) text = [text stringByAppendingString:@"demo"];
     }
-    if(!text) return @"";
     return text;
 }
 - (void)setText:(NSString*)text { } // wtf? - damn textfield believes it's editable
@@ -91,7 +108,6 @@
 @end
 
 
-
 static int numberForKey(CFDictionaryRef desc, CFStringRef key) 
 {
     CFNumberRef value;
@@ -102,29 +118,20 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     return num;
 }
 
-@implementation Launcher
+
+@interface Launcher(ToolBar)
+@end
+@implementation Launcher(ToolBar)
 
 - (void)switchViews:(NSToolbarItem *)item 
 {
-    NSView *prefsView = nil;
-    switch([item tag]) 
-    {
-        case 1: prefsView = view1; break;
-        case 2: prefsView = view2; break;
-        case 3: prefsView = view3; break;
-        case 4: prefsView = view4; break;
-        case 5: prefsView = view5; break;
-            //extend as see fit...
-        default: return;
-    }
+    NSView *views[] = {view1, view2, view3, view4, view5};
+    NSView *prefsView = views[[item tag]-1];
     
     //to stop flicker, we make a temp blank view.
     NSView *tempView = [[NSView alloc] initWithFrame:[[window contentView] frame]];
     [window setContentView:tempView];
     [tempView release];
-
-    //if no view then keep the blank one
-    if(!prefsView) prefsView = tempView;
     
     //mojo to get the right frame for the new window.
     NSRect newFrame = [window frame];
@@ -134,41 +141,36 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     
     //set the frame to newFrame and animate it. 
     [window setFrame:newFrame display:YES animate:YES];
-    //set the main content view to the new view we have picked through the if structure above.
+    //set the main content view to the new view we have picked through.
     [window setContentView:prefsView];
     [window setContentMinSize:[prefsView bounds].size];
 }
 
-- (NSToolbarItem*)addToolBarItem:(NSString*)name 
-{
-    int n = [toolBarItems count] + 1;
-    NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:[NSString stringWithFormat:@"%0d", n]];
-    [item setTag:n];
-    [item setTarget:self];
-    [item setAction:@selector(switchViews:)];
-    [toolBarItems setObject:item forKey:[item itemIdentifier]];
-    [item setLabel:NSLocalizedString(name, @"")];
-    [item setImage:[NSImage imageNamed:name]];
-    [item release];
-    return item;
-}
-
-- (void)initViews 
+- (void)initToolBar 
 {
     toolBarItems = [[NSMutableDictionary alloc] init];
-    NSToolbarItem *first = [self addToolBarItem:@"Main"];
-    [self addToolBarItem:@"Maps"];
-    [self addToolBarItem:@"Keys"];
-    [self addToolBarItem:@"Server"];
-    [self addToolBarItem:@"EisenStern"];
-
-    NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:NSToolbarFlexibleSpaceItemIdentifier];
-    [toolBarItems setObject:item forKey:[item itemIdentifier]];
-    [item release];
-
-    [[self addToolBarItem:@"Help"] setAction:@selector(helpAction:)];
-
-    NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@"PreferencePanes"];
+    NSEnumerator *e = [[self toolbarDefaultItemIdentifiers:nil] objectEnumerator];
+    NSString *identifier;
+    while(identifier = [e nextObject])
+    {
+        NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
+        int tag = [identifier intValue];
+        NSString *name = identifier;
+        SEL action = @selector(helpAction:);
+        if(tag) {
+            NSString *names[] = {@"Main", @"Maps", @"Keys", @"Server", @"EisenStern"};
+            name = names[tag-1];
+            action = @selector(switchViews:);
+        }
+        [item setTag:tag];
+        [item setTarget:self];
+        [item setAction:action];
+        [item setLabel:NSLocalizedString(name, @"")];
+        [item setImage:[NSImage imageNamed:name]];
+        [toolBarItems setObject:item forKey:identifier];
+        [item release];
+    }
+    NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@""];
     [toolbar setDelegate:self]; 
     [toolbar setAllowsUserCustomization:NO]; 
     [toolbar setAutosavesConfiguration:NO];  
@@ -176,14 +178,14 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [toolbar release];
     if([window respondsToSelector:@selector(setShowsToolbarButton:)]) [window setShowsToolbarButton:NO]; //10.4+
     
-    //Make it select the first by default
+    //select the first by default
+    NSToolbarItem *first = [toolBarItems objectForKey:[[self toolbarDefaultItemIdentifiers:nil] objectAtIndex:0]];
     [toolbar setSelectedItemIdentifier:[first itemIdentifier]];
     [self switchViews:first]; 
 }
 
-/*
- * toolbar delegate methods
- */
+#pragma mark toolbar delegate methods
+
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag 
 {
     return [toolBarItems objectForKey:itemIdentifier];
@@ -194,20 +196,48 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     return [self toolbarDefaultItemIdentifiers:theToolbar];
 }
 
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar 
+- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)toolbar 
 {
-    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", NSToolbarFlexibleSpaceItemIdentifier, @"7", nil];
+    NSMutableArray *array = (NSMutableArray *)[self toolbarSelectableItemIdentifiers:toolbar];
+    [array addObject:NSToolbarFlexibleSpaceItemIdentifier];
+    [array addObject:@"Help"];
+    return array;
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar 
 {
-    return [NSArray arrayWithObjects:@"1", @"2", @"3", @"4", @"5", nil];
+    NSMutableArray *array = [NSMutableArray array];
+    NSView *views[] = {view1, view2, view3, view4, view5};
+    int i;
+    for(i = 0; i < sizeof(views)/sizeof(NSView*); i++) if(views[i]) [array addObject:[NSString stringWithFormat:@"%d", i+1]];
+    return array;
+}
+@end
+
+
+@implementation Launcher
+
+/* directory where the executable lives */
++ (NSString *)cwd
+{
+    return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:[@":s" expand]];
 }
 
++ (BOOL)hasUserdir { return [[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR]; }
 
-
-
-
+/* directory where user files are kept - typically /Users/<name>/Application Support/sauerbraten */
++ (NSString*)userdir 
+{
+    FSRef folder;
+    NSString *path = nil;
+    if(FSFindFolder(kUserDomain, kApplicationSupportFolderType, NO, &folder) == noErr) {
+        CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
+        path = [(NSURL *)url path];
+        CFRelease(url);
+        path = [path stringByAppendingPathComponent:[@":s" expand]];
+    }
+    return path;
+}
 
 - (void)addResolutionsForDisplay:(CGDirectDisplayID)dspy 
 {
@@ -236,54 +266,26 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [resolutions selectItemAtIndex: [[NSUserDefaults standardUserDefaults] integerForKey:dkRESOLUTION]];	
 }
 
-
-
-
-/* directory where the executable lives */
--(NSString *)cwd 
-{
-    return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"sauerbraten"];
-}
-
-/* directory where user files are kept */
-- (NSString*)userdir {
-    if(![[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR]) return [self cwd];
-    // /Users/<name>/Application Support/sauerbraten
-    FSRef folder;
-    NSString *path = nil;
-    if(FSFindFolder(kUserDomain, kApplicationSupportFolderType, NO, &folder) == noErr) {
-        CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
-        path = [(NSURL *)url path];
-        CFRelease(url);
-        path = [path stringByAppendingPathComponent:@"sauerbraten"];
-    }
-    return path;
-}
-
 /* build key array from config data */
 -(NSArray *)getKeys:(NSDictionary *)dict 
 {	
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    NSMutableArray *arr = [NSMutableArray array];
     NSEnumerator *e = [dict keyEnumerator];
     NSString *key;
     while ((key = [e nextObject])) 
     {
-        NSString *trig;
-        if([key hasPrefix:@"editbind"]) 
-            trig = [key substringFromIndex:9];
-        else if([key hasPrefix:@"bind"]) 
-            trig = [key substringFromIndex:5];
-        else 
-            continue;
+        int skip;
+        if([key hasPrefix:@"editbind"]) skip = 9;
+        else if([key hasPrefix:@"bind"])  skip = 5;
+        else continue;
         [arr addObject:[NSDictionary dictionaryWithObjectsAndKeys: //keys used in nib
-            trig, @"key",
-            ([key hasPrefix:@"editbind"] ? @"edit" : @""), @"mode",
+            [key substringFromIndex:skip], @"key",
+            ((skip == 9) ? @"edit" : @""), @"mode",
             [dict objectForKey:key], @"action",
             nil]];
     }
     return arr;
 }
-
 
 /*
  * extract a dictionary from the config files containing:
@@ -300,13 +302,14 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     int i;
     for(i = 0; i < sizeof(files)/sizeof(NSString*); i++) 
     {
-        NSString *file = [[self userdir] stringByAppendingPathComponent:files[i]];
+        NSString *file = [Launcher hasUserdir] ? [Launcher userdir] : [Launcher cwd];
+        file = [file stringByAppendingPathComponent:files[i]];
         
         NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
         
         if(i==0 && !lines)  // ugh - special case when first run...
         { 
-            file = [[self cwd] stringByAppendingPathComponent:@"data/defaults.cfg"];
+            file = [[Launcher cwd] stringByAppendingPathComponent:@"data/defaults.cfg"];
             lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
         }
 		
@@ -347,83 +350,11 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     return dict;
 }
 
-- (void)serverTerminated
-{
-    if(server==-1) return;
+- (void)killServer {
+    if(server > 0) kill(server, SIGKILL); //@WARNING - you do NOT want a 0 or -1 to be accidentally sent a  kill!
     server = -1;
-    [multiplayer setTitle:@"Start"];
+    [multiplayer setTitle:NSLocalizedString(@"Start", @"")];
     [console appendText:@"\n \n"];
-}
-
-- (void)setServerActive:(BOOL)start
-{
-    if((server==-1) != start) return;
-	
-    if(!start)
-    {	//STOP
-		
-        //damn server, terminate isn't good enough for you - die, die, die...
-        if((server!=-1) && (server!=0)) kill(server, SIGKILL); //@WARNING - you do not want a 0 or -1 to be accidentally sent a  kill!
-        [self serverTerminated];
-    } 
-    else
-    {	//START
-        NSString *cwd = [self cwd];
-        NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-                       
-        NSArray *opts = [[defs nonNullStringForKey:dkSERVEROPTS] componentsSeparatedByString:@" "];
-		
-        const char *childCwd  = [cwd fileSystemRepresentation];
-        const char *childPath = [[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"] fileSystemRepresentation];
-        const char **args = (const char**)malloc(sizeof(char*)*([opts count] + 3 + 4)); //3 = {path, -d, NULL}, and +4 again for optional settings...
-        int i, fdm, argc = 0;
-		
-        args[argc++] = childPath;
-        args[argc++] = "-d";
-        
-        for(i = 0; i < [opts count]; i++)
-        {
-            NSString *opt = [opts objectAtIndex:i];
-            if([opt length] == 0) continue; //skip empty
-            args[argc++] = [opt UTF8String];
-        }
-        
-        NSString *desc = [defs nonNullStringForKey:dkDESCRIPTION];
-        if (![desc isEqual:@""]) args[argc++] = [[NSString stringWithFormat:@"-n%@", desc] UTF8String];
-        
-        NSString *pass = [defs nonNullStringForKey:dkPASSWORD];
-        if (![pass isEqual:@""]) args[argc++] = [[NSString stringWithFormat:@"-p%@", pass] UTF8String];
-		
-        int clients = [defs integerForKey:dkMAXCLIENTS];
-        if (clients > 0) args[argc++] = [[NSString stringWithFormat:@"-c%d", clients] UTF8String];
-        
-        if([defs boolForKey:dkUSERDIR]) args[argc++] = [[NSString stringWithFormat:@"-q%@", [self userdir]] UTF8String];
-        
-        args[argc++] = NULL;
-                
-        switch ( (server = forkpty(&fdm, NULL, NULL, NULL)) ) // forkpty so we can reliably grab SDL console
-        { 
-            case -1:
-                [console appendLine:@"Error - can't launch server"];
-                [self serverTerminated];
-                break;
-            case 0: // child
-                chdir(childCwd);
-                execv(childPath, (char*const*)args);
-                fprintf(stderr, "Error - can't launch server\n");
-                _exit(0);
-            default: // parent
-                free(args);
-                //fprintf(stderr, "fdm=%d\n", slave_name, fdm);
-                [multiplayer setTitle:@"Stop"];
-				
-                NSFileHandle *taskOutput = [[NSFileHandle alloc] initWithFileDescriptor:fdm];
-                NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-                [nc addObserver:self selector:@selector(serverDataAvailable:) name:NSFileHandleReadCompletionNotification object:taskOutput];
-                [taskOutput readInBackgroundAndNotify];
-                break;
-        }
-    }
 }
 
 - (void)serverDataAvailable:(NSNotification *)note
@@ -443,13 +374,79 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
         [nc removeObserver:self name:NSFileHandleReadCompletionNotification object:taskOutput];
         close([taskOutput fileDescriptor]);
-        [self setServerActive:NO];
+        [self killServer];
     }
+}
+
+- (BOOL)launchGame:(NSArray *)args {
+    NSString *cwd = [Launcher cwd];
+    NSString *exe = [[Launcher cwd] stringByAppendingPathComponent:[@":s.app/Contents/MacOS/:s" expand]];
+    BOOL okay = YES;
+    
+    if([args containsObject:@"-d"])
+    {
+        if(server != -1) return NO; // server is already running
+        
+        const char **argv = (const char**)malloc(sizeof(char*)*([args count] + 2)); //{path, <args>, NULL};
+        argv[0] = [exe fileSystemRepresentation];        
+        argv[[args count]+1] = NULL;
+        int i;
+        for(i = 0; i < [args count]; i++) argv[i+1] = [[args objectAtIndex:i] UTF8String];  
+        
+        int fdm;
+        NSString *fail = [NSLocalizedString(@"ServerAlertMesg", nil) expand];
+        switch ( (server = forkpty(&fdm, NULL, NULL, NULL)) ) // forkpty so we can reliably grab SDL console
+        { 
+            case -1:
+                [console appendLine:fail];
+                [self killServer];
+                okay = NO;
+                break;
+            case 0: // child
+                chdir([cwd fileSystemRepresentation]);
+                if(execv([exe fileSystemRepresentation], (char*const*)argv) == -1) fprintf(stderr, "%s\n", [fail UTF8String]);
+                _exit(0);
+            default: // parent
+                [multiplayer setTitle:NSLocalizedString(@"Stop", @"")];
+                NSFileHandle *taskOutput = [[NSFileHandle alloc] initWithFileDescriptor:fdm];
+                NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
+                [nc addObserver:self selector:@selector(serverDataAvailable:) name:NSFileHandleReadCompletionNotification object:taskOutput];
+                [taskOutput readInBackgroundAndNotify];
+                break;
+        }
+        free(argv);
+    } 
+    else 
+    {
+        NS_DURING
+            NSTask *task = [[NSTask alloc] init];
+            [task setCurrentDirectoryPath:cwd];
+            [task setLaunchPath:exe];
+            [task setArguments:args];
+            [task setEnvironment:[NSDictionary dictionaryWithObjectsAndKeys: 
+                @"1", @"SDL_SINGLEDISPLAY",
+                @"1", @"SDL_ENABLEAPPEVENTS", nil
+            ]]; // makes Command-H, Command-M and Command-Q work at least when not in fullscreen
+
+            [task launch];
+            if(server == -1) [NSApp terminate:self]; //if there is a server then don't exit!
+        NS_HANDLER
+            //NSLog(@"%@", localException);
+            NSBeginCriticalAlertSheet(
+                [NSLocalizedString(@"ClientAlertTitle", @"") expand] , nil, nil, nil,
+                window, nil, nil, nil, nil,
+                [NSLocalizedString(@"ClientAlertMesg", @"") expand]);
+            okay = NO;
+        NS_ENDHANDLER
+    }
+
+    return okay;
 }
 
 /*
  * nil will just launch the fps game
  * "-rpg" will launch the rpg demo
+ * "-x.." will launch and run commands
  * otherwise we are specifying a map to play
  */
 - (BOOL)playFile:(id)filename 
@@ -457,8 +454,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
     
     NSArray *res = [[resolutions titleOfSelectedItem] componentsSeparatedByString:@" x "];	
-    NSMutableArray *args = [[NSMutableArray alloc] init];
-    NSString *cwd = [self cwd];
+    NSMutableArray *args = [NSMutableArray array];
 	
     [args addObject:[NSString stringWithFormat:@"-w%@", [res objectAtIndex:0]]];
     [args addObject:[NSString stringWithFormat:@"-h%@", [res objectAtIndex:1]]];
@@ -468,9 +464,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [args addObject:[NSString stringWithFormat:@"-a%d", [defs integerForKey:dkFSAA]]];
     [args addObject:[NSString stringWithFormat:@"-f%d", [defs integerForKey:dkSHADER]]];
     
-    if([defs boolForKey:dkUSERDIR]) [args addObject:[NSString stringWithFormat:@"-q%@", [self userdir]]];
+    if([Launcher hasUserdir]) [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
 
-    NSMutableArray *cmds = [[NSMutableArray alloc] init];
+    NSMutableArray *cmds = [NSMutableArray array];
     NSString *name = [defs nonNullStringForKey:dkNAME];
     if(name) [cmds addObject:[NSString stringWithFormat:@"name \"%@\"", name]];
     
@@ -483,7 +479,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
             [cmds addObject:[filename substringFromIndex:2]];
         else 
             [args addObject:[NSString stringWithFormat:@"-l%@", filename]];
-	}
+    }
     
     if([cmds count] > 0) 
     {
@@ -493,53 +489,26 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         [args addObject:[NSString stringWithFormat:@"-x%@", script]];
     }
     
-    NSString *adv = [defs nonNullStringForKey:dkADVANCEDOPTS];
-    if(![adv isEqual:@""]) [args addObjectsFromArray:[adv componentsSeparatedByString:@" "]];
+    NSEnumerator *e = [[[defs nonNullStringForKey:dkADVANCEDOPTS] componentsSeparatedByString:@" "] objectEnumerator];
+    NSString *opt;
+    while(opt = [e nextObject]) if([opt length] != 0) [args addObject:opt]; //skip empty ones
 
-    //NSLog(@"%@", args);
-    
-    NSTask *task = [[NSTask alloc] init];
-    [task setCurrentDirectoryPath:cwd];
-    [task setLaunchPath:[cwd stringByAppendingPathComponent:@"sauerbraten.app/Contents/MacOS/sauerbraten"]];
-    [task setArguments:args];
-    [task setEnvironment:[NSDictionary dictionaryWithObjectsAndKeys: 
-        @"1", @"SDL_SINGLEDISPLAY",
-        @"1", @"SDL_ENABLEAPPEVENTS", nil
-        ]]; // makes Command-H, Command-M and Command-Q work at least when not in fullscreen
-    [args release];
-    [cmds release];
-	
-    BOOL okay = YES;
-	
-    NS_DURING
-        [task launch];
-        if(server==-1) [NSApp terminate:self];	//if there is a server then don't exit!
-    NS_HANDLER
-        //NSLog(@"%@", localException);
-        NSBeginCriticalAlertSheet(
-            @"Can't start Sauerbraten", nil, nil, nil,
-            window, nil, nil, nil, nil,
-            @"Please move the directory containing Sauerbraten to a path that doesn't contain weird characters or start Sauerbraten manually.");
-        okay = NO;
-    NS_ENDHANDLER
-        
-    return okay;
+    return [self launchGame:args];
 }
-
 
 - (void)scanMaps:(id)obj //@note threaded!
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    int len = [[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR] ? 2 : 1;
+    int len = [Launcher hasUserdir] ? 2 : 1;
     int i;
     for(i = 0; i < len; i++) 
     {
-        NSString *dir = (i==0) ? [self cwd] : [self userdir];
+        NSString *dir = (i==0) ? [Launcher cwd] : [Launcher userdir];
         NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
         NSString *file;
         while(file = [enumerator nextObject]) 
         {
-            if([file hasSuffix:@".ogz"] || [file hasSuffix:@".dmo"]) 
+            if([file isMap] || [file isDemo]) 
             {   
                 Map *map = [[Map alloc] initWithPath:[dir stringByAppendingPathComponent:file] user:(i==1)];
                 [maps performSelectorOnMainThread:@selector(addObject:) withObject:map waitUntilDone:NO];
@@ -557,25 +526,25 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [NSThread detachNewThreadSelector: @selector(scanMaps:) toTarget:self withObject:nil];
 }
 
-
 - (void)awakeFromNib 
 {
-    [self initViews];
+    [self initToolBar];
     [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
 	
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
     NSFileManager *fm = [NSFileManager defaultManager];
     
     NSString *appVersion = [[[NSBundle bundleForClass:[self class]] infoDictionary] objectForKey:@"CFBundleVersion"];
-	NSString *version = [defs stringForKey:dkVERSION];
-	if(!version || ![version isEqual:appVersion]) 
+    NSString *version = [defs stringForKey:dkVERSION];
+    if(!version || ![version isEqual:appVersion]) 
     {
-		NSLog(@"Upgraded Version...");
+        NSLog(@"Upgraded Version...");
         //need to flush lurking config files - they're automatically generated, so no big deal...
-        [fm removeFileAtPath:[[self userdir] stringByAppendingPathComponent:@"init.cfg"] handler:nil];
-        [fm removeFileAtPath:[[self userdir] stringByAppendingPathComponent:@"config.cfg"] handler:nil];
+        NSString *dir = [Launcher userdir];
+        [fm removeFileAtPath:[dir stringByAppendingPathComponent:@"init.cfg"] handler:nil];
+        [fm removeFileAtPath:[dir stringByAppendingPathComponent:@"config.cfg"] handler:nil];
     }
-	[defs setObject:appVersion forKey:dkVERSION];
+    [defs setObject:appVersion forKey:dkVERSION];
     
     NSDictionary *dict = [self readConfigFiles];
     [keys addObjects:[self getKeys:dict]];
@@ -587,9 +556,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         [defs setValue:name forKey:dkNAME];
     }
     
-    NSString *dir = [self cwd];
-    if(![fm fileExistsAtPath:dir]) NSLog(@"Missing sauebraten?!"); // @TODO error indicator?
-    else if(![fm isWritableFileAtPath:dir]) [defs setBool:YES forKey:dkUSERDIR];  // auto-enable userdir
+    NSString *dir = [Launcher cwd];
+    if(![fm isWritableFileAtPath:dir]) [defs setBool:YES forKey:dkUSERDIR];  // auto-enable userdir
 	
     [self initMaps];
     [self initResolutions];
@@ -598,7 +566,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
     
     //Listen for changes in the preferences that require the gui to refresh	
-	[defs addObserver:self forKeyPath:dkUSERDIR options:NSKeyValueObservingOptionNew context:nil];
+    [defs addObserver:self forKeyPath:dkUSERDIR options:NSKeyValueObservingOptionNew context:nil];
 
 }
 
@@ -610,41 +578,52 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 #pragma mark -
 #pragma mark application delegate
 
+- (void)applicationDidFinishLaunching:(NSNotification *)note {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dir = [Launcher cwd];
+    if(![fm fileExistsAtPath:dir])
+        NSBeginCriticalAlertSheet(
+            [NSLocalizedString(@"InitAlertTitle", @"") expand], nil, nil, nil,
+            window, self, nil, nil, nil,
+            [NSLocalizedString(@"InitAlertMesg", @"") expand]);
+}
+
 -(BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {
     return YES;
 }
 
 - (void)applicationWillTerminate: (NSNotification *)note {
-    [self setServerActive:NO];
+    [self killServer];
 }
-
 
 //we register 'ogz' and 'dmo' as doc types
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename 
 {
-    NSString *dirs[] = {[self cwd], [self userdir]};
-    BOOL demo = [filename hasSuffix:@".dmo"];
-    if(!demo && ![filename hasSuffix:@".ogz"]) return NO;
-    filename = [filename substringToIndex:[filename length]-4]; //chop off extension
+    BOOL demo = [filename isDemo];
+    if(!demo && ![filename isMap]) return NO;
+    filename = [filename stringByDeletingPathExtension]; //chop off extension
+    int len = [Launcher hasUserdir] ? 2 : 1;
     int i;
-    for(i = 0; i < 2; i++) {
-        NSString *pkg = dirs[i];
+    for(i = 0; i < len; i++) {
+        NSString *pkg = (i == 0) ? [Launcher cwd] : [Launcher userdir];
         if(!demo) pkg = [pkg stringByAppendingPathComponent:@"packages"];
         if([filename hasPrefix:pkg])
             return [self playFile:(demo ? [NSString stringWithFormat:@"-xdemo \"%@\"", filename] : filename)];
     }
     NSBeginCriticalAlertSheet(
-        @"Invalid file location", @"Ok", @"Cancel", nil,
+        [NSLocalizedString(@"FileAlertMesg", @"") expand], NSLocalizedString(@"Ok", @""), NSLocalizedString(@"Cancel", @""), nil,
         window, self, @selector(openPackageFolder:returnCode:contextInfo:), nil, nil,
-        @"Can only load files that are within the sauerbraten/packages/ folder. Do you want to show this folder?");
-    //@TODO give user option to copy it into the packages folder?
+        [NSLocalizedString(@"FileAlertMesg", @"") expand]);
     return NO;
 }
 
 - (void)openPackageFolder:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo 
 {
     if(returnCode == 0) return;
-    [self openUserdir:nil]; //close enough... otherwise need to ensure that sauerbraten/packages folder exists
+    if([Launcher hasUserdir]) //close enough... otherwise need to ensure that sauerbraten/packages folder exists too
+        [self openUserdir:nil]; 
+    else
+        [[NSWorkspace sharedWorkspace] openFile:[Launcher cwd]];
 }
 
 //we register 'sauerbraten' as a url scheme
@@ -655,13 +634,38 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [self playFile:[NSString stringWithFormat:@"-xconnect %@", [url host]]]; 
 }
 
-#pragma mark -
 #pragma mark interface actions
 
 - (IBAction)multiplayerAction:(id)sender 
 { 
     [window makeFirstResponder:window]; //ensure fields are exited and committed
-    [self setServerActive:(server==-1)]; 
+    if(server != -1) 
+    {
+        [self killServer]; 
+    }
+    else 
+    {
+        NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+    
+        NSMutableArray *args = [NSMutableArray arrayWithObject:@"-d"];
+
+        NSEnumerator *e = [[[defs nonNullStringForKey:dkSERVEROPTS] componentsSeparatedByString:@" "] objectEnumerator];
+        NSString *opt;
+        while(opt = [e nextObject]) if([opt length] != 0) [args addObject:opt]; //skip empty ones
+        
+        NSString *desc = [defs nonNullStringForKey:dkDESCRIPTION];
+        if (![desc isEqual:@""]) [args addObject:[NSString stringWithFormat:@"-n%@", desc]];
+        
+        NSString *pass = [defs nonNullStringForKey:dkPASSWORD];
+        if (![pass isEqual:@""]) [args addObject:[NSString stringWithFormat:@"-p%@", pass]];
+		
+        int clients = [defs integerForKey:dkMAXCLIENTS];
+        if (clients > 0) [args addObject:[NSString stringWithFormat:@"-c%d", clients]];
+        
+        if([Launcher hasUserdir]) [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
+        
+        [self launchGame:args];
+    } 
 }
 
 - (IBAction)playAction:(id)sender 
@@ -687,9 +691,14 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:file]];
 }
 
+- (IBAction)showForum:(id)sender
+{
+     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:NSLocalizedString(@"forumURL", @"")]];
+}
+
 - (IBAction)openUserdir:(id)sender 
 {
-    NSString *dir = [self userdir];
+    NSString *dir = [Launcher userdir];
     NSFileManager *fm = [NSFileManager defaultManager];
     if(![fm fileExistsAtPath:dir]) [fm createDirectoryAtPath:dir attributes:nil]; //ensure there is a folder to open
     [[NSWorkspace sharedWorkspace] openFile:dir];

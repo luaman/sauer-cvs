@@ -109,12 +109,16 @@
 		B9CACA13092099DF00A13F04 /* launcher-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9CACA12092099DF00A13F04 /* launcher-Info.plist */; };
 		B9CACA15092099E700A13F04 /* sauerbraten-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */; };
 		B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
+		D139B59E0D59A8E600AA994D /* assassin.h in Headers */ = {isa = PBXBuildFile; fileRef = D139B59D0D59A8E600AA994D /* assassin.h */; };
 		D167A1970C493AED007F7D96 /* Nomap.png in Resources */ = {isa = PBXBuildFile; fileRef = D167A1960C493AED007F7D96 /* Nomap.png */; };
+		D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16BD00C0D7000EA0053CECE /* dynlight.cpp */; };
 		D17E0F2C0BAF1FA9008BB696 /* Keys.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F280BAF1FA9008BB696 /* Keys.gif */; };
 		D17E0F2D0BAF1FA9008BB696 /* Main.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F290BAF1FA9008BB696 /* Main.gif */; };
 		D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2A0BAF1FA9008BB696 /* Server.gif */; };
 		D17E0F2F0BAF1FA9008BB696 /* EisenStern.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2B0BAF1FA9008BB696 /* EisenStern.gif */; };
 		D17E0F310BAF2031008BB696 /* Help.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F300BAF2031008BB696 /* Help.tiff */; };
+		D1C660CA0D5467C8002E52C1 /* pvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1C660C90D5467C8002E52C1 /* pvs.cpp */; };
+		D1DB53E80D70F1CD003AE25C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D1DB53E70D70F1CD003AE25C /* Localizable.strings */; };
 		D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */ = {isa = PBXBuildFile; fileRef = D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */; };
 /* End PBXBuildFile section */
 
@@ -233,12 +237,16 @@
 		B9AC7ACE0D06DB44005506F8 /* tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
 		B9CACA12092099DF00A13F04 /* launcher-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = "launcher-Info.plist"; sourceTree = "<group>"; };
 		B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = "sauerbraten-Info.plist"; sourceTree = "<group>"; };
+		D139B59D0D59A8E600AA994D /* assassin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = assassin.h; sourceTree = "<group>"; };
 		D167A1960C493AED007F7D96 /* Nomap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Nomap.png; sourceTree = "<group>"; };
+		D16BD00C0D7000EA0053CECE /* dynlight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dynlight.cpp; sourceTree = "<group>"; };
 		D17E0F280BAF1FA9008BB696 /* Keys.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Keys.gif; sourceTree = "<group>"; };
 		D17E0F290BAF1FA9008BB696 /* Main.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Main.gif; sourceTree = "<group>"; };
 		D17E0F2A0BAF1FA9008BB696 /* Server.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Server.gif; sourceTree = "<group>"; };
 		D17E0F2B0BAF1FA9008BB696 /* EisenStern.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = EisenStern.gif; sourceTree = "<group>"; };
 		D17E0F300BAF2031008BB696 /* Help.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Help.tiff; sourceTree = "<group>"; };
+		D1C660C90D5467C8002E52C1 /* pvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pvs.cpp; sourceTree = "<group>"; };
+		D1DB53E50D70F1C3003AE25C /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Maps.gif; sourceTree = "<group>"; };
 		F5A47A9D01A0482F01D3D55B /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = SOURCE_ROOT; };
 		F5A47A9E01A0483001D3D55B /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = SOURCE_ROOT; };
@@ -349,9 +357,10 @@
 				B930D0D10A3DA92300BDFB85 /* map.icns */,
 				B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */,
 				B9CACA12092099DF00A13F04 /* launcher-Info.plist */,
+				B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */,
 				B96D0D5A0920971300B6C936 /* MainMenu.nib */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
-				B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */,
+				D1DB53E70D70F1CD003AE25C /* Localizable.strings */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -383,6 +392,8 @@
 		B9AC7A830D06DB44005506F8 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				D1C660C90D5467C8002E52C1 /* pvs.cpp */,
+				D16BD00C0D7000EA0053CECE /* dynlight.cpp */,
 				B9AC7A840D06DB44005506F8 /* 3dgui.cpp */,
 				B91D401E0D525FD3004EF78A /* animmodel.h */,
 				B9AC7A850D06DB44005506F8 /* bih.cpp */,
@@ -436,6 +447,7 @@
 		B9AC7AAD0D06DB44005506F8 /* fpsgame */ = {
 			isa = PBXGroup;
 			children = (
+				D139B59D0D59A8E600AA994D /* assassin.h */,
 				B9AC7AAE0D06DB44005506F8 /* capture.h */,
 				B9AC7AAF0D06DB44005506F8 /* client.h */,
 				B9AC7AB00D06DB44005506F8 /* entities.h */,
@@ -534,6 +546,7 @@
 				B91D401F0D525FD3004EF78A /* animmodel.h in Headers */,
 				B91D40230D525FE9004EF78A /* md5.h in Headers */,
 				B91D40250D52600A004EF78A /* skelmodel.h in Headers */,
+				D139B59E0D59A8E600AA994D /* assassin.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,6 +636,7 @@
 				D17E0F310BAF2031008BB696 /* Help.tiff in Resources */,
 				D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */,
 				D167A1970C493AED007F7D96 /* Nomap.png in Resources */,
+				D1DB53E80D70F1CD003AE25C /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -696,6 +710,8 @@
 				B9AC7B130D06DB44005506F8 /* sbtrace.d in Sources */,
 				B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */,
 				B91D40210D525FE0004EF78A /* decal.cpp in Sources */,
+				D1C660CA0D5467C8002E52C1 /* pvs.cpp in Sources */,
+				D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -734,6 +750,14 @@
 				B96D0D5B0920971300B6C936 /* English */,
 			);
 			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+		D1DB53E70D70F1CD003AE25C /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D1DB53E50D70F1C3003AE25C /* English */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
