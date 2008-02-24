@@ -65,9 +65,7 @@ int isvisiblecube(const ivec &o, int size)
 
 float vadist(vtxarray *va, const vec &p)
 {
-    if(va->sortmin.x>va->sortmax.x) 
-        return p.dist_to_bb(va->o, va->size); // box contains only sky/water
-    return p.dist_to_bb(va->sortmin, va->sortmax);
+    return p.dist_to_bb(va->bbmin, va->bbmax);
 }
 
 #define VASORTSIZE 64
@@ -123,7 +121,7 @@ void findvisiblevas(vector<vtxarray *> &vas, bool resetocclude = false)
             if(v.children.length()) findvisiblevas(v.children, prevvfc==VFC_NOT_VISIBLE);
             if(prevvfc==VFC_NOT_VISIBLE)
             {
-                v.occluded = !v.texs || pvsoccluded(v.min, v.max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                v.occluded = !v.texs || pvsoccluded(v.geommin, v.geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                 v.query = NULL;
             }
         }
@@ -508,6 +506,12 @@ void rendermapmodels()
     }
 }
 
+static inline bool bbinsideva(const ivec &bo, const ivec &br, vtxarray *va)
+{
+    return bo.x >= va->bbmin.x && bo.y >= va->bbmin.y && va->o.z >= va->bbmin.z &&
+        bo.x + br.x <= va->bbmax.x && bo.y + br.z <= va->bbmax.y && bo.z + br.z <= va->bbmax.z; 
+}
+
 static inline bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ivec &o, int size)
 {
     loopoctabox(o, size, bo, br)
@@ -516,7 +520,7 @@ static inline bool bboccluded(const ivec &bo, const ivec &br, cube *c, const ive
         if(c[i].ext && c[i].ext->va)
         {
             vtxarray *va = c[i].ext->va;
-            if(va->curvfc >= VFC_FOGGED || va->occluded >= OCCLUDE_BB) continue;
+            if(va->curvfc >= VFC_FOGGED || (va->occluded >= OCCLUDE_BB && bbinsideva(bo, br, va))) continue;
         }
         if(c[i].children && bboccluded(bo, br, c[i].children, co, size>>1)) continue;
         return false;
@@ -716,31 +720,9 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
 
     vec camera(camera1->o);
     if(reflecting && !refracting) camera.z = reflecting;
-    
-    ivec bbmin, bbmax;
-    if(va->children.length() || va->matsurfs || va->sky || va->explicitsky)
-    {
-        bbmin = va->o;
-        bbmax = ivec(va->size, va->size, va->size);
-    }
-    else
-    {
-        bbmin = va->sortmin;
-        bbmax = va->sortmax;
-        if(va->mapmodels) loopv(*va->mapmodels)
-        {
-            octaentities *oe = (*va->mapmodels)[i];
-            loopk(3)
-            {
-                bbmin[k] = min(bbmin[k], oe->bbmin[k]);
-                bbmax[k] = max(bbmax[k], oe->bbmax[k]);
-            }
-        }
-        bbmax.sub(bbmin);
-    }
-
-    drawbb(bbmin.sub(origin).mul(1<<VVEC_FRAC),
-           bbmax.mul(1<<VVEC_FRAC),
+   
+    drawbb(ivec(va->bbmin).sub(origin).mul(1<<VVEC_FRAC),
+           ivec(va->bbmax).sub(va->bbmin).mul(1<<VVEC_FRAC),
            vec(camera).sub(origin.tovec()).mul(1<<VVEC_FRAC));
 
     endquery(query);
@@ -1650,12 +1632,12 @@ void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
         if(!va->texs || va->occluded >= OCCLUDE_GEOM) continue;
         if(refracting || (reflecting && camera1->o.z < reflecting))
         {    
-            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->min.z > refracting : va->max.z <= refracting)) continue;
+            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->geommin.z > refracting : va->geommax.z <= refracting)) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
         }
         else if(reflecting)
         {
-            if(va->max.z <= reflecting || (va->rquery && checkquery(va->rquery))) continue;
+            if(va->geommax.z <= reflecting || (va->rquery && checkquery(va->rquery))) continue;
         }
         if(fogpass ? va->o.z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
         renderva(cur, va, pass, fogpass);
@@ -1700,12 +1682,12 @@ void rendergeom(float causticspass, bool fogpass)
         if(!va->texs) continue;
         if(refracting || (reflecting && camera1->o.z < reflecting))
         {
-            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->min.z > refracting : va->max.z <= reflecting) || va->occluded >= OCCLUDE_GEOM) continue;
+            if(va->curvfc == VFC_FOGGED || (refracting && camera1->o.z >= refracting ? va->geommin.z > refracting : va->geommax.z <= reflecting) || va->occluded >= OCCLUDE_GEOM) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
         }
         else if(reflecting)
         {
-            if(va->max.z <= reflecting) continue;
+            if(va->geommax.z <= reflecting) continue;
             if(doOQ)
             {
                 va->rquery = newquery(&va->rquery);
@@ -1722,7 +1704,7 @@ void rendergeom(float causticspass, bool fogpass)
             if(!zpass && va->query && va->query->owner == va) 
             {
                 if(checkquery(va->query)) va->occluded = min(va->occluded+1, int(OCCLUDE_BB));
-                else va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                else va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
             }
             if(zpass && oqbatch)
             {
@@ -1734,7 +1716,7 @@ void rendergeom(float causticspass, bool fogpass)
                 }
                 if(va->query && va->query->owner == va && checkquery(va->query))
                     va->occluded = min(va->occluded+1, int(OCCLUDE_BB));
-                else va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                else va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                 va->query = newquery(va);
                 if(va->occluded >= OCCLUDE_GEOM)
                 {
@@ -1748,7 +1730,7 @@ void rendergeom(float causticspass, bool fogpass)
                  va->parent->query && va->parent->query->owner == va->parent && va->parent->query->fragments < 0)))
             {
                 va->query = NULL;
-                if(va->occluded >= OCCLUDE_GEOM || pvsoccluded(va->min, va->max))
+                if(va->occluded >= OCCLUDE_GEOM || pvsoccluded(va->geommin, va->geommax))
                 {
                     va->occluded = OCCLUDE_PARENT;
                     continue;
@@ -1765,7 +1747,7 @@ void rendergeom(float causticspass, bool fogpass)
         else
         {
             va->query = NULL;
-            va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+            va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
             if(va->occluded >= OCCLUDE_GEOM) continue;
         }
 
@@ -1793,7 +1775,7 @@ void rendergeom(float causticspass, bool fogpass)
             if(!va->texs) continue;
             if(reflecting)
             {
-                if(va->max.z <= reflecting) continue;
+                if(va->geommax.z <= reflecting) continue;
                 if(va->rquery && checkquery(va->rquery))
                 {
                     if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
@@ -1807,7 +1789,7 @@ void rendergeom(float causticspass, bool fogpass)
                 {
                     if(va->parent->occluded<=OCCLUDE_BB && !va->parent->query)
                     {
-                        va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                        va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                         if(va->occluded >= OCCLUDE_GEOM) continue;
                     }
                     else continue;
@@ -1822,7 +1804,7 @@ void rendergeom(float causticspass, bool fogpass)
             else
             {
                 if(va->query && checkquery(va->query)) va->occluded = min(va->occluded+1, int(OCCLUDE_BB));
-                else va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                else va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             
@@ -1842,7 +1824,7 @@ void rendergeom(float causticspass, bool fogpass)
             }
             else
             {
-                va->occluded = pvsoccluded(va->min, va->max) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
+                va->occluded = pvsoccluded(va->geommin, va->geommax) ? OCCLUDE_GEOM : OCCLUDE_NOTHING;
                 if(va->occluded >= OCCLUDE_GEOM) continue;
             }
             renderva(cur, va, nolights ? RENDERPASS_COLOR : RENDERPASS_LIGHTMAP, fogpass);
