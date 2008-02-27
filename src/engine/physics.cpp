@@ -767,7 +767,7 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
         if(!wall.iszero()) wall.normalize();
     }
     dir.project(wall);
-    if(wall.z)
+    if(wall.z>0)
     {
         d->vel.z += d->falling;
         d->falling = 0;
@@ -781,15 +781,11 @@ void switchfloor(physent *d, vec &dir, const vec &floor)
     {
         if(d->physstate < PHYS_SLIDE || fabs(dir.dot(d->floor)) > 0.01f*dir.magnitude()) return;
         dir.projectxy(floor, 0.0f);
-        d->vel.z += d->falling;
-        d->falling = 0;
         d->vel.projectxy(floor, 0.0f);
     }
     else 
     {
         dir.projectxy(floor);
-        d->vel.z += d->falling;
-        d->falling = 0;
         d->vel.projectxy(floor);
     }
 }
@@ -815,6 +811,8 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     {
         if(d->physstate == PHYS_FALL)
         {
+            d->vel.z += d->falling;
+            d->falling = 0;
             d->timeinair = 0;
             d->floor = vec(0, 0, 1);
             switchfloor(d, dir, d->floor);
@@ -862,6 +860,8 @@ void falling(physent *d, vec &dir, const vec &floor)
 #endif
     if(floor.z > 0.0f && floor.z < SLOPEZ)
     {
+        d->vel.z += d->falling;
+        d->falling = 0;
         if(floor.z >= WALLZ) switchfloor(d, dir, floor);
         d->timeinair = 0;
         d->physstate = PHYS_SLIDE;
@@ -879,6 +879,8 @@ void landing(physent *d, vec &dir, const vec &floor)
         if(dir.z < 0.0f) dir.z = d->vel.z = 0.0f;
     }
 #endif
+    d->vel.z += d->falling;
+    d->falling = 0;
     switchfloor(d, dir, floor);
     d->timeinair = 0;
     if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
@@ -1136,6 +1138,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
         {
             pl->jumpnext = false;
 
+            pl->falling = 0;
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; pl->vel.z *= 0.75f; } // dampen velocity change even harder, gives correct water feel
 
