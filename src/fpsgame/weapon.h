@@ -151,7 +151,7 @@ struct weaponstate
         loopv(bouncers)
         {
             bouncent &bnc = *(bouncers[i]);
-            if(bnc.bouncetype==BNC_GRENADE && vec(bnc.vel).add(bnc.gravity).magnitude() > 50.0f) 
+            if(bnc.bouncetype==BNC_GRENADE && bnc.vel.magnitude() > 50.0f) 
             {
                 vec pos(bnc.o);
                 pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
@@ -688,7 +688,6 @@ struct weaponstate
             vec pos(bnc.o);
             pos.add(vec(bnc.offset).mul(bnc.offsetmillis/float(OFFSETMILLIS)));
             vec vel(bnc.vel);
-            vel.add(bnc.gravity);
             if(vel.magnitude() <= 25.0f) yaw = bnc.lastyaw;
             else
             {

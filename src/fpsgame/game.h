@@ -140,7 +140,7 @@ static char msgsizelookup(int msg)
 
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 255            // bump when protocol changes
+#define PROTOCOL_VERSION 256            // bump when protocol changes
 #define DEMO_VERSION 1                  // bump when demo format changes
 #define DEMO_MAGIC "SAUERBRATEN_DEMO"
 
