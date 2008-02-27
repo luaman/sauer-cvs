@@ -363,7 +363,7 @@ struct fpsent : dynent, fpsstate
     void hitpush(int damage, const vec &dir, fpsent *actor, int gun)
     {
         vec push(dir);
-        push.mul(50*damage/weight);
+        push.mul(80*damage/weight);
         if(gun==GUN_RL || gun==GUN_GL) push.mul(actor==this ? 5 : (type==ENT_AI ? 3 : 2));
         vel.add(push);
     }

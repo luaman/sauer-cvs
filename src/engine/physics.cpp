@@ -391,7 +391,7 @@ const float FLOORZ = 0.867f;
 const float SLOPEZ = 0.5f;
 const float WALLZ = 0.2f;
 const float JUMPVEL = 125.0f;
-const float GRAVITY = 300.0f;
+const float GRAVITY = 200.0f;
 const float STEPSPEED = 1.0f;
 
 bool ellipsecollide(physent *d, const vec &dir, const vec &o, float yaw, float xr, float yr,  float hi, float lo)
@@ -767,6 +767,11 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
         if(!wall.iszero()) wall.normalize();
     }
     dir.project(wall);
+    if(wall.z)
+    {
+        d->vel.z += d->falling;
+        d->falling = 0;
+    }
     d->vel.project(wall);
 }
 
@@ -776,11 +781,15 @@ void switchfloor(physent *d, vec &dir, const vec &floor)
     {
         if(d->physstate < PHYS_SLIDE || fabs(dir.dot(d->floor)) > 0.01f*dir.magnitude()) return;
         dir.projectxy(floor, 0.0f);
+        d->vel.z += d->falling;
+        d->falling = 0;
         d->vel.projectxy(floor, 0.0f);
     }
     else 
     {
         dir.projectxy(floor);
+        d->vel.z += d->falling;
+        d->falling = 0;
         d->vel.projectxy(floor);
     }
 }
@@ -1117,6 +1126,12 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
     else if(pl->physstate >= PHYS_SLOPE || water)
     {
+        if(water && pl->falling)
+        {
+            pl->vel.z += pl->falling;
+            pl->vel.div(8);
+            pl->falling = 0;
+        }
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
@@ -1176,29 +1191,14 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     {
         if(pl==player) d.mul(floatspeed/100.0f);
     }
-    else if(pl->type != ENT_CAMERA && water) 
-    {
-        d.mul(0.5f);
-        if(!pl->inwater && water && pl->vel.z < 0) pl->vel.div(8);
-    }
+    else if(pl->type != ENT_CAMERA && water) d.mul(0.5f);
     else if(cl->allowmove(pl)) d.mul((pl->move && !pl->strafe ? 1.3f : 1.0f) * (pl->physstate < PHYS_SLOPE ? 1.3f : 1.0f)); // EXPERIMENTAL
     float friction = water && !floating ? 20.0f : (pl->physstate >= PHYS_SLOPE || floating ? 6.0f : 30.0f);
     float fpsfric = friction/curtime*20.0f;
 
-    if(floating || pl->type == ENT_CAMERA || water || pl->physstate != PHYS_FALL)
-    {
-        pl->vel.mul(fpsfric-1);
-        pl->vel.add(d);
-        pl->vel.div(fpsfric);
-    }
-    else
-    {
-        pl->vel.x *= fpsfric-1;
-        pl->vel.y *= fpsfric-1;
-        pl->vel.add(d);
-        pl->vel.x /= fpsfric;
-        pl->vel.y /= fpsfric;
-    }
+    pl->vel.mul(fpsfric-1);
+    pl->vel.add(d);
+    pl->vel.div(fpsfric);
 }
 
 void modifygravity(physent *pl, bool water, int curtime)
@@ -1214,7 +1214,10 @@ void modifygravity(physent *pl, bool water, int curtime)
         g.project(pl->floor);
     }
     if(water) g.div(16);
-    pl->vel.add(g);
+    if(water || pl->physstate != PHYS_FALL) pl->vel.z += g.z;
+    else pl->falling += g.z;
+    pl->vel.x += g.x;
+    pl->vel.y += g.y;
 }
 
 // main physics routine, moves a player/monster for a curtime step
@@ -1234,6 +1237,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     modifyvelocity(pl, local, water, floating, curtime);
 
     vec d(pl->vel), oldpos(pl->o);
+    d.z += pl->falling;
     d.mul(secs);
 
     pl->blocked = false;
@@ -1246,6 +1250,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         {
             pl->physstate = PHYS_FLOAT;
             pl->timeinair = 0;
+            pl->falling = 0;
         }
         pl->o.add(d);
     }

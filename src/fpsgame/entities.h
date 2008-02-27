@@ -182,8 +182,9 @@ struct entities : icliententities
                 if(d->lastpickup==ents[n]->type && cl.lastmillis-d->lastpickupmillis<300) break;
                 d->lastpickup = ents[n]->type;
                 d->lastpickupmillis = cl.lastmillis;
-                vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*9.0f);
+                vec v((int)(char)ents[n]->attr3*10.0f, (int)(char)ents[n]->attr2*10.0f, ents[n]->attr1*12.5f);
                 d->timeinair = 0;
+                d->falling = 0;
                 d->vel = v;
 //                d->vel.z = 0;
 //                d->vel.add(v);
@@ -267,7 +268,7 @@ struct entities : icliententities
 
             case JUMPPAD:
                 radius = 4;
-                dir = vec((int)(char)e.attr3*10.0f, (int)(char)e.attr2*10.0f, e.attr1*9.0f).normalize();
+                dir = vec((int)(char)e.attr3*10.0f, (int)(char)e.attr2*10.0f, e.attr1*12.5f).normalize();
                 break;
 
             case MONSTER:
