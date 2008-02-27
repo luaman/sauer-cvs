@@ -649,7 +649,8 @@ struct fpsclient : igameclient
 
         vec sway;
         vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, sway);
-        float swayspeed = min(4.0f, player1->vel.magnitude());
+        float swayspeed = sqrtf(player1->vel.x*player1->vel.x + player1->vel.y*player1->vel.y);
+        swayspeed = min(4.0f, swayspeed);
         sway.mul(swayspeed);
         float swayxy = sinf(swaymillis/115.0f)/100.0f,
               swayz = cosf(swaymillis/115.0f)/100.0f;
