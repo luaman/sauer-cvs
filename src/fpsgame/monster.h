@@ -255,6 +255,8 @@ struct monsterset
             { GUN_GL,        22,  50, 1, 0,   200, 400, 1, 10,  40, S_PAIND, S_DEATHD, "a spider",    "monster/spider",      NULL }, 
         };
         monstertypes = _monstertypes;
+
+        CCOMMAND(endsp, "", (monsterset *self), self->endsp(false));
     }
    
     void preloadmonsters()
