@@ -1242,8 +1242,8 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     modifyvelocity(pl, local, water, floating, curtime);
 
     vec d(pl->vel), oldpos(pl->o);
-    d.add(pl->falling);
     if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
+    d.add(pl->falling);
     d.mul(secs);
 
     pl->blocked = false;
