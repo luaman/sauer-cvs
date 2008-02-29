@@ -248,8 +248,13 @@ struct clientcom : iclientcom
             putint(q, (int)(d->vel.x*DVELF));          // quantize to itself, almost always 1 byte
             putint(q, (int)(d->vel.y*DVELF));
             putint(q, (int)(d->vel.z*DVELF));
-            putuint(q, d->physstate | (d->falling ? 0x10 : 0) | ((((fpsent *)d)->lifesequence&1)<<5));
-            if(d->falling) putint(q, (int)(d->falling*DVELF));
+            putuint(q, d->physstate | (d->falling.x || d->falling.y ? 0x20 : 0) | (d->falling.z ? 0x10 : 0) | ((((fpsent *)d)->lifesequence&1)<<6));
+            if(d->falling.x || d->falling.y)
+            {
+                putint(q, (int)(d->falling.x*DVELF));      // quantize to itself, almost always 1 byte
+                putint(q, (int)(d->falling.y*DVELF));
+            }
+            if(d->falling.z) putint(q, (int)(d->falling.z*DVELF));
             // pack rest in almost always 1 byte: strafe:2, move:2, garmour: 1, yarmour: 1, quad: 1
             uint flags = (d->strafe&3) | ((d->move&3)<<2);
             putuint(q, flags);
@@ -326,8 +331,8 @@ struct clientcom : iclientcom
             case SV_POS:                        // position of another client
             {
                 int cn = getint(p);
-                vec o, vel;
-                float falling, yaw, pitch, roll;
+                vec o, vel, falling;
+                float yaw, pitch, roll;
                 int physstate, f;
                 o.x = getuint(p)/DMF;
                 o.y = getuint(p)/DMF;
@@ -339,8 +344,14 @@ struct clientcom : iclientcom
                 vel.y = getint(p)/DVELF;
                 vel.z = getint(p)/DVELF;
                 physstate = getuint(p);
-                falling = physstate&0x10 ? getint(p)/DVELF : 0;
-                int seqcolor = (physstate>>5)&1;
+                falling = vec(0, 0, 0);
+                if(physstate&0x20)
+                {
+                    falling.x = getint(p)/DVELF;
+                    falling.y = getint(p)/DVELF;
+                }
+                if(physstate&0x10) falling.z = getint(p)/DVELF;
+                int seqcolor = (physstate>>6)&1;
                 f = getuint(p);
                 fpsent *d = cl.getclient(cn);
                 if(!d || seqcolor!=(d->lifesequence&1)) continue;
@@ -358,12 +369,12 @@ struct clientcom : iclientcom
                 d->quadmillis = f&4 ? 1 : 0;
                 f >>= 3;
                 d->maxhealth = 100 + f*itemstats[I_BOOST-I_SHELLS].add;
-                d->falling = falling;
                 vec oldpos(d->o);
                 if(cl.allowmove(d))
                 {
                     d->o = o;
                     d->vel = vel;
+                    d->falling = falling;
                     d->physstate = physstate & 0x0F;
                     updatephysstate(d);
                     updatepos(d);

@@ -758,6 +758,18 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
 
 VARP(minframetime, 5, 10, 20);
 
+void recalcdir(physent *d, const vec &oldvel, vec &dir)
+{
+    float speed = oldvel.magnitude();
+    if(speed)
+    {
+        float step = dir.magnitude();
+        dir = d->vel;
+        dir.add(d->falling);
+        dir.mul(step/speed);
+    }
+}
+
 void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
 {
     vec wall(obstacle);
@@ -766,28 +778,27 @@ void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
         wall.z = 0;
         if(!wall.iszero()) wall.normalize();
     }
-    dir.project(wall);
-    if(wall.z>0)
-    {
-        d->vel.z += d->falling;
-        d->falling = 0;
-    }
+    vec oldvel(d->vel);
+    oldvel.add(d->falling);
     d->vel.project(wall);
+    if(wall.z > 0) d->falling.project(wall);
+    recalcdir(d, oldvel, dir);
 }
 
 void switchfloor(physent *d, vec &dir, const vec &floor)
 {
+    if(floor.z >= FLOORZ) d->falling = vec(0, 0, 0);
+
+    vec oldvel(d->vel);
+    oldvel.add(d->falling);
     if(dir.dot(floor) >= 0)
     {
         if(d->physstate < PHYS_SLIDE || fabs(dir.dot(d->floor)) > 0.01f*dir.magnitude()) return;
-        dir.projectxy(floor, 0.0f);
         d->vel.projectxy(floor, 0.0f);
     }
-    else 
-    {
-        dir.projectxy(floor);
-        d->vel.projectxy(floor);
-    }
+    else d->vel.projectxy(floor);
+    d->falling.project(floor);
+    recalcdir(d, oldvel, dir);
 }
 
 bool trystepup(physent *d, vec &dir, float maxstep)
@@ -811,8 +822,6 @@ bool trystepup(physent *d, vec &dir, float maxstep)
     {
         if(d->physstate == PHYS_FALL)
         {
-            d->vel.z += d->falling;
-            d->falling = 0;
             d->timeinair = 0;
             d->floor = vec(0, 0, 1);
             switchfloor(d, dir, d->floor);
@@ -860,8 +869,6 @@ void falling(physent *d, vec &dir, const vec &floor)
 #endif
     if(floor.z > 0.0f && floor.z < SLOPEZ)
     {
-        d->vel.z += d->falling;
-        d->falling = 0;
         if(floor.z >= WALLZ) switchfloor(d, dir, floor);
         d->timeinair = 0;
         d->physstate = PHYS_SLIDE;
@@ -879,8 +886,6 @@ void landing(physent *d, vec &dir, const vec &floor)
         if(dir.z < 0.0f) dir.z = d->vel.z = 0.0f;
     }
 #endif
-    d->vel.z += d->falling;
-    d->falling = 0;
     switchfloor(d, dir, floor);
     d->timeinair = 0;
     if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
@@ -1077,8 +1082,8 @@ void dropenttofloor(entity *e)
 void phystest()
 {
     static const char *states[] = {"float", "fall", "slide", "slope", "floor", "step up", "step down", "bounce"};
-    printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z);
-    printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z);
+    printf ("PHYS(pl): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[player->physstate], player->timeinair, player->floor.x, player->floor.y, player->floor.z, player->vel.x, player->vel.y, player->vel.z, player->falling.x, player->falling.y, player->falling.z);
+    printf ("PHYS(cam): %s, air %d, floor: (%f, %f, %f), vel: (%f, %f, %f), g: (%f, %f, %f)\n", states[camera1->physstate], camera1->timeinair, camera1->floor.x, camera1->floor.y, camera1->floor.z, camera1->vel.x, camera1->vel.y, camera1->vel.z, camera1->falling.x, camera1->falling.y, camera1->falling.z);
 }
 
 COMMAND(phystest, "");
@@ -1128,17 +1133,11 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
     else if(pl->physstate >= PHYS_SLOPE || water)
     {
-        if(water && pl->falling)
-        {
-            pl->vel.z += pl->falling;
-            pl->vel.div(8);
-            pl->falling = 0;
-        }
+        if(water && !pl->inwater) pl->vel.div(8);
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
 
-            pl->falling = 0;
             pl->vel.z = JUMPVEL; // physics impulse upwards
             if(water) { pl->vel.x /= 8.0f; pl->vel.y /= 8.0f; } // dampen velocity change even harder, gives correct water feel
 
@@ -1205,21 +1204,25 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
 
 void modifygravity(physent *pl, bool water, int curtime)
 {
-    if(water && cl->allowmove(pl) && (pl->move || pl->strafe)) return;
-
     float secs = curtime/1000.0f;
     vec g(0, 0, 0);
     if(pl->physstate == PHYS_FALL) g.z -= GRAVITY*secs;
-    else if(pl->floor.z > 0 && pl->floor.z < FLOORZ)
+    else if(!pl->floor.iszero() && pl->floor.z < FLOORZ)
     {
-        g.z = -GRAVITY*secs;
+        g.z = -1;
         g.project(pl->floor);
+        g.normalize();
+        g.mul(GRAVITY*secs);
     }
-    if(water) g.div(8);
-    if(water || pl->physstate != PHYS_FALL) pl->vel.z += g.z;
-    else pl->falling += g.z;
-    pl->vel.x += g.x;
-    pl->vel.y += g.y;
+    if(!water || !cl->allowmove(pl) || (!pl->move && !pl->strafe)) pl->falling.add(g);
+
+    if(water || pl->physstate >= PHYS_SLOPE)
+    {
+        float friction = water ? 2.0f : 6.0f,
+              fpsfric = friction/curtime*20.0f,
+              c = water ? 1.0f : clamp((pl->floor.z - SLOPEZ)/(FLOORZ-SLOPEZ), 0.0f, 1.0f);
+        pl->falling.mul(1 - c/fpsfric);
+    }
 }
 
 // main physics routine, moves a player/monster for a curtime step
@@ -1239,7 +1242,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     modifyvelocity(pl, local, water, floating, curtime);
 
     vec d(pl->vel), oldpos(pl->o);
-    d.z += pl->falling;
+    d.add(pl->falling);
     if(!floating && pl->type!=ENT_CAMERA && water) d.mul(0.5f);
     d.mul(secs);
 
@@ -1253,7 +1256,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         {
             pl->physstate = PHYS_FLOAT;
             pl->timeinair = 0;
-            pl->falling = 0;
+            pl->falling = vec(0, 0, 0);
         }
         pl->o.add(d);
     }
