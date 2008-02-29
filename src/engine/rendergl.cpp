@@ -224,7 +224,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         waterreflect = 0;
     }
 
-    extern int reservedynlighttc, reserveshadowmaptc, maxtexsize;
+    extern int reservedynlighttc, reserveshadowmaptc, maxtexsize, batchlightmaps;
     bool avoidshaders = false;
     if(strstr(vendor, "ATI"))
     {
@@ -242,6 +242,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         floatvtx = 1;
         maxtexsize = 256;
         reservevpparams = 20;
+        batchlightmaps = 0;
 
         if(!hasOQ) waterrefract = 0;
     }
@@ -251,6 +252,7 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         intel_quadric_bug = 1;
         maxtexsize = 256;
         reservevpparams = 20;
+        batchlightmaps = 0;
 
         if(!hasOQ) waterrefract = 0;
     } 
