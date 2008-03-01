@@ -471,11 +471,13 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
 }
 
-float curfov = 105;
+float curfov = 105, curhgfov = 65;
 VARP(zoominvel, 0, 250, 5000);
 VARP(zoomoutvel, 0, 100, 5000);
 VARP(zoomfov, 10, 35, 60);
 VARFP(fov, 10, 105, 150, curfov = fov);
+VAR(hudgunzoomfov, 10, 25, 60);
+VARF(hudgunfov, 10, 65, 150, curhgfov = 65);
 
 static int zoommillis = 0;
 VARF(zoom, -1, 0, 1,
@@ -484,18 +486,28 @@ VARF(zoom, -1, 0, 1,
 
 void computezoom()
 {
-    if(!zoom) { curfov = fov; return; }
+    if(!zoom) { curfov = fov; curhgfov = hudgunfov; return; }
     if(zoom < 0 && curfov >= fov) { zoom = 0; return; } // don't zoom-out if not zoomed-in
     int zoomvel = zoom > 0 ? zoominvel : zoomoutvel,
         oldfov = zoom > 0 ? fov : zoomfov,
-        newfov = zoom > 0 ? zoomfov : fov;
+        newfov = zoom > 0 ? zoomfov : fov,
+        oldhgfov = zoom > 0 ? hudgunfov : hudgunzoomfov,
+        newhgfov = zoom > 0 ? hudgunzoomfov : hudgunfov;
     float t = zoomvel ? float(zoomvel - (lastmillis - zoommillis)) / zoomvel : 0;
     if(t <= 0) 
     {
-        if(!zoomvel && fabs(newfov - curfov) >= 1) curfov = newfov;
+        if(!zoomvel && fabs(newfov - curfov) >= 1) 
+        {
+            curfov = newfov;
+            curhgfov = newhgfov;
+        }
         zoom = max(zoom, 0);
     }
-    else curfov = oldfov*t + newfov*(1 - t);
+    else 
+    {
+        curfov = oldfov*t + newfov*(1 - t);
+        curhgfov = oldhgfov*t + newhgfov*(1 - t);
+    }
 }
 
 VARP(zoomsens, 1, 1, 10000);
@@ -934,8 +946,6 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
     envmapping = false;
 }
 
-VAR(hudgunfov, 10, 65, 150);
-
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat);
 
 void gl_drawframe(int w, int h)
@@ -1026,7 +1036,7 @@ void gl_drawframe(int w, int h)
 
     if(!isthirdperson())
     {
-        project(hudgunfov, aspect, farplane);
+        project(curhgfov, aspect, farplane);
         cl->drawhudgun();
         project(fovy, aspect, farplane);
     }
