@@ -1133,7 +1133,7 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     }
     else if(pl->physstate >= PHYS_SLOPE || water)
     {
-        if(water && !pl->inwater) pl->vel.div(8);
+        if(pl->type != ENT_CAMERA && water && !pl->inwater) pl->vel.div(8);
         if(pl->jumpnext)
         {
             pl->jumpnext = false;
