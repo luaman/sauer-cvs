@@ -21,7 +21,15 @@
 #define kMaxDisplays	16
 
 //If you make a MOD then please change this, the bundle indentifier, the file extensions (.ogz, .dmo), and the url registration.
-#define kSauerbraten @"sauerbraten"
+#define kSAUERBRATEN @"sauerbraten"
+
+//tab names, i.e. image names (text is localised)
+#define tkMAIN @"Main"
+#define tkMAPS @"Maps"
+#define tkKEYS @"Keys"
+#define tkSERVER @"Server"
+#define tkEISENSTERN @"EisenStern"
+
 
 @interface NSString(Extras)
 @end
@@ -29,7 +37,7 @@
 - (NSString*)expand {
     NSMutableString *str = [NSMutableString string];
     [str setString:self];
-    [str replaceOccurrencesOfString:@":s" withString:kSauerbraten options:0 range:NSMakeRange(0, [str length])]; 
+    [str replaceOccurrencesOfString:@":s" withString:kSAUERBRATEN options:0 range:NSMakeRange(0, [str length])]; 
     return str;
 }
 @end
@@ -72,7 +80,7 @@
 - (NSImage*)image 
 { 
     NSImage *image = [[NSImage alloc] initWithContentsOfFile:[path stringByAppendingString:@".jpg"]]; 
-    if(!image && demo) image = [NSImage imageNamed:@"Main"];
+    if(!image && demo) image = [NSImage imageNamed:tkMAIN];
     if(!image) image = [NSImage imageNamed:@"Nomap"];
     return image;
 }
@@ -153,7 +161,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         NSString *name = identifier;
         SEL action = @selector(helpAction:);
         if(tag) {
-            NSString *names[] = {@"Main", @"Maps", @"Keys", @"Server", @"EisenStern"};
+            NSString *names[] = {tkMAIN, tkMAPS, tkKEYS, tkSERVER, tkEISENSTERN};
             name = names[tag-1];
             action = @selector(switchViews:);
         }
@@ -215,7 +223,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 /* directory where the executable lives */
 + (NSString *)cwd
 {
-    return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:[@":s" expand]];
+    return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:kSAUERBRATEN];
 }
 
 + (BOOL)hasUserdir { return [[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR]; }
@@ -229,7 +237,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         CFURLRef url = CFURLCreateFromFSRef(kCFAllocatorDefault, &folder);
         path = [(NSURL *)url path];
         CFRelease(url);
-        path = [path stringByAppendingPathComponent:[@":s" expand]];
+        path = [path stringByAppendingPathComponent:kSAUERBRATEN];
     }
     return path;
 }
@@ -526,19 +534,24 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (void)awakeFromNib 
 {
-    //generate some pretty icons...
-    NSImage *image = [[NSImage imageNamed:@"NSApplicationIcon"] copy];
+    //generate some pretty icons if they are missing
     NSRect region = NSMakeRect(0, 0, 64, 64);
-    [image setSize:region.size];
-    [image setName:@"Main"]; //one less image to include
-    
-    NSImage *en = [image copy]; 
-    [en lockFocus];
-    [[NSColor cyanColor] set]; //greenish icon instead - as CGBlendMode is 10.4+, bitmap filters are too much code  
-	NSRectFillUsingOperation(region, NSCompositeSourceAtop);
-    [image drawInRect:region fromRect:region operation:NSCompositePlusDarker fraction:1.0];
-    [en unlockFocus];
-    [en setName:@"EisenStern"]; //one less image to include
+    NSImage *image = [NSImage imageNamed:tkMAIN];
+    if(!image) {
+        image = [[NSImage imageNamed:@"NSApplicationIcon"] copy];
+        [image setSize:region.size];
+        [image setName:tkMAIN]; //one less image to include
+    }
+    NSImage *en = [NSImage imageNamed:tkEISENSTERN];
+    if(!en) {
+        en = [image copy]; 
+        [en lockFocus];
+        [[NSColor cyanColor] set]; //greenish icon instead - as CGBlendMode is 10.4+, bitmap filters are too much code  
+        NSRectFillUsingOperation(region, NSCompositeSourceAtop);
+        [image drawInRect:region fromRect:region operation:NSCompositePlusDarker fraction:1.0];
+        [en unlockFocus];
+        [en setName:tkEISENSTERN]; //one less image to include
+    }
     
     [self initToolBar];
     [window setBackgroundColor:[NSColor colorWithDeviceRed:0.90 green:0.90 blue:0.90 alpha:1.0]]; //Apples 'mercury' crayon color
