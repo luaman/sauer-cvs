@@ -839,7 +839,7 @@ void render_particles(int time)
                     float len = step.magnitude();
                     int numsteps = min(int(ceil(len/LIGHTNINGSTEP)), MAXLIGHTNINGSTEPS);
                     if(numsteps > 1) step.mul(LIGHTNINGSTEP/len);
-                    int jitteroffset = detrnd((size_t)p, MAXLIGHTNINGSTEPS);
+                    int jitteroffset = detrnd(int(o.x+o.y+o.z), MAXLIGHTNINGSTEPS);
                     vec cur(o), up, right;
                     up.orthogonal(step);
                     up.normalize();
@@ -1200,7 +1200,9 @@ static struct partmap { int type; int color; } partmaps[] =
     { 18, 0x897661}, // 25 greyish-brown:   big  fast rising smoke          
     { 19, 0x3232FF}, // 26 water  
     { 20, 0xFFC8C8}, // 27 yellow: fireball1
-    { 21, 0xFFFFFF}, // 28 lightning
+    { 21, 0xFFFFFF}, // 28 lightning: yellow
+    { 21, 0xBB0000}, // 29 lightning: red
+    { 21, 0x0000BB}, // 30 lightning: blue
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
@@ -1212,13 +1214,13 @@ void regular_particle_splash(int type, int num, int fade, const vec &p, int dela
 
 void particle_splash(int type, int num, int fade, const vec &p) 
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     splash(partmaps[type].type, partmaps[type].color, 150, num, fade, p);
 }
 
 void particle_trail(int type, int fade, const vec &s, const vec &e)
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     vec v;
     float d = e.dist(s, v);
     v.div(d*2);
@@ -1237,7 +1239,7 @@ VARP(particletext, 0, 1, 1);
 
 void particle_text(const vec &s, const char *t, int type, int fade)
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     if(!particletext || camera1->o.dist(s) > 128) return;
     if(t[0]=='@') t = newstring(t);
     newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->text = t;
@@ -1245,19 +1247,19 @@ void particle_text(const vec &s, const char *t, int type, int fade)
 
 void particle_meter(const vec &s, float val, int type, int fade)
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     newparticle(s, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->val = val;
 }
 
 void particle_flare(const vec &p, const vec &dest, int fade, int type, physent *owner)
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     newparticle(p, dest, fade, partmaps[type].type, partmaps[type].color)->owner = owner;
 }
 
 void particle_fireball(const vec &dest, float max, int type)
 {
-    if(shadowmapping) return;
+    if(shadowmapping || renderedgame) return;
     int maxsize = int(max) - 4;
     newparticle(dest, vec(0, 0, 1), maxsize*25, partmaps[type].type, partmaps[type].color)->val = maxsize;
 }
