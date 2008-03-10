@@ -202,6 +202,8 @@ struct captureclient : capturestate
     fpsclient &cl;
     float radarscale;
 
+    IVARP(capturetether, 0, 1, 1);
+
     captureclient(fpsclient &cl) : cl(cl), radarscale(0)
     {
         CCOMMAND(repammo, "", (captureclient *self), self->replenishammo());
@@ -242,6 +244,21 @@ struct captureclient : capturestate
                 p.y += 10*sinf(angle);
                 p.z += 4;
                 rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, p, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+            }
+            if(capturetether() && (b.owner[0] || b.enemy[0]))
+            {
+                loopvj(cl.players)
+                {
+                    fpsent *d = cl.players[j];
+                    if(!d || d->state!=CS_ALIVE || !insidebase(b, d->o)) continue;
+                    if(!strcmp(b.owner, d->team) || !strcmp(b.enemy, d->team))
+                        particle_flare(b.o, vec(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2), 0,
+                            strcmp(d->team, cl.player1->team) ? 29 : 30);
+                }
+                if(cl.player1->state==CS_ALIVE && insidebase(b, cl.player1->o) && 
+                    (!strcmp(b.owner, cl.player1->team) || !strcmp(b.enemy, cl.player1->team)))
+                    particle_flare(b.o, vec(cl.player1->o.x, cl.player1->o.y, 
+                        cl.player1->o.z + (cl.player1->aboveeye - cl.player1->eyeheight)/2), 0, 30);
             }
             int ttype = 11, mtype = -1;
             if(b.owner[0])
