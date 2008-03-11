@@ -232,11 +232,11 @@ struct captureclient : capturestate
     {
         int oldbase = d->lastbase;
         d->lastbase = -1;  
+        vec pos(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2);
         loopv(bases)
         {
             baseinfo &b = bases[i];
             if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
-            vec pos(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2);
             particle_flare(b.o, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
             if(oldbase < 0) 
             {
@@ -244,6 +244,11 @@ struct captureclient : capturestate
                 particle_splash(0, 200, 250, pos);
             }
             d->lastbase = i;
+        }
+        if(d->lastbase < 0 && oldbase >= 0)
+        {
+            particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
+            particle_splash(0, 200, 250, pos);
         }
     }
 
