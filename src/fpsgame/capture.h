@@ -228,9 +228,35 @@ struct captureclient : capturestate
         cl.et.repammo(cl.player1, type);
     }
 
+    void rendertether(fpsent *d)
+    {
+        int oldbase = d->lastbase;
+        d->lastbase = -1;  
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
+            vec pos(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2);
+            particle_flare(b.o, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
+            if(oldbase < 0) particle_splash(0, 30, 250, pos);
+            d->lastbase = i;
+        }
+    }
+
     void renderbases()
     {
         int gamemode = cl.gamemode;
+        extern bool shadowmapping;
+        if(capturetether() && !shadowmapping) 
+        {
+            loopv(cl.players)
+            {
+                fpsent *d = cl.players[i];
+                if(!d || d->state!=CS_ALIVE) continue;
+                rendertether(d);
+            }
+            if(cl.player1->state==CS_ALIVE) rendertether(cl.player1);
+        }
         loopv(bases)
         {
             baseinfo &b = bases[i];
@@ -244,21 +270,6 @@ struct captureclient : capturestate
                 p.y += 10*sinf(angle);
                 p.z += 4;
                 rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, p, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
-            }
-            if(capturetether() && (b.owner[0] || b.enemy[0]))
-            {
-                loopvj(cl.players)
-                {
-                    fpsent *d = cl.players[j];
-                    if(!d || d->state!=CS_ALIVE || !insidebase(b, d->o)) continue;
-                    if(!strcmp(b.owner, d->team) || !strcmp(b.enemy, d->team))
-                        particle_flare(b.o, vec(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2), 0,
-                            strcmp(d->team, cl.player1->team) ? 29 : 30);
-                }
-                if(cl.player1->state==CS_ALIVE && insidebase(b, cl.player1->o) && 
-                    (!strcmp(b.owner, cl.player1->team) || !strcmp(b.enemy, cl.player1->team)))
-                    particle_flare(b.o, vec(cl.player1->o.x, cl.player1->o.y, 
-                        cl.player1->o.z + (cl.player1->aboveeye - cl.player1->eyeheight)/2), 0, 30);
             }
             int ttype = 11, mtype = -1;
             if(b.owner[0])
