@@ -241,14 +241,14 @@ struct captureclient : capturestate
             if(oldbase < 0) 
             {
                 particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
-                particle_splash(0, 200, 250, pos);
+                particle_splash(0, 50, 250, pos);
             }
             d->lastbase = i;
         }
         if(d->lastbase < 0 && oldbase >= 0)
         {
             particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
-            particle_splash(0, 200, 250, pos);
+            particle_splash(0, 50, 250, pos);
         }
     }
 
