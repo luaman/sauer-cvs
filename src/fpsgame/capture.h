@@ -233,7 +233,7 @@ struct captureclient : capturestate
         int oldbase = d->lastbase;
         d->lastbase = -1;  
         vec pos(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2);
-        loopv(bases)
+        if(d->state==CS_ALIVE) loopv(bases)
         {
             baseinfo &b = bases[i];
             if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
@@ -261,10 +261,9 @@ struct captureclient : capturestate
             loopv(cl.players)
             {
                 fpsent *d = cl.players[i];
-                if(!d || d->state!=CS_ALIVE) continue;
-                rendertether(d);
+                if(d) rendertether(d);
             }
-            if(cl.player1->state==CS_ALIVE) rendertether(cl.player1);
+            rendertether(cl.player1);
         }
         loopv(bases)
         {
