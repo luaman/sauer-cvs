@@ -283,12 +283,17 @@ struct captureclient : capturestate
             if(b.owner[0])
             {
                 bool isowner = !strcmp(b.owner, cl.player1->team);
+#if 0
                 if(b.enemy[0])
                 {
                     s_sprintf(b.info)("\f%d%s \f0vs. \f%d%s", isowner ? 3 : 1, b.enemy, isowner ? 1 : 3, b.owner);
                     mtype = isowner ? 19 : 20; 
                 }
                 else { s_sprintf(b.info)("%s", b.owner); ttype = isowner ? 16 : 13; }
+#else
+                if(b.enemy[0]) mtype = isowner ? 19 : 20;
+                s_sprintf(b.info)("%s", b.owner); ttype = isowner ? 16 : 13;
+#endif
             }
             else if(b.enemy[0])
             {
