@@ -1201,8 +1201,8 @@ static struct partmap { int type; int color; } partmaps[] =
     { 19, 0x3232FF}, // 26 water  
     { 20, 0xFFC8C8}, // 27 yellow: fireball1
     { 21, 0xFFFFFF}, // 28 lightning: yellow
-    { 21, 0xBB0000}, // 29 lightning: red
-    { 21, 0x0000BB}, // 30 lightning: blue
+    { 21, 0xBB2222}, // 29 lightning: red
+    { 21, 0x2222BB}, // 30 lightning: blue
     { 16, 0xFF1932}, // 31 fireball: red
     { 16, 0x3219FF}, // 32 fireball: blue
 };
