@@ -286,9 +286,9 @@ struct captureclient : capturestate
                     ammopos.z -= height.z/2 + sinf(cl.lastmillis/100.0f)/20;
                     rendermodel(&b.ent->light, ammoname, ANIM_MAPMODEL|ANIM_LOOP, ammopos, cl.lastmillis/10.0f, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
                 }
-                else
+                else loopj(b.ammo)
                 {
-                    float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
+                    float angle = 2*M_PI*(cl.lastmillis/4000.0f + j/float(MAXAMMO));
                     vec ammopos(b.o);
                     ammopos.x += 10*cosf(angle);
                     ammopos.y += 10*sinf(angle);
