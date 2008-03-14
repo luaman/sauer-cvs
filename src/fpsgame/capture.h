@@ -255,6 +255,12 @@ struct captureclient : capturestate
         }
     }
 
+    void preloadbases()
+    {
+        static const char *basemodels[3] = { "base/neutral", "base/red", "base/blue" };
+        loopi(3) loadmodel(basemodels[i], -1, true);
+    }
+
     void renderbases()
     {
         int gamemode = cl.gamemode;

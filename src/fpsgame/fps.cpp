@@ -523,6 +523,7 @@ struct fpsclient : igameclient
         preloadcharacters();
         et.preloadentities();
         if(m_sp) ms.preloadmonsters();
+        if(m_capture) cpc.preloadbases();
     }
 
     IVARP(startmenu, 0, 1, 1);
