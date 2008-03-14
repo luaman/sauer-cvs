@@ -22,6 +22,7 @@ struct capturestate
         vec o;
         string owner, enemy;
 #ifndef CAPTURESERV
+        vec ammopos;
         string name, info;
         extentity *ent;
 #endif
@@ -199,6 +200,8 @@ struct capturestate
 
 struct captureclient : capturestate
 {
+    static const int FIREBALLRADIUS = 5;
+
     fpsclient &cl;
     float radarscale;
 
@@ -237,7 +240,7 @@ struct captureclient : capturestate
         {
             baseinfo &b = bases[i];
             if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
-            particle_flare(b.o, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
+            particle_flare(b.ammopos, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
             if(oldbase < 0) 
             {
                 particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
@@ -268,17 +271,32 @@ struct captureclient : capturestate
         loopv(bases)
         {
             baseinfo &b = bases[i];
-            const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "flags/red" : "flags/blue") : "flags/neutral";
+            const char *flagname = b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? "base/red" : "base/blue") : "base/neutral";
             rendermodel(&b.ent->light, flagname, ANIM_MAPMODEL|ANIM_LOOP, b.o, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
-            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) loopi(m_noitemsrail ? 0 : (m_noitems ? 1 : b.ammo))
+            particle_fireball(b.ammopos, 5, b.owner[0] ? (strcmp(b.owner, cl.player1->team) ? 31 : 32) : 33, 0);
+
+            if(!m_noitemsrail && b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1) 
             {
-                float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
-                vec p(b.o);
-                p.x += 10*cosf(angle);
-                p.y += 10*sinf(angle);
-                p.z += 4;
-                rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, p, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+                const char *ammoname = cl.et.entmdlname(I_SHELLS+b.ammotype-1);
+                if(m_noitems)
+                { 
+                    vec height(0, 0, 0);
+                    abovemodel(height, ammoname);
+                    vec ammopos(b.ammopos);
+                    ammopos.z -= height.z/2 + sinf(cl.lastmillis/100.0f)/20;
+                    rendermodel(&b.ent->light, ammoname, ANIM_MAPMODEL|ANIM_LOOP, ammopos, cl.lastmillis/10.0f, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+                }
+                else
+                {
+                    float angle = 2*M_PI*(cl.lastmillis/4000.0f + i/float(MAXAMMO));
+                    vec ammopos(b.o);
+                    ammopos.x += 10*cosf(angle);
+                    ammopos.y += 10*sinf(angle);
+                    ammopos.z += 4;
+                    rendermodel(&b.ent->light, cl.et.entmdlname(I_SHELLS+b.ammotype-1), ANIM_MAPMODEL|ANIM_LOOP, ammopos, 0, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_OCCLUDED);
+                }
             }
+
             int ttype = 11, mtype = -1;
             if(b.owner[0])
             {
@@ -302,9 +320,9 @@ struct captureclient : capturestate
                 else { ttype = 16; mtype = 18; }
             }
             else b.info[0] = '\0';
-            vec above(b.o);
-            abovemodel(above, flagname);
-            above.z += 2.0f;
+
+            vec above(b.ammopos);
+            above.z += FIREBALLRADIUS+1.0f;
             particle_text(above, b.info, ttype, 1);
             if(mtype>=0)
             {
@@ -396,6 +414,9 @@ struct captureclient : capturestate
             if(e->type!=BASE) continue; 
             baseinfo &b = bases.add();
             b.o = e->o;
+            b.ammopos = b.o;
+            abovemodel(b.ammopos, "base/neutral");
+            b.ammopos.z += FIREBALLRADIUS-2;
             b.ammotype = e->attr1;
             s_sprintfd(alias)("base_%d", e->attr2);
             const char *name = getalias(alias);
@@ -440,6 +461,7 @@ struct captureclient : capturestate
             conoutf("\f2%s lost %s", b.owner, b.name); 
             if(!strcmp(b.owner, cl.player1->team)) playsound(S_V_BASELOST); 
         }
+        if(strcmp(b.owner, owner)) particle_splash(0, 200, 250, b.ammopos);
         s_strcpy(b.owner, owner);
         s_strcpy(b.enemy, enemy);
         b.converted = converted;

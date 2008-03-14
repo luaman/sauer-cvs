@@ -929,7 +929,7 @@ void render_particles(int time)
                 if(type==PT_FIREBALL)
                 {
                     float pmax = p->val;
-                    float size = float(ts)/p->fade;
+                    float size = p->fade ? float(ts)/p->fade : 1;
                     float psize = pt.sz + pmax * size;
                    
                     bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
@@ -1205,6 +1205,7 @@ static struct partmap { int type; int color; } partmaps[] =
     { 21, 0x2222BB}, // 30 lightning: blue
     { 16, 0xFF1932}, // 31 fireball: red
     { 16, 0x3219FF}, // 32 fireball: blue
+    { 16, 0x32FF32}, // 33 fireball: green
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
@@ -1263,7 +1264,7 @@ void particle_fireball(const vec &dest, float maxsize, int type, int fade)
 {
     if(shadowmapping || renderedgame) return;
     float growth = maxsize - parttypes[partmaps[type].type].sz;
-    if(!fade) fade = int(growth*25);
+    if(fade < 0) fade = int(growth*25);
     newparticle(dest, vec(0, 0, 1), fade, partmaps[type].type, partmaps[type].color)->val = growth;
 }
 
