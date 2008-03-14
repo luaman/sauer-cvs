@@ -826,7 +826,7 @@ VARNP(gui2d, usegui2d, 0, 0, 1);
 
 void g3d_addgui(g3d_callback *cb, vec &origin, int flags)
 {
-    bool gui2d = flags&GUI_2D && usegui2d;
+    bool gui2d = flags&GUI_FORCE_2D || (flags&GUI_2D && usegui2d);
     if(!gui2d && flags&GUI_FOLLOW && useguifollow) origin.z = player->o.z-(player->eyeheight-1);
     gui &g = (gui2d ? guis2d : guis3d).add();
     g.cb = cb;

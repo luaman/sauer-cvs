@@ -7,6 +7,7 @@ struct scoreboard : g3d_callback
     int menustart;
     fpsclient &cl;
 
+    IVARP(scoreboard2d, 0, 1, 1);
     IVARP(showclientnum, 0, 0, 1);
     IVARP(showpj, 0, 1, 1);
     IVARP(showping, 0, 1, 1);
@@ -357,7 +358,7 @@ struct scoreboard : g3d_callback
     {
         if(scoreson) 
         {
-            g3d_addgui(this, menupos, GUI_2D | GUI_FOLLOW);
+            g3d_addgui(this, menupos, scoreboard2d() ? GUI_FORCE_2D : GUI_2D | GUI_FOLLOW);
         }
     }
 };

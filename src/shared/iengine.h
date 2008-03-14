@@ -279,8 +279,9 @@ struct g3d_callback
 
 enum
 {
-    GUI_2D = 1<<0,
-    GUI_FOLLOW = 1<<1
+    GUI_2D       = 1<<0,
+    GUI_FOLLOW   = 1<<1,
+    GUI_FORCE_2D = 1<<2
 };
 
 extern void g3d_addgui(g3d_callback *cb, vec &origin, int flags = 0);
