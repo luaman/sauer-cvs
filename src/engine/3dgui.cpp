@@ -662,11 +662,14 @@ struct gui : g3d_gui
 
     void start(int starttime, float initscale, int *tab, bool allowinput)
     {	
-        if(gui2d) initscale *= 0.025f; 
+        if(gui2d) 
+        {
+            initscale *= 0.025f; 
+            if(allowinput) hascursor = true;
+        }
         basescale = initscale;
         if(layoutpass) scale.x = scale.y = scale.z = basescale*min((totalmillis-starttime)/300.0f, 1.0f);
         passthrough = scale.x<basescale || !allowinput;
-        if(allowinput) hascursor = true;
         curdepth = -1;
         curlist = -1;
         tpos = 0;
