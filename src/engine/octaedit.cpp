@@ -344,7 +344,7 @@ void cursorupdate()
         {
            if(!havesel) {
                selchildcount = 0;
-               sel.s = vec(0);
+               sel.s = ivec(0, 0, 0);
            }
         }
         else 
@@ -411,7 +411,7 @@ void cursorupdate()
 
             sel.corner = (cor[R[d]]-(lu[R[d]]*2)/gridsize)+(cor[C[d]]-(lu[C[d]]*2)/gridsize)*2;
             selchildcount = 0;
-            countselchild(worldroot, vec(0), hdr.worldsize/2);
+            countselchild(worldroot, ivec(0, 0, 0), hdr.worldsize/2);
             if(mag>1 && selchildcount==1) selchildcount = -mag;
         }
     }
@@ -496,7 +496,7 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
 
 void changed(const block3 &sel)
 {
-    if(sel.s == vec(0)) return;
+    if(sel.s.iszero()) return;
     block3 b = sel;
     loopi(3) b.s[i] *= b.grid;
     b.grid = 1;
@@ -504,7 +504,7 @@ void changed(const block3 &sel)
     {
         b.o[i] -= 1;
         b.s[i] += 2;
-        readychanges(b, worldroot, vec(0), hdr.worldsize/2);
+        readychanges(b, worldroot, ivec(0, 0, 0), hdr.worldsize/2);
         b.o[i] += 1;
         b.s[i] -= 2;
     }
@@ -617,7 +617,7 @@ void addundo(undoblock &u)
 
 void makeundo()                        // stores state of selected cubes before editing
 {
-    if(lastsel==sel || sel.s==vec(0)) return;
+    if(lastsel==sel || sel.s.iszero()) return;
     lastsel=sel;
     if(multiplayer(false)) return;
     undoblock u;
