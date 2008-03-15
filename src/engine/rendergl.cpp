@@ -446,17 +446,16 @@ void cleanupgl()
 
 VAR(wireframe, 0, 0, 1);
 
-vec worldpos, camright, camup;
+vec worldpos, camdir, camright, camup;
 
 void findorientation()
 {
-    vec dir;
-    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, dir);
+    vecfromyawpitch(camera1->yaw, camera1->pitch, 1, 0, camdir);
     vecfromyawpitch(camera1->yaw, 0, 0, -1, camright);
     vecfromyawpitch(camera1->yaw, camera1->pitch+90, 1, 0, camup);
 
-    if(raycubepos(camera1->o, dir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
-        worldpos = dir.mul(2*hdr.worldsize).add(camera1->o); //otherwise 3dgui won't work when outside of map
+    if(raycubepos(camera1->o, camdir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
+        worldpos = vec(camdir).mul(2*hdr.worldsize).add(camera1->o); //otherwise 3dgui won't work when outside of map
 
     setviewcell(camera1->o);
 }
