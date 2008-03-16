@@ -49,6 +49,8 @@ void conoutf(const char *s, ...)
      
     while((visible = curfont ? text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3) : strlen(s))) // cut strings to fit on screen
     {
+        visible = min(visible, sizeof(cols)-1 - (cpos+1));
+
         const char *newline = (const char *)memchr(s, '\n', visible);
         if(newline) visible = newline+1-s;
         
@@ -74,6 +76,7 @@ void conoutf(const char *s, ...)
                         break;
                     default:
                         cols[cpos] = s[i];
+                        break;
                 }
 
         s += visible;
