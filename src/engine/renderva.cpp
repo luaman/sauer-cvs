@@ -406,16 +406,15 @@ static vector<octaentities *> renderedmms;
 
 vtxarray *reflectedva;
 
-void renderreflectedmapmodels(float z, bool refract)
+void renderreflectedmapmodels()
 {
-    bool reflected = !refract && camera1->o.z >= z;
     vector<octaentities *> reflectedmms;
-    vector<octaentities *> &mms = reflected ? reflectedmms : renderedmms;
+    vector<octaentities *> &mms = reflecting ? reflectedmms : renderedmms;
     const vector<extentity *> &ents = et->getents();
 
-    if(reflected)
+    if(reflecting)
     {
-        reflectvfcP(z);
+        reflectvfcP(reflectz);
         for(vtxarray *va = reflectedva; va; va = va->rnext)
         {
             if(!va->mapmodels || va->distance > reflectdist) continue;
@@ -425,8 +424,8 @@ void renderreflectedmapmodels(float z, bool refract)
     loopv(mms)
     {
         octaentities *oe = mms[i];
-        if(refract ? oe->bbmin.z >= z : oe->bbmax.z <= z) continue;
-        if(reflected && isvisiblecube(oe->o, oe->size) >= VFC_FOGGED) continue;
+        if(reflecting || refracting>0 ? oe->bbmax.z <= reflectz : oe->bbmin.z >= reflectz) continue;
+        if(reflecting && isvisiblecube(oe->o, oe->size) >= VFC_FOGGED) continue;
         loopv(oe->mapmodels)
         {
            extentity &e = *ents[oe->mapmodels[i]];
@@ -450,7 +449,7 @@ void renderreflectedmapmodels(float z, bool refract)
         }
         endmodelbatches();
     }
-    if(reflected) restorevfcP();
+    if(reflecting) restorevfcP();
 }
 
 void rendermapmodels()
@@ -722,7 +721,7 @@ void renderquery(renderstate &cur, occludequery *query, vtxarray *va)
     ivec origin = vaorigin;
 
     vec camera(camera1->o);
-    if(reflecting && !refracting) camera.z = reflecting;
+    if(reflecting) camera.z = reflectz;
    
     drawbb(ivec(va->bbmin).sub(origin).mul(1<<VVEC_FRAC),
            ivec(va->bbmax).sub(va->bbmin).mul(1<<VVEC_FRAC),
@@ -876,13 +875,13 @@ static void changefogplane(renderstate &cur, int pass, vtxarray *va)
 {
     if(renderpath!=R_FIXEDFUNCTION)
     {
-        if(reflecting)
+        if(fading || fogging)
         {
-            float fogplane = reflecting - (va->o.z & ~VVEC_INT_MASK);
+            float fogplane = reflectz - (va->o.z & ~VVEC_INT_MASK);
             if(cur.fogplane!=fogplane)
             {
                 cur.fogplane = fogplane;
-                if(refracting) setfogplane(1.0f/(1<<VVEC_FRAC), fogplane, false, -0.25f/(1<<VVEC_FRAC), 0.5f + 0.25f*fogplane);
+                if(fogging) setfogplane(1.0f/(1<<VVEC_FRAC), fogplane, false, -0.25f/(1<<VVEC_FRAC), 0.5f + 0.25f*fogplane);
                 else setfogplane(0, 0, false, 0.25f/(1<<VVEC_FRAC), 0.5f - 0.25f*fogplane);
             }
         }
@@ -891,7 +890,7 @@ static void changefogplane(renderstate &cur, int pass, vtxarray *va)
     {
         if(pass==RENDERPASS_LIGHTMAP) glActiveTexture_(GL_TEXTURE0_ARB+cur.fogtmu);
         else if(pass==RENDERPASS_GLOW) glActiveTexture_(GL_TEXTURE1_ARB);
-        GLfloat s[4] = { 0, 0, -1.0f/(waterfog<<VVEC_FRAC), (refracting - (va->o.z & ~VVEC_INT_MASK))/waterfog };
+        GLfloat s[4] = { 0, 0, -1.0f/(waterfog<<VVEC_FRAC), (reflectz - (va->o.z & ~VVEC_INT_MASK))/waterfog };
         glTexGenfv(GL_S, GL_OBJECT_PLANE, s);
         if(pass==RENDERPASS_LIGHTMAP) glActiveTexture_(GL_TEXTURE0_ARB+cur.diffusetmu);
         else if(pass==RENDERPASS_GLOW) glActiveTexture_(GL_TEXTURE0_ARB);
@@ -1266,7 +1265,7 @@ vector<vtxarray *> foggedvas;
     do { \
         if(!refracting) \
         { \
-            occludequery *query = !reflecting ? va->query : (camera1->o.z >= reflecting ? va->rquery : NULL); \
+            occludequery *query = reflecting ? va->rquery : va->query; \
             if(query) \
             { \
                 flush; \
@@ -1280,7 +1279,7 @@ vector<vtxarray *> foggedvas;
     do { \
         if(!refracting) \
         { \
-            occludequery *query = !reflecting ? va->query : (camera1->o.z >= reflecting ? va->rquery : NULL); \
+            occludequery *query = reflecting ? va->rquery : va->query; \
             if(query) \
             { \
                 flush; \
@@ -1633,8 +1632,8 @@ void cleanupTMUs(renderstate &cur)
     }
 }
 
-#define FIRSTVA (reflecting && !refracting && camera1->o.z >= reflecting ? reflectedva : visibleva)
-#define NEXTVA (reflecting && !refracting && camera1->o.z >= reflecting ? va->rnext : va->next)
+#define FIRSTVA (reflecting ? reflectedva : visibleva)
+#define NEXTVA (reflecting ? va->rnext : va->next)
 
 void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
 {
@@ -1642,16 +1641,16 @@ void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
     for(vtxarray *va = FIRSTVA; va; va = NEXTVA)
     {
         if(!va->texs || va->occluded >= OCCLUDE_GEOM) continue;
-        if(refracting || (reflecting && camera1->o.z < reflecting))
+        if(refracting)
         {    
-            if(refracting && camera1->o.z >= refracting ? va->geommin.z > refracting : va->geommax.z <= refracting) continue;
+            if(refracting < 0 ? va->geommin.z > reflectz : va->geommax.z <= reflectz) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
         }
         else if(reflecting)
         {
-            if(va->geommax.z <= reflecting || (va->rquery && checkquery(va->rquery))) continue;
+            if(va->geommax.z <= reflectz || (va->rquery && checkquery(va->rquery))) continue;
         }
-        if(fogpass ? va->o.z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED) continue;
+        if(fogpass ? va->o.z+va->size<=reflectz-waterfog : va->curvfc==VFC_FOGGED) continue;
         renderva(cur, va, pass, fogpass);
     }
     if(geombatches.length()) renderbatches(cur, pass);
@@ -1674,7 +1673,7 @@ void rendergeom(float causticspass, bool fogpass)
         vtris = vverts = 0;
     }
 
-    bool doOQ = !refracting && (reflecting ? camera1->o.z >= reflecting && hasOQ && oqfrags && oqreflect : zpass!=0);
+    bool doOQ = reflecting ? hasOQ && oqfrags && oqreflect : !refracting && zpass!=0;
     if(!doOQ) 
     {
         setupTMUs(cur, causticspass, fogpass);
@@ -1692,14 +1691,14 @@ void rendergeom(float causticspass, bool fogpass)
     for(vtxarray *va = FIRSTVA; va; va = NEXTVA)
     {
         if(!va->texs) continue;
-        if(refracting || (reflecting && camera1->o.z < reflecting))
+        if(refracting)
         {
-            if((refracting && camera1->o.z >= refracting ? va->geommin.z > refracting : va->geommax.z <= reflecting) || va->occluded >= OCCLUDE_GEOM) continue;
+            if((refracting < 0 ? va->geommin.z > reflectz : va->geommax.z <= reflectz) || va->occluded >= OCCLUDE_GEOM) continue;
             if((!hasOQ || !oqfrags) && va->distance > reflectdist) break;
         }
         else if(reflecting)
         {
-            if(va->geommax.z <= reflecting) continue;
+            if(va->geommax.z <= reflectz) continue;
             if(doOQ)
             {
                 va->rquery = newquery(&va->rquery);
@@ -1787,7 +1786,7 @@ void rendergeom(float causticspass, bool fogpass)
             if(!va->texs) continue;
             if(reflecting)
             {
-                if(va->geommax.z <= reflecting) continue;
+                if(va->geommax.z <= reflectz) continue;
                 if(va->rquery && checkquery(va->rquery))
                 {
                     if(va->occluded >= OCCLUDE_BB || va->curvfc == VFC_NOT_VISIBLE) *prevva = va->rnext;
@@ -1952,14 +1951,14 @@ void rendergeom(float causticspass, bool fogpass)
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc = true)
+void findreflectedvas(vector<vtxarray *> &vas, bool vfc = true)
 {
     bool doOQ = hasOQ && oqfrags && oqreflect;
     loopv(vas)
     {
         vtxarray *va = vas[i];
         if(!vfc) va->curvfc = VFC_NOT_VISIBLE;
-        if(va->curvfc == VFC_FOGGED || va->o.z+va->size <= z || isvisiblecube(va->o, va->size) >= VFC_FOGGED) continue;
+        if(va->curvfc == VFC_FOGGED || va->o.z+va->size <= reflectz || isvisiblecube(va->o, va->size) >= VFC_FOGGED) continue;
         bool render = true;
         if(va->curvfc == VFC_FULL_VISIBLE)
         {
@@ -1980,17 +1979,17 @@ void findreflectedvas(vector<vtxarray *> &vas, float z, bool refract, bool vfc =
             va->rnext = *vprev;
             *vprev = va;
         }
-        if(va->children.length()) findreflectedvas(va->children, z, refract, va->curvfc != VFC_NOT_VISIBLE);
+        if(va->children.length()) findreflectedvas(va->children, va->curvfc != VFC_NOT_VISIBLE);
     }
 }
 
-void renderreflectedgeom(float z, bool refract, bool causticspass, bool fogpass)
+void renderreflectedgeom(bool causticspass, bool fogpass)
 {
-    if(!refract && camera1->o.z >= z)
+    if(reflecting)
     {
-        reflectvfcP(z);
+        reflectvfcP(reflectz);
         reflectedva = NULL;
-        findreflectedvas(varoot, z, refract);
+        findreflectedvas(varoot);
         rendergeom(causticspass ? 1 : 0, fogpass);
         restorevfcP();
     }
@@ -2020,25 +2019,25 @@ void renderskyva(vtxarray *va, bool explicitonly = false)
     prevskyva = va;
 }
 
-int renderreflectedskyvas(vector<vtxarray *> &vas, float z, bool vfc = true)
+int renderreflectedskyvas(vector<vtxarray *> &vas, bool vfc = true)
 {
     int rendered = 0;
     loopv(vas)
     {
         vtxarray *va = vas[i];
         if((vfc && va->curvfc == VFC_FULL_VISIBLE) && va->occluded >= OCCLUDE_BB) continue;
-        if(va->o.z+va->size <= z || isvisiblecube(va->o, va->size) == VFC_NOT_VISIBLE) continue;
+        if(va->o.z+va->size <= reflectz || isvisiblecube(va->o, va->size) == VFC_NOT_VISIBLE) continue;
         if(va->sky+va->explicitsky) 
         {
             renderskyva(va);
             rendered++;
         }
-        if(va->children.length()) rendered += renderreflectedskyvas(va->children, z, vfc && va->curvfc != VFC_NOT_VISIBLE);
+        if(va->children.length()) rendered += renderreflectedskyvas(va->children, vfc && va->curvfc != VFC_NOT_VISIBLE);
     }
     return rendered;
 }
 
-bool rendersky(bool explicitonly, float zreflect)
+bool rendersky(bool explicitonly)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -2049,10 +2048,10 @@ bool rendersky(bool explicitonly, float zreflect)
     prevskyva = NULL;
 
     int rendered = 0;
-    if(zreflect)
+    if(reflecting)
     {
-        reflectvfcP(zreflect);
-        rendered = renderreflectedskyvas(varoot, zreflect);
+        reflectvfcP(reflectz);
+        rendered = renderreflectedskyvas(varoot);
         restorevfcP();
     }
     else for(vtxarray *va = visibleva; va; va = va->next)
