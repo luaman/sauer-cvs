@@ -27,7 +27,8 @@ struct header                   // map file format header
     uchar mapbe;
     uchar skylight[3];
     uchar lavacolour[3];
-    uchar reserved[1+12];
+    uchar waterfallcolour[3];
+    uchar reserved[10];
     char maptitle[128];
 };
 

@@ -296,6 +296,21 @@ void watercolour(int *r, int *g, int *b)
 
 COMMAND(watercolour, "iii");
 
+void getwaterfallcolour(uchar *fcol)
+{
+    if(hdr.waterfallcolour[0] || hdr.waterfallcolour[1] || hdr.waterfallcolour[2]) memcpy(fcol, hdr.waterfallcolour, 3);
+    else getwatercolour(fcol);
+}
+
+void waterfallcolour(int *r, int *g, int *b)
+{
+    hdr.waterfallcolour[0] = *r;
+    hdr.waterfallcolour[1] = *g;
+    hdr.waterfallcolour[2] = *b;
+}
+
+COMMAND(waterfallcolour, "iii");
+
 VAR(lavafog, 0, 50, 10000);
 
 void getlavacolour(uchar *lcol)
