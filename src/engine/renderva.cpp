@@ -299,7 +299,7 @@ bool checkquery(occludequery *query, bool nowait)
         glGetQueryObjectuiv_(query->id, GL_QUERY_RESULT_ARB, &fragments);
         query->fragments = fragments;
     }
-    return fragments < (uint)(reflecting ? oqreflect : oqfrags);
+    return fragments < (uint)(reflecting || refracting ? oqreflect : oqfrags);
 }
 
 void drawbb(const ivec &bo, const ivec &br, const vec &camera)

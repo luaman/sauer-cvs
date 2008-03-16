@@ -471,7 +471,7 @@ void sortmaterials(vector<materialsurface *> &vismats)
             materialsurface &m = va->matbuf[i];
             if(!editmode || !showmat)
             {
-                if(m.material==MAT_WATER && (m.orient==O_TOP || (refracting<0 && !fogging))) continue;
+                if(m.material==MAT_WATER && (m.orient==O_TOP || (refracting<0 && reflectz>hdr.worldsize))) continue;
                 if(m.material>=MAT_EDIT) continue;
             }
             vismats.add(&m);
@@ -618,7 +618,7 @@ void rendermaterials()
                                 name##shader->set(); \
                             } while(0)
 
-                            if(waterfallrefract && (!reflecting || !refracting))
+                            if(waterfallrefract && !reflecting && !refracting)
                             {
                                 if(hasCM && waterfallenv) SETWATERFALLSHADER(waterfallenvrefract);    
                                 else SETWATERFALLSHADER(waterfallrefract);
