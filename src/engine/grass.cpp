@@ -428,7 +428,7 @@ void rendergrass()
     {
         if(!va->grasstris || va->occluded >= OCCLUDE_GEOM) continue;
         if(va->distance > grassdist) continue;
-        if(reflecting || refracting>0 ? va->o.z+va->size<reflectz : va->o.z>=reflectz)
+        if(reflecting || refracting>0 ? va->o.z+va->size<reflectz : va->o.z>=reflectz) continue;
         if(!va->grasssamples) gengrasssamples(va);
         if(!rendered++) setupgrass();
         rendergrasssamples(va, dir);
