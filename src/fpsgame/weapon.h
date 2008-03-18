@@ -16,7 +16,7 @@ struct weaponstate
     {
         CCOMMAND(nextweapon, "i", (weaponstate *self, int *dir), self->nextweapon(*dir));
         CCOMMAND(setweapon, "ii", (weaponstate *self, int *gun, int *force), self->setweapon(*gun, force!=0));
-        CCOMMAND(cycleweapon, "iiiii", (weaponstate *self, char *w1, char *w2, char *w3, char *w4, char *w5),
+        CCOMMAND(cycleweapon, "sssss", (weaponstate *self, char *w1, char *w2, char *w3, char *w4, char *w5),
         {
             int numguns = 0;
             int guns[5];
@@ -47,7 +47,7 @@ struct weaponstate
         player1->gunselect = gun;
     }
 
-    void nextweapon(int dir)
+    void nextweapon(int dir, bool force = false)
     {
         if(player1->state!=CS_ALIVE) return;
         dir = (dir < 0 ? NUMGUNS-1 : 1);
@@ -55,26 +55,30 @@ struct weaponstate
         loopi(NUMGUNS)
         {
             gun = (gun + dir)%NUMGUNS;
-            if(player1->ammo[gun]) break;
+            if(force || player1->ammo[gun]) break;
         }
         gunselect(gun);
     }
 
-    void setweapon(int gun, bool force)
+    void setweapon(int gun, bool force = false)
     {
         if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
         if(force || player1->ammo[gun]) gunselect(gun);
     }
 
-    void cycleweapon(int numguns, int *guns)
+    void cycleweapon(int numguns, int *guns, bool force = false)
     {
-        if(player1->state!=CS_ALIVE) return;
+        if(numguns<=0 || player1->state!=CS_ALIVE) return;
         int offset = 0;
         loopi(numguns) if(guns[i] == player1->gunselect) { offset = i+1; break; }
-        for(int i = offset; i < NUMGUNS; i++) if(guns[i]>=0 && guns[i]<NUMGUNS)
+        loopi(numguns)
         {
-            player1->gunselect = guns[i];
-            break;
+            int gun = guns[(i+offset)%numguns];
+            if(gun>=0 && gun<NUMGUNS && (force || player1->ammo[gun]))
+            {
+                player1->gunselect = gun;
+                break;
+            }
         }
     }
 
