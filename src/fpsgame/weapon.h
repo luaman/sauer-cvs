@@ -15,7 +15,19 @@ struct weaponstate
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
         CCOMMAND(nextweapon, "i", (weaponstate *self, int *dir), self->nextweapon(*dir));
-        CCOMMAND(setweapon, "i", (weaponstate *self, int *gun), self->setweapon(*gun));
+        CCOMMAND(setweapon, "ii", (weaponstate *self, int *gun, int *force), self->setweapon(*gun, force!=0));
+        CCOMMAND(cycleweapon, "iiiii", (weaponstate *self, char *w1, char *w2, char *w3, char *w4, char *w5),
+        {
+            int numguns = 0;
+            int guns[5];
+            if(w1[0]) guns[numguns++] = atoi(w1);
+            if(w2[0]) guns[numguns++] = atoi(w2);
+            if(w3[0]) guns[numguns++] = atoi(w3);
+            if(w4[0]) guns[numguns++] = atoi(w4);
+            if(w5[0]) guns[numguns++] = atoi(w5);
+
+            self->cycleweapon(numguns, guns);
+        });
         CCOMMAND(weapon, "sss", (weaponstate *self, char *w1, char *w2, char *w3),
         {
             self->weaponswitch(w1[0] ? atoi(w1) : -1,
@@ -48,10 +60,22 @@ struct weaponstate
         gunselect(gun);
     }
 
-    void setweapon(int gun)
+    void setweapon(int gun, bool force)
     {
         if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
-        gunselect(gun);
+        if(force || player1->ammo[gun]) gunselect(gun);
+    }
+
+    void cycleweapon(int numguns, int *guns)
+    {
+        if(player1->state!=CS_ALIVE) return;
+        int offset = 0;
+        loopi(numguns) if(guns[i] == player1->gunselect) { offset = i+1; break; }
+        for(int i = offset; i < NUMGUNS; i++) if(guns[i]>=0 && guns[i]<NUMGUNS)
+        {
+            player1->gunselect = guns[i];
+            break;
+        }
     }
 
     void weaponswitch(int a = -1, int b = -1, int c = -1)
