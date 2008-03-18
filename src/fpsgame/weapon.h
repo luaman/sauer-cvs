@@ -76,7 +76,7 @@ struct weaponstate
             int gun = guns[(i+offset)%numguns];
             if(gun>=0 && gun<NUMGUNS && (force || player1->ammo[gun]))
             {
-                player1->gunselect = gun;
+                gunselect(gun);
                 break;
             }
         }
