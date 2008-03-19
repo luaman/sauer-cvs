@@ -557,7 +557,7 @@ VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
 physent *camera1 = NULL;
 bool deathcam = false;
-bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || (reflecting && !refracting); }
+bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || reflecting; }
 
 void recomputecamera()
 {
