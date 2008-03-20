@@ -243,13 +243,13 @@ cube *loadchildren(gzFile f)
     return c;
 }
 
-void save_world(char *mname, bool nolms)
+bool save_world(const char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
     setnames(*mname ? mname : "untitled");
     if(savebak) backup(cgzname, bakname);
     gzFile f = opengzfile(cgzname, "wb9");
-    if(!f) { conoutf("could not write map to %s", cgzname); return; }
+    if(!f) { conoutf("could not write map to %s", cgzname); return false; }
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
@@ -305,6 +305,7 @@ void save_world(char *mname, bool nolms)
 
     gzclose(f);
     conoutf("wrote map file %s", cgzname);
+    return true;
 }
 
 void swapXZ(cube *c)
@@ -323,17 +324,17 @@ void swapXZ(cube *c)
 	}
 }
 
-void load_world(const char *mname, const char *cname)        // still supports all map formats that have existed since the earliest cube betas!
+bool load_world(const char *mname, const char *cname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     int loadingstart = SDL_GetTicks();
     setnames(mname, cname);
     gzFile f = opengzfile(cgzname, "rb9");
-    if(!f) { conoutf("could not read map %s", cgzname); return; }
+    if(!f) { conoutf("could not read map %s", cgzname); return false; }
     header newhdr;
     gzread(f, &newhdr, sizeof(header));
     endianswap(&newhdr.version, sizeof(int), 9);
-    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return; }
-    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return; }
+    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return false; }
+    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return false; }
     hdr = newhdr;
     resetmap();
     Texture *mapshot = textureload(picname, 0, true, false);
@@ -519,6 +520,7 @@ void load_world(const char *mname, const char *cname)        // still supports a
     attachentities();
 
     startmap(cname ? cname : mname);
+    return true;
 }
 
 void savecurrentmap() { save_world(cl->getclientmap()); }

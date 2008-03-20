@@ -965,7 +965,7 @@ void startmap(const char *name)
     cl->startmap(name);
 }
 
-bool emptymap(int scale, bool force)    // main empty world creation routine
+bool emptymap(int scale, bool force, const char *mname)    // main empty world creation routine
 {
     if(!force && !editmode) 
     {
@@ -1004,7 +1004,7 @@ bool emptymap(int scale, bool force)    // main empty world creation routine
     execfile("data/default_map_settings.cfg");
     overrideidents = false;
 
-    startmap("");
+    startmap(mname);
     player->o.z += player->eyeheight+1;
 
     return true;

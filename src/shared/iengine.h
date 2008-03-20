@@ -85,7 +85,7 @@ extern void newgui(char *name, char *contents);
 extern void showgui(const char *name);
 
 // world
-extern bool emptymap(int factor, bool force);
+extern bool emptymap(int factor, bool force, const char *mname = "");
 extern bool enlargemap(bool force);
 extern int findentity(int type, int index = 0);
 extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local);
@@ -150,8 +150,8 @@ enum
 extern void adddecal(int type, const vec &center, const vec &surface, float radius, int color = 0xFFFFFF, int info = 0);
 
 // worldio
-extern void load_world(const char *mname, const char *cname = NULL);
-extern void save_world(char *mname, bool nolms = false);
+extern bool load_world(const char *mname, const char *cname = NULL);
+extern bool save_world(const char *mname, bool nolms = false);
 
 // physics
 extern void moveplayer(physent *pl, int moveres, bool local);

@@ -1004,8 +1004,7 @@ struct clientcom : iclientcom
         cl.minremain = -1;
         if(editmode && !allowedittoggle()) toggleedit();
         if(m_demo) return;
-        if(gamemode==1 && !name[0]) emptymap(0, true);
-        else load_world(name);
+        if((gamemode==1 && !name[0]) || (!load_world(name) && remote)) emptymap(0, true, name);
         if(m_capture) cl.cpc.setupbases();
         else if(m_assassin) cl.asc.reset();
         if(editmode) edittoggled(editmode);
