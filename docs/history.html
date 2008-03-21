@@ -171,6 +171,8 @@
 </div>
 
 <ul>
+<li>scoreboard now always defaults to 2D, regardless of GUI settings (controlled via "scoreboard2d" var)</li>
+<li>added "waterfallcolour" command to control coloring of waterfalls separately from water</li>
 <li>added refractive waterfalls (controlled via "waterfallrefract" var, disabled by default due to cost)</li>
 <li>added environment-mapped waterfalls (controlled via "waterfallenv" var)</li>
 <li>added tethers that show who is capturing a base (controlled via "capturetether" var)</li>
@@ -178,7 +180,7 @@
 <li>revised handling of slopes in physics to reduce sticking problems</li>
 <li>made underwater fog/caustics fade in instead of turn on immediately at the surface</li>
 <li>added "resetgl" command to restart the renderer while running</li>
-<li>added builtin zoom (toggled via G key)</li>
+<li>added builtin zoom (toggled via G key or "zoom" var)</li>
 <li>added directional damage indicator to the HUD (toggled via "damagecompass" var)</li>
 <li>smoothed out the shadow boundary caused by the shadowmap depth peeling</li>
 <li>softened water edges now work when under water</li>
