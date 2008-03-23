@@ -270,6 +270,9 @@
 <a href="#mapmsg"><tt>mapmsg</tt></a>
 </li>
 <li>
+<a href="#loadsky"><tt>loadsky</tt></a>
+</li>
+<li>
 <a href="#texturereset"><tt>texturereset</tt></a>
 </li>
 <li>
@@ -1066,6 +1069,18 @@ Doubles the dimensions of the current map.
 sets the map msg, which will be displayed when the map loads. Either use the
 above format, or simply "by Author" if the map has no particular title (always
 displayed after the map load msg).
+</p>
+
+<pre id="loadsky">loadsky NAME</pre>
+<p>
+loads the skybox described by NAME, where NAME is a file name relative
+to the "packages/" directory. The engine will look for 6 sky box images:
+NAME_up.jpg, NAME_dn.jpg, NAME_lf.jpg, NAME_rt.jpg, NAME_ft.jpg, NAME_bk.jpg.
+These represent the skybox in the up, down, left, right, front, and back
+directions, respectively.
+
+NOTE: For the skybox to save with your map, much like the "texture" command,
+you must use this command directly in your map's .cfg file!
 </p>
 
 <pre id="texturereset">texturereset</pre>
