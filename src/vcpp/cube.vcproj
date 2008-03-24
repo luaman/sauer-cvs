@@ -906,6 +906,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\glare.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\grass.cpp"
 					>
 					<FileConfiguration
