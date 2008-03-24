@@ -70,6 +70,8 @@ void writeinitcfg()
     FILE *f = openfile("init.cfg", "w");
     if(!f) return;
     fprintf(f, "// automatically written on exit, DO NOT MODIFY\n// modify settings in game\n");
+    extern int fullscreen;
+    fprintf(f, "fullscreen %d\n", fullscreen);
     fprintf(f, "scr_w %d\n", scr_w);
     fprintf(f, "scr_h %d\n", scr_h);
     fprintf(f, "colorbits %d\n", colorbits);
@@ -282,17 +284,16 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
 
 void setfullscreen(bool enable)
 {
+    if(!screen) return;
+#if defined(WIN32) || defined(__APPLE__)
+    initwarning();
+#else
     if(enable == !(screen->flags&SDL_FULLSCREEN))
     {
-#if defined(WIN32) || defined(__APPLE__)
-        conoutf("\"fullscreen\" variable not supported on this platform. Use the -t command-line option.");
-        extern int fullscreen;
-        fullscreen = !enable;
-#else
         SDL_WM_ToggleFullScreen(screen);
         SDL_WM_GrabInput((screen->flags&SDL_FULLSCREEN) ? SDL_GRAB_ON : SDL_GRAB_OFF);
-#endif
     }
+#endif
 }
 
 #ifdef _DEBUG
@@ -665,7 +666,7 @@ int main(int argc, char **argv)
             case 'b': colorbits = atoi(&argv[i][2]); break;
             case 'a': fsaa = atoi(&argv[i][2]); break;
             case 'v': vsync = atoi(&argv[i][2]); break;
-            case 't': fullscreen = 0; break;
+            case 't': fullscreen = atoi(&argv[i][2]); break;
             case 's': stencilbits = atoi(&argv[i][2]); break;
             case 'f': 
             {
