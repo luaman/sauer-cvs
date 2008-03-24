@@ -1107,8 +1107,8 @@ void gl_drawframe(int w, int h)
     glDisable(GL_FOG);
     glDisable(GL_CULL_FACE);
 
-    renderfullscreenshader(w, h);
     addglare();
+    renderfullscreenshader(w, h);
 
     defaultshader->set();
     g3d_render();
