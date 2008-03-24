@@ -340,6 +340,12 @@ extern void getwatercolour(uchar *wcol);
 extern void getwaterfallcolour(uchar *fcol);
 extern void getlavacolour(uchar *lcol);
 
+// glare
+extern bool glaring;
+
+extern void drawglaretex();
+extern void addglare();
+
 // server
 extern vector<char *> gameargs;
 

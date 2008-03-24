@@ -769,6 +769,49 @@ void rendergame()
     if(!shadowmapping) renderedgame = true;
 }
 
+void drawglare()
+{
+    glaring = true;
+    refracting = -1;
+
+    float oldfogstart, oldfogend, oldfogcolor[4], zerofog[4] = { 0, 0, 0, 1 };
+    glGetFloatv(GL_FOG_START, &oldfogstart);
+    glGetFloatv(GL_FOG_END, &oldfogend);
+    glGetFloatv(GL_FOG_COLOR, oldfogcolor);
+
+    glFogi(GL_FOG_START, (fog+64)/8);
+    glFogi(GL_FOG_END, fog);
+    glFogfv(GL_FOG_COLOR, zerofog);
+
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    float fovy = float(curfov*screen->h)/screen->w, aspect = screen->w/float(screen->h);
+    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+
+    rendergeom();
+    renderreflectedmapmodels();
+    rendergame();
+
+    renderwater();
+    rendermaterials();
+    render_particles(0);
+
+    if(!isthirdperson())
+    {
+        project(curhgfov, aspect, farplane);
+        cl->drawhudgun();
+        project(fovy, aspect, farplane);
+    }
+
+    glFogf(GL_FOG_START, oldfogstart);
+    glFogf(GL_FOG_END, oldfogend);
+    glFogfv(GL_FOG_COLOR, oldfogcolor);
+
+    refracting = 0;
+    glaring = false;
+}
+
 void drawreflection(float z, bool refract, bool clear)
 {
     uchar wcol[3];
@@ -1002,12 +1045,15 @@ void gl_drawframe(int w, int h)
     
     xtravertsva = xtraverts = glde = 0;
 
-    if(!hasFBO) drawreflections();
+    if(!hasFBO) 
+    {
+        drawreflections();
+        drawglaretex();
+    }
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, curfov);
     
-    extern GLuint shadowmapfb;
-    if(shadowmap && !shadowmapfb) rendershadowmap();
+    if(shadowmap && !hasFBO) rendershadowmap();
 
     glClear(GL_DEPTH_BUFFER_BIT|(wireframe && editmode ? GL_COLOR_BUFFER_BIT : 0)|(hasstencil ? GL_STENCIL_BUFFER_BIT : 0));
 
@@ -1031,7 +1077,11 @@ void gl_drawframe(int w, int h)
 
     if(!limitsky()) drawskybox(farplane, false);
 
-    if(hasFBO) drawreflections();
+    if(hasFBO) 
+    {
+        drawreflections();
+        drawglaretex();
+    }
 
     if(waterrefract && !nowater)
     {
@@ -1058,7 +1108,8 @@ void gl_drawframe(int w, int h)
     glDisable(GL_CULL_FACE);
 
     renderfullscreenshader(w, h);
-   
+    addglare();
+
     defaultshader->set();
     g3d_render();
 
@@ -1217,6 +1268,13 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
     {
         extern void viewshadowmap();
         viewshadowmap();
+    }
+
+    extern int debugglare;
+    if(debugglare)
+    {
+        extern void viewglaretex();
+        viewglaretex();
     }
 
     glEnable(GL_BLEND);
