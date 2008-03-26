@@ -769,6 +769,8 @@ void rendergame()
     if(!shadowmapping) renderedgame = true;
 }
 
+VARP(skyboxglare, 0, 1, 1);
+
 void drawglare()
 {
     glaring = true;
@@ -784,7 +786,7 @@ void drawglare()
     glFogfv(GL_FOG_COLOR, zerofog);
 
     glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear((skyboxglare ? 0 : GL_COLOR_BUFFER_BIT) | GL_DEPTH_BUFFER_BIT);
 
     float fovy = float(curfov*screen->h)/screen->w, aspect = screen->w/float(screen->h);
     int farplane = max(max(fog*2, 384), hdr.worldsize*2);
@@ -792,6 +794,8 @@ void drawglare()
     rendergeom();
     renderreflectedmapmodels();
     rendergame();
+
+    if(skyboxglare) drawskybox(farplane, false);
 
     renderwater();
     rendermaterials();

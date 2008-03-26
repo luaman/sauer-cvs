@@ -92,7 +92,7 @@ bool drawskylimits(bool explicitonly)
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glEnable(GL_TEXTURE_2D);
 
-    defaultshader->set();
+    if(!glaring) defaultshader->set();
 
     return rendered;
 }
@@ -119,7 +119,7 @@ void drawskyoutline()
     glDepthMask(GL_TRUE);
     glEnable(GL_TEXTURE_2D);
 
-    defaultshader->set();
+    if(!glaring) defaultshader->set();
 }
 
 void drawskybox(int farplane, bool limited)
@@ -127,6 +127,13 @@ void drawskybox(int farplane, bool limited)
     if(limited && !reflecting && !refracting) 
     {
         if(!drawskylimits(false) && !editmode && insideworld(camera1->o)) return;
+    }
+
+    if(glaring)
+    {
+        static Shader *skyboxglareshader = NULL;
+        if(!skyboxglareshader) skyboxglareshader = lookupshaderbyname("skyboxglare");
+        skyboxglareshader->set();
     }
 
     bool fog = glIsEnabled(GL_FOG)==GL_TRUE;
