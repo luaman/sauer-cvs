@@ -525,6 +525,15 @@ void autograss(char *name)
 
 COMMAND(autograss, "s");
 
+void texscroll(float *scrollS, float *scrollT)
+{
+    Slot &s = slots.last();
+    s.scrollS = *scrollS/1000.0f;
+    s.scrollT = *scrollT/1000.0f;
+}
+
+COMMAND(texscroll, "ff");
+
 static int findtextype(Slot &s, int type, int last = -1)
 {
     for(int i = last+1; i<s.sts.length(); i++) if((type&(1<<s.sts[i].type)) && s.sts[i].combined<0) return i;
