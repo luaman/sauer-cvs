@@ -241,6 +241,8 @@ void gl_init(int w, int h, int bpp, int depth, int fsaa)
         reserveshadowmaptc = 3;
         minimizetcusage = 1;
         emulatefog = 1;
+        extern int fpdepthfx;
+        fpdepthfx = 0;
     }
     else if(strstr(vendor, "Tungsten"))
     {
@@ -1058,6 +1060,7 @@ void gl_drawframe(int w, int h)
     {
         drawreflections();
         drawglaretex();
+        drawdepthfxtex();
     }
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, curfov);
@@ -1090,6 +1093,7 @@ void gl_drawframe(int w, int h)
     {
         drawreflections();
         drawglaretex();
+        drawdepthfxtex();
     }
 
     if(waterrefract && !nowater)
@@ -1284,6 +1288,13 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
     {
         extern void viewglaretex();
         viewglaretex();
+    }
+
+    extern int debugdepthfx;
+    if(debugdepthfx)
+    {
+        extern void viewdepthfxtex();
+        viewdepthfxtex();
     }
 
     glEnable(GL_BLEND);

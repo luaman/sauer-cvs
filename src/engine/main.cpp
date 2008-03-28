@@ -431,6 +431,7 @@ void resetgl()
     extern void cleanshadowmap();
     extern void cleanreflections();
     extern void cleanupglare();
+    extern void cleanupdepthfx();
     extern void cleanupshaders();
     extern void cleanupgl();
     cleanupva();
@@ -441,6 +442,7 @@ void resetgl()
     cleanshadowmap();
     cleanreflections();
     cleanupglare();
+    cleanupdepthfx();
     cleanupshaders();
     cleanupgl();
     
