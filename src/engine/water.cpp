@@ -561,26 +561,24 @@ void renderwater()
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, s.sts.inrange(3) ? s.sts[3].t->id : notexture->id);
 
-    if(glaring)
+    if(!glaring)
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
-    }
-    else if(waterrefract)
-    {
-        glActiveTexture_(GL_TEXTURE3_ARB);
-        glEnable(GL_TEXTURE_2D);
-        if(waterfade && hasFBO)
+        if(waterrefract)
         {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glActiveTexture_(GL_TEXTURE3_ARB);
+            glEnable(GL_TEXTURE_2D);
+            if(waterfade && hasFBO)
+            {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }
         }
-    }
-    else
-    {
-        glDepthMask(GL_FALSE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+        else
+        {
+            glDepthMask(GL_FALSE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+        }
     }
     glActiveTexture_(GL_TEXTURE0_ARB);
 
@@ -710,8 +708,7 @@ void renderwater()
         if(begin) glEnd();
     }
 
-    if(glaring) glDisable(GL_BLEND);
-    else 
+    if(!glaring)
     {
         if(waterreflect || waterrefract)
         {
