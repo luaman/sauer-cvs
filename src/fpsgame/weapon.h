@@ -335,6 +335,8 @@ struct weaponstate
                 playsound(S_PAIN1+rnd(5), &f->o); 
             }
         }
+
+        if(at==player1 && f!=player1) cl.lasthit = cl.lastmillis;
     }
 
     void hitpush(int damage, dynent *d, fpsent *at, vec &from, vec &to, int gun, int rays)

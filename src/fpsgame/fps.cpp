@@ -34,6 +34,7 @@ struct fpsclient : igameclient
     vec swaydir;
     int respawned, suicided;
     int lastslowmohealth, slowmorealtimestart;
+    int lasthit;
 
     int following;
     IVARP(followdist, 10, 50, 1000);
@@ -532,6 +533,7 @@ struct fpsclient : igameclient
     {
         respawned = suicided = -1;
         respawnent = -1;
+        lasthit = 0;
         if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
         cc.mapstart();
         mo.clear(gamemode);
@@ -747,11 +749,13 @@ struct fpsclient : igameclient
     }
 
     IVARP(teamcrosshair, 0, 1, 1);
+    IVARP(hitcrosshair, 0, 350, 1000);
 
     const char *defaultcrosshair(int index)
     {
         switch(index)
         {
+            case 2: return "data/hit.png";
             case 1: return "data/teammate.png";
             default: return "data/crosshair.png";
         }
@@ -759,19 +763,22 @@ struct fpsclient : igameclient
 
     int selectcrosshair(float &r, float &g, float &b)
     {
+        if(player1->state!=CS_ALIVE) return 0;
+
         int crosshair = 0;
-        if(m_teammode && teamcrosshair())
+        if(lastmillis - lasthit < hitcrosshair()) crosshair = 2;
+        else if(teamcrosshair())
         {
-            fpsent *d = (fpsent *)ws.intersectclosest(player1->o, worldpos, player1);
-            if(d && isteam(d->team, player1->team)) 
+            dynent *d = ws.intersectclosest(player1->o, worldpos, player1);
+            if(d && d->type==ENT_PLAYER && isteam(((fpsent *)d)->team, player1->team))
             {
                 crosshair = 1;
                 r = g = 0;
             }
         }
-        if(player1->state!=CS_ALIVE) return crosshair;
+
         if(player1->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
-        else if(crosshair!=1 && !editmode && !m_noitemsrail)
+        else if(!crosshair && r && g && b && !editmode && !m_noitemsrail)
         {
             if(player1->health<=25) { r = 1.0f; g = b = 0; }
             else if(player1->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
