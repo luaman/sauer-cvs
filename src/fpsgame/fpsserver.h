@@ -477,12 +477,13 @@ struct fpsserver : igameserver
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
                 if(!ci) break;
-                if(m_capture) rank = 1;
+                if(m_capture && ci->state.state!=CS_SPECTATOR) rank = 1;
                 else if(selected && rank<=0) break;    
                 ci->state.timeplayed = -1;
                 team[first].add(ci);
                 if(rank>0) teamrank[first] += rank;
                 selected++;
+                if(rank<=0) break;
             }
             if(!selected) break;
             remaining -= selected;
