@@ -1234,7 +1234,7 @@ void writecrosshairs(FILE *f)
 void drawcrosshair(int w, int h)
 {
     bool windowhit = g3d_windowhit(true, false);
-    if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;
+    if(!windowhit && (hidehud || player->state==CS_SPECTATOR || player->state==CS_DEAD)) return;
 
     float r = 1, g = 1, b = 1, cx = 0.5f, cy = 0.5f, chsize;
     Texture *crosshair;
