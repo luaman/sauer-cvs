@@ -1222,11 +1222,11 @@ void loadcrosshair(const char *name, int *i)
     }
 }
 
-COMMAND(loadcrosshair, "s");
+COMMAND(loadcrosshair, "si");
 
 void writecrosshairs(FILE *f)
 {
-    loopi(MAXCROSSHAIRS) if(crosshairs[i])
+    loopi(MAXCROSSHAIRS) if(crosshairs[i] && crosshairs[i]!=notexture)
         fprintf(f, "loadcrosshair \"%s\" %d\n", crosshairs[i]->name, i);
     fprintf(f, "\n");
 }
