@@ -458,7 +458,7 @@ struct fpsserver : igameserver
         {
             clientinfo *ci = clients[i];
             if(ci->state.timeplayed<0) continue;
-            float rank = ci->state.effectiveness/max(ci->state.timeplayed, 1);
+            float rank = ci->state.state!=CS_SPECTATOR ? ci->state.effectiveness/max(ci->state.timeplayed, 1) : -1;
             if(!best || rank > bestrank) { best = ci; bestrank = rank; }
         }
         return best;
@@ -481,9 +481,8 @@ struct fpsserver : igameserver
                 else if(selected && rank<=0) break;    
                 ci->state.timeplayed = -1;
                 team[first].add(ci);
-                teamrank[first] += rank;
+                if(rank>0) teamrank[first] += rank;
                 selected++;
-                if(rank<=0) break;
             }
             if(!selected) break;
             remaining -= selected;
@@ -516,7 +515,7 @@ struct fpsserver : igameserver
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(!ci->team[0]) continue;
+            if(ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             ci->state.lasttimeplayed = lastmillis;
 
@@ -1365,12 +1364,14 @@ struct fpsserver : igameserver
                 {
                     if(smode) smode->leavegame(spinfo);
                     spinfo->state.state = CS_SPECTATOR;
+                    spinfo->state.timeplayed += lastmillis - spinfo->state.lasttimeplayed;
                 }
                 else if(spinfo->state.state==CS_SPECTATOR && !val)
                 {
                     spinfo->state.state = CS_DEAD;
                     spinfo->state.respawn();
                     if(!smode || smode->canspawn(spinfo)) sendspawn(spinfo);
+                    spinfo->state.lasttimeplayed = lastmillis;
                 }
                 break;
             }
