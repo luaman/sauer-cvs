@@ -336,7 +336,7 @@ struct weaponstate
             }
         }
 
-        if(at==player1 && f!=player1) cl.lasthit = cl.lastmillis;
+        if(at==player1 && f!=player1 && gun!=GUN_RL && gun!=GUN_GL) cl.lasthit = cl.lastmillis;
     }
 
     void hitpush(int damage, dynent *d, fpsent *at, vec &from, vec &to, int gun, int rays)
