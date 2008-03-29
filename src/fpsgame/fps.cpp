@@ -746,15 +746,37 @@ struct fpsclient : igameclient
         else if(m_assassin) asc.drawhud(w, h);
     }
 
-    void crosshaircolor(float &r, float &g, float &b)
+    IVARP(teamcrosshair, 0, 1, 1);
+
+    const char *defaultcrosshair(int index)
     {
-        if(player1->state!=CS_ALIVE) return;
-        if(player1->gunwait) r = g = b = 0.5f;
-        else if(!editmode && !m_noitemsrail)
+        switch(index)
+        {
+            case 1: return "data/teammate.png";
+            default: return "data/crosshair.png";
+        }
+    }
+
+    int selectcrosshair(float &r, float &g, float &b)
+    {
+        int crosshair = 0;
+        if(m_teammode && teamcrosshair())
+        {
+            fpsent *d = (fpsent *)ws.intersectclosest(player1->o, worldpos, player1);
+            if(d && isteam(d->team, player1->team)) 
+            {
+                crosshair = 1;
+                r = g = 0;
+            }
+        }
+        if(player1->state!=CS_ALIVE) return crosshair;
+        if(player1->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
+        else if(crosshair!=1 && !editmode && !m_noitemsrail)
         {
             if(player1->health<=25) { r = 1.0f; g = b = 0; }
             else if(player1->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
         }
+        return crosshair;
     }
 
     void lighteffects(dynent *e, vec &color, vec &dir)

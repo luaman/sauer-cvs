@@ -1207,19 +1207,27 @@ VARP(crosshairsize, 0, 15, 50);
 VARP(cursorsize, 0, 30, 50);
 VARP(crosshairfx, 0, 1, 1);
 
-static Texture *crosshair = NULL;
+#define MAXCROSSHAIRS 4
+static Texture *crosshairs[MAXCROSSHAIRS] = { NULL, NULL, NULL, NULL };
 
-void loadcrosshair(const char *name)
+void loadcrosshair(const char *name, int *i)
 {
-    crosshair = textureload(name, 3, true);
-    if(crosshair==notexture) crosshair = textureload("data/crosshair.png", 3, true);
+    if(*i < 0 || *i >= MAXCROSSHAIRS) return;
+    crosshairs[*i] = textureload(name, 3, true);
+    if(crosshairs[*i] == notexture) 
+    {
+        name = cl->defaultcrosshair(*i);
+        if(!name) name = "data/crosshair.png";
+        crosshairs[*i] = textureload(name, 3, true);
+    }
 }
 
 COMMAND(loadcrosshair, "s");
 
 void writecrosshairs(FILE *f)
 {
-    fprintf(f, "loadcrosshair \"%s\"\n", crosshair->name);
+    loopi(MAXCROSSHAIRS) if(crosshairs[i])
+        fprintf(f, "loadcrosshair \"%s\" %d\n", crosshairs[i]->name, i);
     fprintf(f, "\n");
 }
 
@@ -1228,20 +1236,33 @@ void drawcrosshair(int w, int h)
     bool windowhit = g3d_windowhit(true, false);
     if(!windowhit && (hidehud || player->state==CS_SPECTATOR)) return;
 
-    static Texture *cursor = NULL;
-    if(!cursor) cursor = textureload("data/guicursor.png", 3, true);
-    if(!crosshair) crosshair = textureload("data/crosshair.png", 3, true);
-    if((windowhit ? cursor : crosshair)->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    float r = 1, g = 1, b = 1, cx = 0.5f, cy = 0.5f, chsize;
+    Texture *crosshair;
+    if(windowhit)
+    {
+        static Texture *cursor = NULL;
+        if(!cursor) cursor = textureload("data/guicursor.png", 3, true);
+        crosshair = cursor;
+        chsize = cursorsize*w/300.0f;
+        g3d_cursorpos(cx, cy);
+    }
+    else
+    { 
+        int index = crosshairfx ? cl->selectcrosshair(r, g, b) : 0;
+        crosshair = crosshairs[index];
+        if(!crosshair) 
+        {
+            loadcrosshair(cl->defaultcrosshair(index), &index);
+            crosshair = crosshairs[index];
+        }
+        chsize = crosshairsize*w/300.0f;
+    }
+    if(crosshair->bpp==32) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     else glBlendFunc(GL_ONE, GL_ONE);
-    float r = 1, g = 1, b = 1;
-    if(!windowhit && crosshairfx) cl->crosshaircolor(r, g, b);
     glColor3f(r, g, b);
-    float chsize = (windowhit ? cursorsize : crosshairsize)*w/300.0f;
-    float cx = 0.5f, cy = 0.5f;
-    if(windowhit) g3d_cursorpos(cx, cy);
     float x = cx*w*3.0f - (windowhit ? 0 : chsize/2.0f);
     float y = cy*h*3.0f - (windowhit ? 0 : chsize/2.0f);
-    glBindTexture(GL_TEXTURE_2D, (windowhit ? cursor : crosshair)->id);
+    glBindTexture(GL_TEXTURE_2D, crosshair->id);
     glBegin(GL_QUADS);
     glTexCoord2d(0.0, 0.0); glVertex2f(x,          y);
     glTexCoord2d(1.0, 0.0); glVertex2f(x + chsize, y);

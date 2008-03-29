@@ -73,7 +73,8 @@ struct igameclient
     virtual void writegamedata(vector<char> &extras) = 0;
     virtual void readgamedata(vector<char> &extras) = 0;
     virtual void g3d_gamemenus() = 0;
-    virtual void crosshaircolor(float &r, float &g, float &b) {} 
+    virtual const char *defaultcrosshair(int index) { return NULL; }
+    virtual int selectcrosshair(float &r, float &g, float &b) { return 0; }
     virtual void lighteffects(dynent *d, vec &color, vec &dir) {}
     virtual void setupcamera() {}
     virtual void adddynlights() {}
