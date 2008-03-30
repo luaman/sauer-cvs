@@ -749,7 +749,7 @@ struct fpsclient : igameclient
     }
 
     IVARP(teamcrosshair, 0, 1, 1);
-    IVARP(hitcrosshair, 0, 500, 1000);
+    IVARP(hitcrosshair, 0, 425, 1000);
 
     const char *defaultcrosshair(int index)
     {
