@@ -136,6 +136,7 @@ struct fpsclient : igameclient
         {
             spawnplayer(player1);
             sb.showscores(false);
+            lasthit = 0;
         }
     }
 

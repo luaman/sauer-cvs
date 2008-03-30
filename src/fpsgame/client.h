@@ -590,6 +590,7 @@ struct clientcom : iclientcom
                 player1->state = CS_ALIVE;
                 findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1);
                 cl.sb.showscores(false);
+                cl.lasthit = 0;
                 if(m_arena) conoutf("new round starting... fight!");
                 addmsg(SV_SPAWN, "rii", player1->lifesequence, player1->gunselect);
                 break;
