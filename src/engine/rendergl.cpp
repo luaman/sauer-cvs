@@ -482,7 +482,8 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
 }
 
-float curfov = 105, curhgfov = 65;
+float curfov = 105, curhgfov = 65, fovy, aspect;
+int farplane;
 VARP(zoominvel, 0, 250, 5000);
 VARP(zoomoutvel, 0, 100, 5000);
 VARP(zoomfov, 10, 35, 60);
@@ -795,9 +796,6 @@ void drawglare()
     glClearColor(0, 0, 0, 1);
     glClear((skyboxglare ? 0 : GL_COLOR_BUFFER_BIT) | GL_DEPTH_BUFFER_BIT);
 
-    float fovy = float(curfov*screen->h)/screen->w, aspect = screen->w/float(screen->h);
-    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
-
     rendergeom();
     renderreflectedmapmodels();
     rendergame();
@@ -879,8 +877,6 @@ void drawreflection(float z, bool refract, bool clear)
 
         glCullFace(GL_BACK);
     }
-
-    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
     GLfloat clipmatrix[16];
     if(reflectclip && z>=0)
@@ -1023,7 +1019,8 @@ void gl_drawframe(int w, int h)
    
     updatedynlights();
 
-    float fovy = float(curfov*h)/w, aspect = w/float(h);
+    fovy = float(curfov*h)/w;
+    aspect = w/float(h);
     
     int fogmat = lookupmaterial(camera1->o), abovemat = MAT_AIR;
     float fogblend = 1.0f, causticspass = 0.0f;
@@ -1044,7 +1041,7 @@ void gl_drawframe(int w, int h)
         aspect += blend*sinf(lastmillis/1000.0+PI)*0.1f;
     }
 
-    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    farplane = max(max(fog*2, 384), hdr.worldsize*2);
 
     project(fovy, aspect, farplane);
 
