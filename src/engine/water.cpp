@@ -1090,7 +1090,7 @@ void drawreflections()
         if(!refs) 
         {
             glViewport(hasFBO ? 0 : screen->w-size, hasFBO ? 0 : screen->h-size, size, size);
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, reflectionfb);
+            if(hasFBO) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, reflectionfb);
         }
         refs++;
         ref.lastupdate = totalmillis;
@@ -1133,7 +1133,7 @@ void drawreflections()
         if(!refs)
         {
             glViewport(hasFBO ? 0 : screen->w-size, hasFBO ? 0 : screen->h-size, size, size);
-            glBindFramebuffer_(GL_FRAMEBUFFER_EXT, reflectionfb);
+            if(hasFBO) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, reflectionfb);
         }
         refs++;
         ref.lastupdate = totalmillis;
