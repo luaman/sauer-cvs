@@ -1057,9 +1057,9 @@ void gl_drawframe(int w, int h)
 
     if(!hasFBO) 
     {
-        drawreflections();
         drawglaretex();
         drawdepthfxtex();
+        drawreflections();
     }
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, curfov);
@@ -1078,11 +1078,8 @@ void gl_drawframe(int w, int h)
 
     rendermapmodels();
 
-    if(!waterrefract || nowater) 
-    {
-        defaultshader->set();
-        rendergame();
-    }
+    defaultshader->set();
+    rendergame();
 
     defaultshader->set();
 
@@ -1090,15 +1087,9 @@ void gl_drawframe(int w, int h)
 
     if(hasFBO) 
     {
-        drawreflections();
         drawglaretex();
         drawdepthfxtex();
-    }
-
-    if(waterrefract && !nowater)
-    {
-        defaultshader->set();
-        rendergame();
+        drawreflections();
     }
 
     if(!waterrefract || nowater) renderdecals(curtime);
