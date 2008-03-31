@@ -613,6 +613,8 @@ void rendermodelquery(model *m, dynent *d, const vec &center, float radius)
     glDepthMask(GL_TRUE);
 }   
 
+extern int oqfrags;
+
 void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, float yaw, float pitch, int cull, dynent *d, modelattach *a, int basetime, float speed)
 {
     if(shadowmapping && !(cull&(MDL_SHADOW|MDL_DYNSHADOW))) return;
@@ -620,7 +622,8 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
     if(!m) return;
     vec center;
     float radius = 0;
-    bool shadow = (!shadowmap || renderpath==R_FIXEDFUNCTION) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil;
+    bool shadow = (!shadowmap || renderpath==R_FIXEDFUNCTION) && (cull&(MDL_SHADOW|MDL_DYNSHADOW)) && dynshadow && hasstencil,
+         doOQ = cull&MDL_CULL_QUERY && hasOQ && oqfrags && oqdynent;
     if(cull&(MDL_CULL_VFC|MDL_CULL_DIST|MDL_CULL_OCCLUDED|MDL_CULL_QUERY|MDL_SHADOW|MDL_DYNSHADOW))
     {
         radius = m->boundsphere(0/*frame*/, center, a); // FIXME
@@ -649,7 +652,7 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
             if(d)
             {
                 if(cull&MDL_CULL_OCCLUDED && d->occluded>=OCCLUDE_PARENT) return;
-                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d->occluded+1>=OCCLUDE_BB && d->query && d->query->owner==d && checkquery(d->query)) return;
+                if(doOQ && d->occluded+1>=OCCLUDE_BB && d->query && d->query->owner==d && checkquery(d->query)) return;
             }
             if(!addshadowmapcaster(center, radius, radius)) return;
         }
@@ -658,11 +661,11 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
             if(!reflecting && !refracting && d)
             {
                 d->occluded = OCCLUDE_PARENT;
-                if(cull&MDL_CULL_QUERY && hasOQ && oqdynent) rendermodelquery(m, d, center, radius);
+                if(doOQ) rendermodelquery(m, d, center, radius);
             }
             return;
         }
-        else if(cull&MDL_CULL_QUERY && hasOQ && oqdynent && d && d->query && d->query->owner==d && checkquery(d->query))
+        else if(doOQ && d && d->query && d->query->owner==d && checkquery(d->query))
         {
             if(!reflecting && !refracting) 
             {
@@ -729,7 +732,7 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
         //if(a[i].m && a[i].m->type()!=m->type()) a[i].m = NULL;
     }
 
-    bool doOQ = cull&MDL_CULL_QUERY && !reflecting && !refracting && !shadowmapping && hasOQ && oqdynent && d;
+    if(!d || reflecting || refracting || shadowmapping) doOQ = false;
   
     if(numbatches>=0)
     {
