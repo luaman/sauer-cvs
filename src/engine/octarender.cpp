@@ -1195,7 +1195,7 @@ void allchanged(bool load)
     octarender();
     if(load) precacheall();
     setupmaterials();
-    invalidatereflections();
+    invalidatepostfx();
     entitiesinoctanodes();
     updatevabbs(true);
     if(load) genenvmaps();

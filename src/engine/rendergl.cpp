@@ -1011,6 +1011,13 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
     envmapping = false;
 }
 
+bool dopostfx = false;
+
+void invalidatepostfx()
+{
+    dopostfx = false;
+}
+
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat);
 
 void gl_drawframe(int w, int h)
@@ -1055,11 +1062,15 @@ void gl_drawframe(int w, int h)
     
     xtravertsva = xtraverts = glde = 0;
 
-    if(!hasFBO) 
+    if(!hasFBO)
     {
-        drawglaretex();
-        drawdepthfxtex();
-        drawreflections();
+        if(dopostfx)
+        {
+            drawglaretex();
+            drawdepthfxtex();
+            drawreflections();
+        }
+        else dopostfx = true;
     }
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, w, h, curfov);
