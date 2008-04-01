@@ -296,6 +296,8 @@ struct weaponstate
 
     void hit(int damage, dynent *d, fpsent *at, const vec &vel, int gun, int info = 1)
     {
+        if(at==player1 && d!=player1) cl.lasthit = cl.lastmillis;
+
         if(d->type==ENT_INANIMATE) 
         {
             movableset::movable *m = (movableset::movable *)d;
@@ -335,8 +337,6 @@ struct weaponstate
                 playsound(S_PAIN1+rnd(5), &f->o); 
             }
         }
-
-        if(at==player1 && f!=player1) cl.lasthit = cl.lastmillis;
     }
 
     void hitpush(int damage, dynent *d, fpsent *at, vec &from, vec &to, int gun, int rays)
