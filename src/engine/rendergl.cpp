@@ -1103,11 +1103,10 @@ void gl_drawframe(int w, int h)
         drawreflections();
     }
 
-    if(!waterrefract || nowater) renderdecals(curtime);
+    renderdecals(curtime);
     renderwater();
     rendergrass();
 
-    if(waterrefract && !nowater) renderdecals(curtime);
     rendermaterials();
     render_particles(curtime);
 
