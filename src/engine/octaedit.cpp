@@ -479,6 +479,7 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
                 if(hasmerges) invalidatemerges(c[i]);
             }
             freeoctaentities(c[i]);
+            c[i].ext->tjoints = -1;
         }
         if(c[i].children)
         {
