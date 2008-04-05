@@ -178,9 +178,6 @@ struct rendertarget
         if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
         if(size!=texsize || (hasFBO && (!rtsharefb) != (blurfb!=0))) cleanup();
 
-        bool fog = glIsEnabled(GL_FOG)==GL_TRUE;
-        if(fog) glDisable(GL_FOG);
-
         if(!rendertex) setup(size);
        
         if(hasFBO)
@@ -216,7 +213,6 @@ struct rendertarget
 
         if(hasFBO) glBindFramebuffer_(GL_FRAMEBUFFER_EXT, 0);
         glViewport(0, 0, screen->w, screen->h);
-        if(fog) glEnable(GL_FOG);
     }
 
     virtual void dodebug(int w, int h) {}
