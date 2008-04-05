@@ -516,14 +516,14 @@ struct fpsserver : igameserver
         teamscore(const char *name) : name(name), rank(0), clients(0) {}
     };
     
-    const char *chooseworstteam(const char *suggest)
+    const char *chooseworstteam(const char *suggest, clientinfo *exclude = NULL)
     {
         teamscore teamscores[2] = { teamscore("good"), teamscore("evil") };
         const int numteams = sizeof(teamscores)/sizeof(teamscores[0]);
         loopv(clients)
         {
             clientinfo *ci = clients[i];
-            if(ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
+            if(ci==exclude || ci->state.state==CS_SPECTATOR || !ci->team[0]) continue;
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             ci->state.lasttimeplayed = lastmillis;
 
@@ -1238,9 +1238,9 @@ struct fpsserver : igameserver
                 }
                 getstring(text, p);
                 filtertext(text, text, false, MAXTEAMLEN);
-                if(!ci->local && connected && m_teammode)
+                if(!ci->local && (connected || (smode && !smode->canchangeteam(ci, ci->team, text))) && m_teammode)
                 {
-                    const char *worst = chooseworstteam(text);
+                    const char *worst = chooseworstteam(text, ci);
                     if(worst)
                     {
                         s_strcpy(text, worst);
@@ -1404,13 +1404,12 @@ struct fpsserver : igameserver
                 if(!ci->privilege || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
-                bool allowchange = true;
-                if(smode && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) 
+                if(!smode || smode->canchangeteam(wi, wi->team, text))
                 {
-                    allowchange = smode->canchangeteam(wi, wi->team, text);
-                    if(allowchange) smode->changeteam(wi, wi->team, text);
+                    if(smode && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) 
+                        smode->changeteam(wi, wi->team, text);
+                    s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 }
-                if(allowchange) s_strncpy(wi->team, text, MAXTEAMLEN+1);
                 sendf(sender, 1, "riis", SV_SETTEAM, who, wi->team);
                 QUEUE_INT(SV_SETTEAM);
                 QUEUE_INT(who);
