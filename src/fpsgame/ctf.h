@@ -342,7 +342,7 @@ struct ctfclient : ctfstate
         ctfstate::returnflag(i);
         if(d==cl.player1) conoutf("you returned your flag");
         else if(i==ctfteamflag(cl.player1->team)) conoutf("%s returned your flag", cl.colorname(d));
-        else conoutf("%s returned %s's flag", cl.colorname(d), ctfflagteam(i));
+        else conoutf("%s returned team %s's flag", cl.colorname(d), ctfflagteam(i));
         playsound(S_FLAGRETURN);
     }
 
