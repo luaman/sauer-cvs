@@ -334,6 +334,7 @@ struct ctfclient : ctfstate
         if(d==cl.player1) conoutf("you dropped team %s's flag", ctfflagteam(i));
         else if(i==ctfteamflag(cl.player1->team)) conoutf("%s dropped your flag", cl.colorname(d));
         else conoutf("%s dropped team %s's flag", cl.colorname(d), ctfflagteam(i));
+        playsound(S_FLAGDROP);
     }
 
     void returnflag(fpsent *d, int i)
@@ -342,6 +343,7 @@ struct ctfclient : ctfstate
         if(d==cl.player1) conoutf("you returned your flag");
         else if(i==ctfteamflag(cl.player1->team)) conoutf("%s returned your flag", cl.colorname(d));
         else conoutf("%s returned %s's flag", cl.colorname(d), ctfflagteam(i));
+        playsound(S_FLAGRETURN);
     }
 
     void resetflag(int i)
@@ -349,6 +351,7 @@ struct ctfclient : ctfstate
         ctfstate::returnflag(i);
         if(i==ctfteamflag(cl.player1->team)) conoutf("your flag reset");
         else conoutf("team %s's flag reset", ctfflagteam(i));
+        playsound(S_FLAGRESET);
     }
 
     void scoreflag(fpsent *d, int relay, int goal, int score)
@@ -364,6 +367,7 @@ struct ctfclient : ctfstate
             if(goal==ctfteamflag(cl.player1->team)) conoutf("%s scored for your team", cl.colorname(d));
             else conoutf("%s scored for team %s", cl.colorname(d), ctfflagteam(goal));
         }
+        playsound(S_FLAGSCORE);
     }
 
     void takeflag(fpsent *d, int i)
@@ -373,6 +377,7 @@ struct ctfclient : ctfstate
         else if(i==ctfteamflag(cl.player1->team)) conoutf("%s %s your flag", cl.colorname(d), f.droptime ? "picked up" : "stole");
         else conoutf("%s %s team %s's flag", cl.colorname(d), f.droptime ? "picked up" : "stole", ctfflagteam(i)); 
         ctfstate::takeflag(i, d);
+        playsound(S_FLAGPICKUP);
     }
 
     void checkflags(fpsent *d)

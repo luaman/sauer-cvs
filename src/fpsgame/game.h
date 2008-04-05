@@ -88,6 +88,12 @@ enum
     S_V_BOOST, S_V_BOOST10,
     S_V_QUAD, S_V_QUAD10,
     S_V_RESPAWNPOINT, 
+
+    S_FLAGPICKUP,
+    S_FLAGDROP,
+    S_FLAGRETURN,
+    S_FLAGSCORE,
+    S_FLAGRESET,
 };
 
 // network messages codes, c2s, c2c, s2c
