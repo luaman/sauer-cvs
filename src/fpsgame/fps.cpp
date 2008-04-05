@@ -301,9 +301,9 @@ struct fpsclient : igameclient
         if(player1->state==CS_DEAD)
         {
             player1->attacking = false;
-            if(m_capture)
+            if(m_capture || m_ctf)
             {
-                int wait = cpc.respawnwait();
+                int wait = m_capture ? cpc.respawnwait() : ctf.respawnwait();
                 if(wait>0)
                 {
                     conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");

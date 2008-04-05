@@ -207,6 +207,8 @@ struct ctfservmode : ctfstate, servmode
 #else
 struct ctfclient : ctfstate
 {
+    static const int RESPAWNSECS = 5000;
+
     fpsclient &cl;
     float radarscale;
 
@@ -259,6 +261,18 @@ struct ctfclient : ctfstate
             flag &f = flags[i];
             if(!f.ent || ((f.owner || f.droptime) && cl.lastmillis%1000 >= 500)) continue;
             drawblips(x, y, s, i);
+        }
+        if(cl.player1->state == CS_DEAD)
+        {
+            int wait = respawnwait();
+            if(wait>=0)
+            {
+                glPushMatrix();
+                glLoadIdentity();
+                glOrtho(0, w*900/h, 900, 0, -1, 1);
+                draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
+                glPopMatrix();
+            }
         }
         glDisable(GL_BLEND);
     }
@@ -396,6 +410,11 @@ struct ctfclient : ctfstate
             }
             else f.pickup = false;
        }
+    }
+
+    int respawnwait()
+    {
+        return max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastpain)/1000);
     }
 };
 #endif
