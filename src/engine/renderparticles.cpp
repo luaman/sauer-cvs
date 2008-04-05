@@ -174,7 +174,7 @@ extern void cleanupdepthfx();
 VARFP(fpdepthfx, 0, 1, 1, cleanupdepthfx());
 
 static struct depthfxtexture : rendertarget
-{
+{    
     const GLenum *colorformats() const
     {
         static const GLenum colorfmts[] = { GL_RGB16F_ARB, GL_RGB16, GL_FALSE };
@@ -185,13 +185,13 @@ static struct depthfxtexture : rendertarget
     {
         depthfxing = true;
         refracting = -1;
-
+        
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
         extern void renderdepthobstacles();
         renderdepthobstacles();
-
+       
         refracting = 0;
         depthfxing = false;
 
@@ -221,11 +221,6 @@ bool depthfxing = false;
 
 void drawdepthfxtex()
 {
-    #ifdef __APPLE__
-        // Apple bug, high precision formats cause driver to crash
-        return;
-    #endif
-
     if(!depthfx || renderpath==R_FIXEDFUNCTION || !hasTF || !hasFBO) return;
 
     depthfxtex.render(1<<depthfxsize, blurdepthfx, blurdepthfxsigma/100.0f);
