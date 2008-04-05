@@ -136,7 +136,7 @@ struct ctfservmode : ctfstate, servmode
         static const dynent dummy;
         vec o(newpos);
         o.z -= dummy.eyeheight;
-        loopi(2) if(flags[i].owner==ci->clientnum && o.dist(flags[i^1].spawnloc) < FLAGRADIUS)
+        loopi(2) if(flags[i].owner==ci->clientnum && !flags[i^1].owner && !flags[i^1].droptime && o.dist(flags[i^1].spawnloc) < FLAGRADIUS)
         {
             returnflag(i);
             flags[i^1].score++;
