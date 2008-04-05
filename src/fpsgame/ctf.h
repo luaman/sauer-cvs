@@ -136,11 +136,16 @@ struct ctfservmode : ctfstate, servmode
         static const dynent dummy;
         vec o(newpos);
         o.z -= dummy.eyeheight;
-        loopi(2) if(flags[i].owner==ci->clientnum && !flags[i^1].owner && !flags[i^1].droptime && o.dist(flags[i^1].spawnloc) < FLAGRADIUS)
+        loopi(2) 
         {
-            returnflag(i);
-            flags[i^1].score++;
-            sendf(-1, 1, "ri5", SV_SCOREFLAG, ci->clientnum, i, i^1, flags[i^1].score);
+            flag &relay = flags[i],
+                 &goal = flags[ctfteamflag(ci->team)];
+            if(relay.owner==ci->clientnum && goal.owner<0 && !goal.droptime && o.dist(goal.spawnloc) < FLAGRADIUS)
+            {
+                returnflag(i);
+                goal.score++;
+                sendf(-1, 1, "ri5", SV_SCOREFLAG, ci->clientnum, i, ctfteamflag(ci->team), goal.score);
+            }
         }
     }
 
@@ -165,10 +170,14 @@ struct ctfservmode : ctfstate, servmode
     void update()
     {
         if(sv.minremain<0) return;
-        loopi(2) if(flags[i].droptime && sv.lastmillis - flags[i].droptime >= RESETFLAGTIME)
+        loopi(2) 
         {
-            returnflag(i);
-            sendf(-1, 1, "ri2", SV_RESETFLAG, i);
+            flag &f = flags[i];
+            if(f.owner>=0 && f.droptime && sv.lastmillis - f.droptime >= RESETFLAGTIME)
+            {
+                returnflag(i);
+                sendf(-1, 1, "ri2", SV_RESETFLAG, i);
+            }
         }
     }
 
@@ -207,7 +216,7 @@ struct ctfservmode : ctfstate, servmode
 #else
 struct ctfclient : ctfstate
 {
-    static const int RESPAWNSECS = 5000;
+    static const int RESPAWNSECS = 5;
 
     fpsclient &cl;
     float radarscale;
