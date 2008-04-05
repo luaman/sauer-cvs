@@ -87,7 +87,7 @@ extern void showgui(const char *name);
 // world
 extern bool emptymap(int factor, bool force, const char *mname = "");
 extern bool enlargemap(bool force);
-extern int findentity(int type, int index = 0);
+extern int findentity(int type, int index = 0, int attr1 = -1, int attr2 = -1);
 extern void mpeditent(int i, const vec &o, int type, int attr1, int attr2, int attr3, int attr4, bool local);
 extern int getworldsize();
 extern int getmapversion();
@@ -161,6 +161,8 @@ extern bool bounce(physent *d, float secs, float elasticity = 0.8f, float waterf
 extern void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space);
 extern void physicsframe();
 extern void dropenttofloor(entity *e);
+extern bool droptofloor(vec &o, float radius, float height);
+
 extern void vecfromyawpitch(float yaw, float pitch, int move, int strafe, vec &m);
 extern void vectoyawpitch(const vec &v, float &yaw, float &pitch);
 extern bool intersect(physent *d, vec &from, vec &to);
@@ -168,7 +170,8 @@ extern bool moveplatform(physent *p, const vec &dir);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
 extern bool entinmap(dynent *d, bool avoidplayers = false);
-extern void findplayerspawn(dynent *d, int forceent = -1);
+extern void findplayerspawn(dynent *d, int forceent = -1, int tag = 0);
+
 // sound
 extern void playsound    (int n,   const vec *loc = NULL, extentity *ent = NULL);
 extern void playsoundname(const char *s, const vec *loc = NULL, int vol = 0);

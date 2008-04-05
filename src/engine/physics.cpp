@@ -1063,21 +1063,30 @@ void avoidcollision(physent *d, const vec &dir, physent *obstacle, float space)
     if(mindist >= 0.0f && mindist < 1e15f) d->o.add(vec(dir).mul(mindist));
 }
 
-void dropenttofloor(entity *e)
+bool droptofloor(vec &o, float radius, float height)
 {
-    if(!insideworld(e->o)) return;
+    if(!insideworld(o)) return false;
     vec v(0.0001f, 0.0001f, -1);
     v.normalize();
-    if(raycube(e->o, v, hdr.worldsize) >= hdr.worldsize) return;
+    if(raycube(o, v, hdr.worldsize) >= hdr.worldsize) return false;
     physent d;
     d.type = ENT_CAMERA;
-    d.o = e->o;
+    d.o = o;
     d.vel = vec(0, 0, -1);
-    d.radius = 1.0f;
-    d.eyeheight = et->dropheight(*e);
-    d.aboveeye = 1.0f;
-    loopi(hdr.worldsize) if(!move(&d, v)) break;
-    e->o = d.o;
+    d.radius = radius;
+    d.eyeheight = height;
+    d.aboveeye = radius;
+    loopi(hdr.worldsize) if(!move(&d, v))
+    {
+        o = d.o;
+        return true;
+    }
+    return false;
+}
+
+void dropenttofloor(entity *e)
+{
+    droptofloor(e->o, 1.0f, et->dropheight(*e));
 }
 
 void phystest()

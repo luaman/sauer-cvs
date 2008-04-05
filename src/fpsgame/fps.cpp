@@ -23,6 +23,7 @@ struct fpsclient : igameclient
     #include "client.h"
     #include "capture.h"
     #include "assassin.h"
+    #include "ctf.h"
 
     int nextmode, gamemode;         // nextmode becomes gamemode after next map load
     bool intermission;
@@ -58,6 +59,7 @@ struct fpsclient : igameclient
 
     captureclient cpc;
     assassinclient asc;
+    ctfclient ctf;
 
     fpsclient()
         : nextmode(0), gamemode(0), intermission(false), lastmillis(0),
@@ -66,7 +68,8 @@ struct fpsclient : igameclient
           respawned(-1), suicided(-1), 
           following(-1), openmainmenu(true),
           player1(spawnstate(new fpsent())),
-          ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), cpc(*this), asc(*this)
+          ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), 
+          cpc(*this), asc(*this), ctf(*this)
     {
         CCOMMAND(mode, "i", (fpsclient *self, int *val), { self->setmode(*val); });
         CCOMMAND(kill, "",  (fpsclient *self), { self->suicide(self->player1); });
@@ -281,13 +284,14 @@ struct fpsclient : igameclient
             swaydir.add(vec(vel).mul((1-k)/(15*max(vel.magnitude(), player1->maxspeed))));
             et.checkitems(player1);
             if(m_classicsp) checktriggers();
+            else if(m_ctf) ctf.checkflags(player1);
         }
         if(player1->clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
     }
 
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
     {
-        findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1));
+        findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1), m_ctf ? ctfteamflag(player1->team)+1 : 0);
         spawnstate(d);
         d->state = cc.spectator ? CS_SPECTATOR : (d==player1 && editmode ? CS_EDITING : CS_ALIVE);
     }
@@ -525,7 +529,8 @@ struct fpsclient : igameclient
         preloadcharacters();
         et.preloadentities();
         if(m_sp) ms.preloadmonsters();
-        if(m_capture) cpc.preloadbases();
+        else if(m_capture) cpc.preloadbases();
+        else if(m_ctf) ctf.preloadflags(); 
     }
 
     IVARP(startmenu, 0, 1, 1);
@@ -716,11 +721,12 @@ struct fpsclient : igameclient
         if(player1->state==CS_SPECTATOR)
         {
             draw_text("SPECTATOR", 10, 827);
-            if(m_capture)
+            if(m_capture || m_ctf)
             {
                 glLoadIdentity();
                 glOrtho(0, w*1800/h, 1800, 0, -1, 1);
-                cpc.capturehud(w, h);
+                if(m_capture) cpc.capturehud(w, h);
+                else if(m_ctf) ctf.drawhud(w, h);
             }
             return;
         }
@@ -747,6 +753,7 @@ struct fpsclient : igameclient
         }
         if(m_capture) cpc.capturehud(w, h);
         else if(m_assassin) asc.drawhud(w, h);
+        else if(m_ctf) ctf.drawhud(w, h);
     }
 
     IVARP(teamcrosshair, 0, 1, 1);

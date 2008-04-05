@@ -105,6 +105,7 @@ struct fpsrender
         cl.et.renderentities();
         cl.ws.renderprojectiles();
         if(m_capture) cl.cpc.renderbases();
+        else if(m_ctf) cl.ctf.renderflags();
 
         endmodelbatches();
     }

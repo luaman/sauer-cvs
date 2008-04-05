@@ -9,7 +9,7 @@ enum                            // static entity types
     NOTUSED = ET_EMPTY,         // entity slot not in use in map
     LIGHT = ET_LIGHT,           // lightsource, attr1 = radius, attr2 = intensity
     MAPMODEL = ET_MAPMODEL,     // attr1 = angle, attr2 = idx
-    PLAYERSTART,                // attr1 = angle
+    PLAYERSTART,                // attr1 = angle, attr2 = team
     ENVMAP = ET_ENVMAP,         // attr1 = radius
     PARTICLES = ET_PARTICLES,
     MAPSOUND = ET_SOUND,
@@ -29,6 +29,7 @@ enum                            // static entity types
     BARREL,                     // attr1 = angle, attr2 = idx, attr3 = weight, attr4 = health
     PLATFORM,                   // attr1 = angle, attr2 = idx, attr3 = tag, attr4 = speed
     ELEVATOR,                   // attr1 = angle, attr2 = idx, attr3 = tag, attr4 = speed
+    FLAG,                       // attr1 = angle, attr2 = team
     MAXENTTYPES
 };
 
@@ -41,14 +42,15 @@ enum { GUN_FIST = 0, GUN_SG, GUN_CG, GUN_RL, GUN_RIFLE, GUN_GL, GUN_PISTOL, GUN_
 enum { A_BLUE, A_GREEN, A_YELLOW };     // armour types... take 20/40/60 % off
 enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  // monster states
 
-#define m_noitems      ((gamemode>=4 && gamemode<=11) || gamemode==13 || gamemode==14 || gamemode==16)
-#define m_noitemsrail  ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9) || gamemode==13 || gamemode==16)
+#define m_noitems      ((gamemode>=4 && gamemode<=11) || gamemode==13 || gamemode==14 || gamemode==16 || gamemode==18)
+#define m_noitemsrail  ((gamemode>=4 && gamemode<=5) || (gamemode>=8 && gamemode<=9) || gamemode==13 || gamemode==16 || gamemode==18)
 #define m_arena        (gamemode>=8 && gamemode<=11)
 #define m_tarena       (gamemode>=10 && gamemode<=11)
 #define m_capture      (gamemode>=12 && gamemode<=14)
 #define m_regencapture (gamemode==14)
 #define m_assassin     (gamemode>=15 && gamemode<=16)
-#define m_teammode     ((gamemode>2 && gamemode<12 && gamemode&1) || m_capture)
+#define m_ctf          (gamemode>=17 && gamemode<=18)
+#define m_teammode     ((gamemode>2 && gamemode<12 && gamemode&1) || m_capture || m_ctf)
 #define m_teamskins    (m_teammode || m_assassin)
 #define m_sp           (m_dmsp || m_classicsp)
 #define m_dmsp         (gamemode==-1 || gamemode==-4)
@@ -57,7 +59,7 @@ enum { M_NONE = 0, M_SEARCH, M_HOME, M_ATTACKING, M_PAIN, M_SLEEP, M_AIMING };  
 #define m_demo         (gamemode==-3)
 #define isteam(a,b)    (m_teammode && strcmp(a, b)==0)
 
-#define m_mp(mode)    (mode>=0 && mode<=16)
+#define m_mp(mode)    (mode>=0 && mode<=18)
 
 // hardcoded sounds, defined in sounds.cfg
 enum
@@ -109,6 +111,7 @@ enum
     SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER,
     SV_LISTDEMOS, SV_SENDDEMOLIST, SV_GETDEMO, SV_SENDDEMO,
     SV_DEMOPLAYBACK, SV_RECORDDEMO, SV_STOPDEMO, SV_CLEARDEMOS,
+    SV_TAKEFLAG, SV_RETURNFLAG, SV_RESETFLAG, SV_DROPFLAG, SV_SCOREFLAG, SV_INITFLAGS,
     SV_CLIENT,
 };
 
@@ -131,6 +134,7 @@ static char msgsizelookup(int msg)
         SV_CLEARTARGETS, 1, SV_CLEARHUNTERS, 1, SV_ADDTARGET, 2, SV_REMOVETARGET, 2, SV_ADDHUNTER, 2, SV_REMOVEHUNTER, 2,
         SV_LISTDEMOS, 1, SV_SENDDEMOLIST, 0, SV_GETDEMO, 2, SV_SENDDEMO, 0,
         SV_DEMOPLAYBACK, 2, SV_RECORDDEMO, 2, SV_STOPDEMO, 1, SV_CLEARDEMOS, 2,
+        SV_DROPFLAG, 6, SV_SCOREFLAG, 5, SV_RETURNFLAG, 3, SV_TAKEFLAG, 2, SV_RESETFLAG, 2, SV_INITFLAGS, 6,   
         SV_CLIENT, 0,
         -1
     };
@@ -140,7 +144,7 @@ static char msgsizelookup(int msg)
 
 #define SAUERBRATEN_SERVER_PORT 28785
 #define SAUERBRATEN_SERVINFO_PORT 28786
-#define PROTOCOL_VERSION 255            // bump when protocol changes
+#define PROTOCOL_VERSION 256            // bump when protocol changes
 #define DEMO_VERSION 1                  // bump when demo format changes
 #define DEMO_MAGIC "SAUERBRATEN_DEMO"
 

@@ -286,6 +286,7 @@ struct fpsserver : igameserver
             return 1;
         }
         virtual void died(clientinfo *victim, clientinfo *actor) {}
+        virtual bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam) { return true; }
         virtual void changeteam(clientinfo *ci, const char *oldteam, const char *newteam) {}
         virtual void initclient(clientinfo *ci, ucharbuf &p, bool connecting) {}
         virtual void update() {}
@@ -352,12 +353,17 @@ struct fpsserver : igameserver
     #include "assassin.h"
     #undef ASSASSINSERV
 
+    #define CTFSERV 1
+    #include "ctf.h"
+    #undef CTFSERV
+
     arenaservmode arenamode;
     captureservmode capturemode;
     assassinservmode assassinmode;
+    ctfservmode ctfmode;
     servmode *smode;
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(MM_DEFAULT), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), assassinmode(*this), smode(NULL) 
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(MM_DEFAULT), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), assassinmode(*this), ctfmode(*this), smode(NULL) 
     {
         serverdesc[0] = '\0';
         masterpass[0] = '\0';
@@ -376,7 +382,8 @@ struct fpsserver : igameserver
             "slowmo SP", "slowmo DMSP", "demo", "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
             "instagib", "instagib team", "efficiency", "efficiency team",
             "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
-            "capture", "insta capture", "regen capture", "assassin", "insta assassin"
+            "capture", "insta capture", "regen capture", "assassin", "insta assassin",
+            "ctf", "insta ctf"
         };
         return (n>=-5 && size_t(n+5)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+5] : "unknown";
     }
@@ -477,7 +484,7 @@ struct fpsserver : igameserver
                 float rank;
                 clientinfo *ci = choosebestclient(rank);
                 if(!ci) break;
-                if(m_capture) rank = 1;
+                if(m_capture || m_ctf) rank = 1;
                 else if(selected && rank<=0) break;    
                 ci->state.timeplayed = -1;
                 team[first].add(ci);
@@ -532,7 +539,7 @@ struct fpsserver : igameserver
         loopi(numteams-1)
         {
             teamscore &ts = teamscores[i];
-            if(m_capture)
+            if(m_capture || m_ctf)
             {
                 if(ts.clients < worst->clients || (ts.clients == worst->clients && ts.rank < worst->rank)) worst = &ts;
             }
@@ -800,6 +807,7 @@ struct fpsserver : igameserver
         if(m_arena) smode = &arenamode;
         else if(m_capture) smode = &capturemode;
         else if(m_assassin) smode = &assassinmode;
+        else if(m_ctf) smode = &ctfmode;
         else smode = NULL;
         if(smode) smode->reset(false);
 
@@ -923,7 +931,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_BASEREGEN, SV_ANNOUNCE, SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER, SV_SENDDEMOLIST, SV_SENDDEMO, SV_DEMOPLAYBACK, SV_SENDMAP, SV_CLIENT };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_BASEREGEN, SV_ANNOUNCE, SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER, SV_SENDDEMOLIST, SV_SENDDEMO, SV_DEMOPLAYBACK, SV_SENDMAP, SV_DROPFLAG, SV_SCOREFLAG, SV_RETURNFLAG, SV_CLIENT };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     }
@@ -1297,6 +1305,17 @@ struct fpsserver : igameserver
                 if(ci->state.state!=CS_SPECTATOR && smode==&capturemode) capturemode.replenishammo(ci);
                 break;
 
+            case SV_TAKEFLAG:
+            {
+                int flag = getint(p);
+                if(ci->state.state!=CS_SPECTATOR && smode==&ctfmode) ctfmode.takeflag(ci, flag); 
+                break;
+            }
+
+            case SV_INITFLAGS:
+                if(ci->state.state!=CS_SPECTATOR && smode==&ctfmode) ctfmode.parseflags(p);
+                break;
+
             case SV_PING:
                 sendf(sender, 1, "i2", SV_PONG, getint(p));
                 break;
@@ -1385,12 +1404,17 @@ struct fpsserver : igameserver
                 if(!ci->privilege || who<0 || who>=getnumclients()) break;
                 clientinfo *wi = (clientinfo *)getinfo(who);
                 if(!wi) break;
-                if(smode && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) smode->changeteam(wi, wi->team, text);
-                s_strncpy(wi->team, text, MAXTEAMLEN+1);
-                sendf(sender, 1, "riis", SV_SETTEAM, who, text);
+                bool allowchange = true;
+                if(smode && wi->state.state==CS_ALIVE && strcmp(wi->team, text)) 
+                {
+                    allowchange = smode->canchangeteam(wi, wi->team, text);
+                    if(allowchange) smode->changeteam(wi, wi->team, text);
+                }
+                if(allowchange) s_strncpy(wi->team, text, MAXTEAMLEN+1);
+                sendf(sender, 1, "riis", SV_SETTEAM, who, wi->team);
                 QUEUE_INT(SV_SETTEAM);
                 QUEUE_INT(who);
-                QUEUE_STR(text);
+                QUEUE_STR(wi->team);
                 break;
             } 
 

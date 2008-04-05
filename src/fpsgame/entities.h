@@ -30,7 +30,8 @@ struct entities : icliententities
             NULL, NULL,
             "checkpoint",
             NULL, NULL,
-            NULL, NULL
+            NULL, NULL,
+            NULL
         };
         return entmdlnames[type];
     }
@@ -239,6 +240,7 @@ struct entities : icliententities
     {
         switch(e.type)
         {
+            case FLAG:
             case BOX:
             case BARREL:
             case PLATFORM:
@@ -271,6 +273,7 @@ struct entities : icliententities
                 dir = vec((int)(char)e.attr3*10.0f, (int)(char)e.attr2*10.0f, e.attr1*12.5f).normalize();
                 break;
 
+            case FLAG:
             case MONSTER:
             case TELEDEST:
             case MAPMODEL:
@@ -298,6 +301,7 @@ struct entities : icliententities
             "base", "respawnpoint",
             "box", "barrel",
             "platform", "elevator",
+            "flag",
             "", "", "", "",
         };
         return i>=0 && size_t(i)<sizeof(entnames)/sizeof(entnames[0]) ? entnames[i] : "";
@@ -330,7 +334,7 @@ struct entities : icliententities
 
     float dropheight(entity &e)
     {
-        if(e.type==MAPMODEL || e.type==BASE) return 0.0f;
+        if(e.type==MAPMODEL || e.type==BASE || e.type==FLAG) return 0.0f;
         return 4.0f;
     }
 };

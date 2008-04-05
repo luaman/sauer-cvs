@@ -797,10 +797,10 @@ extentity *newentity(bool local, const vec &o, int type, int v1, int v2, int v3,
         switch(type)
         {
                 case ET_MAPMODEL:
+                case ET_PLAYERSTART:
                     e.attr4 = e.attr3;
                     e.attr3 = e.attr2;
                     e.attr2 = e.attr1;
-                case ET_PLAYERSTART:
                     e.attr1 = (int)camera1->yaw;
                     break;
         }
@@ -885,24 +885,33 @@ ICOMMAND(insel,     "",  (), entfocus(efocus, intret(pointinsel(sel, e.o))));
 ICOMMAND(entget,    "",  (), entfocus(efocus, s_sprintfd(s)("%s %d %d %d %d", et->entname(e.type), e.attr1, e.attr2, e.attr3, e.attr4);  result(s)));
 COMMAND(entset, "siiii");
 
-
-int findentity(int type, int index)
+int findentity(int type, int index, int attr1, int attr2)
 {
     const vector<extentity *> &ents = et->getents();
-    for(int i = index; i<ents.length(); i++) if(ents[i]->type==type) return i;
-    loopj(min(index, ents.length())) if(ents[j]->type==type) return j;
+    for(int i = index; i<ents.length(); i++) 
+    {
+        extentity &e = *ents[i];
+        if(e.type==type && (attr1<0 || e.attr1==attr1) && (attr2<0 || e.attr2==attr2))
+            return i;
+    }
+    loopj(min(index, ents.length())) 
+    {
+        extentity &e = *ents[j];
+        if(e.type==type && (attr1<0 || e.attr1==attr1) && (attr2<0 || e.attr2==attr2))
+            return j;
+    }
     return -1;
 }
 
 int spawncycle = -1, fixspawn = 4;
 
-void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also used by monsters!
+void findplayerspawn(dynent *d, int forceent, int tag)   // place at random spawn. also used by monsters!
 {
     int pick = forceent;
     if(pick<0)
     {
         int r = fixspawn-->0 ? 7 : rnd(10)+1;
-        loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1);
+        loopi(r) spawncycle = findentity(ET_PLAYERSTART, spawncycle+1, -1, tag);
         pick = spawncycle;
     }
     if(pick!=-1)
@@ -914,7 +923,7 @@ void findplayerspawn(dynent *d, int forceent)   // place at random spawn. also u
             d->o = et->getents()[attempt]->o;
             d->yaw = et->getents()[attempt]->attr1;
             if(entinmap(d, true)) break;
-            attempt = findentity(ET_PLAYERSTART, attempt+1);
+            attempt = findentity(ET_PLAYERSTART, attempt+1, -1, tag);
             if(attempt<0 || attempt==pick)
             {
                 d->o = et->getents()[attempt]->o;

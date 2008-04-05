@@ -269,6 +269,7 @@ struct clientcom : iclientcom
             if(!m_noitems) cl.et.putitems(p, gamemode);
             putint(p, -1);
             if(m_capture) cl.cpc.sendbases(p);
+            else if(m_ctf) cl.ctf.sendflags(p);
             senditemstoserver = false;
         }
         if(!c2sinit)    // tell other clients who I am
@@ -519,7 +520,7 @@ struct clientcom : iclientcom
 
             case SV_MAPRELOAD:          // server requests next map
             {
-                s_sprintfd(nextmapalias)("nextmap_%s%s", m_capture ? "capture_" : "", cl.getclientmap());
+                s_sprintfd(nextmapalias)("nextmap_%s%s", m_capture ? "capture_" : (m_ctf ? "ctf_" : ""), cl.getclientmap());
                 const char *map = getalias(nextmapalias);     // look up map in the cycle
                 addmsg(SV_MAPCHANGE, "rsi", *map ? map : cl.getclientmap(), cl.nextmode);
                 break;
@@ -588,7 +589,7 @@ struct clientcom : iclientcom
                 player1->gunselect = getint(p);
                 loopi(GUN_PISTOL-GUN_SG+1) player1->ammo[GUN_SG+i] = getint(p);
                 player1->state = CS_ALIVE;
-                findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1);
+                findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1, m_ctf ? ctfteamflag(player1->team)+1 : 0);
                 cl.sb.showscores(false);
                 cl.lasthit = 0;
                 if(m_arena) conoutf("new round starting... fight!");
@@ -917,6 +918,53 @@ struct clientcom : iclientcom
                 break;
             }
 
+            case SV_INITFLAGS:
+            {
+                cl.ctf.parseflags(p, m_ctf);
+                break;
+            }
+
+            case SV_DROPFLAG:
+            {
+                int ocn = getint(p), flag = getint(p);
+                vec droploc;
+                loopk(3) droploc[k] = getint(p)/DMF;
+                fpsent *o = ocn==cl.player1->clientnum ? cl.player1 : cl.newclient(ocn);  
+                if(m_ctf) cl.ctf.dropflag(o, flag, droploc);
+                break;
+            }
+
+            case SV_SCOREFLAG:
+            {
+                int ocn = getint(p), relayflag = getint(p), goalflag = getint(p), score = getint(p);
+                fpsent *o = ocn==cl.player1->clientnum ? cl.player1 : cl.newclient(ocn);
+                if(m_ctf) cl.ctf.scoreflag(o, relayflag, goalflag, score);
+                break;
+            }
+
+            case SV_RETURNFLAG:
+            {
+                int ocn = getint(p), flag = getint(p);
+                fpsent *o = ocn==cl.player1->clientnum ? cl.player1 : cl.newclient(ocn);
+                if(m_ctf) cl.ctf.returnflag(o, flag);
+                break;
+            }
+
+            case SV_TAKEFLAG:
+            {
+                int ocn = getint(p), flag = getint(p);
+                fpsent *o = ocn==cl.player1->clientnum ? cl.player1 : cl.newclient(ocn);
+                if(m_ctf) cl.ctf.takeflag(o, flag);
+                break;
+            }
+
+            case SV_RESETFLAG:
+            {
+                int flag = getint(p);
+                if(m_ctf) cl.ctf.resetflag(flag);
+                break;
+            }
+
             case SV_ANNOUNCE:
             {
                 int t = getint(p);
@@ -1008,6 +1056,7 @@ struct clientcom : iclientcom
         if((gamemode==1 && !name[0]) || (!load_world(name) && remote)) emptymap(0, true, name);
         if(m_capture) cl.cpc.setupbases();
         else if(m_assassin) cl.asc.reset();
+        else if(m_ctf) cl.ctf.setupflags();
         if(editmode) edittoggled(editmode);
     }
 
