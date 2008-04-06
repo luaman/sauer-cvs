@@ -334,21 +334,21 @@ struct hline
         else cc->toserver(buf);
     }
 };
-vector<hline *> vhistory;
+vector<hline *> history;
 int histpos = 0;
 
-void history(int *n)
+void history_(int *n)
 {
     static bool inhistory = true;
-    if(!inhistory && vhistory.inrange(*n))
+    if(!inhistory && history.inrange(*n))
     {
         inhistory = true;
-        vhistory[vhistory.length()-*n-1]->run();
+        history[history.length()-*n-1]->run();
         inhistory = false;
     }
 }
 
-COMMAND(history, "i");
+COMMANDN(history, history_, "i");
 
 struct releaseaction
 {
@@ -452,11 +452,11 @@ void consolekey(int code, bool isdown, int cooked)
                 break;
 
             case SDLK_UP:
-                if(histpos>0) vhistory[--histpos]->restore(); 
+                if(histpos>0) history[--histpos]->restore(); 
                 break;
 
             case SDLK_DOWN:
-                if(histpos+1<vhistory.length()) vhistory[++histpos]->restore();
+                if(histpos+1<history.length()) history[++histpos]->restore();
                 break;
 
             case SDLK_TAB:
@@ -496,15 +496,19 @@ void consolekey(int code, bool isdown, int cooked)
         if(code==SDLK_RETURN || code==SDLK_KP_ENTER)
         {
             hline *h = NULL;
-            if(commandbuf[0] && (vhistory.empty() || vhistory.last()->shouldsave()))
-                vhistory.add(h = new hline)->save(); // cap this?
-            histpos = vhistory.length();
+            if(commandbuf[0])
+            {
+                if(history.empty() || history.last()->shouldsave())
+                    history.add(h = new hline)->save(); // cap this?
+                else h = history.last();
+            }
+            histpos = history.length();
             saycommand(NULL);
             if(h) h->run();
         }
         else if(code==SDLK_ESCAPE)
         {
-            histpos = vhistory.length();
+            histpos = history.length();
             saycommand(NULL);
         }
     }
