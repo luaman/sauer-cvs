@@ -16,6 +16,7 @@ struct clientcom : iclientcom
     clientcom(fpsclient &_cl) : cl(_cl), c2sinit(false), senditemstoserver(false), lastping(0), connected(false), remote(false), demoplayback(false), spectator(false), player1(_cl.player1)
     {
         CCOMMAND(say, "C", (clientcom *self, char *s), self->toserver(s));
+        CCOMMAND(sayteam, "C", (clientcom *self, char *s), self->sayteam(s));
         CCOMMAND(name, "s", (clientcom *self, char *s), self->switchname(s));
         CCOMMAND(team, "s", (clientcom *self, char *s), self->switchteam(s));
         CCOMMAND(map, "s", (clientcom *self, char *s), self->changemap(s));
@@ -229,6 +230,7 @@ struct clientcom : iclientcom
     }
 
     void toserver(char *text) { conoutf("%s:\f0 %s", cl.colorname(player1), text); addmsg(SV_TEXT, "rs", text); }
+    void sayteam(char *text) { conoutf("%s:\f1 %s", cl.colorname(player1), text); addmsg(SV_SAYTEAM, "rs", text); }
 
     int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d)
     {
@@ -470,7 +472,23 @@ struct clientcom : iclientcom
                     s_sprintfd(ds)("@%s", &text);
                     particle_text(d->abovehead(), ds, 9);
                 }
-                conoutf("%s:\f0 %s", cl.colorname(d), &text);
+                conoutf("%s:\f0 %s", cl.colorname(d), text);
+                break;
+            }
+
+            case SV_SAYTEAM:
+            {
+                int tcn = getint(p);
+                fpsent *t = tcn==cl.player1->clientnum ? cl.player1 : cl.getclient(tcn);
+                getstring(text, p);
+                filtertext(text, text);
+                if(!t) break;
+                if(t->state!=CS_DEAD && t->state!=CS_SPECTATOR)
+                {
+                    s_sprintfd(ts)("@%s", &text);
+                    particle_text(t->abovehead(), ts, 34);
+                }
+                conoutf("%s:\f1 %s", cl.colorname(t), text);
                 break;
             }
 

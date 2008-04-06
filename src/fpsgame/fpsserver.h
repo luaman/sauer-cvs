@@ -1218,6 +1218,19 @@ struct fpsserver : igameserver
                 QUEUE_STR(text);
                 break;
 
+            case SV_SAYTEAM:
+            {
+                getstring(text, p);
+                if(ci->state.state==CS_SPECTATOR || !m_teammode || !ci->team[0]) break;
+                loopv(clients)
+                {
+                    clientinfo *t = clients[i];
+                    if(t==ci || t->state.state==CS_SPECTATOR || strcmp(ci->team, t->team)) continue;
+                    sendf(t->clientnum, 1, "riis", SV_SAYTEAM, ci->clientnum, text);
+                }
+                break;
+            }
+
             case SV_INITC2S:
             {
                 QUEUE_MSG;

@@ -10,6 +10,7 @@ int conskip = 0;
 
 bool saycommandon = false;
 string commandbuf;
+char *commandaction = NULL, *commandprompt = NULL;
 int commandpos = -1;
 
 void setconskip(int *n)
@@ -89,9 +90,9 @@ COMMAND(toggleconsole, "");
 
 void rendercommand(int x, int y)
 {
-    s_sprintfd(s)("> %s", commandbuf);
+    s_sprintfd(s)("%s %s", commandprompt ? commandprompt : ">", commandbuf);
     draw_text(s, x, y);
-    draw_text("_", x + text_width(s, commandpos>=0 ? commandpos+2 : -1), y);
+    draw_text("_", x + text_width(s, commandpos>=0 ? commandpos+strlen(commandprompt ? commandprompt : ">")+1 : -1), y);
 }
 
 void blendbox(int x1, int y1, int x2, int y2, bool border)
@@ -163,7 +164,9 @@ struct keym
 {
     int code;
     char *name, *action, *editaction;
+    bool pressed;
 
+    keym() : code(-1), name(NULL), action(NULL), editaction(NULL), pressed(false) {}
     ~keym() { DELETEA(name); DELETEA(action); DELETEA(editaction); }
 };
 
@@ -225,13 +228,22 @@ void saycommand(char *init)                         // turns input to the comman
     SDL_EnableUNICODE(saycommandon = (init!=NULL));
     if(!editmode) keyrepeat(saycommandon);
     s_strcpy(commandbuf, init ? init : "");
+    DELETEA(commandaction);
+    DELETEA(commandprompt);
     commandpos = -1;
-    player->stopmoving(); // prevent situations where player presses direction key, open command line, then releases key
+}
+
+void inputcommand(char *init, char *action, char *prompt)
+{
+    saycommand(init);
+    if(action[0]) commandaction = newstring(action);
+    if(prompt[0]) commandprompt = newstring(prompt);
 }
 
 void mapmsg(char *s) { s_strncpy(hdr.maptitle, s, 128); }
 
 COMMAND(saycommand, "C");
+COMMAND(inputcommand, "sss");
 COMMAND(mapmsg, "s");
 
 #if !defined(WIN32) && !defined(__APPLE__)
@@ -276,7 +288,53 @@ void pasteconsole()
     #endif
 }
 
-cvector vhistory;
+struct hline
+{
+    char *buf, *action, *prompt;
+
+    hline() : buf(NULL), action(NULL), prompt(NULL) {}
+    ~hline()
+    {
+        DELETEA(buf);
+        DELETEA(action);
+        DELETEA(prompt);
+    }
+
+    void restore()
+    {
+        s_strcpy(commandbuf, buf);
+        DELETEA(commandaction);
+        DELETEA(commandprompt);
+        if(action) commandaction = newstring(action);
+        if(prompt) commandprompt = newstring(prompt);
+    }
+
+    bool shouldsave()
+    {
+        return strcmp(commandbuf, buf) ||
+               (commandaction ? !action || strcmp(commandaction, action) : action!=NULL) ||
+               (commandprompt ? !prompt || strcmp(commandprompt, prompt) : prompt!=NULL);
+    }
+    
+    void save()
+    {
+        buf = newstring(commandbuf);
+        if(commandaction) action = newstring(commandaction);
+        if(commandprompt) prompt = newstring(commandprompt);
+    }
+
+    void run()
+    {
+        if(action)
+        {
+            alias("commandbuf", buf);
+            execute(action);
+        }
+        else if(buf[0]=='/') execute(buf+1);
+        else cc->toserver(buf);
+    }
+};
+vector<hline *> vhistory;
 int histpos = 0;
 
 void history(int *n)
@@ -285,9 +343,7 @@ void history(int *n)
     if(!inhistory && vhistory.inrange(*n))
     {
         inhistory = true;
-        char *buf = vhistory[vhistory.length()-*n-1];
-        if(buf[0]=='/') execute(buf+1);
-        else cc->toserver(buf);
+        vhistory[vhistory.length()-*n-1]->run();
         inhistory = false;
     }
 }
@@ -317,149 +373,154 @@ void onrelease(char *s)
 
 COMMAND(onrelease, "s");
 
+void execbind(keym &k, bool isdown)
+{
+    loopv(releaseactions)
+    {
+        releaseaction &ra = releaseactions[i];
+        if(ra.key==&k)
+        {
+            if(!isdown) execute(ra.action);
+            delete[] ra.action;
+            releaseactions.remove(i--);
+        }
+    }
+    if(isdown)
+    {
+        char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
+        keyaction = action;
+        keypressed = &k;
+        execute(keyaction);
+        keypressed = NULL;
+        if(keyaction!=action) delete[] keyaction;
+    }
+    k.pressed = isdown;
+}
+
+void consolekey(int code, bool isdown, int cooked)
+{
+    #ifdef __APPLE__
+        #define MOD_KEYS (KMOD_LMETA|KMOD_RMETA) 
+    #else
+        #define MOD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
+    #endif
+
+    if(isdown)
+    {
+        switch(code)
+        {
+            case SDLK_RETURN:
+            case SDLK_KP_ENTER:
+                break;
+
+            case SDLK_HOME:
+                if(strlen(commandbuf)) commandpos = 0;
+                break;
+
+            case SDLK_END:
+                commandpos = -1;
+                break;
+
+            case SDLK_DELETE:
+            {
+                int len = (int)strlen(commandbuf);
+                if(commandpos<0) break;
+                memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);
+                resetcomplete();
+                if(commandpos>=len-1) commandpos = -1;
+                break;
+            }
+
+            case SDLK_BACKSPACE:
+            {
+                int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
+                if(i<1) break;
+                memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);
+                resetcomplete();
+                if(commandpos>0) commandpos--;
+                else if(!commandpos && len<=1) commandpos = -1;
+                break;
+            }
+
+            case SDLK_LEFT:
+                if(commandpos>0) commandpos--;
+                else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
+                break;
+
+            case SDLK_RIGHT:
+                if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
+                break;
+
+            case SDLK_UP:
+                if(histpos>0) vhistory[--histpos]->restore(); 
+                break;
+
+            case SDLK_DOWN:
+                if(histpos+1<vhistory.length()) vhistory[++histpos]->restore();
+                break;
+
+            case SDLK_TAB:
+                if(!commandaction)
+                {
+                    complete(commandbuf);
+                    if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
+                }
+                break;
+
+            case SDLK_v:
+                if(SDL_GetModState()&MOD_KEYS) { pasteconsole(); return; }
+                // fall through
+
+            default:
+                resetcomplete();
+                if(cooked)
+                {
+                    size_t len = (int)strlen(commandbuf);
+                    if(len+1<sizeof(commandbuf))
+                    {
+                        if(commandpos<0) commandbuf[len] = cooked;
+                        if(commandpos<0) commandbuf[len] = cooked;
+                        else
+                        {
+                            memmove(&commandbuf[commandpos+1], &commandbuf[commandpos], len - commandpos);
+                            commandbuf[commandpos++] = cooked;
+                        }
+                        commandbuf[len+1] = '\0';
+                    }
+                }
+                break;
+        }
+    }
+    else
+    {
+        if(code==SDLK_RETURN || code==SDLK_KP_ENTER)
+        {
+            hline *h = NULL;
+            if(commandbuf[0] && (vhistory.empty() || vhistory.last()->shouldsave()))
+                vhistory.add(h = new hline)->save(); // cap this?
+            histpos = vhistory.length();
+            saycommand(NULL);
+            if(h) h->run();
+        }
+        else if(code==SDLK_ESCAPE)
+        {
+            histpos = vhistory.length();
+            saycommand(NULL);
+        }
+    }
+}
 
 extern bool menukey(int code, bool isdown, int cooked);
 
 void keypress(int code, bool isdown, int cooked)
 {
-	#ifdef __APPLE__
-        #define MOD_KEYS (KMOD_LMETA|KMOD_RMETA) 
-	#else
-		#define MOD_KEYS (KMOD_LCTRL|KMOD_RCTRL)
-	#endif
-	
-    if(menukey(code, isdown, cooked)) return;  // 3D GUI mouse button intercept   
-    else if(saycommandon)                                // keystrokes go to commandline
+    keym *haskey = NULL;
+    loopv(keyms) if(keyms[i].code==code) { haskey = &keyms[i]; break; }        
+    if(haskey && haskey->pressed) execbind(*haskey, isdown); // allow pressed keys to release
+    else if(!menukey(code, isdown, cooked)) // 3D GUI mouse button intercept   
     {
-        if(isdown)
-        {
-            switch(code)
-            {
-                case SDLK_RETURN:
-                case SDLK_KP_ENTER:
-                    break;
-
-                case SDLK_HOME: 
-                    if(strlen(commandbuf)) commandpos = 0; 
-                    break;
-
-                case SDLK_END: 
-                    commandpos = -1; 
-                    break;
-
-                case SDLK_DELETE:
-                {
-                    int len = (int)strlen(commandbuf);
-                    if(commandpos<0) break;
-                    memmove(&commandbuf[commandpos], &commandbuf[commandpos+1], len - commandpos);    
-                    resetcomplete();
-                    if(commandpos>=len-1) commandpos = -1;
-                    break;
-                }
-
-                case SDLK_BACKSPACE:
-                {
-                    int len = (int)strlen(commandbuf), i = commandpos>=0 ? commandpos : len;
-                    if(i<1) break;
-                    memmove(&commandbuf[i-1], &commandbuf[i], len - i + 1);  
-                    resetcomplete();
-                    if(commandpos>0) commandpos--;
-                    else if(!commandpos && len<=1) commandpos = -1;
-                    break;
-                }
-
-                case SDLK_LEFT:
-                    if(commandpos>0) commandpos--;
-                    else if(commandpos<0) commandpos = (int)strlen(commandbuf)-1;
-                    break;
-
-                case SDLK_RIGHT:
-                    if(commandpos>=0 && ++commandpos>=(int)strlen(commandbuf)) commandpos = -1;
-                    break;
-                        
-                case SDLK_UP:
-                    if(histpos>0) s_strcpy(commandbuf, vhistory[--histpos]);
-                    break;
-                
-                case SDLK_DOWN:
-                    if(histpos+1<vhistory.length()) s_strcpy(commandbuf, vhistory[++histpos]);
-                    break;
-                    
-                case SDLK_TAB:
-                    complete(commandbuf);
-                    if(commandpos>=0 && commandpos>=(int)strlen(commandbuf)) commandpos = -1;
-                    break;
-						
-                case SDLK_v:
-                    if(SDL_GetModState()&MOD_KEYS) { pasteconsole(); return; }
-                    // fall through
-                    
-                default:
-                    resetcomplete();
-                    if(cooked) 
-                    { 
-                        size_t len = (int)strlen(commandbuf);
-                        if(len+1<sizeof(commandbuf))
-                        {
-                            if(commandpos<0) commandbuf[len] = cooked;
-                            else
-                            {
-                                memmove(&commandbuf[commandpos+1], &commandbuf[commandpos], len - commandpos);
-                                commandbuf[commandpos++] = cooked;
-                            }
-                            commandbuf[len+1] = '\0';
-                        }
-                    }
-                    break;
-            }
-        }
-        else
-        {
-            if(code==SDLK_RETURN || code==SDLK_KP_ENTER)
-            {
-                histpos = vhistory.length();
-                if(commandbuf[0])
-                {
-                    if(vhistory.empty() || strcmp(vhistory.last(), commandbuf))
-                        vhistory.add(newstring(commandbuf));  // cap this?
-                    if(commandbuf[0]=='/') execute(commandbuf+1);
-                    else cc->toserver(commandbuf);
-                }
-                saycommand(NULL);
-            }
-            else if(code==SDLK_ESCAPE)
-            {
-                histpos = vhistory.length();
-                saycommand(NULL);
-            }
-        }
-    }
-    else
-    {
-        loopv(keyms) if(keyms[i].code==code)        // keystrokes go to game, lookup in keymap and execute
-        {
-            keym &k = keyms[i];
-            loopv(releaseactions)
-            {
-                releaseaction &ra = releaseactions[i];
-                if(ra.key==&k)
-                {
-                    if(!isdown) execute(ra.action);
-                    delete[] ra.action;
-                    releaseactions.remove(i--);
-                }
-            }
-            if(isdown)
-            {
-                char *&action = editmode && k.editaction[0] ? k.editaction : k.action;
-                keyaction = action;
-                keypressed = &k;
-                execute(keyaction); 
-                keypressed = NULL;
-                if(keyaction!=action) delete[] keyaction;
-            }
-            break;
-        }
+        if(saycommandon) consolekey(code, isdown, cooked);
+        else if(haskey) execbind(*haskey, isdown);
     }
 }
 

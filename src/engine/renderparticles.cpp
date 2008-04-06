@@ -1304,6 +1304,7 @@ static struct partmap { int type; int color; } partmaps[] =
     { 22, 0x802020}, // 31 fireball: red
     { 22, 0x2020FF}, // 32 fireball: blue
     { 22, 0x208020}, // 33 fireball: green
+    {  9, 0x6496FF}, // 34 TEXT BLUE
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
