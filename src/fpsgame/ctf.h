@@ -103,6 +103,7 @@ struct ctfservmode : ctfstate, servmode
 
     void dropflag(clientinfo *ci)
     {
+        if(notgotflags) return;
         loopi(2) if(flags[i].owner==ci->clientnum)
         {
             ivec o(vec(ci->state.o).mul(DMF));
@@ -133,6 +134,7 @@ struct ctfservmode : ctfstate, servmode
 
     void moved(clientinfo *ci, const vec &oldpos, const vec &newpos)
     {
+        if(notgotflags) return;
         static const dynent dummy;
         vec o(newpos);
         o.z -= dummy.eyeheight;
@@ -151,7 +153,7 @@ struct ctfservmode : ctfstate, servmode
 
     void takeflag(clientinfo *ci, int i)
     {
-        if(i<0 || i>1 || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
+        if(notgotflags || i<0 || i>1 || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         flag &f = flags[i];
         if(i==ctfteamflag(ci->team))
         {
@@ -169,7 +171,7 @@ struct ctfservmode : ctfstate, servmode
 
     void update()
     {
-        if(sv.minremain<0) return;
+        if(sv.minremain<0 || notgotflags) return;
         loopi(2) 
         {
             flag &f = flags[i];
