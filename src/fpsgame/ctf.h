@@ -296,7 +296,7 @@ struct ctfclient : ctfstate
 
     vec interpflagpos(flag &f, float &angle)
     {
-        vec pos = f.owner ? f.owner->abovehead() : (f.droptime ? f.droploc : f.spawnloc);
+        vec pos = f.owner ? vec(f.owner->abovehead()).add(vec(0, 0, 1)) : (f.droptime ? f.droploc : f.spawnloc);
         angle = f.owner ? f.owner->yaw : (f.ent ? f.ent->attr1 : 0);
         if(pos.x < 0) return pos;
         if(f.interptime && f.interploc.x >= 0) 

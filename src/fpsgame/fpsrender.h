@@ -99,7 +99,6 @@ struct fpsrender
             if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, mdl ? (mdl==1 ? 16 : 13) : 11, 1);
         }
         if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teamskins ? mdlnames[1] : mdlnames[0]);
-
         cl.ms.monsterrender();
         cl.mo.render();
         cl.et.renderentities();
