@@ -1686,7 +1686,7 @@ void setupTMUs(renderstate &cur, float causticspass, bool fogpass)
         setuptmu(cur.diffusetmu, cur.diffusetmu>0 ? "P * T" : "= T");
     }
 
-    setuptexgen();
+    if(renderpath==R_FIXEDFUNCTION) setuptexgen();
 }
 
 void cleanupTMUs(renderstate &cur)
@@ -1732,9 +1732,8 @@ void cleanupTMUs(renderstate &cur)
         glDisable(GL_TEXTURE_2D);
     }
 
-    disabletexgen();
-
-    if(renderpath!=R_FIXEDFUNCTION)
+    if(renderpath==R_FIXEDFUNCTION) disabletexgen();
+    else
     {
         glDisableClientState(GL_COLOR_ARRAY);
         loopi(8-2) { glActiveTexture_(GL_TEXTURE2_ARB+i); glDisable(GL_TEXTURE_2D); }
