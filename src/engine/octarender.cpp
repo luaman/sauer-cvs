@@ -526,6 +526,11 @@ struct vacollect : verthash
 
         if(mapmodels.length()) va->mapmodels = new vector<octaentities *>(mapmodels);
     }
+
+    bool emptyva()
+    {
+        return verts.empty() && matsurfs.empty() && skyindices.empty() && explicitskyindices.empty() && grasstris.empty() && mapmodels.empty();
+    }            
 } vc;
 
 VARF(lodsize, 0, 32, 128, hdr.mapwlod = lodsize);
@@ -1296,14 +1301,17 @@ void setva(cube &c, int cx, int cy, int cz, int size, int csi)
 
     addskyverts(ivec(cx, cy, cz), size);
 
-    vtxarray *va = newva(cx, cy, cz, size);
-    ext(c).va = va;
-    va->geommin = bbmin;
-    va->geommax = bbmax;
-    va->shadowmapmin = shadowmapmin.toivec(va->o);
-    loopk(3) shadowmapmax[k] += (1<<VVEC_FRAC)-1;
-    va->shadowmapmax = shadowmapmax.toivec(va->o);
-    va->hasmerges = vahasmerges;
+    if(!vc.emptyva())
+    {
+        vtxarray *va = newva(cx, cy, cz, size);
+        ext(c).va = va;
+        va->geommin = bbmin;
+        va->geommax = bbmax;
+        va->shadowmapmin = shadowmapmin.toivec(va->o);
+        loopk(3) shadowmapmax[k] += (1<<VVEC_FRAC)-1;
+        va->shadowmapmax = shadowmapmax.toivec(va->o);
+        va->hasmerges = vahasmerges;
+    }
 
     explicitsky = 0;
     skyarea = 0;
