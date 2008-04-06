@@ -1301,10 +1301,12 @@ static struct partmap { int type; int color; } partmaps[] =
     { 21, 0xFFFFFF}, // 28 lightning: yellow
     { 21, 0xFF2222}, // 29 lightning: red
     { 21, 0x2222FF}, // 30 lightning: blue
-    { 22, 0x802020}, // 31 fireball: red
-    { 22, 0x2020FF}, // 32 fireball: blue
-    { 22, 0x208020}, // 33 fireball: green
+    { 22, 0x802020}, // 31 fireball: red, no glare
+    { 22, 0x2020FF}, // 32 fireball: blue, no glare
+    { 22, 0x208020}, // 33 fireball: green, no glare
     {  9, 0x6496FF}, // 34 TEXT BLUE
+    { 16, 0x802020}, // 35 fireball: red
+    { 16, 0x2020FF}, // 36 fireball: blue
 };
 
 void regular_particle_splash(int type, int num, int fade, const vec &p, int delay) 
