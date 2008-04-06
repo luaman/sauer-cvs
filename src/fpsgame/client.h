@@ -664,7 +664,7 @@ struct clientcom : iclientcom
                        *actor = acn==player1->clientnum ? player1 : cl.getclient(acn);
                 if(!actor) break;
                 actor->frags = frags;
-                if(actor!=player1)
+                if(actor!=player1 && !m_capture && !m_ctf)
                 {
                     s_sprintfd(ds)("@%d", actor->frags);
                     particle_text(actor->abovehead(), ds, 9);
@@ -887,7 +887,6 @@ struct clientcom : iclientcom
                 getstring(text, p);
                 s_strcpy(enemy, text);
                 int converted = getint(p), ammo = getint(p);
-                int gamemode = cl.gamemode;
                 if(m_capture) cl.cpc.updatebase(base, owner, enemy, converted, ammo);
                 break;
             }
@@ -923,7 +922,7 @@ struct clientcom : iclientcom
             case SV_TEAMSCORE:
             {
                 getstring(text, p);
-                int total = getint(p), gamemode = cl.gamemode;
+                int total = getint(p);
                 if(m_capture) cl.cpc.setscore(text, total);
                 break;
             }
@@ -931,7 +930,6 @@ struct clientcom : iclientcom
             case SV_REPAMMO:
             {
                 int ammotype = getint(p);
-                int gamemode = cl.gamemode;
                 if(m_capture) cl.cpc.receiveammo(ammotype);
                 break;
             }
