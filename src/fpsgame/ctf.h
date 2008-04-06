@@ -89,7 +89,7 @@ struct ctfstate
 #ifdef CTFSERV
 struct ctfservmode : ctfstate, servmode
 {
-    static const int RESETFLAGTIME = 15000;
+    static const int RESETFLAGTIME = 10000;
 
     bool notgotflags;
 
@@ -173,7 +173,7 @@ struct ctfservmode : ctfstate, servmode
         loopi(2) 
         {
             flag &f = flags[i];
-            if(f.owner>=0 && f.droptime && sv.lastmillis - f.droptime >= RESETFLAGTIME)
+            if(f.owner<0 && f.droptime && sv.lastmillis - f.droptime >= RESETFLAGTIME)
             {
                 returnflag(i);
                 sendf(-1, 1, "ri2", SV_RESETFLAG, i);
