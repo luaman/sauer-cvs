@@ -1052,6 +1052,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\rendertarget.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\rendertext.cpp"
 					>
 					<FileConfiguration
@@ -1561,6 +1565,10 @@
 			</File>
 			<File
 				RelativePath="..\fpsgame\client.h"
+				>
+			</File>
+			<File
+				RelativePath="..\fpsgame\ctf.h"
 				>
 			</File>
 			<File
