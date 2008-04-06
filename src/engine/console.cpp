@@ -303,6 +303,7 @@ struct hline
     void restore()
     {
         s_strcpy(commandbuf, buf);
+        if(commandpos >= (int)strlen(commandbuf)) commandpos = -1;
         DELETEA(commandaction);
         DELETEA(commandprompt);
         if(action) commandaction = newstring(action);
@@ -478,7 +479,6 @@ void consolekey(int code, bool isdown, int cooked)
                     size_t len = (int)strlen(commandbuf);
                     if(len+1<sizeof(commandbuf))
                     {
-                        if(commandpos<0) commandbuf[len] = cooked;
                         if(commandpos<0) commandbuf[len] = cooked;
                         else
                         {
