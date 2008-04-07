@@ -255,6 +255,12 @@
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="..\engine\animmodel.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="..\engine\bih.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
@@ -285,10 +291,18 @@
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="..\engine\dynlight.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="..\engine\engine.h">
 			<Option compilerVar="CPP"/>
 			<Option compile="0"/>
 			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\engine\glare.cpp">
+			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="..\engine\grass.cpp">
@@ -321,6 +335,12 @@
 		</Unit>
 		<Unit filename="..\engine\md3.h">
 			<Option compilerVar="CPP"/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\engine\md5.h">
+			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
 			<Option target="default"/>
@@ -361,6 +381,10 @@
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="..\engine\pvs.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="..\engine\rendergl.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
@@ -375,6 +399,12 @@
 		</Unit>
 		<Unit filename="..\engine\rendersky.cpp">
 			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\engine\rendertarget.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="..\engine\rendertext.cpp">
@@ -399,6 +429,12 @@
 		</Unit>
 		<Unit filename="..\engine\shadowmap.cpp">
 			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\engine\skelmodel.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="..\engine\sound.cpp">
@@ -463,6 +499,12 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="..\fpsgame\ctf.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="..\fpsgame\entities.h">
 			<Option compilerVar="CPP"/>
 			<Option compile="0"/>
@@ -493,6 +535,12 @@
 		</Unit>
 		<Unit filename="..\fpsgame\monster.h">
 			<Option compilerVar="CPP"/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\fpsgame\movable.h">
+			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
 			<Option target="default"/>
@@ -597,6 +645,12 @@
 		</Unit>
 		<Unit filename="..\shared\pch.h">
 			<Option compilerVar="CPP"/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="..\shared\sbtrace.h">
+			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
 			<Option target="default"/>
