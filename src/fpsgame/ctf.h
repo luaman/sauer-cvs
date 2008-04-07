@@ -265,6 +265,19 @@ struct ctfclient : ctfstate
 
     void drawhud(int w, int h)
     {
+        if(cl.player1->state == CS_ALIVE)
+        {
+            loopi(2) if(i != ctfteamflag(cl.player1->team))
+            {
+                flag &f = flags[i];
+                if(f.owner == cl.player1)
+                {
+                    cl.drawicon(320, 0, 1820, 1650);
+                    break;
+                }
+            }
+        }
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
