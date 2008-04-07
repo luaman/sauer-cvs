@@ -470,7 +470,7 @@ struct ctfclient : ctfstate
     void takeflag(fpsent *d, int i)
     {
         flag &f = flags[i];
-        f.interploc = interpflagpos(f);
+        f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = cl.lastmillis;
         conoutf("%s %s %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.droptime ? "picked up" : "stole", i==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         ctfstate::takeflag(i, d);
