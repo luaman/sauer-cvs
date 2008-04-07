@@ -661,10 +661,9 @@ struct weaponstate
         kickback.mul(guns[d->gunselect].kickamount*-2.5f);
         d->vel.add(kickback);
         if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
-        float shorten = 0.0f;
-        
-        if(dist>1024) shorten = 1024;
-        if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) shorten = 12;
+        float shorten = 0;
+        if(guns[d->gunselect].range && dist > guns[d->gunselect].range)
+            shorten = guns[d->gunselect].range;
         float barrier = raycube(d->o, unitv, dist, RAY_CLIPMAT|RAY_POLY);
         if(barrier < dist && (!shorten || barrier < shorten))
             shorten = barrier;
