@@ -34,7 +34,7 @@ struct fpsrender
         if((!ogro() || d->gunselect!=GUN_FIST) && d->gunselect<=GUN_PISTOL)
         {
             a[ai].name = ogro() ? "monster/ogro/vwep" : vweps[d->gunselect];
-            a[ai].type = MDL_ATTACH_VWEP;
+            a[ai].tag = "tag_weapon";
             a[ai].anim = ANIM_VWEP|ANIM_LOOP;
             a[ai].basetime = 0;
             ai++;
@@ -44,7 +44,7 @@ struct fpsrender
             if(d->quadmillis)
             {
                 a[ai].name = "quadspheres";
-                a[ai].type = MDL_ATTACH_POWERUP;
+                a[ai].tag = "tag_powerup";
                 a[ai].anim = ANIM_POWERUP|ANIM_LOOP;
                 a[ai].basetime = 0;
                 ai++;
@@ -52,7 +52,7 @@ struct fpsrender
             if(d->armour)
             {
                 a[ai].name = d->armourtype==A_GREEN ? "shield/green" : (d->armourtype==A_YELLOW ? "shield/yellow" : NULL);
-                a[ai].type = MDL_ATTACH_SHIELD;
+                a[ai].tag = "tag_shield";
                 a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
                 a[ai].basetime = 0;
                 ai++;
