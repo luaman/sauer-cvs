@@ -266,6 +266,8 @@ struct md5 : skelmodel
                 m.buildnorms();
                 m.cleanup();
             }
+            
+            sortblendcombos();
 
             fclose(f);
             return true;
