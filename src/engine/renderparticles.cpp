@@ -1031,7 +1031,7 @@ struct varenderer : partrenderer
                 memcpy(&parts[expired], &parts[cntpart-relocate], relocate*sizeof(particle));
                 memcpy(&verts[4*expired], &verts[4*(cntpart-relocate)], 4*relocate*sizeof(partvert));
                 cntpart -= remove;
-                i -= remove+1;
+                i = expired;
                 p = parts + i;
                 expired = -1;
             }
