@@ -664,7 +664,7 @@ struct listrenderer : partrenderer
     
     void resettracked(physent *owner) 
     {
-        if(!type&PT_TRACK) return;
+        if(!(type&PT_TRACK)) return;
         for(listparticle **prev = &list, *cur = list; cur; cur = *prev)
         {
             if(!owner || cur->head.owner==owner) 
@@ -960,7 +960,7 @@ struct varenderer : partrenderer
     
     void resettracked(physent *owner) 
     {
-        if(!type&PT_TRACK) return;
+        if(!(type&PT_TRACK)) return;
         loopi(cntpart)
         {
             particle *p = parts+i;
