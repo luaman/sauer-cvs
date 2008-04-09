@@ -975,7 +975,7 @@ struct varenderer : partrenderer
 
     particle *addpart(const vec &o, const vec &d, int fade, int color, float size) 
     {
-        particle *p = parts + ((cntpart < maxparts) ? (cntpart++) : (rand()%maxparts)); //next free slot, or kill a random kitten
+        particle *p = parts + (cntpart < maxparts ? cntpart++ : rnd(maxparts)); //next free slot, or kill a random kitten
         p->o = o;
         p->d = d;
         p->fade = fade;
@@ -1344,7 +1344,7 @@ void render_particles(int time)
     static float zerofog[4] = { 0, 0, 0, 1 };
     float oldfogc[4];
     bool rendered = false;
-    uint lastflags;
+    uint lastflags = PT_LERP;
     
     loopi(sizeof(parts)/sizeof(parts[0]))
     {
@@ -1364,7 +1364,6 @@ void render_particles(int time)
 
             particleshader->set();
             glGetFloatv(GL_FOG_COLOR, oldfogc);
-            lastflags = PT_LERP;
         }
         
         uint basetype = p->type&0xFF;
