@@ -587,7 +587,7 @@ struct partrenderer
     virtual void update()  { }
     virtual void render() = NULL;
     virtual bool haswork() = NULL;
-    
+   
     //blend = 0 => remove it
     void calc(particle *p, int &blend, int &ts, vec &o, vec &d)
     {
@@ -1014,69 +1014,77 @@ struct varenderer : partrenderer
     
     void update()
     {
-        int basetype = type&0xFF;
+        int basetype = type&0xFF, expired = -1;
         loopi(cntpart)
         {
             particle *p = parts + i;
             vec o, d;
             int blend, ts;
-            calc(p, blend, ts, o, d);
-            if(blend > 0) 
+            if(p->fade < 0) 
             {
-                partvert *vs = verts + (p-parts) * 4; //4 verts for every part
-                
-                if(basetype!=PT_FLARE) 
-                {
-                    blend = min(blend<<2, 255);
-                    if(renderpath==R_FIXEDFUNCTION && fogging) blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
-                } 
-                if(type&PT_MOD) //multiply alpha into color
-                {
-                    bvec col = bvec(p->color>>16, (p->color>>8)&0xFF, p->color&0xFF);
-                    loopi(3) col[i] = (col[i]*blend)>>8;
-                    loopi(4) vs[i].color = col;
-                } 
-                else
-                    loopi(4) vs[i].alpha = blend;
-                
-                if(basetype==PT_FLARE || basetype==PT_TRAIL)
-                {					
-                    vec e = d;
-                    if(basetype==PT_TRAIL)
-                    {
-                        if(grav) e.z -= float(ts)/grav;
-                        e.div(-75.0f);
-                        e.add(o);
-                    }                    
-                    vec dir1 = e, dir2 = e, c;
-                    dir1.sub(o);
-                    dir2.sub(camera1->o);
-                    c.cross(dir2, dir1).normalize().mul(p->size);
-                    vs[0].pos = vec(e.x-c.x, e.y-c.y, e.z-c.z);
-                    vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
-                    vs[2].pos = vec(o.x+c.x, o.y+c.y, o.z+c.z);
-                    vs[3].pos = vec(e.x+c.x, e.y+c.y, e.z+c.z);
-                }
-                else
-                {
-                    vec udir = vec(camup).sub(camright).mul(p->size);
-                    vec vdir = vec(camup).add(camright).mul(p->size);
-                    vs[0].pos = vec(o.x + udir.x, o.y + udir.y, o.z + udir.z);
-                    vs[1].pos = vec(o.x + vdir.x, o.y + vdir.y, o.z + vdir.z);
-                    vs[2].pos = vec(o.x - udir.x, o.y - udir.y, o.z - udir.z);
-                    vs[3].pos = vec(o.x - vdir.x, o.y - vdir.y, o.z - vdir.z);
-                }
-                
-                if(p->fade <= 5 && !refracting && !reflecting) p->fade = -1; //mark to remove on next pass (i.e. after render)
+                if(expired < 0) expired = i;
                 continue;
             }
-            cntpart--;
-            if(cntpart > 0) 
+            if(expired >= 0)
             {
-                parts[i] = parts[cntpart];
-                memcpy(verts + i*4, verts + cntpart*4, 4*sizeof(partvert));
+                int remove = i-expired, relocate = min(remove, cntpart-i);
+                memcpy(&parts[expired], &parts[cntpart-relocate], relocate*sizeof(particle));
+                memcpy(&verts[4*expired], &verts[4*(cntpart-relocate)], 4*relocate*sizeof(partvert));
+                cntpart -= remove;
+                i -= remove+1;
+                p = parts + i;
+                expired = -1;
             }
+            calc(p, blend, ts, o, d);
+            if(blend <= 0) { p->fade = -1; continue; }
+
+            partvert *vs = verts + (p-parts) * 4; //4 verts for every part
+            
+            if(basetype!=PT_FLARE) 
+            {
+                blend = min(blend<<2, 255);
+                if(renderpath==R_FIXEDFUNCTION && fogging) blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
+            } 
+            if(type&PT_MOD) //multiply alpha into color
+            {
+                bvec col = bvec(p->color>>16, (p->color>>8)&0xFF, p->color&0xFF);
+                loopi(3) col[i] = (col[i]*blend)>>8;
+                loopi(4) vs[i].color = col;
+            } 
+            else
+                loopi(4) vs[i].alpha = blend;
+            
+            if(basetype==PT_FLARE || basetype==PT_TRAIL)
+            {					
+                vec e = d;
+                if(basetype==PT_TRAIL)
+                {
+                    if(grav) e.z -= float(ts)/grav;
+                    e.div(-75.0f);
+                    e.add(o);
+                }                    
+                vec dir1 = e, dir2 = e, c;
+                dir1.sub(o);
+                dir2.sub(camera1->o);
+                c.cross(dir2, dir1).normalize().mul(p->size);
+                vs[0].pos = vec(e.x-c.x, e.y-c.y, e.z-c.z);
+                vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
+                vs[2].pos = vec(o.x+c.x, o.y+c.y, o.z+c.z);
+                vs[3].pos = vec(e.x+c.x, e.y+c.y, e.z+c.z);
+            }
+            else
+            {
+                vec udir = vec(camup).sub(camright).mul(p->size);
+                vec vdir = vec(camup).add(camright).mul(p->size);
+                vs[0].pos = vec(o.x + udir.x, o.y + udir.y, o.z + udir.z);
+                vs[1].pos = vec(o.x + vdir.x, o.y + vdir.y, o.z + vdir.z);
+                vs[2].pos = vec(o.x - udir.x, o.y - udir.y, o.z - udir.z);
+                vs[3].pos = vec(o.x - vdir.x, o.y - vdir.y, o.z - vdir.z);
+            }
+            
+            if(p->fade <= 5 && !refracting && !reflecting) p->fade = -1; //mark to remove on next pass (i.e. after render)
         }
+        if(expired >= 0) cntpart = expired;
     }
     
     void render()
