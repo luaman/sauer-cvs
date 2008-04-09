@@ -543,7 +543,6 @@ enum
     PT_LERP  = 1<<10, // use very sparingly - order of blending issues
     PT_TRACK = 1<<11,
     PT_GLARE = 1<<12,
-    PT_GROW  = 1<<13, //only affect PT_PART and PT_TRAIL
 };
 
 struct particle
@@ -1041,11 +1040,9 @@ struct varenderer : partrenderer
 
             partvert *vs = verts + i * 4; //4 verts for every part
             
-            float size = p->size;
             if(basetype!=PT_FLARE) 
             {
                 blend = min(blend<<2, 255);
-                if(type&PT_GROW) size *= (255*6-blend*5)/255.0;
                 if(renderpath==R_FIXEDFUNCTION && fogging) blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
             } 
             if(type&PT_MOD) //multiply alpha into color
@@ -1069,7 +1066,7 @@ struct varenderer : partrenderer
                 vec dir1 = e, dir2 = e, c;
                 dir1.sub(o);
                 dir2.sub(camera1->o);
-                c.cross(dir2, dir1).normalize().mul(size);
+                c.cross(dir2, dir1).normalize().mul(p->size);
                 vs[0].pos = vec(e.x-c.x, e.y-c.y, e.z-c.z);
                 vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
                 vs[2].pos = vec(o.x+c.x, o.y+c.y, o.z+c.z);
@@ -1077,8 +1074,8 @@ struct varenderer : partrenderer
             }
             else
             {
-                vec udir = vec(camup).sub(camright).mul(size);
-                vec vdir = vec(camup).add(camright).mul(size);
+                vec udir = vec(camup).sub(camright).mul(p->size);
+                vec vdir = vec(camup).add(camright).mul(p->size);
                 vs[0].pos = vec(o.x + udir.x, o.y + udir.y, o.z + udir.z);
                 vs[1].pos = vec(o.x + vdir.x, o.y + vdir.y, o.z + vdir.z);
                 vs[2].pos = vec(o.x - udir.x, o.y - udir.y, o.z - udir.z);
@@ -1086,6 +1083,7 @@ struct varenderer : partrenderer
             }
             
             if(p->fade <= 5 && !refracting && !reflecting) p->fade = -1; //mark to remove on next pass (i.e. after render)
+            continue;
         }
         if(expired >= 0) cntpart = expired;
     }
@@ -1296,7 +1294,7 @@ static partrenderer *renderer(const char *texname, int type, int grav, int colli
 static partrenderer *parts[] = 
 {
     renderer("data/blood.png",        PT_MOD|PT_RND4,       2, 1), // 0 blood spats (note: rgb is inverted) 
-    renderer("data/martin/spark.png", PT_GROW|PT_GLARE,     2, 0), // 1 sparks
+    renderer("data/martin/spark.png", PT_GLARE,             2, 0), // 1 sparks
     renderer("data/martin/smoke.png", PT_PART,            -20, 0), // 2 small slowly rising smoke
     renderer("data/martin/base.png",  PT_GLARE,            20, 0), // 3 edit mode entities
     renderer("data/martin/ball1.png", PT_GLARE,            20, 0), // 4 fireball1
