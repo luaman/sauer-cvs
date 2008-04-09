@@ -1036,9 +1036,9 @@ struct varenderer : partrenderer
                 expired = -1;
             }
             calc(p, blend, ts, o, d);
-            if(blend <= 0) { p->fade = -1; continue; }
+            if(blend <= 0) { expired = i; continue; } 
 
-            partvert *vs = verts + (p-parts) * 4; //4 verts for every part
+            partvert *vs = verts + i * 4; //4 verts for every part
             
             if(basetype!=PT_FLARE) 
             {
