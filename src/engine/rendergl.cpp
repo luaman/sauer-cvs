@@ -211,7 +211,7 @@ void gl_checkextensions()
     if(strstr(vendor, "ATI"))
     {
         floatvtx = 1;
-        conoutf("WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
+        //conoutf("WARNING: ATI cards may show garbage in skybox. (use \"/ati_skybox_bug 1\" to fix)");
 
         reservedynlighttc = 2;
         reserveshadowmaptc = 3;
@@ -1286,6 +1286,7 @@ void drawcrosshair(int w, int h)
 }
 
 VARP(showfpsrange, 0, 0, 1);
+VAR(showallstats, 0, 0, 1);
 
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
 {
@@ -1390,6 +1391,9 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
             if(editmode)
             {
                 draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount<0 ? "1/" : "", abs(selchildcount));
+            }
+            if(editmode || showallstats)
+            {
                 draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
                 draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length(), rplanes, getnumviewcells());
             }
