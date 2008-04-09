@@ -1287,6 +1287,7 @@ void drawcrosshair(int w, int h)
 
 VARP(showfpsrange, 0, 0, 1);
 VAR(showallstats, 0, 0, 1);
+VAR(statrate, 0, 200, 1000);
 
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
 {
@@ -1394,8 +1395,26 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
             }
             if(editmode || showallstats)
             {
-                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, vtris*100/max(wtris, 1), wverts/1024, vverts*100/max(wverts, 1), xtraverts/1024, xtravertsva/1024);
-                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, glde, getnumqueries(), lightmaps.length(), rplanes, getnumviewcells());
+                static int laststats = 0, prevstats[7] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[7] = { 0, 0, 0, 0, 0, 0, 0 };
+                if(lastmillis - laststats >= statrate)
+                {
+                    memcpy(prevstats, curstats, sizeof(prevstats));
+                    laststats = lastmillis - (lastmillis%statrate);
+                }
+                int nextstats[7] =
+                {
+                    vtris*100/max(wtris, 1),
+                    vverts*100/max(wverts, 1),
+                    xtraverts/1024,
+                    xtravertsva/1024,
+                    glde,
+                    getnumqueries(),
+                    rplanes
+                };
+                loopi(7) if(prevstats[i]==curstats[i]) curstats[i] = nextstats[i];
+
+                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, curstats[0], wverts/1024, curstats[1], curstats[2], curstats[3]);
+                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, curstats[4], curstats[5], lightmaps.length(), curstats[6], getnumviewcells());
             }
         }
 
