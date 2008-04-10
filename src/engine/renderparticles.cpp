@@ -8,7 +8,7 @@
 VARP(depthfxfpscale, 1, 1<<12, 1<<16);
 VARP(depthfxscale, 1, 1<<6, 1<<8);
 VARP(depthfxblend, 1, 16, 64);
-VAR(depthfxmargin, 0, 2, 64);
+VAR(depthfxmargin, 0, 1, 64);
 VAR(depthfxbias, 0, 4, 64);
 
 extern void cleanupdepthfx();
@@ -927,6 +927,8 @@ static meterrenderer meters(PT_METER|PT_LERP), metervs(PT_METERVS|PT_LERP);
 
 struct fireballrenderer : listrenderer
 {
+    static const float WOBBLE = 1.25f;
+
     fireballrenderer(int type)
         : listrenderer("data/explosion.jpg", type, 0, 0)
     {}
@@ -956,8 +958,8 @@ struct fireballrenderer : listrenderer
             int ts = p->fade <= 5 ? 1 : lastmillis-p->millis;
             float pmax = p->val, 
                   size = p->fade ? float(ts)/p->fade : 1,
-                  psize = p->size + pmax * size;
-            if(2*(p->size + pmax) < depthfxblend || isvisiblesphere(psize, p->o) >= VFC_FOGGED) continue;
+                  psize = (p->size + pmax * size)*WOBBLE;
+            if(2*(p->size + pmax)*WOBBLE < depthfxblend || isvisiblesphere(psize, p->o) >= VFC_FOGGED) continue;
 
             e.o = p->o;
             e.radius = e.eyeheight = e.aboveeye = psize;
@@ -1000,7 +1002,7 @@ struct fireballrenderer : listrenderer
               size = p->fade ? float(ts)/p->fade : 1,
               psize = p->size + pmax * size;
 
-        if(isvisiblesphere(psize, p->o) >= VFC_FOGGED) return;
+        if(isvisiblesphere(psize*WOBBLE, p->o) >= VFC_FOGGED) return;
 
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
@@ -1010,7 +1012,7 @@ struct fireballrenderer : listrenderer
             else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
         }
 
-        bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
+        bool inside = o.dist(camera1->o) <= psize*WOBBLE;
         vec oc(o);
         oc.sub(camera1->o);
         if(reflecting) oc.z = o.z - reflectz;
