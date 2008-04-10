@@ -837,11 +837,7 @@ struct meterrenderer : listrenderer
 
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
-        if(fogging)
-        {
-            if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
-            else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
-        }
+        if(fogging && renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
         glRotatef(camera1->yaw-180, 0, 0, 1);
         glRotatef(camera1->pitch-90, 1, 0, 0);
 
@@ -854,7 +850,7 @@ struct meterrenderer : listrenderer
         glBegin(GL_TRIANGLE_STRIP);
         loopk(10)
         {
-            float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+            float c = -0.5f*sinf(k/9.0f*M_PI), s = 0.5f + 0.5f*cosf(k/9.0f*M_PI);
             glVertex2f(left - c*FONTH, s*FONTH);
             glVertex2f(c*FONTH, s*FONTH);
         }
@@ -865,7 +861,7 @@ struct meterrenderer : listrenderer
         glBegin(GL_TRIANGLE_STRIP);
         loopk(10)
         {
-            float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+            float c = 0.5f*sinf(k/9.0f*M_PI), s = 0.5f - 0.5f*cosf(k/9.0f*M_PI);
             glVertex2f(left + c*FONTH, s*FONTH);
             glVertex2f(right + c*FONTH, s*FONTH);
         }
@@ -877,19 +873,20 @@ struct meterrenderer : listrenderer
             glBegin(GL_LINE_LOOP);
             loopk(10)
             {
-                float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                float c = -0.5f*sinf(k/9.0f*M_PI), s = 0.5f + 0.5f*cosf(k/9.0f*M_PI);
                 glVertex2f(c*FONTH, s*FONTH);
             }
             loopk(10)
             {
-                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                float c = 0.5f*sinf(k/9.0f*M_PI), s = 0.5f - 0.5f*cosf(k/9.0f*M_PI);
                 glVertex2f(right + c*FONTH, s*FONTH);
             }
             glEnd();
+           
             glBegin(GL_LINE_STRIP);
             loopk(10)
             {
-                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                float c = 0.5f*sinf(k/9.0f*M_PI), s = 0.5f - 0.5f*cosf(k/9.0f*M_PI);
                 glVertex2f(left + c*FONTH, s*FONTH);
             }
             glEnd();
@@ -1020,7 +1017,7 @@ struct textrenderer : listrenderer
         const char *text = p->text+(p->text[0]=='@' ? 1 : 0);
         float xoff = -text_width(text)/2;
         float yoff = 0;
-        if((type&0xFF)==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+        if((type&0xFF)==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } //@TODO instead in worldspace beforehand?
         glTranslatef(xoff, yoff, 50);
 
         draw_text(text, 0, 0, color[0], color[1], color[2], blend);
@@ -1487,8 +1484,17 @@ void render_particles(int time)
         defaultshader->set();
         loopi(n) 
         {
-            s_sprintfd(ds)("%d\t%s%s%s", parts[i]->count(), partnames[parts[i]->type&0xFF], parts[i]->texname ? ": " : "", parts[i]->texname ? parts[i]->texname : "");
-            draw_text(ds, 1, (i+n/2)*FONTH);
+            int type = parts[i]->type;
+            char *title = parts[i]->texname ? strrchr(parts[i]->texname, '/')+1 : NULL;
+            string info = "";
+            if(type&PT_GLARE) s_strcat(info, "g,");
+            if(type&PT_LERP) s_strcat(info, "l,");
+            if(type&PT_MOD) s_strcat(info, "m,");
+            if(type&PT_RND4) s_strcat(info, "r,");
+            if(type&PT_TRACK) s_strcat(info, "t,");
+            if(parts[i]->collide) s_strcat(info, "c,");
+            s_sprintfd(ds)("%d\t%s(%s%d) %s", parts[i]->count(), partnames[type&0xFF], info, parts[i]->grav, (title?title:""));
+            draw_text(ds, FONTH, (i+n/2)*FONTH);
         }
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
