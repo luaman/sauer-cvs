@@ -177,7 +177,7 @@ struct rendertarget
         size = min(size, hwtexsize);
         if(!hasFBO) while(size>screen->w || size>screen->h) size /= 2;
         if(size!=texsize || (hasFBO && (!rtsharefb) != (blurfb!=0))) cleanup();
-
+            
         if(!rendertex) setup(size);
        
         if(hasFBO)
