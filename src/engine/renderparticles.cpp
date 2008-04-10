@@ -627,10 +627,9 @@ struct partrenderer
     }
 };
 
-struct listparticle
+struct listparticle : particle
 {   
-    particle head;
-    listparticle *tail;
+    listparticle *next;
 };
 
 static listparticle *parempty = NULL;
@@ -646,19 +645,26 @@ struct listrenderer : partrenderer
     {
     }
 
+    virtual ~listrenderer()
+    {
+    }
+
+    virtual void cleanup(listparticle *p)
+    {
+    }
+
     void reset()  
     {
         if(!list) return;
-        int basetype = type & 0xFF;
-        bool textual = (basetype == PT_TEXT) || (basetype == PT_TEXTUP);
-        listparticle *head = list, *tail = head;
-        while(tail->tail)  
+        listparticle *p = list;
+        for(;;)
         {
-            if(textual && tail->head.text && tail->head.text[0]=='@') delete[] tail->head.text;
-            tail = tail->tail;
+            cleanup(p);
+            if(p->next) p = p->next;
+            else break;
         }
-        tail->tail = parempty;
-        parempty = head;
+        p->next = parempty;
+        parempty = list;
         list = NULL;
     }
     
@@ -667,13 +673,13 @@ struct listrenderer : partrenderer
         if(!(type&PT_TRACK)) return;
         for(listparticle **prev = &list, *cur = list; cur; cur = *prev)
         {
-            if(!owner || cur->head.owner==owner) 
+            if(!owner || cur->owner==owner) 
             {
-                *prev = cur->tail;
-                cur->tail = parempty;
+                *prev = cur->next;
+                cur->next = parempty;
                 parempty = cur;
             }
-            else prev = &cur->tail;
+            else prev = &cur->next;
         }
     }
     
@@ -682,15 +688,14 @@ struct listrenderer : partrenderer
         if(!parempty)
         {
             listparticle *ps = new listparticle[256];
-            loopi(255) ps[i].tail = &ps[i+1];
-            ps[255].tail = parempty;
+            loopi(255) ps[i].next = &ps[i+1];
+            ps[255].next = parempty;
             parempty = ps;
         }
-        listparticle *lp = parempty;
-        parempty = lp->tail;
-        lp->tail = list;
-        list = lp;
-        particle *p = &lp->head;
+        listparticle *p = parempty;
+        parempty = p->next;
+        p->next = list;
+        list = p;
         p->o = o;
         p->d = d;
         p->fade = fade;
@@ -706,231 +711,308 @@ struct listrenderer : partrenderer
         return (list != NULL);
     }
     
-    void update() 
-    {
-        int basetype = type&0xFF;
-        if(!reflecting && !refracting && basetype == PT_LIGHTNING) setuplightning();
-    }
+    virtual void startrender() = 0;
+    virtual void endrender() = 0;
+    virtual void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color) = 0;
 
     void render() 
     {
-        int basetype = type&0xFF;
-        switch(basetype)
-        {
-            case PT_LIGHTNING:
-                glDisable(GL_CULL_FACE);
-                break;
-            case PT_FIREBALL:
-                setupexplosion();
-                break;
-            case PT_METER:
-            case PT_METERVS:
-                glDisable(GL_BLEND);
-                glDisable(GL_TEXTURE_2D);
-                particlenotextureshader->set();
-                break;
-        }
+        startrender();
         if(texname)
         {
             if(!tex) tex = textureload(texname);
             glBindTexture(GL_TEXTURE_2D, tex->id);
         }
         
-        for(listparticle **prev = &list, *cur = list; cur; cur = *prev)
+        for(listparticle **prev = &list, *p = list; p; p = *prev)
         {   
-            particle *p = &cur->head;
             vec o, d;
             int blend, ts;
             calc(p, blend, ts, o, d);
             if(blend > 0) 
             {
                 uchar color[3] = {p->color>>16, (p->color>>8)&0xFF, p->color&0xFF};
-                
-                if(basetype == PT_LIGHTNING)
-                {
-                    blend = min(blend<<2, 255);
-                    if(type&PT_MOD) //multiply alpha into color
-                        glColor3ub((color[0]*blend)>>8, (color[1]*blend)>>8, (color[2]*blend)>>8);
-                    else
-                        glColor4ub(color[0], color[1], color[2], blend);
-                    float tx = 0, ty = 0, tsz = 1;
-                    if(type&PT_RND4)
-                    {
-                        int i = detrnd((size_t)p, 4);
-                        tx = 0.5f*(i&1);
-                        ty = 0.5f*((i>>1)&1);
-                        tsz = 0.5f;
-                    }
-                    renderlightning(o, d, p->size, tx, ty, tsz);                
-                }
-                else
-                {
-                    glPushMatrix();
-                    glTranslatef(o.x, o.y, o.z);
-                    if(fogging)
-                    {
-                        if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
-                        else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
-                    }
-                    if(basetype==PT_FIREBALL)
-                    {
-                        float pmax = p->val;
-                        float size = p->fade ? float(ts)/p->fade : 1;
-                        float psize = p->size + pmax * size;
-                        
-                        bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
-                        vec oc(o);
-                        oc.sub(camera1->o);
-                        if(reflecting) oc.z = o.z - reflectz;
-                        
-                        float yaw = inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90,
-                        pitch = (inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90;                    
-                        vec rotdir;
-                        if(renderpath==R_FIXEDFUNCTION || explosion2d)
-                        {
-                            glRotatef(yaw, 0, 0, 1);
-                            glRotatef(pitch, 1, 0, 0);
-                            rotdir = vec(0, 0, 1);
-                        }
-                        else
-                        {
-                            vec s(1, 0, 0), t(0, 1, 0);
-                            s.rotate(pitch*RAD, vec(-1, 0, 0));
-                            s.rotate(yaw*RAD, vec(0, 0, -1));
-                            t.rotate(pitch*RAD, vec(-1, 0, 0));
-                            t.rotate(yaw*RAD, vec(0, 0, -1));
-                            
-                            rotdir = vec(-1, 1, -1).normalize();
-                            s.rotate(-lastmillis/7.0f*RAD, rotdir);
-                            t.rotate(-lastmillis/7.0f*RAD, rotdir);
-                            
-                            setlocalparamf("texgenS", SHPARAM_VERTEX, 2, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
-                            setlocalparamf("texgenT", SHPARAM_VERTEX, 3, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
-                        }
-                        
-                        if(renderpath!=R_FIXEDFUNCTION)
-                        {
-                            setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
-                            setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-                            if(!glaring && !reflecting && !refracting && depthfx && depthfxtex.rendertex)
-                            {
-                                setlocalparamf("depthfxparams", SHPARAM_VERTEX, 5, float(depthfxscale)/depthfxblend, 1.0f/depthfxblend, inside ? blend/(2*255.0f) : 0); 
-                                setlocalparamf("depthfxparams", SHPARAM_PIXEL, 5, float(depthfxscale)/depthfxblend, 1.0f/depthfxblend, inside ? blend/(2*255.0f) : 0);
-                            }
-                        }
-                        
-                        glRotatef(lastmillis/7.0f, -rotdir.x, rotdir.y, -rotdir.z);
-                        glScalef(-psize, psize, -psize);
-                        drawexplosion(inside, color[0], color[1], color[2], blend);
-                    } 
-                    else 
-                    {
-                        glRotatef(camera1->yaw-180, 0, 0, 1);
-                        glRotatef(camera1->pitch-90, 1, 0, 0);
-                        
-                        float scale = p->size/80.0f;
-                        glScalef(-scale, scale, -scale);
-                        if(basetype==PT_METER || basetype==PT_METERVS)
-                        {
-                            float right = 8*FONTH, left = p->val*right;
-                            glTranslatef(-right/2.0f, 0, 0);
-                            glColor3ubv(color);
-                            glBegin(GL_TRIANGLE_STRIP);
-                            loopk(10)
-                            {
-                                float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                                glVertex2f(left - c*FONTH, s*FONTH);
-                                glVertex2f(c*FONTH, s*FONTH);
-                            }
-                            glEnd();
-                            
-                            if(basetype==PT_METERVS) glColor3ub(color[2], color[1], color[0]); //swap r<->b                        
-                            else glColor3f(0, 0, 0);
-                            glBegin(GL_TRIANGLE_STRIP);
-                            loopk(10)
-                            {
-                                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                                glVertex2f(left + c*FONTH, s*FONTH);
-                                glVertex2f(right + c*FONTH, s*FONTH);
-                            }
-                            glEnd();
-                            
-                            if(outlinemeters)
-                            {
-                                glColor3f(0, 0.8f, 0);
-                                glBegin(GL_LINE_LOOP);
-                                loopk(10)
-                                {
-                                    float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                                    glVertex2f(c*FONTH, s*FONTH);
-                                }
-                                loopk(10)
-                                {
-                                    float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                                    glVertex2f(right + c*FONTH, s*FONTH);
-                                }
-                                glEnd();
-                                glBegin(GL_LINE_STRIP);
-                                loopk(10)
-                                {
-                                    float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
-                                    glVertex2f(left + c*FONTH, s*FONTH);
-                                }
-                                glEnd();                        
-                            }
-                        }
-                        else
-                        {
-                            const char *text = p->text+(p->text[0]=='@');
-                            float xoff = -text_width(text)/2;
-                            float yoff = 0;
-                            if(basetype==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
-                            glTranslatef(xoff, yoff, 50);
-                            
-                            draw_text(text, 0, 0, color[0], color[1], color[2], blend);
-                        }
-                    }
-                    glPopMatrix();
-                }
+               
+                renderpart(p, o, d, blend, ts, color);
 
                 if(p->fade > 5 || refracting || reflecting) 
                 {
-                    prev = &cur->tail;
+                    prev = &p->next;
                     continue;
                 }
             }
             //remove
-            *prev = cur->tail;
-            cur->tail = parempty;
-            if((basetype==PT_TEXT || basetype==PT_TEXTUP) && p->text && p->text[0]=='@') delete[] p->text;
-            parempty = cur;
+            *prev = p->next;
+            p->next = parempty;
+            cleanup(p);
+            parempty = p;
         }
-        
-        switch(basetype)
-        {
-            case PT_LIGHTNING:
-                glEnable(GL_CULL_FACE);
-                break;
-            case PT_FIREBALL:
-                cleanupexplosion();
-                particleshader->set();
-                break;
-            case PT_METER:
-            case PT_METERVS:
-                glEnable(GL_BLEND);
-                glEnable(GL_TEXTURE_2D);
-                if(fogging && renderpath!=R_FIXEDFUNCTION) setfogplane(1, reflectz);
-                particleshader->set();
-                break;
-            case PT_TEXT:
-            case PT_TEXTUP:
-                if(fogging && renderpath!=R_FIXEDFUNCTION) setfogplane(1, reflectz, true);
-                particleshader->set();
-                break;
-        }
+       
+        endrender();
     }
 };
 
+struct lightningrenderer : listrenderer
+{
+    lightningrenderer()
+        : listrenderer("data/lightning.jpg", PT_LIGHTNING|PT_TRACK|PT_GLARE, 0, 0)
+    {}
+
+    void startrender()
+    {
+        glDisable(GL_CULL_FACE);
+    }
+
+    void endrender()
+    {
+        glEnable(GL_CULL_FACE); 
+    }
+
+    void update()
+    {
+        setuplightning();
+    }
+
+    void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color)
+    {
+        blend = min(blend<<2, 255);
+        if(type&PT_MOD) //multiply alpha into color
+            glColor3ub((color[0]*blend)>>8, (color[1]*blend)>>8, (color[2]*blend)>>8);
+        else
+            glColor4ub(color[0], color[1], color[2], blend);
+        float tx = 0, ty = 0, tsz = 1;
+        if(type&PT_RND4)
+        {
+            int i = detrnd((size_t)p, 4);
+            tx = 0.5f*(i&1);
+            ty = 0.5f*((i>>1)&1);
+            tsz = 0.5f;
+        }
+        renderlightning(o, d, p->size, tx, ty, tsz);
+    }
+};
+static lightningrenderer lightnings;
+
+struct meterrenderer : listrenderer
+{
+    meterrenderer(int type)
+        : listrenderer(NULL, type, 0, 0)
+    {}
+
+    void startrender()
+    {
+         glDisable(GL_BLEND);
+         glDisable(GL_TEXTURE_2D);
+         particlenotextureshader->set();
+    }
+
+    void endrender()
+    {
+         glEnable(GL_BLEND);
+         glEnable(GL_TEXTURE_2D);
+         if(fogging && renderpath!=R_FIXEDFUNCTION) setfogplane(1, reflectz);
+         particleshader->set();
+    }
+
+    void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color)
+    {
+        int basetype = type&0xFF;
+
+        glPushMatrix();
+        glTranslatef(o.x, o.y, o.z);
+        if(fogging)
+        {
+            if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
+            else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
+        }
+        glRotatef(camera1->yaw-180, 0, 0, 1);
+        glRotatef(camera1->pitch-90, 1, 0, 0);
+
+        float scale = p->size/80.0f;
+        glScalef(-scale, scale, -scale);
+
+        float right = 8*FONTH, left = p->val*right;
+        glTranslatef(-right/2.0f, 0, 0);
+        glColor3ubv(color);
+        glBegin(GL_TRIANGLE_STRIP);
+        loopk(10)
+        {
+            float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+            glVertex2f(left - c*FONTH, s*FONTH);
+            glVertex2f(c*FONTH, s*FONTH);
+        }
+        glEnd();
+
+        if(basetype==PT_METERVS) glColor3ub(color[2], color[1], color[0]); //swap r<->b                    
+        else glColor3f(0, 0, 0);
+        glBegin(GL_TRIANGLE_STRIP);
+        loopk(10)
+        {
+            float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+            glVertex2f(left + c*FONTH, s*FONTH);
+            glVertex2f(right + c*FONTH, s*FONTH);
+        }
+        glEnd();
+
+        if(outlinemeters)
+        {
+            glColor3f(0, 0.8f, 0);
+            glBegin(GL_LINE_LOOP);
+            loopk(10)
+            {
+                float c = 0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f + 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                glVertex2f(c*FONTH, s*FONTH);
+            }
+            loopk(10)
+            {
+                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                glVertex2f(right + c*FONTH, s*FONTH);
+            }
+            glEnd();
+            glBegin(GL_LINE_STRIP);
+            loopk(10)
+            {
+                float c = -0.5f*cosf(M_PI/2 + k/9.0f*M_PI), s = 0.5f - 0.5f*sinf(M_PI/2 + k/9.0f*M_PI);
+                glVertex2f(left + c*FONTH, s*FONTH);
+            }
+            glEnd();
+        }
+
+        glPopMatrix();
+    }
+};
+static meterrenderer meters(PT_METER|PT_LERP), metervs(PT_METERVS|PT_LERP);
+
+struct fireballrenderer : listrenderer
+{
+    fireballrenderer(int type)
+        : listrenderer("data/explosion.jpg", type, 0, 0)
+    {}
+
+    void startrender()
+    {
+        setupexplosion();
+    }
+
+    void endrender()
+    {
+        cleanupexplosion();
+        particleshader->set();
+    }
+
+    void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color)
+    {
+        glPushMatrix();
+        glTranslatef(o.x, o.y, o.z);
+        if(fogging)
+        {
+            if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
+            else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
+        }
+
+        float pmax = p->val;
+        float size = p->fade ? float(ts)/p->fade : 1;
+        float psize = p->size + pmax * size;
+
+        bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
+        vec oc(o);
+        oc.sub(camera1->o);
+        if(reflecting) oc.z = o.z - reflectz;
+
+        float yaw = inside ? camera1->yaw - 180 : atan2(oc.y, oc.x)/RAD - 90,
+        pitch = (inside ? camera1->pitch : asin(oc.z/oc.magnitude())/RAD) - 90;
+        vec rotdir;
+        if(renderpath==R_FIXEDFUNCTION || explosion2d)
+        {
+            glRotatef(yaw, 0, 0, 1);
+            glRotatef(pitch, 1, 0, 0);
+            rotdir = vec(0, 0, 1);
+        }
+        else
+        {
+            vec s(1, 0, 0), t(0, 1, 0);
+            s.rotate(pitch*RAD, vec(-1, 0, 0));
+            s.rotate(yaw*RAD, vec(0, 0, -1));
+            t.rotate(pitch*RAD, vec(-1, 0, 0));
+            t.rotate(yaw*RAD, vec(0, 0, -1));
+
+            rotdir = vec(-1, 1, -1).normalize();
+            s.rotate(-lastmillis/7.0f*RAD, rotdir);
+            t.rotate(-lastmillis/7.0f*RAD, rotdir);
+
+            setlocalparamf("texgenS", SHPARAM_VERTEX, 2, 0.5f*s.x, 0.5f*s.y, 0.5f*s.z, 0.5f);
+            setlocalparamf("texgenT", SHPARAM_VERTEX, 3, 0.5f*t.x, 0.5f*t.y, 0.5f*t.z, 0.5f);
+        }
+
+        if(renderpath!=R_FIXEDFUNCTION)
+        {
+            setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
+            setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
+            if(!glaring && !reflecting && !refracting && depthfx && depthfxtex.rendertex)
+            {
+                setlocalparamf("depthfxparams", SHPARAM_VERTEX, 5, float(depthfxscale)/depthfxblend, 1.0f/depthfxblend, inside ? blend/(2*255.0f) : 0);
+                setlocalparamf("depthfxparams", SHPARAM_PIXEL, 5, float(depthfxscale)/depthfxblend, 1.0f/depthfxblend, inside ? blend/(2*255.0f) : 0);
+            }
+        }
+
+        glRotatef(lastmillis/7.0f, -rotdir.x, rotdir.y, -rotdir.z);
+        glScalef(-psize, psize, -psize);
+        drawexplosion(inside, color[0], color[1], color[2], blend);
+
+        glPopMatrix();
+    }
+};
+static fireballrenderer fireballs(PT_FIREBALL|PT_GLARE), noglarefireballs(PT_FIREBALL);
+
+struct textrenderer : listrenderer
+{
+    textrenderer(int type, int grav = 0)
+        : listrenderer(NULL, type, grav, 0)
+    {}
+
+    void startrender()
+    {
+    }
+
+    void endrender()
+    {
+        if(fogging && renderpath!=R_FIXEDFUNCTION) setfogplane(1, reflectz);
+    }
+
+    void cleanup(listparticle *p)
+    {
+        if(p->text && p->text[0]=='@') delete[] p->text;
+    }
+
+    void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color)
+    {
+        glPushMatrix();
+        glTranslatef(o.x, o.y, o.z);
+        if(fogging)
+        {
+            if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
+            else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
+        }
+
+        glRotatef(camera1->yaw-180, 0, 0, 1);
+        glRotatef(camera1->pitch-90, 1, 0, 0);
+
+        float scale = p->size/80.0f;
+        glScalef(-scale, scale, -scale);
+
+        const char *text = p->text+(p->text[0]=='@' ? 1 : 0);
+        float xoff = -text_width(text)/2;
+        float yoff = 0;
+        if((type&0xFF)==PT_TEXTUP) { xoff += detrnd((size_t)p, 100)-50; yoff -= detrnd((size_t)p, 101); } else blend = 255;
+        glTranslatef(xoff, yoff, 50);
+
+        draw_text(text, 0, 0, color[0], color[1], color[2], blend);
+
+        glPopMatrix();
+    } 
+};
+static textrenderer texts(PT_TEXT|PT_LERP), textups(PT_TEXTUP|PT_LERP, -8);
+ 
 struct varenderer : partrenderer
 {
     partvert *verts;
@@ -1280,38 +1362,29 @@ struct flarerenderer : partrenderer
     //square per round hole - use addflare(..) instead
     particle *addpart(const vec &o, const vec &d, int fade, int color, float size) { return NULL; }
 };
-static flarerenderer flares = flarerenderer("data/lensflares.png", 64);
-
-static partrenderer *renderer(const char *texname, int type, int grav, int collide)
-{
-    int basetype = type&0xFF;
-    bool va = (basetype==PT_PART)||(basetype==PT_FLARE)||(basetype==PT_TRAIL);
-    if(!va && ((basetype==PT_TEXT)||(basetype==PT_TEXTUP)||(basetype==PT_METER)||(basetype==PT_METERVS))) type = type|PT_LERP; //text&meters must be lerp
-    if(va) return new varenderer(texname, type, grav, collide);
-    return new listrenderer(texname, type, grav, collide);
-}
+static flarerenderer flares("data/lensflares.png", 64);
 
 static partrenderer *parts[] = 
 {
-    renderer("data/blood.png",        PT_MOD|PT_RND4,       2, 1), // 0 blood spats (note: rgb is inverted) 
-    renderer("data/martin/spark.png", PT_GLARE,             2, 0), // 1 sparks
-    renderer("data/martin/smoke.png", PT_PART,            -20, 0), // 2 small slowly rising smoke
-    renderer("data/martin/base.png",  PT_GLARE,            20, 0), // 3 edit mode entities
-    renderer("data/martin/ball1.png", PT_GLARE,            20, 0), // 4 fireball1
-    renderer("data/martin/smoke.png", PT_PART,            -20, 0), // 5 big  slowly rising smoke   
-    renderer("data/martin/ball2.png", PT_GLARE,            20, 0), // 6 fireball2
-    renderer("data/martin/ball3.png", PT_GLARE,            20, 0), // 7 big fireball3
-    renderer(NULL,                    PT_TEXTUP,           -8, 0), // 8 TEXT
-    renderer("data/flare.jpg",        PT_FLARE|PT_GLARE,    0, 0), // 9 flare
-    renderer(NULL,                    PT_TEXT,              0, 0), // 10 TEXT, SMALL, NON-MOVING
-    renderer(NULL,                    PT_METER,             0, 0), // 11 METER, SMALL, NON-MOVING
-    renderer(NULL,                    PT_METERVS,           0, 0), // 12 METER vs., SMALL, NON-MOVING
-    renderer("data/martin/smoke.png", PT_PART,             20, 0), // 13 small  slowly sinking smoke trail
-    renderer("data/explosion.jpg",    PT_FIREBALL|PT_GLARE, 0, 0), // 14 explosion fireball
-    renderer("data/lightning.jpg", PT_LIGHTNING|PT_TRACK|PT_GLARE, 0, 0), // 15 lightning
-    renderer("data/martin/smoke.png", PT_PART,            -15, 0), // 16 big  fast rising smoke          
-    renderer("data/martin/base.png",  PT_TRAIL|PT_LERP,     2, 0), // 17 water, entity
-    renderer("data/explosion.jpg",    PT_FIREBALL,          0, 0), // 18 explosion fireball no glare
+    new varenderer("data/blood.png",        PT_MOD|PT_RND4,     2, 1), // 0 blood spats (note: rgb is inverted) 
+    new varenderer("data/martin/spark.png", PT_GLARE,           2, 0), // 1 sparks
+    new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 2 small slowly rising smoke
+    new varenderer("data/martin/base.png",  PT_GLARE,          20, 0), // 3 edit mode entities
+    new varenderer("data/martin/ball1.png", PT_GLARE,          20, 0), // 4 fireball1
+    new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 5 big  slowly rising smoke   
+    new varenderer("data/martin/ball2.png", PT_GLARE,          20, 0), // 6 fireball2
+    new varenderer("data/martin/ball3.png", PT_GLARE,          20, 0), // 7 big fireball3
+    &textups,                                                          // 8 TEXT, floats up
+    new varenderer("data/flare.jpg", PT_FLARE|PT_GLARE,         0, 0), // 9 flare
+    &texts,                                                            // 10 TEXT, SMALL, NON-MOVING
+    &meters,                                                           // 11 METER, SMALL, NON-MOVING
+    &metervs,                                                          // 12 METER vs., SMALL, NON-MOVING
+    new varenderer("data/martin/smoke.png", PT_PART,           20, 0), // 13 small  slowly sinking smoke trail
+    &fireballs,                                                        // 14 explosion fireball
+    &lightnings,                                                       // 15 lightning
+    new varenderer("data/martin/smoke.png", PT_PART,          -15, 0), // 16 big  fast rising smoke          
+    new varenderer("data/martin/base.png",  PT_TRAIL|PT_LERP,   2, 0), // 17 water, entity
+    &noglarefireballs,                                                 // 18 explosion fireball no glare
     &flares // must be done last
 };
 
