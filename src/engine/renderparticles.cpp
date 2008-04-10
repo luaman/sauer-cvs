@@ -1486,7 +1486,7 @@ void render_particles(int time)
         defaultshader->set();
         loopi(n) 
         {
-            s_sprintfd(ds)("%d\t%s%s%s", parts[i]->count(), partnames[parts[i]->type&0xFF], parts[i]->texname ? ": \t" : "", parts[i]->texname ? parts[i]->texname : "");
+            s_sprintfd(ds)("%d\t%s%s%s", parts[i]->count(), partnames[parts[i]->type&0xFF], parts[i]->texname ? ": " : "", parts[i]->texname ? parts[i]->texname : "");
             draw_text(ds, 1, (i+n/2)*FONTH);
         }
         glDisable(GL_BLEND);
