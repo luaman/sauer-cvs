@@ -584,10 +584,11 @@ struct partrenderer
     virtual void reset() = NULL;
     virtual void resettracked(physent *owner) { }   
     virtual particle *addpart(const vec &o, const vec &d, int fade, int color, float size) = NULL;    
-    virtual void update()  { }
+    virtual void update() { }
     virtual void render() = NULL;
     virtual bool haswork() = NULL;
-   
+    virtual bool usesvertexarray() { return false; } 
+
     //blend = 0 => remove it
     void calc(particle *p, int &blend, int &ts, vec &o, vec &d)
     {
@@ -1055,6 +1056,8 @@ struct varenderer : partrenderer
         return (cntpart > 0);
     }
 
+    bool usesvertexarray() { return true; }
+
     particle *addpart(const vec &o, const vec &d, int fade, int color, float size) 
     {
         particle *p = parts + (cntpart < maxparts ? cntpart++ : rnd(maxparts)); //next free slot, or kill a random kitten
@@ -1440,9 +1443,8 @@ void render_particles(int time)
             glGetFloatv(GL_FOG_COLOR, oldfogc);
         }
         
-        uint basetype = p->type&0xFF;
         uint flags = p->type & (PT_LERP|PT_MOD);
-        if((basetype==PT_PART)||(basetype==PT_FLARE)||(basetype==PT_TRAIL)) flags = flags | 0x01; //0x01 = VA marker
+        if(p->usesvertexarray()) flags |= 0x01; //0x01 = VA marker
         uint changedbits = (flags ^ lastflags);
         if(changedbits != 0x0000)
         {
