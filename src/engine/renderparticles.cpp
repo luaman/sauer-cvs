@@ -537,6 +537,7 @@ enum
     PT_METERVS,
     PT_FIREBALL,
     PT_LIGHTNING,
+    PT_FLARE,
 
     PT_MOD   = 1<<8,
     PT_RND4  = 1<<9,
@@ -544,6 +545,8 @@ enum
     PT_TRACK = 1<<11,
     PT_GLARE = 1<<12,
 };
+
+const char *partnames[] = { "part", "tape", "trail", "text", "textup", "meter", "metervs", "fireball", "lightning", "flare" };
 
 struct particle
 {
@@ -1270,7 +1273,7 @@ struct flarerenderer : partrenderer
     flare *flares;
     
     flarerenderer(const char *texname, int maxflares) 
-        : partrenderer(texname, PT_LIGHTNING, 0, 0), maxflares(maxflares), shinetime(0) //PT_LIGHTNING => not va
+        : partrenderer(texname, PT_FLARE, 0, 0), maxflares(maxflares), shinetime(0)
     {
         flares = new flare[maxflares];
     }
@@ -1483,7 +1486,7 @@ void render_particles(int time)
         defaultshader->set();
         loopi(n) 
         {
-            s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname ? parts[i]->texname : "?");
+            s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname ? parts[i]->texname : partnames[parts[i]->type&0xFF]);
             draw_text(ds, 1, (i+n/2)*FONTH);
         }
         glDisable(GL_BLEND);
