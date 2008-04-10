@@ -548,7 +548,8 @@ enum
 struct particle
 {
     vec o, d;
-    int fade, millis, color;
+    int fade, millis;
+    bvec color;
     float size;
     union
     {
@@ -577,7 +578,7 @@ struct partrenderer
     int grav, collide;
     
     partrenderer(const char *texname, int type, int grav, int collide) 
-        : texname(texname), tex(NULL), type(type), grav(grav), collide(collide)
+        : tex(NULL), texname(texname), type(type), grav(grav), collide(collide)
     {
     }
     virtual void init(int n) { }
@@ -702,17 +703,18 @@ struct listrenderer : partrenderer
         p->d = d;
         p->fade = fade;
         p->millis = lastmillis;
-        p->color = color;
+        p->color = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
         p->size = size;
         p->owner = NULL;
         return p;
     }
     
-    int count() {
-        int cnt = 0;
+    int count() 
+    {
+        int num = 0;
         listparticle *lp;
-        for(lp = list; lp; lp = lp->next) cnt++;
-        return cnt;
+        for(lp = list; lp; lp = lp->next) num++;
+        return num;
     }
     
     bool haswork() 
@@ -742,9 +744,7 @@ struct listrenderer : partrenderer
             calc(p, blend, ts, o, d, lastpass);
             if(blend > 0) 
             {
-                uchar color[3] = {p->color>>16, (p->color>>8)&0xFF, p->color&0xFF};
-               
-                renderpart(p, o, d, blend, ts, color);
+                renderpart(p, o, d, blend, ts, p->color.v);
 
                 if(p->fade > 5 || !lastpass) 
                 {
@@ -1028,33 +1028,33 @@ struct varenderer : partrenderer
 {
     partvert *verts;
     particle *parts;
-    int maxparts, cntpart;
+    int maxparts, numparts;
     
     varenderer(const char *texname, int type, int grav, int collide) 
-        : partrenderer(texname, type, grav, collide), cntpart(0),
-        parts(NULL), verts(NULL)   
+        : partrenderer(texname, type, grav, collide),
+          verts(NULL), parts(NULL), maxparts(0), numparts(0)
     {
     }
     
     void init(int n)
     {
-        if(parts) DELETEA(parts);
-        if(verts) DELETEA(verts);
+        DELETEA(parts);
+        DELETEA(verts);
         parts = new particle[n];
         verts = new partvert[n*4];
         maxparts = n;
-        cntpart = 0;
+        numparts = 0;
     }
         
     void reset() 
     {
-        cntpart = 0;
+        numparts = 0;
     }
     
     void resettracked(physent *owner) 
     {
         if(!(type&PT_TRACK)) return;
-        loopi(cntpart)
+        loopi(numparts)
         {
             particle *p = parts+i;
             if(!owner || (p->owner == owner)) p->fade = -1;
@@ -1063,44 +1063,40 @@ struct varenderer : partrenderer
     
     int count() 
     {
-        return cntpart;
+        return numparts;
     }
     
     bool haswork() 
     {
-        return (cntpart > 0);
+        return (numparts > 0);
     }
 
     bool usesvertexarray() { return true; }
 
     particle *addpart(const vec &o, const vec &d, int fade, int color, float size) 
     {
-        particle *p = parts + (cntpart < maxparts ? cntpart++ : rnd(maxparts)); //next free slot, or kill a random kitten
+        particle *p = parts + (numparts < maxparts ? numparts++ : rnd(maxparts)); //next free slot, or kill a random kitten
         p->o = o;
         p->d = d;
         p->fade = fade;
         p->millis = lastmillis;
-        p->color = color;
+        p->color = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
         p->size = size;
         p->owner = NULL;
-        partvert *vs = verts + (p-parts) * 4; //4 verts for every part
-        if(type&PT_MOD)
-            loopi(4) vs[i].alpha = 255;
-        else
-        {
-            bvec col = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
-            loopi(4) vs[i].color = col;
-        }
+        int offset = p-parts;
+        partvert *vs = verts + offset * 4; //4 verts for every part
+        if(type&PT_MOD) loopi(4) vs[i].alpha = 255;
+        else loopi(4) vs[i].color = p->color;
         float tx = 0, ty = 0, tsz = 1;
         if(type&PT_RND4)
         {
-            int i = detrnd(cntpart, 4);
+            int i = detrnd(offset, 4);
             tx = 0.5f*(i&1);
             ty = 0.5f*((i>>1)&1);
             tsz = 0.5f;
         }
         int basetype = type & 0xFF;
-        int orient = (basetype == PT_PART) ? detrnd(cntpart*cntpart+37, 4) : 0; //rotate tex coords rather than vertices
+        int orient = (basetype == PT_PART) ? detrnd(offset*offset+37, 4) : 0; //rotate tex coords rather than vertices
         vs[orient].u       = tx;
         vs[orient].v       = ty + tsz;
         vs[(orient+1)&3].u = tx + tsz;
@@ -1117,7 +1113,7 @@ struct varenderer : partrenderer
         bool lastpass = !reflecting && !refracting;
         
         int basetype = type&0xFF, expired = -1;
-        loopi(cntpart)
+        loopi(numparts)
         {
             particle *p = parts + i;
             vec o, d;
@@ -1129,10 +1125,10 @@ struct varenderer : partrenderer
             }
             if(expired >= 0)
             {
-                int remove = i-expired, relocate = min(remove, cntpart-i);
-                memcpy(&parts[expired], &parts[cntpart-relocate], relocate*sizeof(particle));
-                memcpy(&verts[4*expired], &verts[4*(cntpart-relocate)], 4*relocate*sizeof(partvert));
-                cntpart -= remove;
+                int remove = i-expired, relocate = min(remove, numparts-i);
+                memcpy(&parts[expired], &parts[numparts-relocate], relocate*sizeof(particle));
+                memcpy(&verts[4*expired], &verts[4*(numparts-relocate)], 4*relocate*sizeof(partvert));
+                numparts -= remove;
                 i = expired;
                 p = parts + i;
                 expired = -1;
@@ -1149,8 +1145,8 @@ struct varenderer : partrenderer
             } 
             if(type&PT_MOD) //multiply alpha into color
             {
-                bvec col = bvec(p->color>>16, (p->color>>8)&0xFF, p->color&0xFF);
-                loopi(3) col[i] = (col[i]*blend)>>8;
+                bvec col;
+                loopi(3) col[i] = (p->color[i]*blend)>>8;
                 loopi(4) vs[i].color = col;
             } 
             else 
@@ -1187,7 +1183,7 @@ struct varenderer : partrenderer
             if(p->fade <= 5 && lastpass) p->fade = -1; //mark to remove on next pass (i.e. after render)
             continue;
         }
-        if(expired >= 0) cntpart = expired;
+        if(expired >= 0) numparts = expired;
     }
     
     void render()
@@ -1197,7 +1193,7 @@ struct varenderer : partrenderer
         glVertexPointer(3, GL_FLOAT, sizeof(partvert), &verts->pos);
         glTexCoordPointer(2, GL_FLOAT, sizeof(partvert), &verts->u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(partvert), &verts->color);
-        glDrawArrays(GL_QUADS, 0, cntpart*4);
+        glDrawArrays(GL_QUADS, 0, numparts*4);
     }
 };
 
@@ -1237,7 +1233,7 @@ VARP(flaresize, 20, 100, 500);
 
 struct flarerenderer : partrenderer
 {
-    int maxflares, cntflares;
+    int maxflares, numflares;
     unsigned int shinetime;
     flare *flares;
     
@@ -1248,15 +1244,15 @@ struct flarerenderer : partrenderer
     }
     void reset() 
     {
-        cntflares = 0;
+        numflares = 0;
     }
 
     void newflare(vec &o,  const vec &center, uchar r, uchar g, uchar b, float mod, float size, bool sun, bool sparkle)
     {
-        if(cntflares >= maxflares) return;
+        if(numflares >= maxflares) return;
         vec target; //occlusion check (neccessary as depth testing is turned off)
         if(!raycubelos(o, camera1->o, target)) return;
-        flare &f = flares[cntflares++];
+        flare &f = flares[numflares++];
         f.o = o;
         f.center = center;
         f.size = size;
@@ -1292,7 +1288,7 @@ struct flarerenderer : partrenderer
     
     void makelightflares()
     {
-        cntflares = 0; //regenerate flarelist each frame
+        numflares = 0; //regenerate flarelist each frame
         shinetime = lastmillis/10;
         
         if(editmode || !flarelights) return;
@@ -1330,12 +1326,12 @@ struct flarerenderer : partrenderer
     
     int count()
     {
-        return cntflares;
+        return numflares;
     }
     
     bool haswork() 
     {
-        return (cntflares != 0) && !glaring && !reflecting  && !refracting;
+        return (numflares != 0) && !glaring && !reflecting  && !refracting;
     }
     
     void render()
@@ -1348,7 +1344,7 @@ struct flarerenderer : partrenderer
         if(!flaretex) flaretex = textureload("data/lensflares.png");
         glBindTexture(GL_TEXTURE_2D, flaretex->id);
         glBegin(GL_QUADS);
-        loopi(cntflares)
+        loopi(numflares)
         {
             flare *f = flares+i;
             vec center = f->center;
@@ -1392,14 +1388,14 @@ static flarerenderer flares("data/lensflares.png", 64);
 
 static partrenderer *parts[] = 
 {
-    new varenderer("data/blood.png",        PT_MOD|PT_RND4,     2, 1), // 0 blood spats (note: rgb is inverted) 
-    new varenderer("data/martin/spark.png", PT_GLARE,           2, 0), // 1 sparks
+    new varenderer("data/blood.png",  PT_PART|PT_MOD|PT_RND4,   2, 1), // 0 blood spats (note: rgb is inverted) 
+    new varenderer("data/martin/spark.png", PT_PART|PT_GLARE,   2, 0), // 1 sparks
     new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 2 small slowly rising smoke
-    new varenderer("data/martin/base.png",  PT_GLARE,          20, 0), // 3 edit mode entities
-    new varenderer("data/martin/ball1.png", PT_GLARE,          20, 0), // 4 fireball1
+    new varenderer("data/martin/base.png",  PT_PART|PT_GLARE,  20, 0), // 3 edit mode entities
+    new varenderer("data/martin/ball1.png", PT_PART|PT_GLARE,  20, 0), // 4 fireball1
     new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 5 big  slowly rising smoke   
-    new varenderer("data/martin/ball2.png", PT_GLARE,          20, 0), // 6 fireball2
-    new varenderer("data/martin/ball3.png", PT_GLARE,          20, 0), // 7 big fireball3
+    new varenderer("data/martin/ball2.png", PT_PART|PT_GLARE,  20, 0), // 6 fireball2
+    new varenderer("data/martin/ball3.png", PT_PART|PT_GLARE,  20, 0), // 7 big fireball3
     &textups,                                                          // 8 TEXT, floats up
     new varenderer("data/flare.jpg", PT_FLARE|PT_GLARE,         0, 0), // 9 flare
     &texts,                                                            // 10 TEXT, SMALL, NON-MOVING
@@ -1455,7 +1451,7 @@ void render_particles(int time)
         defaultshader->set();
         loopi(n) 
         {
-            s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname);
+            s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname ? parts[i]->texname : "?");
             draw_text(ds, 1, i*FONTH);
         }
         glDisable(GL_BLEND);

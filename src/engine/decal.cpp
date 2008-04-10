@@ -11,7 +11,8 @@ struct decalvert
 
 struct decalinfo
 {
-    int color, millis;
+    int millis;
+    bvec color;
     ushort startvert, endvert;
 };
 
@@ -106,7 +107,7 @@ struct decalrenderer
         }
         else
         {
-            color = bvec((d.color>>16)&0xFF, (d.color>>8)&0xFF, d.color&0xFF);
+            color = d.color;
             if(flags&(DF_ADD|DF_INVMOD)) loopk(3) color[k] = uchar((int(color[k])*int(alpha))>>8);
         }
 
@@ -315,13 +316,13 @@ struct decalrenderer
     float decalradius, decalu, decalv;
     bvec decalcolor;
 
-    void adddecal(const vec &center, const vec &dir, float radius, int color, int info)
+    void adddecal(const vec &center, const vec &dir, float radius, const bvec &color, int info)
     {
         int isz = int(ceil(radius));
         bborigin = ivec(center).sub(isz);
         bbsize = ivec(isz*2, isz*2, isz*2);
 
-        decalcolor = bvec((color>>16)&0xFF, (color>>8)&0xFF, color&0xFF);
+        decalcolor = color;
         decalcenter = center;
         decalradius = radius;
         decalnormal = dir;
@@ -531,7 +532,7 @@ void renderdecals(int time)
 
 VARP(maxdecaldistance, 1, 512, 10000);
 
-void adddecal(int type, const vec &center, const vec &surface, float radius, int color, int info)
+void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color, int info)
 {
     if(!showdecals || type<0 || (size_t)type>=sizeof(decals)/sizeof(decals[0]) || center.dist(camera1->o) - radius > maxdecaldistance) return;
     decalrenderer &d = decals[type];
