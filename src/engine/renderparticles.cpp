@@ -1181,7 +1181,6 @@ struct varenderer : partrenderer
             }
             
             if(p->fade <= 5 && lastpass) p->fade = -1; //mark to remove on next pass (i.e. after render)
-            continue;
         }
         if(expired >= 0) numparts = expired;
     }
