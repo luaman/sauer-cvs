@@ -529,7 +529,7 @@ static bool emit_particles()
 enum
 {
     PT_PART = 0,
-    PT_FLARE,
+    PT_TAPE,
     PT_TRAIL,
     PT_TEXT,
     PT_TEXTUP,
@@ -550,6 +550,7 @@ struct particle
     vec o, d;
     int fade, millis;
     bvec color;
+    uchar flags;
     float size;
     union
     {
@@ -592,17 +593,20 @@ struct partrenderer
     virtual bool usesvertexarray() { return false; } 
 
     //blend = 0 => remove it
-    void calc(particle *p, int &blend, int &ts, vec &o, vec &d, bool lastpass)
+    void calc(particle *p, int &blend, int &ts, vec &o, vec &d, bool lastpass = true)
     {
         o = p->o;
         d = p->d;
         if(type&PT_TRACK && p->owner) cl->particletrack(p->owner, o, d);
-        blend = 255;
-        ts = 1;
-        if(p->fade > 5) 
+        if(p->fade <= 5) 
+        {
+            ts = 1;
+            blend = 255;
+        }
+        else
         {
             ts = lastmillis-p->millis;
-            blend = 255 - (ts<<8)/p->fade;
+            blend = max(255 - (ts<<8)/p->fade, 0);
             if(grav)
             {
                 if(ts > p->fade) ts = p->fade;
@@ -625,8 +629,7 @@ struct partrenderer
                     blend = 0;
                 }
             }
-        } else if(p->fade < 0)
-            blend = 0;
+        }
     }
 };
 
@@ -1023,16 +1026,63 @@ struct textrenderer : listrenderer
     } 
 };
 static textrenderer texts(PT_TEXT|PT_LERP), textups(PT_TEXTUP|PT_LERP, -8);
- 
+
+template<int T>
+static inline void modifyblend(const vec &o, int &blend)
+{
+    blend = min(blend<<2, 255);
+    if(renderpath==R_FIXEDFUNCTION && fogging) blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
+}
+
+template<>
+static inline void modifyblend<PT_TAPE>(const vec &o, int &blend)
+{
+}
+
+template<int T>
+static inline void genpos(const vec &o, const vec &d, float size, int grav, int ts, partvert *vs)
+{
+    vec udir = vec(camup).sub(camright).mul(size);
+    vec vdir = vec(camup).add(camright).mul(size);
+    vs[0].pos = vec(o.x + udir.x, o.y + udir.y, o.z + udir.z);
+    vs[1].pos = vec(o.x + vdir.x, o.y + vdir.y, o.z + vdir.z);
+    vs[2].pos = vec(o.x - udir.x, o.y - udir.y, o.z - udir.z);
+    vs[3].pos = vec(o.x - vdir.x, o.y - vdir.y, o.z - vdir.z);
+}
+
+template<>
+static inline void genpos<PT_TAPE>(const vec &o, const vec &d, float size, int ts, int grav, partvert *vs)
+{
+    vec dir1 = d, dir2 = d, c;
+    dir1.sub(o);
+    dir2.sub(camera1->o);
+    c.cross(dir2, dir1).normalize().mul(size);
+    vs[0].pos = vec(d.x-c.x, d.y-c.y, d.z-c.z);
+    vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
+    vs[2].pos = vec(o.x+c.x, o.y+c.y, o.z+c.z);
+    vs[3].pos = vec(d.x+c.x, d.y+c.y, d.z+c.z);
+}
+
+template<>
+static inline void genpos<PT_TRAIL>(const vec &o, const vec &d, float size, int ts, int grav, partvert *vs)
+{
+    vec e = d;
+    if(grav) e.z -= float(ts)/grav;
+    e.div(-75.0f);
+    e.add(o);
+    genpos<PT_TAPE>(o, e, size, ts, grav, vs);
+}
+
+template<int T>
 struct varenderer : partrenderer
 {
     partvert *verts;
     particle *parts;
-    int maxparts, numparts;
-    
+    int maxparts, numparts, lastupdate;
+
     varenderer(const char *texname, int type, int grav, int collide) 
         : partrenderer(texname, type, grav, collide),
-          verts(NULL), parts(NULL), maxparts(0), numparts(0)
+          verts(NULL), parts(NULL), maxparts(0), numparts(0), lastupdate(-1)
     {
     }
     
@@ -1044,11 +1094,13 @@ struct varenderer : partrenderer
         verts = new partvert[n*4];
         maxparts = n;
         numparts = 0;
+        lastupdate = -1;
     }
         
     void reset() 
     {
         numparts = 0;
+        lastupdate = -1;
     }
     
     void resettracked(physent *owner) 
@@ -1083,106 +1135,84 @@ struct varenderer : partrenderer
         p->color = bvec(color>>16, (color>>8)&0xFF, color&0xFF);
         p->size = size;
         p->owner = NULL;
+        p->flags = 0x80;
         int offset = p-parts;
-        partvert *vs = verts + offset * 4; //4 verts for every part
-        if(type&PT_MOD) loopi(4) vs[i].alpha = 255;
-        else loopi(4) vs[i].color = p->color;
-        float tx = 0, ty = 0, tsz = 1;
-        if(type&PT_RND4)
-        {
-            int i = detrnd(offset, 4);
-            tx = 0.5f*(i&1);
-            ty = 0.5f*((i>>1)&1);
-            tsz = 0.5f;
-        }
-        int basetype = type & 0xFF;
-        int orient = (basetype == PT_PART) ? detrnd(offset*offset+37, 4) : 0; //rotate tex coords rather than vertices
-        vs[orient].u       = tx;
-        vs[orient].v       = ty + tsz;
-        vs[(orient+1)&3].u = tx + tsz;
-        vs[(orient+1)&3].v = ty + tsz;
-        vs[(orient+2)&3].u = tx + tsz;
-        vs[(orient+2)&3].v = ty;
-        vs[(orient+3)&3].u = tx;
-        vs[(orient+3)&3].v = ty;
+        if(type&PT_RND4) p->flags |= detrnd(offset, 4)<<2;
+        if((type&0xFF)==PT_PART) p->flags |= detrnd(offset*offset+37, 4);
+        lastupdate = -1;
         return p;
     }
-    
+  
+    void genverts(particle *p, partvert *vs, bool regen)
+    {
+        vec o, d;
+        int blend, ts;
+
+        calc(p, blend, ts, o, d);
+        if(blend <= 1 || p->fade <= 5) p->fade = -1; //mark to remove on next pass (i.e. after render)
+
+        modifyblend<T>(o, blend);
+
+        if(regen)
+        {
+            p->flags &= ~0x80;
+
+            int orient = p->flags&3;
+            #define SETTEXCOORDS(u1, u2, v1, v2) \
+            do { \
+                vs[orient].u       = u1; \
+                vs[orient].v       = v2; \
+                vs[(orient+1)&3].u = u2; \
+                vs[(orient+1)&3].v = v2; \
+                vs[(orient+2)&3].u = u2; \
+                vs[(orient+2)&3].v = v1; \
+                vs[(orient+3)&3].u = u1; \
+                vs[(orient+3)&3].v = v1; \
+            } while(0)    
+            if(type&PT_RND4)
+            {
+                float tx = 0.5f*((p->flags>>2)&1), ty = 0.5f*((p->flags>>3)&1);
+                SETTEXCOORDS(tx, tx + 0.5f, ty, ty + 0.5f);
+            } 
+            else SETTEXCOORDS(0, 1, 0, 1);
+
+            #define SETCOLOR(r, g, b, a) \
+            do { \
+                uchar col[4] = { r, g, b, a }; \
+                loopi(4) memcpy(vs[i].color.v, col, sizeof(col)); \
+            } while(0) 
+            #define SETMODCOLOR SETCOLOR((p->color[0]*blend)>>8, (p->color[1]*blend)>>8, (p->color[2]*blend)>>8, 255)
+            if(type&PT_MOD) SETMODCOLOR;
+            else SETCOLOR(p->color[0], p->color[1], p->color[2], blend);
+        }
+        else if(type&PT_MOD) SETMODCOLOR;
+        else loopi(4) vs[i].alpha = blend;
+
+        genpos<T>(o, d, p->size, ts, grav, vs); 
+    }
+
     void update()
     {
-        bool lastpass = !reflecting && !refracting;
-        
-        int basetype = type&0xFF, expired = -1;
+        if(lastmillis == lastupdate) return;
+        lastupdate = lastmillis;
+       
         loopi(numparts)
         {
-            particle *p = parts + i;
-            vec o, d;
-            int blend, ts;
-            if(p->fade < 0) 
+            particle *p = &parts[i];
+            partvert *vs = &verts[i*4];
+            if(p->fade < 0)
             {
-                if(expired < 0) expired = i;
-                continue;
-            }
-            if(expired >= 0)
-            {
-                int remove = i-expired, relocate = min(remove, numparts-i);
-                memcpy(&parts[expired], &parts[numparts-relocate], relocate*sizeof(particle));
-                memcpy(&verts[4*expired], &verts[4*(numparts-relocate)], 4*relocate*sizeof(partvert));
-                numparts -= remove;
-                i = expired;
-                p = parts + i;
-                expired = -1;
-            }
-            calc(p, blend, ts, o, d, lastpass);
-            if(blend <= 0) { expired = i; continue; } 
-
-            partvert *vs = verts + i * 4; //4 verts for every part
-            
-            if(basetype!=PT_FLARE) 
-            {
-                blend = min(blend<<2, 255);
-                if(renderpath==R_FIXEDFUNCTION && fogging) blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
-            } 
-            if(type&PT_MOD) //multiply alpha into color
-            {
-                bvec col;
-                loopi(3) col[i] = (p->color[i]*blend)>>8;
-                loopi(4) vs[i].color = col;
-            } 
-            else 
-                loopi(4) vs[i].alpha = blend;
-            
-            if(basetype==PT_FLARE || basetype==PT_TRAIL)
-            {					
-                vec e = d;
-                if(basetype==PT_TRAIL)
+                do 
                 {
-                    if(grav) e.z -= float(ts)/grav;
-                    e.div(-75.0f);
-                    e.add(o);
-                }                    
-                vec dir1 = e, dir2 = e, c;
-                dir1.sub(o);
-                dir2.sub(camera1->o);
-                c.cross(dir2, dir1).normalize().mul(p->size);
-                vs[0].pos = vec(e.x-c.x, e.y-c.y, e.z-c.z);
-                vs[1].pos = vec(o.x-c.x, o.y-c.y, o.z-c.z);
-                vs[2].pos = vec(o.x+c.x, o.y+c.y, o.z+c.z);
-                vs[3].pos = vec(e.x+c.x, e.y+c.y, e.z+c.z);
+                    --numparts; 
+                    if(numparts <= i) return;
+                }
+                while(parts[numparts].fade < 0);
+                *p = parts[numparts];
+                genverts(p, vs, true);
             }
-            else
-            {
-                vec udir = vec(camup).sub(camright).mul(p->size);
-                vec vdir = vec(camup).add(camright).mul(p->size);
-                vs[0].pos = vec(o.x + udir.x, o.y + udir.y, o.z + udir.z);
-                vs[1].pos = vec(o.x + vdir.x, o.y + vdir.y, o.z + vdir.z);
-                vs[2].pos = vec(o.x - udir.x, o.y - udir.y, o.z - udir.z);
-                vs[3].pos = vec(o.x - vdir.x, o.y - vdir.y, o.z - vdir.z);
-            }
-            
-            if(p->fade <= 5 && lastpass) p->fade = -1; //mark to remove on next pass (i.e. after render)
+            else genverts(p, vs, p->flags&0x80);
         }
-        if(expired >= 0) numparts = expired;
     }
     
     void render()
@@ -1195,6 +1225,9 @@ struct varenderer : partrenderer
         glDrawArrays(GL_QUADS, 0, numparts*4);
     }
 };
+typedef varenderer<PT_PART> quadrenderer;
+typedef varenderer<PT_TAPE> taperenderer;
+typedef varenderer<PT_TRAIL> trailrenderer;
 
 static struct flaretype 
 {
@@ -1387,25 +1420,25 @@ static flarerenderer flares("data/lensflares.png", 64);
 
 static partrenderer *parts[] = 
 {
-    new varenderer("data/blood.png",  PT_PART|PT_MOD|PT_RND4,   2, 1), // 0 blood spats (note: rgb is inverted) 
-    new varenderer("data/martin/spark.png", PT_PART|PT_GLARE,   2, 0), // 1 sparks
-    new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 2 small slowly rising smoke
-    new varenderer("data/martin/base.png",  PT_PART|PT_GLARE,  20, 0), // 3 edit mode entities
-    new varenderer("data/martin/ball1.png", PT_PART|PT_GLARE,  20, 0), // 4 fireball1
-    new varenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 5 big  slowly rising smoke   
-    new varenderer("data/martin/ball2.png", PT_PART|PT_GLARE,  20, 0), // 6 fireball2
-    new varenderer("data/martin/ball3.png", PT_PART|PT_GLARE,  20, 0), // 7 big fireball3
-    &textups,                                                          // 8 TEXT, floats up
-    new varenderer("data/flare.jpg", PT_FLARE|PT_GLARE,         0, 0), // 9 flare
-    &texts,                                                            // 10 TEXT, SMALL, NON-MOVING
-    &meters,                                                           // 11 METER, SMALL, NON-MOVING
-    &metervs,                                                          // 12 METER vs., SMALL, NON-MOVING
-    new varenderer("data/martin/smoke.png", PT_PART,           20, 0), // 13 small  slowly sinking smoke trail
-    &fireballs,                                                        // 14 explosion fireball
-    &lightnings,                                                       // 15 lightning
-    new varenderer("data/martin/smoke.png", PT_PART,          -15, 0), // 16 big  fast rising smoke          
-    new varenderer("data/martin/base.png",  PT_TRAIL|PT_LERP,   2, 0), // 17 water, entity
-    &noglarefireballs,                                                 // 18 explosion fireball no glare
+    new quadrenderer("data/blood.png",  PT_PART|PT_MOD|PT_RND4,   2, 1), // 0 blood spats (note: rgb is inverted) 
+    new quadrenderer("data/martin/spark.png", PT_PART|PT_GLARE,   2, 0), // 1 sparks
+    new quadrenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 2 small slowly rising smoke
+    new quadrenderer("data/martin/base.png",  PT_PART|PT_GLARE,  20, 0), // 3 edit mode entities
+    new quadrenderer("data/martin/ball1.png", PT_PART|PT_GLARE,  20, 0), // 4 fireball1
+    new quadrenderer("data/martin/smoke.png", PT_PART,          -20, 0), // 5 big  slowly rising smoke   
+    new quadrenderer("data/martin/ball2.png", PT_PART|PT_GLARE,  20, 0), // 6 fireball2
+    new quadrenderer("data/martin/ball3.png", PT_PART|PT_GLARE,  20, 0), // 7 big fireball3
+    &textups,                                                            // 8 TEXT, floats up
+    new taperenderer("data/flare.jpg",        PT_TAPE|PT_GLARE,  0, 0), // 9 streak
+    &texts,                                                              // 10 TEXT, SMALL, NON-MOVING
+    &meters,                                                             // 11 METER, SMALL, NON-MOVING
+    &metervs,                                                            // 12 METER vs., SMALL, NON-MOVING
+    new quadrenderer("data/martin/smoke.png", PT_PART,           20, 0), // 13 small  slowly sinking smoke trail
+    &fireballs,                                                          // 14 explosion fireball
+    &lightnings,                                                         // 15 lightning
+    new quadrenderer("data/martin/smoke.png", PT_PART,          -15, 0), // 16 big  fast rising smoke          
+    new trailrenderer("data/martin/base.png", PT_TRAIL|PT_LERP,   2, 0), // 17 water, entity
+    &noglarefireballs,                                                   // 18 explosion fireball no glare
     &flares // must be done last
 };
 
@@ -1712,7 +1745,7 @@ void regularshape(int type, int radius, int color, int dir, int num, int fade, c
     if(!emit_particles()) return;
     
     int basetype = parts[type]->type&0xFF;
-    bool flare = (basetype == PT_FLARE) || (basetype == PT_LIGHTNING);
+    bool flare = (basetype == PT_TAPE) || (basetype == PT_LIGHTNING);
     
     bool inv = (dir >= 32);
     dir = dir&0x1F;
