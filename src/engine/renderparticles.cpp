@@ -1114,6 +1114,7 @@ struct varenderer : partrenderer
             particle *p = parts+i;
             if(!owner || (p->owner == owner)) p->fade = -1;
         }
+        lastupdate = -1;
     }
     
     int count() 
