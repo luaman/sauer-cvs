@@ -1484,7 +1484,7 @@ void render_particles(int time)
         loopi(n) 
         {
             s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname ? parts[i]->texname : "?");
-            draw_text(ds, 1, i*FONTH);
+            draw_text(ds, 1, (i+n/2)*FONTH);
         }
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
