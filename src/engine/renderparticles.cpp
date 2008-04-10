@@ -587,10 +587,11 @@ struct partrenderer
     virtual void update() { }
     virtual void render() = NULL;
     virtual bool haswork() = NULL;
+    virtual int count() = NULL; //for debug
     virtual bool usesvertexarray() { return false; } 
 
     //blend = 0 => remove it
-    void calc(particle *p, int &blend, int &ts, vec &o, vec &d)
+    void calc(particle *p, int &blend, int &ts, vec &o, vec &d, bool lastpass)
     {
         o = p->o;
         d = p->d;
@@ -610,7 +611,7 @@ struct partrenderer
                 o.add(v);
                 o.z -= t*t/(2.0f * 5000.0f * grav);
             }
-            if(collide && o.z < p->val && !refracting && !reflecting)
+            if(collide && o.z < p->val && lastpass)
             {
                 vec surface;
                 float floorz = rayfloor(vec(o.x, o.y, p->val), surface, RAY_CLIPMAT, COLLIDERADIUS);
@@ -707,6 +708,13 @@ struct listrenderer : partrenderer
         return p;
     }
     
+    int count() {
+        int cnt = 0;
+        listparticle *lp;
+        for(lp = list; lp; lp = lp->next) cnt++;
+        return cnt;
+    }
+    
     bool haswork() 
     {
         return (list != NULL);
@@ -725,18 +733,20 @@ struct listrenderer : partrenderer
             glBindTexture(GL_TEXTURE_2D, tex->id);
         }
         
+        bool lastpass = !reflecting && !refracting;
+        
         for(listparticle **prev = &list, *p = list; p; p = *prev)
         {   
             vec o, d;
             int blend, ts;
-            calc(p, blend, ts, o, d);
+            calc(p, blend, ts, o, d, lastpass);
             if(blend > 0) 
             {
                 uchar color[3] = {p->color>>16, (p->color>>8)&0xFF, p->color&0xFF};
                
                 renderpart(p, o, d, blend, ts, color);
 
-                if(p->fade > 5 || refracting || reflecting) 
+                if(p->fade > 5 || !lastpass) 
                 {
                     prev = &p->next;
                     continue;
@@ -1051,6 +1061,11 @@ struct varenderer : partrenderer
         }
     }
     
+    int count() 
+    {
+        return cntpart;
+    }
+    
     bool haswork() 
     {
         return (cntpart > 0);
@@ -1099,6 +1114,8 @@ struct varenderer : partrenderer
     
     void update()
     {
+        bool lastpass = !reflecting && !refracting;
+        
         int basetype = type&0xFF, expired = -1;
         loopi(cntpart)
         {
@@ -1120,7 +1137,7 @@ struct varenderer : partrenderer
                 p = parts + i;
                 expired = -1;
             }
-            calc(p, blend, ts, o, d);
+            calc(p, blend, ts, o, d, lastpass);
             if(blend <= 0) { expired = i; continue; } 
 
             partvert *vs = verts + i * 4; //4 verts for every part
@@ -1167,7 +1184,7 @@ struct varenderer : partrenderer
                 vs[3].pos = vec(o.x - vdir.x, o.y - vdir.y, o.z - vdir.z);
             }
             
-            if(p->fade <= 5 && !refracting && !reflecting) p->fade = -1; //mark to remove on next pass (i.e. after render)
+            if(p->fade <= 5 && lastpass) p->fade = -1; //mark to remove on next pass (i.e. after render)
             continue;
         }
         if(expired >= 0) cntpart = expired;
@@ -1311,10 +1328,16 @@ struct flarerenderer : partrenderer
         }
     }
     
+    int count()
+    {
+        return cntflares;
+    }
+    
     bool haswork() 
     {
         return (cntflares != 0) && !glaring && !reflecting  && !refracting;
     }
+    
     void render()
     {
         bool fog = glIsEnabled(GL_FOG)==GL_TRUE;
@@ -1412,8 +1435,37 @@ void removetrackedparticles(physent *owner)
 
 VARP(particleglare, 0, 4, 100);
 
+VAR(debugparticles, 0, 0, 1);
+
 void render_particles(int time)
 {
+    //want to debug BEFORE the lastpass render (that would delete particles)
+    if(debugparticles && !glaring && !reflecting && !refracting) 
+    {
+        int n = sizeof(parts)/sizeof(parts[0]);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, FONTH*n*2, FONTH*n*2, 0, -1, 1); //squeeze into top-left corner        
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        defaultshader->set();
+        loopi(n) 
+        {
+            s_sprintfd(ds)("%d\t%s", parts[i]->count(), parts[i]->texname);
+            draw_text(ds, 1, i*FONTH);
+        }
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+
     if(glaring && !particleglare) return;
     
     loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->update();
@@ -1501,6 +1553,8 @@ static void splash(int type, int color, int radius, int num, int fade, const vec
 {
     if(camera1->o.dist(p) > maxparticledistance) return;
     float collidez = parts[type]->collide ? p.z - raycube(p, vec(0, 0, -1), COLLIDERADIUS, RAY_CLIPMAT) + COLLIDEERROR : -1; 
+    int fmin = 1;
+    int fmax = fade*3;
     loopi(num)
     {
         int x, y, z;
@@ -1512,7 +1566,8 @@ static void splash(int type, int color, int radius, int num, int fade, const vec
         }
         while(x*x+y*y+z*z>radius*radius);
     	vec tmp = vec((float)x, (float)y, (float)z);
-        newparticle(p, tmp, rnd(fade*3)+1, type, color, size)->val = collidez;
+        int f = (num < 10) ? (fmin + rnd(fmax)) : (fmax - (i*(fmax-fmin))/(num-1)); //help deallocater by using fade distribution rather than random
+        newparticle(p, tmp, f, type, color, size)->val = collidez;
     }
 }
 
