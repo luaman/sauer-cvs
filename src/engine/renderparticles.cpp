@@ -957,7 +957,7 @@ struct fireballrenderer : listrenderer
             float pmax = p->val, 
                   size = p->fade ? float(ts)/p->fade : 1,
                   psize = p->size + pmax * size;
-            if(2*pmax < depthfxblend || isvisiblesphere(psize, p->o) >= VFC_FOGGED) continue;
+            if(2*(p->size + pmax) < depthfxblend || isvisiblesphere(psize, p->o) >= VFC_FOGGED) continue;
 
             e.o = p->o;
             e.radius = e.eyeheight = e.aboveeye = psize;
