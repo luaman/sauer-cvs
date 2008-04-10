@@ -302,7 +302,7 @@ static void setupexplosion()
         {
             if(explosion2d) SETSHADER(explosion2dglare); else SETSHADER(explosion3dglare);
         }
-        else if(!reflecting && !refracting && depthfx && depthfxtex.rendertex)
+        else if(!reflecting && !refracting && depthfx && depthfxtex.rendertex && numdepthfxranges>0)
         {
             if(depthfxtex.colorfmt!=GL_RGB16F_ARB && depthfxtex.colorfmt!=GL_RGB16)
             {
@@ -988,6 +988,12 @@ struct fireballrenderer : listrenderer
 
     void renderpart(listparticle *p, const vec &o, const vec &d, int blend, int ts, uchar *color)
     {
+        float pmax = p->val,
+              size = p->fade ? float(ts)/p->fade : 1,
+              psize = p->size + pmax * size;
+
+        if(isvisiblesphere(psize, p->o) >= VFC_FOGGED) return;
+
         glPushMatrix();
         glTranslatef(o.x, o.y, o.z);
         if(fogging)
@@ -995,10 +1001,6 @@ struct fireballrenderer : listrenderer
             if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, reflectz - o.z, true);
             else blend = (uchar)(blend * max(0.0f, min(1.0f, (reflectz - o.z)/waterfog)));
         }
-
-        float pmax = p->val, 
-              size = p->fade ? float(ts)/p->fade : 1,
-              psize = p->size + pmax * size;
 
         bool inside = o.dist(camera1->o) <= psize*1.25f; //1.25 is max wobble scale
         vec oc(o);
@@ -1034,7 +1036,7 @@ struct fireballrenderer : listrenderer
         {
             setlocalparamf("center", SHPARAM_VERTEX, 0, o.x, o.y, o.z);
             setlocalparamf("animstate", SHPARAM_VERTEX, 1, size, psize, pmax, float(lastmillis));
-            if(!glaring && !reflecting && !refracting && depthfx && depthfxtex.rendertex)
+            if(!glaring && !reflecting && !refracting && depthfx && depthfxtex.rendertex && numdepthfxranges>0)
             {
                 if(depthfxtex.colorfmt!=GL_RGB16F_ARB && depthfxtex.colorfmt!=GL_RGB16)
                 {
