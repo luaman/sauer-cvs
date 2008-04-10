@@ -147,7 +147,7 @@ enum
     DECAL_BULLET
 };
 
-extern void adddecal(int type, const vec &center, const vec &surface, float radius, int color = 0xFFFFFF, int info = 0);
+extern void adddecal(int type, const vec &center, const vec &surface, float radius, const bvec &color = bvec(0xFF, 0xFF, 0xFF), int info = 0);
 
 // worldio
 extern bool load_world(const char *mname, const char *cname = NULL);
