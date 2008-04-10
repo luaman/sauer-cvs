@@ -20,7 +20,7 @@ VARFP(depthfxprecision, 0, 1, 1, cleanupdepthfx());
 void *depthfxowners[MAXDFXRANGES];
 float depthfxranges[MAXDFXRANGES];
 int numdepthfxranges = 0;
-float maxdepthfxdist = 0;
+vec depthfxmin(1e16f, 1e16f, 1e16f), depthfxmax(1e16f, 1e16f, 1e16f);
 
 static struct depthfxtexture : rendertarget
 {    
@@ -38,7 +38,7 @@ static struct depthfxtexture : rendertarget
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-        extern void renderdepthobstacles(float maxdist, float scale, float *ranges, int numranges);
+        extern void renderdepthobstacles(const vec &bbmin, const vec &bbmax, float scale, float *ranges, int numranges);
         float scale = depthfxscale;
         float *ranges = depthfxranges;
         int numranges = numdepthfxranges;
@@ -48,7 +48,7 @@ static struct depthfxtexture : rendertarget
             ranges = NULL;
             numranges = 0;
         }
-        renderdepthobstacles(maxdepthfxdist + depthfxmargin, scale, ranges, numranges);
+        renderdepthobstacles(depthfxmin, depthfxmax, scale, ranges, numranges);
        
         refracting = 0;
         depthfxing = false;
@@ -942,7 +942,7 @@ struct fireballrenderer : listrenderer
         particleshader->set();
     }
 
-    int finddepthfxranges(void **owners, float *ranges, int maxranges, float &maxdist)
+    int finddepthfxranges(void **owners, float *ranges, int maxranges, vec &bbmin, vec &bbmax)
     {
         GLfloat mm[16];
         glGetFloatv(GL_MODELVIEW_MATRIX, mm);
@@ -969,7 +969,11 @@ struct fireballrenderer : listrenderer
             dir.mul(psize/dist).add(p->o);
             float depth = max(-(dir.x*mm[2] + dir.y*mm[6] + dir.z*mm[10] + mm[14]) - depthfxmargin, 0.0f);
 
-            maxdist = max(maxdist, dist + psize);
+            loopk(3)
+            {
+                bbmin[k] = min(bbmin[k], p->o[k] - psize);
+                bbmax[k] = max(bbmax[k], p->o[k] + psize);
+            }
 
             int pos = numranges;
             loopi(numranges) if(depth < ranges[i]) { pos = i; break; }
@@ -1074,8 +1078,14 @@ static fireballrenderer fireballs(PT_FIREBALL|PT_GLARE), noglarefireballs(PT_FIR
 
 void finddepthfxranges()
 {
-    maxdepthfxdist = 0;
-    numdepthfxranges = fireballs.finddepthfxranges(depthfxowners, depthfxranges, MAXDFXRANGES, maxdepthfxdist);
+    depthfxmin = vec(1e16f, 1e16f, 1e16f);
+    depthfxmax = vec(0, 0, 0);
+    numdepthfxranges = fireballs.finddepthfxranges(depthfxowners, depthfxranges, MAXDFXRANGES, depthfxmin, depthfxmax);
+    loopk(3)
+    {
+        depthfxmin[k] -= depthfxmargin;
+        depthfxmax[k] += depthfxmargin;
+    }
 }
 
 struct textrenderer : listrenderer
