@@ -509,7 +509,7 @@ VARF(hudgunfov, 10, 65, 150, curhgfov = 65);
 
 static int zoommillis = 0;
 VARF(zoom, -1, 0, 1,
-    if(zoom) zoommillis = lastmillis;
+    if(zoom) zoommillis = totalmillis;
 );
 
 void computezoom()
@@ -521,7 +521,7 @@ void computezoom()
         newfov = zoom > 0 ? zoomfov : fov,
         oldhgfov = zoom > 0 ? hudgunfov : hudgunzoomfov,
         newhgfov = zoom > 0 ? hudgunzoomfov : hudgunfov;
-    float t = zoomvel ? float(zoomvel - (lastmillis - zoommillis)) / zoomvel : 0;
+    float t = zoomvel ? float(zoomvel - (totalmillis - zoommillis)) / zoomvel : 0;
     if(t <= 0) 
     {
         if(!zoomvel && fabs(newfov - curfov) >= 1) 
