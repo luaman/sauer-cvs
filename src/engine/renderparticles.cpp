@@ -1667,17 +1667,20 @@ void particle_splash(int type, int num, int fade, const vec &p)
     splash(partmaps[type].type, partmaps[type].color, 150, num, fade, p, partsize(type));
 }
 
+VARP(maxtrail, 1, 500, 10000);
+
 void particle_trail(int type, int fade, const vec &s, const vec &e)
 {
     if(shadowmapping || renderedgame) return;
     vec v;
     float d = e.dist(s, v);
-    v.div(d*2);
+    int steps = clamp(int(d*2), 1, maxtrail);
+    v.div(steps);
     vec p = s;
     int ptype = partmaps[type].type;
     int color = partmaps[type].color;
     float size = partsize(type);
-    loopi((int)d*2)
+    loopi(steps)
     {
         p.add(v);
         vec tmp = vec(float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5));
