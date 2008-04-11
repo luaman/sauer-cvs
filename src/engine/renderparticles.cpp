@@ -1558,9 +1558,8 @@ struct flarerenderer : partrenderer
         if(fog) glDisable(GL_FOG);
         defaultshader->set();
         glDisable(GL_DEPTH_TEST);
-        static Texture *flaretex = NULL;
-        if(!flaretex) flaretex = textureload("data/lensflares.png");
-        glBindTexture(GL_TEXTURE_2D, flaretex->id);
+        if(!tex) tex = textureload(texname);
+        glBindTexture(GL_TEXTURE_2D, tex->id);
         glBegin(GL_QUADS);
         loopi(numflares)
         {
