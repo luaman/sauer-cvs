@@ -676,6 +676,10 @@ struct partrenderer
         : tex(NULL), texname(texname), type(type), grav(grav), collide(collide)
     {
     }
+    virtual ~partrenderer()
+    {
+    }
+
     virtual void init(int n) { }
     virtual void reset() = NULL;
     virtual void resettracked(physent *owner) { }   
