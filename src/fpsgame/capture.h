@@ -236,17 +236,20 @@ struct captureclient : capturestate
         int oldbase = d->lastbase;
         d->lastbase = -1;  
         vec pos(d->o.x, d->o.y, d->o.z + (d->aboveeye - d->eyeheight)/2);
-        if(d->state==CS_ALIVE) loopv(bases)
+        if(d->state==CS_ALIVE) 
         {
-            baseinfo &b = bases[i];
-            if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
-            particle_flare(b.ammopos, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
-            if(oldbase < 0) 
+            loopv(bases)
             {
-                particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
-                particle_splash(0, 50, 250, pos);
+                baseinfo &b = bases[i];
+                if(!insidebase(b, d->o) || (strcmp(b.owner, d->team) && strcmp(b.enemy, d->team))) continue;
+                particle_flare(b.ammopos, pos, 0, strcmp(d->team, cl.player1->team) ? 29 : 30);
+                if(oldbase < 0) 
+                {
+                    particle_fireball(pos, 4, strcmp(d->team, cl.player1->team) ? 31 : 32, 250);
+                    particle_splash(0, 50, 250, pos);
+                }
+                d->lastbase = i;
             }
-            d->lastbase = i;
         }
         if(d->lastbase < 0 && oldbase >= 0)
         {
@@ -703,12 +706,15 @@ struct captureservmode : capturestate, servmode
 
     void initclient(clientinfo *ci, ucharbuf &p, bool connecting)
     {
-        if(connecting) loopv(scores)
+        if(connecting) 
         {
-            score &cs = scores[i];
-            putint(p, SV_TEAMSCORE);
-            sendstring(cs.team, p);
-            putint(p, cs.total);
+            loopv(scores)
+            {
+                score &cs = scores[i];
+                putint(p, SV_TEAMSCORE);
+                sendstring(cs.team, p);
+                putint(p, cs.total);
+            }
         }
         putint(p, SV_BASES);
         loopv(bases)

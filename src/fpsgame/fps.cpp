@@ -328,7 +328,7 @@ struct fpsclient : igameclient
     void doattack(bool on)
     {
         if(intermission) return;
-        if(player1->attacking = on) respawn();
+        if((player1->attacking = on)) respawn();
     }
 
     bool canjump() 

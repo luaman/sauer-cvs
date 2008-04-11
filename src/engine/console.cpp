@@ -145,10 +145,13 @@ int renderconsole(int w, int h)                   // render buffer taking into a
     {
         static vector<char *> refs;
         refs.setsizenodelete(0);
-        if(consize) loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : (!confade || totalmillis-conlines[i].outtime<confade*1000))
+        if(consize) 
         {
-            refs.add(conlines[i].cref);
-            if(refs.length()>=consize) break;
+            loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : (!confade || totalmillis-conlines[i].outtime<confade*1000))
+            {
+                refs.add(conlines[i].cref);
+                if(refs.length()>=consize) break;
+            }
         }
         loopvj(refs)
         {

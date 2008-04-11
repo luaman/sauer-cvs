@@ -832,16 +832,19 @@ struct fpsserver : igameserver
     {
         uint ip = getclientip(ci->clientnum);
         if(!ip) return *(savedscore *)0;
-        if(!insert) loopv(clients)
+        if(!insert) 
         {
-            clientinfo *oi = clients[i];
-            if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
+            loopv(clients)
             {
-                oi->state.timeplayed += lastmillis - oi->state.lasttimeplayed;
-                oi->state.lasttimeplayed = lastmillis;
-                static savedscore curscore;
-                curscore.save(oi->state);
-                return curscore;
+                clientinfo *oi = clients[i];
+                if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
+                {
+                    oi->state.timeplayed += lastmillis - oi->state.lasttimeplayed;
+                    oi->state.lasttimeplayed = lastmillis;
+                    static savedscore curscore;
+                    curscore.save(oi->state);
+                    return curscore;
+                }
             }
         }
         loopv(scores)
@@ -1347,7 +1350,10 @@ struct fpsserver : igameserver
                     {
                         mastermode = mm;
                         allowedips.setsize(0);
-                        if(mm>=MM_PRIVATE) loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
+                        if(mm>=MM_PRIVATE) 
+                        {
+                            loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
+                        }
                         s_sprintfd(s)("mastermode is now %d", mastermode);
                         sendservmsg(s);
                     }
@@ -1807,19 +1813,22 @@ struct fpsserver : igameserver
         else if(minremain>0)
         {
             processevents();
-            if(curtime) loopv(sents) if(sents[i].spawntime) // spawn entities when timer reached
+            if(curtime) 
             {
-                int oldtime = sents[i].spawntime;
-                sents[i].spawntime -= curtime;
-                if(sents[i].spawntime<=0)
+                loopv(sents) if(sents[i].spawntime) // spawn entities when timer reached
                 {
-                    sents[i].spawntime = 0;
-                    sents[i].spawned = true;
-                    sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
-                }
-                else if(sents[i].spawntime<=10000 && oldtime>10000 && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
-                {
-                    sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
+                    int oldtime = sents[i].spawntime;
+                    sents[i].spawntime -= curtime;
+                    if(sents[i].spawntime<=0)
+                    {
+                        sents[i].spawntime = 0;
+                        sents[i].spawned = true;
+                        sendf(-1, 1, "ri2", SV_ITEMSPAWN, i);
+                    }
+                    else if(sents[i].spawntime<=10000 && oldtime>10000 && (sents[i].type==I_QUAD || sents[i].type==I_BOOST))
+                    {
+                        sendf(-1, 1, "ri2", SV_ANNOUNCE, sents[i].type);
+                    }
                 }
             }
             if(smode) smode->update();
