@@ -992,10 +992,9 @@ struct meterrenderer : listrenderer
 };
 static meterrenderer meters(PT_METER|PT_LERP), metervs(PT_METERVS|PT_LERP);
 
+static const float WOBBLE = 1.25f; //WTF? gcc 4.01 gives a link failure when this is declared inside fireballrenderer
 struct fireballrenderer : listrenderer
 {
-    static const float WOBBLE = 1.25f;
-
     fireballrenderer(int type)
         : listrenderer("data/explosion.jpg", type, 0, 0)
     {}
@@ -1690,7 +1689,11 @@ void render_particles(int time)
 
     if(glaring && !particleglare) return;
     
-    loopi(sizeof(parts)/sizeof(parts[0])) parts[i]->update();
+    loopi(sizeof(parts)/sizeof(parts[0])) 
+    {
+        if(glaring && !(parts[i]->type&PT_GLARE)) continue;
+        parts[i]->update();
+    }
     
     static float zerofog[4] = { 0, 0, 0, 1 };
     float oldfogc[4];
