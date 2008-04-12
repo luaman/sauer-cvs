@@ -118,6 +118,9 @@
 		D17E0F2C0BAF1FA9008BB696 /* Keys.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F280BAF1FA9008BB696 /* Keys.gif */; };
 		D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2A0BAF1FA9008BB696 /* Server.gif */; };
 		D17E0F310BAF2031008BB696 /* Help.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F300BAF2031008BB696 /* Help.tiff */; };
+		D18B8FC10DB0AF8200171439 /* explosion.h in Headers */ = {isa = PBXBuildFile; fileRef = D18B8FBE0DB0AF8200171439 /* explosion.h */; };
+		D18B8FC20DB0AF8200171439 /* lensflare.h in Headers */ = {isa = PBXBuildFile; fileRef = D18B8FBF0DB0AF8200171439 /* lensflare.h */; };
+		D18B8FC30DB0AF8200171439 /* lightning.h in Headers */ = {isa = PBXBuildFile; fileRef = D18B8FC00DB0AF8200171439 /* lightning.h */; };
 		D1C660CA0D5467C8002E52C1 /* pvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1C660C90D5467C8002E52C1 /* pvs.cpp */; };
 		D1DB53E80D70F1CD003AE25C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D1DB53E70D70F1CD003AE25C /* Localizable.strings */; };
 		D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */ = {isa = PBXBuildFile; fileRef = D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */; };
@@ -247,6 +250,9 @@
 		D17E0F280BAF1FA9008BB696 /* Keys.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Keys.gif; sourceTree = "<group>"; };
 		D17E0F2A0BAF1FA9008BB696 /* Server.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Server.gif; sourceTree = "<group>"; };
 		D17E0F300BAF2031008BB696 /* Help.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Help.tiff; sourceTree = "<group>"; };
+		D18B8FBE0DB0AF8200171439 /* explosion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = explosion.h; sourceTree = "<group>"; };
+		D18B8FBF0DB0AF8200171439 /* lensflare.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lensflare.h; sourceTree = "<group>"; };
+		D18B8FC00DB0AF8200171439 /* lightning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lightning.h; sourceTree = "<group>"; };
 		D1C660C90D5467C8002E52C1 /* pvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pvs.cpp; sourceTree = "<group>"; };
 		D1DB53E50D70F1C3003AE25C /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Maps.gif; sourceTree = "<group>"; };
@@ -392,6 +398,9 @@
 		B9AC7A830D06DB44005506F8 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				D18B8FBE0DB0AF8200171439 /* explosion.h */,
+				D18B8FBF0DB0AF8200171439 /* lensflare.h */,
+				D18B8FC00DB0AF8200171439 /* lightning.h */,
 				D116C0AA0D9F7DB500E8B945 /* rendertarget.h */,
 				D118DEB50D979281000E8C4C /* glare.cpp */,
 				D1C660C90D5467C8002E52C1 /* pvs.cpp */,
@@ -552,6 +561,9 @@
 				D139B59E0D59A8E600AA994D /* assassin.h in Headers */,
 				D116C0AB0D9F7DB500E8B945 /* rendertarget.h in Headers */,
 				D123F95B0DA8B312001DB09F /* ctf.h in Headers */,
+				D18B8FC10DB0AF8200171439 /* explosion.h in Headers */,
+				D18B8FC20DB0AF8200171439 /* lensflare.h in Headers */,
+				D18B8FC30DB0AF8200171439 /* lightning.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
