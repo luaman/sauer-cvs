@@ -183,9 +183,15 @@ void computescreen(const char *text, Texture *t, const char *overlaytext)
         if(overlaytext)
         {
             int sz = 256, x = (w-sz)/2, y = min(384, h-256), tw = text_width(overlaytext);
+            int tx = t && tw < sz*2 - FONTH/3 ? 
+                        2*(x + sz) - tw - FONTH/3 : 
+                        2*(x + sz/2) - tw/2, 
+                     ty = t ? 
+                        2*(y + sz) - FONTH*4/3 :
+                        2*(y + sz/2) - FONTH/2; 
             glPushMatrix();
             glScalef(1/2.0f, 1/2.0f, 1);
-            draw_text(overlaytext, 2*(x + sz/2) - tw/2, 2*y + FONTH);
+            draw_text(overlaytext, tx, ty);
             glPopMatrix();
         }
         int x = (w-512)/2, y = 128;
