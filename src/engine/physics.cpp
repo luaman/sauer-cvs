@@ -953,7 +953,7 @@ bool move(physent *d, vec &dir)
         d->o = old;
     }
 #endif
-    bool collided = false;
+    bool collided = false, slidecollide = false;
     vec obstacle;
     d->o.add(dir);
     if(!collide(d, d->type!=ENT_CAMERA ? dir : vec(0, 0, 0)) || ((d->type==ENT_AI || d->type==ENT_INANIMATE) && !collide(d)))
@@ -961,7 +961,10 @@ bool move(physent *d, vec &dir)
         obstacle = wall;
         /* check to see if there is an obstacle that would prevent this one from being used as a floor (or ceiling bump) */
         if(d->type==ENT_PLAYER && ((wall.z>=SLOPEZ && dir.z<0) || (wall.z<=-SLOPEZ && dir.z>0)) && (dir.x || dir.y) && !collide(d, vec(dir.x, dir.y, 0)))
+        {
+            if(wall.dot(dir) >= 0) slidecollide = true;
             obstacle = wall;
+        }
         d->o = old;
         if(d->type == ENT_CAMERA) return false;
         float stepdist = (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
@@ -987,7 +990,7 @@ bool move(physent *d, vec &dir)
          found = findfloor(d, collided, obstacle, slide, floor);
     if(slide || (!collided && floor.z > 0 && floor.z < WALLZ))
     {
-        slideagainst(d, dir, slide ? obstacle : floor, found);
+        slideagainst(d, dir, slide ? obstacle : floor, found || slidecollide);
         if(d->type == ENT_AI || d->type == ENT_INANIMATE) d->blocked = true;
     }
     if(found)
