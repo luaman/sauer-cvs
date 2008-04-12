@@ -338,7 +338,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     hdr = newhdr;
     resetmap();
     Texture *mapshot = textureload(picname, 0, true, false);
-    computescreen(mname, mapshot!=notexture ? mapshot : NULL);
+    computescreen(NULL, mapshot!=notexture ? mapshot : NULL, mname);
     if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
@@ -516,7 +516,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     initlights();
     allchanged(true);
 
-    computescreen(mname, mapshot!=notexture ? mapshot : NULL);
+    computescreen(NULL, mapshot!=notexture ? mapshot : NULL, mname);
     attachentities();
 
     startmap(cname ? cname : mname);

@@ -118,12 +118,21 @@ void screenshot(char *filename)
 COMMAND(screenshot, "s");
 COMMAND(quit, "");
 
-void computescreen(const char *text, Texture *t)
+static void getcomputescreenres(int &w, int &h)
+{
+    float wk = 1, hk = 1;
+    if(w < 1024) wk = 1024.0f/w;
+    if(h < 768) hk = 768.0f/h;
+    wk = hk = max(wk, hk);
+    w = int(ceil(w*wk));
+    h = int(ceil(h*hk));
+}
+
+void computescreen(const char *text, Texture *t, const char *overlaytext)
 {
     int w = screen->w, h = screen->h;
+    getcomputescreenres(w, h);
     gettextres(w, h);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
@@ -132,14 +141,20 @@ void computescreen(const char *text, Texture *t)
     glColor3f(1, 1, 1);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, w, h, 0, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     loopi(2)
     {
-        glLoadIdentity();
-        glOrtho(0, w*3, h*3, 0, -1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-        draw_text(text, 70, 2*FONTH + FONTH/2);
-        glLoadIdentity();
-        glOrtho(0, w, h, 0, -1, 1);
+        if(text)
+        {
+            glPushMatrix();
+            glScalef(1/3.0f, 1/3.0f, 1);
+            draw_text(text, 70, 2*FONTH + FONTH/2);
+            glPopMatrix();
+        }
         if(t)
         {
             glDisable(GL_BLEND);
@@ -164,6 +179,14 @@ void computescreen(const char *text, Texture *t)
 #endif
             glEnd();
             glEnable(GL_BLEND);
+        }
+        if(overlaytext)
+        {
+            int sz = 256, x = (w-sz)/2, y = min(384, h-256), tw = text_width(overlaytext);
+            glPushMatrix();
+            glScalef(1/2.0f, 1/2.0f, 1);
+            draw_text(overlaytext, 2*(x + sz/2) - tw/2, 2*y + FONTH);
+            glPopMatrix();
         }
         int x = (w-512)/2, y = 128;
         settexture("data/sauer_logo_512_256a.png");
@@ -221,6 +244,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
 
     int w = screen->w, h = screen->h;
+    getcomputescreenres(w, h);
     gettextres(w, h);
 
     glDisable(GL_DEPTH_TEST);
