@@ -11,3 +11,6 @@ created with my own voice or otherwise. They are hereby
 placed in the public domain as well.
 
 awesund/Rifle.wav and free/shotgun.wav were modified by Darthvim.
+
+The "ctf" ones are borrowed from AssaultCube, with
+permission from Makke to reuse in Sauerbraten.
