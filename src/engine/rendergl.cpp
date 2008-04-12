@@ -999,7 +999,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    xtravertsva = xtraverts = glde = 0;
+    xtravertsva = xtraverts = glde = gbatches = 0;
 
     visiblecubes(worldroot, hdr.worldsize/2, 0, 0, 0, size, size, 90);
 
@@ -1075,7 +1075,7 @@ void gl_drawframe(int w, int h)
 
     glPolygonMode(GL_FRONT_AND_BACK, wireframe && editmode ? GL_LINE : GL_FILL);
     
-    xtravertsva = xtraverts = glde = 0;
+    xtravertsva = xtraverts = glde = gbatches = 0;
 
     if(!hasFBO)
     {
@@ -1287,7 +1287,7 @@ void drawcrosshair(int w, int h)
 }
 
 VARP(showfpsrange, 0, 0, 1);
-VAR(showallstats, 0, 0, 1);
+VAR(showeditstats, 0, 0, 1);
 VAR(statrate, 0, 200, 1000);
 
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
@@ -1394,28 +1394,29 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
             {
                 draw_textf("cube %s%d", FONTH/2, abovegameplayhud-FONTH*3, selchildcount<0 ? "1/" : "", abs(selchildcount));
             }
-            if(editmode || showallstats)
+            if(editmode || showeditstats)
             {
-                static int laststats = 0, prevstats[7] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[7] = { 0, 0, 0, 0, 0, 0, 0 };
+                static int laststats = 0, prevstats[8] = { 0, 0, 0, 0, 0, 0, 0 }, curstats[8] = { 0, 0, 0, 0, 0, 0, 0 };
                 if(lastmillis - laststats >= statrate)
                 {
                     memcpy(prevstats, curstats, sizeof(prevstats));
                     laststats = lastmillis - (lastmillis%statrate);
                 }
-                int nextstats[7] =
+                int nextstats[8] =
                 {
                     vtris*100/max(wtris, 1),
                     vverts*100/max(wverts, 1),
                     xtraverts/1024,
                     xtravertsva/1024,
                     glde,
+                    gbatches,
                     getnumqueries(),
                     rplanes
                 };
-                loopi(7) if(prevstats[i]==curstats[i]) curstats[i] = nextstats[i];
+                loopi(8) if(prevstats[i]==curstats[i]) curstats[i] = nextstats[i];
 
                 draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud-FONTH*2, wtris/1024, curstats[0], wverts/1024, curstats[1], curstats[2], curstats[3]);
-                draw_textf("ond:%d va:%d gl:%d oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, curstats[4], curstats[5], lightmaps.length(), curstats[6], getnumviewcells());
+                draw_textf("ond:%d va:%d gl:%d(%d) oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud-FONTH, allocnodes*8, allocva, curstats[4], curstats[5], curstats[6], lightmaps.length(), curstats[7], getnumviewcells());
             }
         }
 
