@@ -204,7 +204,6 @@ void computescreen(const char *text, Texture *t, const char *overlaytext)
         glEnd();
         SDL_GL_SwapBuffers();
     }
-    glMatrixMode(GL_MODELVIEW);
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
