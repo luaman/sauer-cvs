@@ -372,18 +372,25 @@ struct ctfclient : ctfstate
             flag &f = flags[i];
             int score = getint(p), owner = getint(p), dropped = 0;
             vec droploc(f.spawnloc);
-            if(owner>=0)
+            if(owner<0)
             {
                 dropped = getint(p);
                 if(dropped) loopk(3) droploc[k] = getint(p)/DMF;
             }
             if(commit)
             {
+                f.reset();
+
                 f.score = score;
-                f.owner = owner==cl.player1->clientnum ? cl.player1 : cl.newclient(owner);
+                f.owner = owner>=0 ? (owner==cl.player1->clientnum ? cl.player1 : cl.newclient(owner)) : NULL;
                 f.droptime = dropped;
                 f.droploc = droploc;
                 f.interptime = 0;
+                
+                if(dropped)
+                {
+                    if(!droptofloor(f.droploc, 2, 0)) f.droploc = vec(-1, -1, -1);
+                }
             }
         }
     }

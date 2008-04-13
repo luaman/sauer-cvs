@@ -446,6 +446,7 @@ struct clientcom : iclientcom
                 }
                 player1->clientnum = mycn;      // we are now fully connected
                 if(!hasmap && (cl.gamemode==1 || cl.getclientmap()[0])) changemap(cl.getclientmap()); // we are the first client on this server, set map
+                gamemode = cl.gamemode;
                 break;
             }
 
@@ -496,6 +497,7 @@ struct clientcom : iclientcom
                 getstring(text, p);
                 changemapserv(text, getint(p));
                 mapchanged = true;
+                gamemode = cl.gamemode;
                 break;
 
             case SV_ARENAWIN:
