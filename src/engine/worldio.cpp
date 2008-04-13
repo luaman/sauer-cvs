@@ -499,6 +499,9 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     execfile(pcfname);
     execfile(mcfname);
     overrideidents = false;
+   
+    extern void fixlightmapnormals();
+    if(hdr.version <= 25) fixlightmapnormals();
 
     loopv(ents)
     {

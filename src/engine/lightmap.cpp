@@ -32,7 +32,7 @@ int shadows = 1;
 int mmshadows = 0;
 int aalights = 3;
 
-static int lmtype, lmorient;
+static int lmtype, lmorient, lmrotate;
 static uchar lm[3*LM_MAXW*LM_MAXH];
 static vec lm_ray[LM_MAXW*LM_MAXH];
 static int lm_w, lm_h;
@@ -321,10 +321,10 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
         case LM_BUMPMAP0:
             if(avgray.iszero()) break;
             // transform to tangent space
-            extern float orientation_tangent[3][4];
-            extern float orientation_binormal[3][4];            
-            vec S(orientation_tangent[dimension(lmorient)]), 
-                T(orientation_binormal[dimension(lmorient)]);
+            extern float orientation_tangent[5][3][4];
+            extern float orientation_binormal[5][3][4];            
+            vec S(orientation_tangent[4-lmrotate][dimension(lmorient)]),
+                T(orientation_binormal[4-lmrotate][dimension(lmorient)]);
             normal.orthonormalize(S, T);
             avgray.normalize();
             lm_ray[y*lm_w+x].add(vec(S.dot(avgray), T.dot(avgray), normal.dot(avgray)));
@@ -932,7 +932,8 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
         vec v[4], n[4], n2[3];
         int numplanes;
 
-        Shader *shader = lookupshader(c.texture[i]);
+        Slot &slot = lookuptexture(c.texture[i], false);
+        Shader *shader = slot.shader ? slot.shader : defaultshader;
         if(c.ext && c.ext->merged&(1<<i))
         {
             if(!(c.ext->mergeorigin&(1<<i))) continue;
@@ -982,6 +983,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
         }
         lmtype = LM_DIFFUSE;
         lmorient = i;
+        lmrotate = slot.rotation;
         if(shader->type&(SHADER_NORMALSLMS | SHADER_ENVMAP))
         {
             if(shader->type&SHADER_NORMALSLMS) lmtype = LM_BUMPMAP0;
@@ -1176,6 +1178,54 @@ VARF(fullbright, 0, 0, 1, if(lightmaptexs.length()) initlights());
 VARF(fullbrightlevel, 0, 128, 255, setfullbrightlevel(fullbrightlevel));
 
 vector<LightMapTexture> lightmaptexs;
+
+static void rotatenormals(LightMap &lmlv, int x, int y, int w, int h, int rotate)
+{
+    bool flipx = rotate>=2 && rotate<=4,
+         flipy = (rotate>=1 && rotate<=2) || rotate==5,
+         swapxy = (rotate&5)==1;
+    uchar *lv = lmlv.data + 3*(y*LM_PACKW + x);
+    int stride = 3*(LM_PACKW-w);
+    loopi(h)
+    {
+        loopj(w)
+        {
+            if(flipx) lv[0] = 255 - lv[0];
+            if(flipy) lv[1] = 255 - lv[1];
+            if(swapxy) swap(lv[0], lv[1]);
+            lv += 3;
+        }
+        lv += stride;
+    }
+}
+
+static void rotatenormals(cube *c)
+{
+    loopi(8)
+    {
+        cube &ch = c[i];
+        if(ch.children)
+        {
+            rotatenormals(ch.children);
+            continue;
+        }
+        else if(!ch.ext || !ch.ext->surfaces) continue;
+        loopj(6) if(lightmaps.inrange(ch.ext->surfaces[j].lmid+1-LMID_RESERVED))
+        {
+            Slot &slot = lookuptexture(ch.texture[j], false);
+            if(!slot.rotation || !slot.shader || !(slot.shader->type&SHADER_NORMALSLMS))
+                continue;
+            surfaceinfo &surface = ch.ext->surfaces[j];
+            LightMap &lmlv = lightmaps[surface.lmid+1-LMID_RESERVED];
+            rotatenormals(lmlv, surface.x, surface.y, surface.w, surface.h, 4-slot.rotation);
+        }
+    }
+}
+
+void fixlightmapnormals()
+{
+    rotatenormals(worldroot);
+}
 
 static void convertlightmap(LightMap &lmc, LightMap &lmlv, uchar *dst, size_t stride)
 {
