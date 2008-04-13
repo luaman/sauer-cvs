@@ -38,7 +38,7 @@ struct fpsclient : igameclient
     int lasthit;
 
     int following;
-    IVARP(followdist, 10, 50, 1000);
+    IVARP(followdist, 0, 50, 1000);
     IVARP(followorient, 0, 1, 1);
 
     bool openmainmenu;
@@ -162,19 +162,22 @@ struct fpsclient : igameclient
             player1->pitch = target->pitch; 
         }
 
-        physent followcam;
-        followcam.o = target->o;
-        followcam.yaw = player1->yaw;
-        followcam.pitch = player1->pitch;
-        followcam.type = ENT_CAMERA;
-        followcam.move = -1;
-        followcam.eyeheight = 2;
-        loopi(10)
+        if(followdist())
         {
-            if(!moveplayer(&followcam, 10, true, followdist())) break;
+            physent followcam;
+            followcam.o = target->o;
+            followcam.yaw = player1->yaw;
+            followcam.pitch = player1->pitch;
+            followcam.type = ENT_CAMERA;
+            followcam.move = -1;
+            followcam.eyeheight = 2;
+            loopi(10)
+            {
+                if(!moveplayer(&followcam, 10, true, followdist())) break;
+            }
+            player1->o = followcam.o;
         }
-
-        player1->o = followcam.o;
+        else player1->o = target->o;
     }
 
     void stopfollowing()

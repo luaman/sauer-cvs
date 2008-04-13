@@ -87,8 +87,12 @@ struct fpsrender
             ogro() ? "monster/ogro/red" : "ironsnout/red"
         };
 
+        fpsent *exclude = NULL;
+        if(cl.player1->state==CS_SPECTATOR && cl.following>=0 && !cl.followdist())
+            exclude = cl.getclient(cl.following);
+
         fpsent *d;
-        loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && d->state!=CS_SPAWNING)
+        loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && d->state!=CS_SPAWNING && d!=exclude)
         {
             int mdl = 0;
             if(m_assassin) mdl = cl.asc.targets.find(d)>=0 ? 2 : (cl.asc.hunters.find(d)>=0 ? 0 : 1);
