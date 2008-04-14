@@ -370,9 +370,9 @@ struct captureclient : capturestate
             dir.sub(cl.player1->o);
             dir.z = 0.0f;
             float dist = dir.magnitude();
-            if(dist >= scale) dir.mul(scale/dist);
+            if(dist >= scale*(1 - 0.05f)) dir.mul(scale*(1 - 0.05f)/dist);
             dir.rotate_around_z(-cl.player1->yaw*RAD);
-            drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/scale), y + s*0.5f*0.95f*(1.0f+dir.y/scale), 0.05f*s);
+            drawradar(x + s*0.5f*(1.0f + dir.x/scale - 0.05f), y + s*0.5f*(1.0f + dir.y/scale - 0.05f), 0.05f*s);
         }
         glEnd();
     }

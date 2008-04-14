@@ -247,19 +247,26 @@ struct ctfclient : ctfstate
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
 
-    void drawblips(int x, int y, int s, int i)
+    void drawblips(int x, int y, int s, int i, bool flagblip)
     {
-        settexture(ctfteamflag(cl.player1->team)==i ? "data/blip_blue.png" : "data/blip_red.png");
+        settexture(ctfteamflag(cl.player1->team)==i ? 
+                    (flagblip ? "data/blip_blue_flag.png" : "data/blip_blue.png") : 
+                    (flagblip ? "data/blip_red_flag.png" : "data/blip_red.png"));
         float scale = radarscale<=0 || radarscale>cl.maxradarscale() ? cl.maxradarscale() : radarscale;
         flag &f = flags[i];
-        vec dir(f.owner ? f.owner->o : (f.droptime ? f.droploc : f.spawnloc));
+        vec dir;
+        if(flagblip) dir = f.owner ? f.owner->o : (f.droptime ? f.droploc : f.spawnloc);
+        else dir = f.spawnloc;
         dir.sub(cl.player1->o);
         dir.z = 0.0f;
-        float dist = dir.magnitude();
-        if(dist >= scale) dir.mul(scale/dist);
+        float size = flagblip ? 0.1f : 0.05f,
+              xoffset = flagblip ? -2*(3/32.0f)*size : -size,
+              yoffset = flagblip ? -2*(1 - 3/32.0f)*size : -size,
+              dist = dir.magnitude();
+        if(dist >= scale*(1 - 0.05f)) dir.mul(scale*(1 - 0.05f)/dist);
         dir.rotate_around_z(-cl.player1->yaw*RAD);
         glBegin(GL_QUADS);
-        drawradar(x + s*0.5f*0.95f*(1.0f+dir.x/scale), y + s*0.5f*0.95f*(1.0f+dir.y/scale), 0.05f*s);
+        drawradar(x + s*0.5f*(1.0f + dir.x/scale + xoffset), y + s*0.5f*(1.0f + dir.y/scale + yoffset), size*s);
         glEnd();
     }
 
@@ -289,8 +296,14 @@ struct ctfclient : ctfstate
         loopi(2)
         {
             flag &f = flags[i];
-            if(!f.ent || ((f.owner || f.droptime) && cl.lastmillis%1000 >= 500)) continue;
-            drawblips(x, y, s, i);
+            drawblips(x, y, s, i, false);
+            if(!f.ent) continue;
+            if(f.owner)
+            {
+                if(cl.lastmillis%1000 >= 500) continue;
+            }
+            else if(f.droptime && cl.lastmillis%300 >= 150) continue;
+            drawblips(x, y, s, i, true);
         }
         if(cl.player1->state == CS_DEAD)
         {
