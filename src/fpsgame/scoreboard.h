@@ -78,7 +78,19 @@ struct scoreboard : g3d_callback
         {
             loopv(cl.cpc.scores) teamscores.add(teamscore(cl.cpc.scores[i].team, cl.cpc.scores[i].total));
         }
-        else if(m_ctf) loopi(2) if(cl.ctf.flags[i].score) teamscores.add(teamscore(ctfflagteam(i), cl.ctf.flags[i].score));
+        else if(m_ctf) 
+        {
+            loopv(cl.ctf.flags) if(cl.ctf.flags[i].score)
+            {
+                const char *team = ctfflagteam(cl.ctf.flags[i].team);
+                if(!team) continue;
+                teamscore *ts = NULL;
+                loopv(teamscores) if(!strcmp(teamscores[i].team, team)) { ts = &teamscores[i]; break; } 
+                if(!ts) teamscores.add(teamscore(team, cl.ctf.flags[i].score));
+                else ts->score += cl.ctf.flags[i].score;
+            }
+        }
+
         loopi(cl.numdynents())
         {
             fpsent *o = (fpsent *)cl.iterdynents(i);
@@ -147,7 +159,11 @@ struct scoreboard : g3d_callback
             g.team = team;
             if(!team) g.score = 0;
             else if(m_capture) g.score = cl.cpc.findscore(o->team).total;
-            else if(m_ctf) g.score = cl.ctf.flags[ctfteamflag(o->team)].score;
+            else if(m_ctf) 
+            {
+                g.score = 0;
+                loopv(cl.ctf.flags) if(cl.ctf.flags[i].team==ctfteamflag(o->team)) g.score += cl.ctf.flags[i].score;
+            }
             else g.score = o->frags;
             g.players.setsize(0);
             g.players.add(o);
