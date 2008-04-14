@@ -363,32 +363,35 @@ static vec parsevec(const char *arg)
 
 static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool msg = true)
 {
-    if(tex && !tname)
-    {
-        static string pname;
-        s_sprintf(pname)("packages/%s", tex->name);
-        tname = path(pname);
-    }
-    if(!tname) return NULL;
+    const char *cmds = NULL, *file = tname;
 
-    const char *file = tname, *cmd = NULL, *arg1 = NULL, *arg2 = NULL, *arg3 = NULL;
-    if(tname[0]=='<')
+    if(!tname)
     {
-        file = strchr(tname, '>');
+        if(!tex) return NULL;
+        if(tex->name[0]=='<') 
+        {
+            cmds = tex->name;
+            file = strrchr(tex->name, '>');
+            if(!file) { if(msg) conoutf("could not load texture packages/%s", tex->name); return NULL; }
+            file++;
+        }
+        else file = tex->name;
+        
+        static string pname;
+        s_sprintf(pname)("packages/%s", file);
+        file = path(pname);
+    }
+    else if(tname[0]=='<') 
+    {
+        cmds = tname;
+        file = strrchr(tname, '>');
         if(!file) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
         file++;
-        cmd = &tname[1];
-        arg1 = strchr(cmd, ':');
-        if(arg1) 
-        {
-            arg2 = strchr(arg1, ',');
-            if(arg2) arg3 = strchr(arg2, ',');
-        }
-        else arg1 = strchr(cmd, '>');
-        if(!strncmp(cmd, "noff", arg1-cmd))
-        {
-            if(renderpath==R_FIXEDFUNCTION) return &stubsurface;
-        }
+    }
+
+    if(cmds)
+    {
+        if(renderpath==R_FIXEDFUNCTION && !strncmp(cmds, "<noff>", 6)) return &stubsurface;
     }
     
     if(msg) show_out_of_renderloop_progress(0, file);
@@ -397,15 +400,32 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     if(!s) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
     int bpp = s->format->BitsPerPixel;
     if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 16, 24, or 32 bpp: %s", tname); return NULL; }
-    if(tname[0]=='<')
+
+    while(cmds)
     {
-        if(!strncmp(cmd, "mad", arg1-cmd)) texmad(s, parsevec(arg1+1), arg2 ? parsevec(arg2+1) : vec(0, 0, 0)); 
-        else if(!strncmp(cmd, "ffmask", arg1-cmd)) s = texffmask(s, atoi(arg1+1));
-        else if(!strncmp(cmd, "dup", arg1-cmd)) texdup(s, atoi(arg1+1), atoi(arg2+1));
-        else if(!strncmp(cmd, "decal", arg1-cmd)) s = texdecal(s);
-        else if(!strncmp(cmd, "rotate", arg1-cmd)) s = texrotate(s, atoi(arg1+1), tex ? tex->type : 0);
-        else if(!strncmp(cmd, "reorient", arg1-cmd)) s = texreorient(s, atoi(arg1+1)>0, atoi(arg2+1)>0, atoi(arg3+1)>0, tex ? tex->type : TEX_DIFFUSE);
+        const char *cmd = NULL, *arg[3] = { NULL, NULL, NULL };
+        cmd = &cmds[1];
+        cmds = strchr(cmd, '<');
+        size_t len = strcspn(cmd, ":,><");
+        loopi(3)
+        {
+            arg[i] = strchr(i ? arg[i-1] : cmd, i ? ',' : ':');
+            if(arg[i]) 
+            {
+                if(cmds && arg[i]>=cmds) cmds = strchr(arg[i], '<');
+                arg[i]++;
+            }
+            else arg[i] = "";
+        }
+        if(!strncmp(cmd, "mad", len)) texmad(s, parsevec(arg[0]), parsevec(arg[1])); 
+        else if(!strncmp(cmd, "ffmask", len)) s = texffmask(s, atoi(arg[0]));
+        else if(!strncmp(cmd, "dup", len)) texdup(s, atoi(arg[0]), atoi(arg[1]));
+        else if(!strncmp(cmd, "decal", len)) s = texdecal(s);
+        else if(!strncmp(cmd, "offset", len)) s = texoffset(s, atoi(arg[0]), atoi(arg[1]));
+        else if(!strncmp(cmd, "rotate", len)) s = texrotate(s, atoi(arg[0]), tex ? tex->type : 0);
+        else if(!strncmp(cmd, "reorient", len)) s = texreorient(s, atoi(arg[0])>0, atoi(arg[1])>0, atoi(arg[2])>0, tex ? tex->type : TEX_DIFFUSE);
     }
+
     return s;
 }
 
