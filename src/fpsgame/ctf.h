@@ -392,8 +392,6 @@ struct ctfclient : ctfstate
             }
             if(commit)
             {
-                f.reset();
-
                 f.score = score;
                 f.owner = owner>=0 ? (owner==cl.player1->clientnum ? cl.player1 : cl.newclient(owner)) : NULL;
                 f.droptime = dropped;

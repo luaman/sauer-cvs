@@ -516,7 +516,7 @@ struct fpsserver : igameserver
         teamscore(const char *name) : name(name), rank(0), clients(0) {}
     };
     
-    const char *chooseworstteam(const char *suggest, clientinfo *exclude = NULL)
+    const char *chooseworstteam(const char *suggest = NULL, clientinfo *exclude = NULL)
     {
         teamscore teamscores[2] = { teamscore("good"), teamscore("evil") };
         const int numteams = sizeof(teamscores)/sizeof(teamscores[0]);
@@ -1254,7 +1254,7 @@ struct fpsserver : igameserver
                 }
                 getstring(text, p);
                 filtertext(text, text, false, MAXTEAMLEN);
-                if(!ci->local && (connected || (smode && !smode->canchangeteam(ci, ci->team, text))) && m_teammode)
+                if(!ci->local && (smode && !smode->canchangeteam(ci, ci->team, text)) && m_teammode)
                 {
                     const char *worst = chooseworstteam(text, ci);
                     if(worst)
@@ -1558,6 +1558,16 @@ struct fpsserver : igameserver
                 putint(p, sents[i].type);
             }
             putint(p, -1);
+        }
+        if(ci && !ci->local && m_teammode)
+        {
+            const char *worst = chooseworstteam();
+            if(worst)
+            {
+                putint(p, SV_SETTEAM);
+                putint(p, ci->clientnum);
+                sendstring(worst, p);
+            }
         }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
         {
