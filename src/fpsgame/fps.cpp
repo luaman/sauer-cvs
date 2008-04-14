@@ -526,9 +526,25 @@ struct fpsclient : igameclient
         }
     }
 
+    void preloadbouncers()
+    {
+        const char *mdls[] =
+        {
+            "gibc", "gibh",
+            "projectiles/grenade", "projectiles/rocket",
+            "debris/debris01", "debris/debris02", "debris/debris03", "debris/debris04",
+            "barreldebris/debris01", "barreldebris/debris02", "barreldebris/debris03", "barreldebris/debris04"
+        };
+        loopi(sizeof(mdls)/sizeof(mdls[0]))
+        {
+            loadmodel(mdls[i], -1, true);
+        }
+    }
+
     void preload()
     {
         preloadweapons();
+        preloadbouncers();
         preloadcharacters();
         et.preloadentities();
         if(m_sp) ms.preloadmonsters();
