@@ -418,6 +418,10 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
             else arg[i] = "";
         }
         if(!strncmp(cmd, "mad", len)) texmad(s, parsevec(arg[0]), parsevec(arg[1])); 
+        else if(!strncmp(cmd, "ffcolor", len))
+        {
+            if(renderpath==R_FIXEDFUNCTION) texmad(s, parsevec(arg[0]), parsevec(arg[1]));
+        }
         else if(!strncmp(cmd, "ffmask", len)) s = texffmask(s, atoi(arg[0]));
         else if(!strncmp(cmd, "dup", len)) texdup(s, atoi(arg[0]), atoi(arg[1]));
         else if(!strncmp(cmd, "decal", len)) s = texdecal(s);
@@ -512,14 +516,6 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     else if(curmatslot>=0) matslot=curmatslot;
     else if(!curtexnum) return;
     Slot &s = matslot>=0 ? materialslots[matslot] : (tnum!=TEX_DIFFUSE ? slots.last() : slots.add());
-    if(tnum==TEX_DIFFUSE) 
-    {
-        setslotshader(s);
-        s.rotation = clamp(*rot, 0, 5);
-        s.xoffset = max(*xoffset, 0);
-        s.yoffset = max(*yoffset, 0);
-        s.scale = *scale <= 0 ? 1 : *scale;
-    }
     s.loaded = false;
     s.texmask |= 1<<tnum;
     if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
@@ -529,6 +525,14 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     st.t = NULL;
     s_strcpy(st.name, name);
     path(st.name);
+    if(tnum==TEX_DIFFUSE)
+    {
+        setslotshader(s);
+        s.rotation = clamp(*rot, 0, 5);
+        s.xoffset = max(*xoffset, 0);
+        s.yoffset = max(*yoffset, 0);
+        s.scale = *scale <= 0 ? 1 : *scale;
+    }
 }
 
 COMMAND(texture, "ssiiif");
