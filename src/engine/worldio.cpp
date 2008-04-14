@@ -224,8 +224,16 @@ void loadc(gzFile f, cube &c)
                         c.ext->merges = new mergeinfo[nummerges];
                         loopi(nummerges)
                         {
-                            gzread(f, &c.ext->merges[i], sizeof(mergeinfo));
-                            endianswap(&c.ext->merges[i], sizeof(ushort), 4);
+                            mergeinfo *m = &c.ext->merges[i];
+                            gzread(f, m, sizeof(mergeinfo));
+                            endianswap(m, sizeof(ushort), 4);
+                            if(hdr.version <= 25)
+                            {
+                                m->u1 *= 4;
+                                m->u2 *= 4;
+                                m->v1 *= 4;
+                                m->v2 *= 4;
+                            }
                         }
                     }
                 }
@@ -308,7 +316,7 @@ bool save_world(const char *mname, bool nolms)
     return true;
 }
 
-void swapXZ(cube *c)
+static void swapXZ(cube *c)
 {	
 	loopi(8) 
 	{
@@ -322,6 +330,16 @@ void swapXZ(cube *c)
 		}
 		if(c[i].children) swapXZ(c[i].children);
 	}
+}
+
+static void fixoversizedcubes(cube *c, int size)
+{
+    if(size <= VVEC_INT_MASK+1) return;
+    loopi(8)
+    {
+        if(!c[i].children) subdividecube(c[i], true, false);
+        fixoversizedcubes(c[i].children, size>>1);
+    }
 }
 
 bool load_world(const char *mname, const char *cname)        // still supports all map formats that have existed since the earliest cube betas!
@@ -462,6 +480,9 @@ bool load_world(const char *mname, const char *cname)        // still supports a
 
     if(hdr.version <= 8)
         converttovectorworld();
+
+    if(hdr.version <= 25 && hdr.worldsize > VVEC_INT_MASK+1)
+        fixoversizedcubes(worldroot, hdr.worldsize>>1);
 
     show_out_of_renderloop_progress(0, "validating...");
     validatec(worldroot, hdr.worldsize>>1);
