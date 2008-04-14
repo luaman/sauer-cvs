@@ -1498,7 +1498,7 @@ void renderva(renderstate &cur, vtxarray *va, int pass = RENDERPASS_LIGHTMAP, bo
             vverts += va->verts;
             va->shadowed = false;
             va->dynlightmask = 0;
-            if(fogpass ? va->o.z+va->size<=refracting-waterfog : va->curvfc==VFC_FOGGED)
+            if(fogpass ? va->geommax.z<=reflectz-waterfog : va->curvfc==VFC_FOGGED)
             {
                 foggedvas.add(va);
                 break;
@@ -1813,7 +1813,7 @@ void rendergeommultipass(renderstate &cur, int pass, bool fogpass)
         {
             if(va->geommax.z <= reflectz || (va->rquery && checkquery(va->rquery))) continue;
         }
-        if(fogpass ? va->o.z+va->size<=reflectz-waterfog : va->curvfc==VFC_FOGGED) continue;
+        if(fogpass ? va->geommax.z <= reflectz-waterfog : va->curvfc==VFC_FOGGED) continue;
         renderva(cur, va, pass, fogpass);
     }
     if(geombatches.length()) renderbatches(cur, pass);
