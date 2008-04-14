@@ -906,6 +906,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\explosion.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\glare.cpp"
 					>
 				</File>
@@ -920,6 +924,14 @@
 							PrecompiledHeaderThrough="pch.h"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\engine\lensflare.h"
+					>
+				</File>
+				<File
+					RelativePath="..\engine\lightning.h"
+					>
 				</File>
 				<File
 					RelativePath="..\engine\material.cpp"
