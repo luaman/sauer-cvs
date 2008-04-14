@@ -229,10 +229,11 @@ void loadc(gzFile f, cube &c)
                             endianswap(m, sizeof(ushort), 4);
                             if(hdr.version <= 25)
                             {
-                                m->u1 *= 4;
-                                m->u2 *= 4;
-                                m->v1 *= 4;
-                                m->v2 *= 4;
+                                int uorigin = m->u1 & 0xF000, vorigin = m->v1 & 0xF000;
+                                m->u1 = (m->u1 - uorigin) << 2;
+                                m->u2 = (m->u2 - uorigin) << 2;
+                                m->v1 = (m->v1 - vorigin) << 2;
+                                m->v2 = (m->v2 - vorigin) << 2;
                             }
                         }
                     }
