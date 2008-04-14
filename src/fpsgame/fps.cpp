@@ -294,7 +294,7 @@ struct fpsclient : igameclient
 
     void spawnplayer(fpsent *d)   // place at random spawn. also used by monsters!
     {
-        findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1), m_ctf ? ctfteamflag(player1->team)+1 : 0);
+        findplayerspawn(d, m_capture ? cpc.pickspawn(d->team) : (respawnent>=0 ? respawnent : -1), m_ctf ? ctfteamflag(player1->team) : 0);
         spawnstate(d);
         d->state = cc.spectator ? CS_SPECTATOR : (d==player1 && editmode ? CS_EDITING : CS_ALIVE);
     }
