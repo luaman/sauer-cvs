@@ -46,11 +46,15 @@ struct entities : icliententities
         }
     }
 
-    void renderent(extentity &e, int type, float z, float yaw)
+    void renderent(extentity &e, const char *mdlname, float z, float yaw)
     {
-        const char *mdlname = entmdlname(type);
         if(!mdlname) return;
         rendermodel(&e.light, mdlname, ANIM_MAPMODEL|ANIM_LOOP, vec(e.o).add(vec(0, 0, z)), yaw, 0, MDL_SHADOW | MDL_CULL_VFC | MDL_CULL_DIST | MDL_CULL_OCCLUDED);
+    }
+
+    void renderent(extentity &e, int type, float z, float yaw)
+    {
+        renderent(e, entmdlname(type), z, yaw);
     }
 
     void renderentities()
@@ -63,8 +67,20 @@ struct entities : icliententities
                 renderent(e, e.type, (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/(e.attr2 ? 1.0f : 10.0f));
                 continue;
             }
-            if(!e.spawned && e.type!=TELEPORT) continue;
-            if(e.type<I_SHELLS || e.type>TELEPORT) continue;
+            if(e.type==TELEPORT)
+            {
+                if(e.attr2 < 0) continue;
+                if(e.attr2 > 0)
+                {
+                    renderent(e, mapmodelname(e.attr2), (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);        
+                    continue;
+                }
+            }
+            else
+            {
+                if(!e.spawned) continue;
+                if(e.type<I_SHELLS || e.type>I_QUAD) continue;
+            }
             renderent(e, e.type, (float)(1+sin(cl.lastmillis/100.0+e.o.x+e.o.y)/20), cl.lastmillis/10.0f);
         }
     }
