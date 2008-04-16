@@ -36,9 +36,10 @@ struct clientcom : iclientcom
         CCOMMAND(stopdemo, "", (clientcom *self), self->stopdemo());
         CCOMMAND(cleardemos, "i", (clientcom *self, int *val), self->cleardemos(*val));
 
-        extern void result(const char *s);
         CCOMMAND(getname, "", (clientcom *self), result(self->player1->name));
         CCOMMAND(getteam, "", (clientcom *self), result(self->player1->team));
+        CCOMMAND(getclientfocus, "", (clientcom *self), intret(self->getclientfocus()));
+        CCOMMAND(getclientname, "", (clientcom *self, int *cn), result(self->getclientname(*cn)));
     }
 
     void switchname(const char *name)
@@ -106,6 +107,20 @@ struct clientcom : iclientcom
     void edittoggled(bool on)
     {
         addmsg(SV_EDITMODE, "ri", on ? 1 : 0);
+    }
+
+    int getclientfocus()
+    {
+        fpsent *d = cl.pointatplayer();
+        return d ? d->clientnum : -1;
+    }
+
+    const char *getclientname(int cn)
+    {
+        if(cn == cl.player1->clientnum) return cl.player1->name;
+
+        fpsent *d = cl.getclient(cn);
+        return d ? d->name : "";
     }
 
     int parseplayer(const char *arg)
