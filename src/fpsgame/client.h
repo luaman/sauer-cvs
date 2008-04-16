@@ -613,6 +613,7 @@ struct clientcom : iclientcom
                 cl.sb.showscores(false);
                 cl.lasthit = 0;
                 if(m_arena) conoutf("new round starting... fight!");
+                else if(m_capture) cl.cpc.lastrepammo = -1;
                 addmsg(SV_SPAWN, "rii", player1->lifesequence, player1->gunselect);
                 break;
             }

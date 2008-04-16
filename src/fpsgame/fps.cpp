@@ -140,6 +140,7 @@ struct fpsclient : igameclient
             spawnplayer(player1);
             sb.showscores(false);
             lasthit = 0;
+            if(m_capture) cpc.lastrepammo = -1;
         }
     }
 
@@ -287,6 +288,7 @@ struct fpsclient : igameclient
             swaydir.add(vec(vel).mul((1-k)/(15*max(vel.magnitude(), player1->maxspeed))));
             et.checkitems(player1);
             if(m_classicsp) checktriggers();
+            else if(m_capture) cpc.checkbaseammo(player1);
             else if(m_ctf) ctf.checkflags(player1);
         }
         if(player1->clientnum>=0) c2sinfo(player1);   // do this last, to reduce the effective frame lag
