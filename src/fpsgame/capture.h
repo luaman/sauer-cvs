@@ -204,10 +204,12 @@ struct captureclient : capturestate
 
     fpsclient &cl;
     float radarscale;
+    int lastrepammo;
 
     IVARP(capturetether, 0, 1, 1);
+    IVARP(autorepammo, 0, 1, 1);
 
-    captureclient(fpsclient &cl) : cl(cl), radarscale(0)
+    captureclient(fpsclient &cl) : cl(cl), radarscale(0), lastrepammo(-1)
     {
         CCOMMAND(repammo, "", (captureclient *self), self->replenishammo());
     }
@@ -231,6 +233,28 @@ struct captureclient : capturestate
         cl.et.repammo(cl.player1, type);
     }
 
+    void checkbaseammo(fpsent *d)
+    {
+        int gamemode = cl.gamemode;
+        if(m_noitems || !autorepammo() || d!=cl.player1 || d->state!=CS_ALIVE) return;
+        vec o = d->o;
+        o.z -= d->eyeheight;
+        loopv(bases)
+        {
+            baseinfo &b = bases[i];
+            if(b.ammotype>0 && b.ammotype<=I_CARTRIDGES-I_SHELLS+1 && insidebase(b, d->o) && !strcmp(b.owner, d->team) && b.o.dist(o) < 12)
+            {
+                if(lastrepammo!=i)
+                {
+                    if(b.ammo > 0 && !cl.player1->hasmaxammo(b.ammotype-1+I_SHELLS)) cl.cc.addmsg(SV_REPAMMO, "r");
+                    lastrepammo = i;
+                }
+                return;
+            }
+        }
+        lastrepammo = -1;
+    }    
+        
     void rendertether(fpsent *d)
     {
         int oldbase = d->lastbase;
@@ -437,6 +461,7 @@ struct captureclient : capturestate
         center.div(bases.length());
         radarscale = 0;
         loopv(bases) radarscale = max(radarscale, 2*center.dist(bases[i].o));
+        lastrepammo = -1;
     }
             
     void sendbases(ucharbuf &p)
