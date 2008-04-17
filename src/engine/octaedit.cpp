@@ -464,7 +464,7 @@ void cursorupdate()
 
 //////////// ready changes to vertex arrays ////////////
 
-static bool invalidatedmerges = false;
+static bool invalidatedmerges = false, haschanged = false;
 
 void readychanges(block3 &b, cube *c, const ivec &cor, int size)
 {
@@ -505,21 +505,11 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
     }
 }
 
-void changed(const block3 &sel)
+void commitchanges()
 {
-    if(sel.s.iszero()) return;
-    block3 b = sel;
-    loopi(3) b.s[i] *= b.grid;
-    b.grid = 1;
+    if(!haschanged) return;
+    haschanged = false;
     invalidatedmerges = false;
-    loopi(3)                    // the changed blocks are the selected cubes
-    {
-        b.o[i] -= 1;
-        b.s[i] += 2;
-        readychanges(b, worldroot, ivec(0, 0, 0), hdr.worldsize/2);
-        b.o[i] += 1;
-        b.s[i] -= 2;
-    }
 
     extern vector<vtxarray *> valist;
     int oldlen = valist.length();
@@ -530,6 +520,25 @@ void changed(const block3 &sel)
     invalidatepostfx();
     entitiesinoctanodes();
     updatevabbs();
+}
+
+void changed(const block3 &sel, bool commit = true)
+{
+    if(sel.s.iszero()) return;
+    block3 b = sel;
+    loopi(3) b.s[i] *= b.grid;
+    b.grid = 1;
+    loopi(3)                    // the changed blocks are the selected cubes
+    {
+        b.o[i] -= 1;
+        b.s[i] += 2;
+        readychanges(b, worldroot, ivec(0, 0, 0), hdr.worldsize/2);
+        b.o[i] += 1;
+        b.s[i] -= 2;
+    }
+    haschanged = true;
+
+    if(commit) commitchanges();
 }
 
 //////////// copy and undo /////////////
@@ -664,9 +673,10 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 		if(u.n) copyundoents(r, u);
 		b.add(r);
 		pasteundo(u);
-		if(u.b) changed(sel);
+		if(u.b) changed(sel, false);
 		freeundo(u);
 	}    
+    commitchanges();
     reorient();
     forcenextundo();
 }
