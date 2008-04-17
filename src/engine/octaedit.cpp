@@ -626,10 +626,10 @@ void pruneundos(int maxremain)                          // bound memory
     while(!redos.empty()) { freeundo(redos.pop()); }
 }
 
-void initundocube(undoblock &u, selinfo &sel)
+void initundocube(undoblock &u, selinfo &s)
 {
-    u.g = selgridmap(sel);
-    u.b = blockcopy(sel, -sel.grid);
+    u.g = selgridmap(s);
+    u.b = blockcopy(s, -s.grid);
 }
 
 void addundo(undoblock &u)
@@ -658,26 +658,30 @@ void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
     if(noedit() || multiplayer()) return;
     if(a.empty()) { conoutf("nothing more to %s", s); return; }	
 	int ts = a.last().ts;
+    selinfo l;
 	while(!a.empty() && ts==a.last().ts)
 	{
 		undoblock u = a.pop();
 		if(u.b)
 		{
-			sel.o = u.b->o;
-			sel.s = u.b->s;
-			sel.grid = u.b->grid;
-			sel.orient = u.b->orient;
+			l.o = u.b->o;
+			l.s = u.b->s;
+			l.grid = u.b->grid;
+			l.orient = u.b->orient;
 		}
 		undoblock r;
-		if(u.g) initundocube(r, sel);
+		if(u.g) initundocube(r, l);
 		if(u.n) copyundoents(r, u);
 		b.add(r);
 		pasteundo(u);
-		if(u.b) changed(sel, false);
+		if(u.b) changed(l, false);
 		freeundo(u);
-	}    
+	}
     commitchanges();
-    reorient();
+    if (!hmapsel) {
+        sel = l;
+        reorient();
+    }
     forcenextundo();
 }
 
