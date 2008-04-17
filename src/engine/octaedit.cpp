@@ -415,7 +415,7 @@ void cursorupdate()
             if(mag>1 && selchildcount==1) selchildcount = -mag;
         }
     }
-    
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     
@@ -629,14 +629,19 @@ void addundo(undoblock &u)
     pruneundos(undomegs<<20);
 }
 
+void makeundoex(selinfo &s)
+{
+    if(multiplayer(false)) return;
+    undoblock u;
+	initundocube(u, s);
+    addundo(u);
+}
+
 void makeundo()                        // stores state of selected cubes before editing
 {
     if(lastsel==sel || sel.s.iszero()) return;
     lastsel=sel;
-    if(multiplayer(false)) return;
-    undoblock u;
-	initundocube(u, sel);
-    addundo(u);
+    makeundoex(sel);
 }
 
 void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
@@ -812,6 +817,7 @@ namespace hmap
     int d, dc, dr, dcr, biasup, br, hws, fg;
     int gx, gy, gz, mx, my, mz, nx, ny, nz, bmx, bmy, bnx, bny;
     uint fs;
+    selinfo hundo;
     
     cube *getcube(ivec t, int f) 
     {
@@ -855,6 +861,11 @@ namespace hmap
         if((NOTHMAP & flags[x][y]) || (PAINTED & flags[x][y])) return;
         ivec t(d, x+gx, y+gy, dc ? z : hws-z);
         t.shl(gridpower);
+
+        // selections may damage; must makeundo before
+        hundo.o = t;
+        hundo.o[D[d]] -= dcr*gridsize*2;
+        makeundoex(hundo);
         
         cube **c = cmap[x][y];     
         loopk(4) c[k] = NULL;
@@ -1060,6 +1071,10 @@ namespace hmap
         }
         nz = hdr.worldsize-gridsize;
         mz = 0;
+        hundo.s = ivec(d,1,1,5);
+        hundo.orient = sel.orient;
+        hundo.grid = gridsize;
+        forcenextundo();
                     
         changes.grid = gridsize;
         changes.s = changes.o = cur;
@@ -1353,10 +1368,10 @@ void replace()
 COMMAND(replace, "");
 
 ////////// flip and rotate ///////////////
-uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4)+ ((face&0x0F0F0F0F)<<4)); }
-uint cflip(uint face) { return ((face&0xFF00FF00)>>8) + ((face&0x00FF00FF)<<8); }
-uint rflip(uint face) { return ((face&0xFFFF0000)>>16)+ ((face&0x0000FFFF)<<16); }
-uint mflip(uint face) { return (face&0xFF0000FF) + ((face&0x00FF0000)>>8) + ((face&0x0000FF00)<<8); }
+uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4) | ((face&0x0F0F0F0F)<<4)); }
+uint cflip(uint face) { return ((face&0xFF00FF00)>>8) | ((face&0x00FF00FF)<<8); }
+uint rflip(uint face) { return ((face&0xFFFF0000)>>16)| ((face&0x0000FFFF)<<16); }
+uint mflip(uint face) { return (face&0xFF0000FF) | ((face&0x00FF0000)>>8) | ((face&0x0000FF00)<<8); }
 
 void flipcube(cube &c, int d)
 {
