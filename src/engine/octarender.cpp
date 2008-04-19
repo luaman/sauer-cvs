@@ -1379,27 +1379,31 @@ int updateva(cube *c, int cx, int cy, int cz, int size, int csi)
             varoot.add(c[i].ext->va);
             if(c[i].ext->va->hasmerges&MERGE_ORIGIN) findmergedfaces(c[i], o, size, csi, csi);
         }
-        else if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi-1);
-        else if(!isempty(c[i]) || hasskyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
-        int tcount = count + (csi < VVEC_INT ? vamerges[csi].length() : 0);
-        if(tcount > vacubemax || (tcount >= vacubemin && size >= vacubesize) || size == min(VVEC_INT_MASK+1, hdr.worldsize/2)) 
+        else
         {
-            setva(c[i], o.x, o.y, o.z, size, csi);
-            if(c[i].ext && c[i].ext->va)
+            if(c[i].children) count += updateva(c[i].children, o.x, o.y, o.z, size/2, csi-1);
+            else if(!isempty(c[i]) || hasskyfaces(c[i], o.x, o.y, o.z, size, faces)) count++;
+            int tcount = count + (csi < VVEC_INT ? vamerges[csi].length() : 0);
+            if(tcount > vacubemax || (tcount >= vacubemin && size >= vacubesize) || size == min(VVEC_INT_MASK+1, hdr.worldsize/2)) 
             {
-                while(varoot.length() > childpos)
+                setva(c[i], o.x, o.y, o.z, size, csi);
+                if(c[i].ext && c[i].ext->va)
                 {
-                    vtxarray *child = varoot.pop();
-                    c[i].ext->va->children.add(child);
-                    child->parent = c[i].ext->va;
+                    while(varoot.length() > childpos)
+                    {
+                        vtxarray *child = varoot.pop();
+                        c[i].ext->va->children.add(child);
+                        child->parent = c[i].ext->va;
+                    }
+                    varoot.add(c[i].ext->va);
+                    if(vamergemax > size)
+                    {
+                        cmergemax = max(cmergemax, vamergemax);
+                        chasmerges |= vahasmerges&~MERGE_USE;
+                    }
+                    continue;
                 }
-                varoot.add(c[i].ext->va);
-                if(vamergemax > size)
-                {
-                    cmergemax = max(cmergemax, vamergemax);
-                    chasmerges |= vahasmerges&~MERGE_USE;
-                }
-                continue;
+                else count = 0;
             }
         }
         if(csi < VVEC_INT-1 && vamerges[csi].length()) vamerges[csi+1].move(vamerges[csi]);
