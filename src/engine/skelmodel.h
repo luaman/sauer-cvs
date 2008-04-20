@@ -1090,7 +1090,7 @@ struct skelmodel : animmodel
 
         bool shouldcleanup() const
         {
-            return skelcache.empty() || gpuaccelerate()!=usegpuskel || ((matskel!=0)!=usematskel && numframes);
+            return numframes && (skelcache.empty() || gpuaccelerate()!=usegpuskel || (matskel!=0)!=usematskel);
         }
     };
 
@@ -1436,7 +1436,7 @@ struct skelmodel : animmodel
             }
             if(hasVBO) { if(ebuf) { glDeleteBuffers_(1, &ebuf); ebuf = 0; } }
             else DELETEA(vdata);
-            lastvbuf = lasttcbuf = lastmtcbuf = lastbbuf = lastbdata = NULL;
+            lastvbuf = lasttcbuf = lastmtcbuf = lastnbuf = lastbbuf = lastbdata = NULL;
             lastebuf = 0;
         }
 
