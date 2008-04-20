@@ -5,7 +5,7 @@
 
 Shader *Shader::lastshader = NULL;
 
-Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *foggedshader = NULL, *foggednotextureshader = NULL;
+Shader *defaultshader = NULL, *notextureshader = NULL, *nocolorshader = NULL, *foggedshader = NULL, *foggednotextureshader = NULL, *stdworldshader = NULL;
 
 static hashtable<const char *, Shader> shaders;
 static Shader *curshader = NULL;
@@ -38,7 +38,11 @@ void loadshaders()
     exec("data/stdshader.cfg");
     standardshader = false;
     defaultshader = lookupshaderbyname("default");
-    if(!defaultshader) fatal("cannot find shader definitions");
+    stdworldshader = lookupshaderbyname("stdworld");
+    if(!defaultshader || !stdworldshader) fatal("cannot find shader definitions");
+
+    extern Slot dummyslot;
+    dummyslot.shader = stdworldshader;
 
     notextureshader = lookupshaderbyname("notexture");
     nocolorshader = lookupshaderbyname("nocolor");
@@ -1136,8 +1140,6 @@ void setslotshader(Slot &s)
     s.shader = curshader;
     if(!s.shader)
     {
-        static Shader *stdworldshader = NULL;
-        if(!stdworldshader) stdworldshader = lookupshaderbyname("stdworld");
         s.shader = stdworldshader;
         return;
     }
