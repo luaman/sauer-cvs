@@ -241,7 +241,7 @@ struct fpsstate
             case I_GREENARMOUR:
                 // (100h/100g only absorbs 200 damage)
                 if(armourtype==A_YELLOW && armour>=100) return false;
-            case I_YELLOWARMOUR: return armour<is.max;
+            case I_YELLOWARMOUR: return !armourtype || armour<is.max;
             case I_QUAD: return quadmillis<is.max;
             default: return ammo[is.info]<is.max;
         }
@@ -323,6 +323,13 @@ struct fpsstate
                     ammo[GUN_CG] /= 2;
                 }
             }
+        }
+        else if(m_ctf)
+        {
+            armourtype = A_BLUE;
+            armour = 100;
+            ammo[GUN_PISTOL] = 40;
+            ammo[GUN_GL] = 1;
         }
         else
         {

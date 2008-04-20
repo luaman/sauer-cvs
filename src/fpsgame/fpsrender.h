@@ -51,7 +51,8 @@ struct fpsrender
             }
             if(d->armour)
             {
-                a[ai].name = d->armourtype==A_GREEN ? "shield/green" : (d->armourtype==A_YELLOW ? "shield/yellow" : NULL);
+                static const char *armormdls[] = { "shield/blue", "shield/green", "shield/yellow" };
+                a[ai].name = armormdls[clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW)];
                 a[ai].tag = "tag_shield";
                 a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
                 a[ai].basetime = 0;

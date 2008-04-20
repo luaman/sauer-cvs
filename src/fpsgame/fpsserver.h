@@ -1086,8 +1086,7 @@ struct fpsserver : igameserver
                 if(!ci->local && (ci->state.state==CS_ALIVE || ci->state.state==CS_EDITING))
                 {
                     f &= 0xF;
-                    if(ci->state.armourtype==A_GREEN && ci->state.armour>0) f |= 1<<4;
-                    if(ci->state.armourtype==A_YELLOW && ci->state.armour>0) f |= 1<<5;
+                    if(ci->state.armour>0) f |= (ci->state.armourtype+1)<<4;
                     if(ci->state.quadmillis) f |= 1<<6;
                     if(ci->state.maxhealth>100) f |= ((ci->state.maxhealth-100)/itemstats[I_BOOST-I_SHELLS].add)<<7;
                     curmsg = p.length();

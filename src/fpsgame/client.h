@@ -381,8 +381,11 @@ struct clientcom : iclientcom
                 f >>= 2;
                 d->move = (f&3)==3 ? -1 : f&3;
                 f >>= 2;
-                if(f&1) { d->armourtype = A_GREEN; d->armour = 1; }
-                else if(f&2) { d->armourtype = A_YELLOW; d->armour = 1; }
+                if(f&3)
+                {
+                    d->armourtype = (f&3)-1;
+                    d->armour = 1;
+                }
                 else { d->armourtype = A_BLUE; d->armour = 0; }
                 d->quadmillis = f&4 ? 1 : 0;
                 f >>= 3;
