@@ -46,6 +46,30 @@
 <a href="#md3bumpmap"><tt>md3bumpmap</tt></a>
 </li>
 <li>
+<a href="#md3spec"><tt>md3spec</tt></a>
+</li>
+<li>
+<a href="#md3alphatest"><tt>md3alphatest</tt></a>
+</li>
+<li>
+<a href="#md3alphablend"><tt>md3alphablend</tt></a>
+</li>
+<li>
+<a href="#md3shader"><tt>md3shader</tt></a>
+</li>
+<li>
+<a href="#md3ambient"><tt>md3ambient</tt></a>
+</li>
+<li>
+<a href="#md3envmap"><tt>md3envmap</tt></a>
+</li>
+<li>
+<a href="#md3glow"><tt>md3glow</tt></a>
+</li>
+<li>
+<a href="#md3fullbright"><tt>md3fullbright</tt></a>
+</li>
+<li>
 <a href="#md3anim"><tt>md3anim</tt></a>
 </li>
 <li>
@@ -58,11 +82,69 @@
 </li>
 </ul>
 </li>
+
+<li>
+<a href="#md5_format"><b>MD5 Format</b></a>
+<ul class="contents2">
+<li>
+<a href="#md5load"><tt>md5load</tt></a>
+</li>
+<li>
+<a href="#md5pitch"><tt>md5pitch</tt></a>
+</li>
+<li>
+<a href="#md5skin"><tt>md5skin</tt></a>
+</li>
+<li>
+<a href="#md5bumpmap"><tt>md5bumpmap</tt></a>
+</li>
+<li>
+<a href="#md5spec"><tt>md5spec</tt></a>
+</li>
+<li>
+<a href="#md5alphatest"><tt>md5alphatest</tt></a>
+</li>
+<li>
+<a href="#md5alphablend"><tt>md5alphablend</tt></a>
+</li>
+<li>
+<a href="#md5shader"><tt>md5shader</tt></a>
+</li>
+<li>
+<a href="#md5ambient"><tt>md5ambient</tt></a>
+</li>
+<li>
+<a href="#md5envmap"><tt>md5envmap</tt></a>
+</li>
+<li>
+<a href="#md5glow"><tt>md5glow</tt></a>
+</li>
+<li>
+<a href="#md5fullbright"><tt>md5fullbright</tt></a>
+</li>
+<li>
+<a href="#md5anim"><tt>md5anim</tt></a>
+</li>
+<li>
+<a href="#md5animpart"><tt>md5animpart</tt></a>
+</li>
+<li>
+<a href="#md5tag"><tt>md5tag</tt></a>
+</li>
+<li>
+<a href="#md5link"><tt>md5link</tt></a>
+</li>
+</ul>
+</li>
+
 <li>
 <a href="#common_commands"><b>Common Commands</b></a>
 <ul class="contents2">
 <li>
 <a href="#mdlcollide"><tt>mdlcollide</tt></a>
+</li>
+<li>
+<a href="#mdlellipsecollide"><tt>mdlellipsecollide</tt></a>
 </li>
 <li>
 <a href="#mdlbb"><tt>mdlbb</tt></a>
@@ -98,10 +180,14 @@
 <a href="#mdlenvmap"><tt>mdlenvmap</tt></a>
 </li>
 <li>
+<a href="#mdlfullbright"><tt>mdlfullbright</tt></a>
+</li>
+<li>
 <a href="#mdlshadow"><tt>mdlshadow</tt></a>
 </li>
 </ul>
 </li>
+
 </ul>
 </div>
 
@@ -241,6 +327,50 @@ and this command allows you to provide a separate skin for the bumpmapping case.
 used to shade the supplied diffuse skin texture.
 </p>
 
+<pre id="md3spec">md3spec MESH S</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. S is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics and anything shiny, use lower values like 50 for wood etc, -1 means off entirely).</p>
+
+<pre id="md3alphatest">md3alphatest MESH T</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Controls the cut-off threshold, T, at which alpha-channel skins will discard pixels where alpha is less than T.
+T is a floating point value in the range of 0 to 1 (Default: 0.9). 
+</p>
+
+<pre id="md3alphablend">md3alphablend MESH B</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Controls whether a model with an alpha-channel skin will alpha blend (Default: 1). 
+</p>
+
+<pre id="md3shader">md3shader MESH S</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. S is the name of the shader to use for rendering the model (Default: "stdmodel"). 
+</p>
+
+<pre id="md3glow">md3glow MESH G</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. G is the glowmap scale (not given or 0 gives the default of 300, -1 means off entirely), such that
+the glow is G percent of the diffuse skin color.
+</p>
+
+<pre id="md3envmap">md3envmap MESH P</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Sets the environment map used for the model, where P is a pathname in the same syntax as the
+"loadsky" command. If this is not specified, the mesh will use the closest "envmap" entity,
+or skybox, if none is available (unless overridden by "mdlenvmap").
+</p>
+
+<pre id="md3ambient">md3ambient MESH A</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to.  A is the percent of the ambient light that should be used for shading. Not given or 0 gives the
+default of 30%, -1 means no ambient.
+</p>
+
+<pre id="md3fullbright">md3fullbright MESH N</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Uses a constant lighting level of N instead of the normal lighting. N is a floating-point value on a scale of 0 to 1.
+</p>
+
 <pre id="md3anim">md3anim A F N [S [P]]</pre>
 <p>
 This assigns a new animation to the last loaded model (md3load). A is the name of the animation
@@ -378,10 +508,210 @@ mdlscale 20         // 20 percent of the original size
 mdltrans 0 0 -1.5   // lower the model a bit
 </pre>
 
+<h2 id="md5_format">MD5 Format</h2>
+<p>
+MD5 models require a Sauerbraten configuration to function properly. Make sure your exporter properly exports mesh names in the MD5 file so that these can be referenced in the configuration file (the Blender exporter does not export these, but a fixed  Blender MD5 exporter can be gotten from the Cube wiki).
+</p>
+
+<p>
+Make sure no more than 4 blend weights are used per vertex, as Sauerbraten will silently drop any extra blend weights. The skeleton should use no more than 256 bones, and less than 70 or so bones should be used if you wish the model to be skeletally animated on the GPU. To optimize animation of the model on both CPU and GPU, keep the number of blend weights per vertex to a minimum. Also, Sauerbraten caches similar combinations of blend weights while animating, especially on the CPU, such that if two or more vertices use the same blend weights, blending calculations only have to be done once for all the vertices - so try and minimize the number of distinct combinations of blend weights if possible. 
+</p>
+
+<p>
+When animating skeletal models for Sauerbraten, you should model the animations as a single piece for the entire body (unlike for MD3 which requires splitting the mesh). In the configuration file, you can choose a bone at which to split the model into an upper and lower part (via "md5animpart"), which allows, for example, the upper body movement of one animation to be combined with the lower body movement of another animation automatically. The bone at which you split the animation up should ideally be a root bone, of which the upper body and lower body are separate sub-trees. Rigging the model in this way also allows for pitch animation (which also requires selecting a bone to pitch at) to take place such as bending at the waist, which similarly requires the upper body to be a sub-tree of the bone at which the pitch animation will occur.
+</p>
+
+<p>
+Sauerbraten's MD5 support allows for two methods of attaching models to another: via tags (by assigning a tag name to a bone with "md5tag"), or by animating multiple models against a common, named skeleton that will be shared among all of them (useful for modeling clothing attachments and similar items). To use a shared skeleton, you simply export all the models with the same skeleton. Animations only need to be specified for the base model. A name for the skeleton is specified via the "md5load" command, for both the model exporting the skeleton and the models using it. When one of the models is attached to the one supplying the skeleton internally, the tag setup is instead ignored and the skeleton/animations of the base model are used to animate the attachment as if it were a sub-mesh of the base model itself.
+</p>
+
+<p>
+You must place a <i>md5.cfg</i> in a directory in <i>packages/models/</i>.
+The following commands may be used in the <i>md5.cfg</i>:
+</p>
+
+<pre id="md5load">md5load P [S]</pre>
+<p>
+This command loads the fa part of your model. As an example, this could be the <i>head.md5mesh</i>
+of a playermodel. P is the path to the md5mesh file to load, its relative to the location of the
+<i>md5.cfg</i>. S is an optional name that can be assigned to the skeleton specified in the md5mesh
+for skeleton sharing, but need not be specified if you do not wish to share the skeleton. This skeleton 
+name must be specified for both the model supplying a skeleton and an attached model intending to use the skeleton.
+</p>
+
+<pre id="md5pitch">md5pitch B S O M N</pre>
+<p>
+This command controls how a model responds to the model's pitch. B is the name of the bone which
+the pitch animation is applied to, as well as all bones in the sub-tree below it. The pitch (in degrees) 
+is scaled by S, offset by O, and then clamped to the range M..N, i.e. clamp(pitch*S + O, M, N). By default,
+all model parts have S=1, O=0, M=-360, and N=360, such that the model part will pitch one-to-one.
+</p>
+
+<pre id="md5skin">md5skin H S M [E [F]]</pre>
+<p>
+This loads a texture and assigns it to a mesh of the last loaded model (md5load). H is the name
+of the mesh you want to assign the texture to. S is the path to the texture, its recursive
+to the location of the <i>md5.cfg</i>. The optional M sets a texture for spec (red channel)/glow
+(green channel) maps as above. If E is non-zero, then the blue channel of the masks is
+interpreted as a chrome map. E (maximum envmap intensity) and F (minimum envmap intensity, default: 0) are floating point
+values in the range of 0 to 1, and specify the range in which the envmapping intensity will vary based on a viewing angle
+(a Fresnel term that is maximal at glancing angles, minimal when viewed dead-on). The intensity,
+after scaled into this range, is then multiplied by the chrome map.
+</p>
+
+<pre id="md5bumpmap">md5bumpmap H S N</pre>
+<p>
+This command enables bumpmapping for a given mesh in the last loaded model (md5load). H is the name
+of the mesh you want to assign bumpmapping textures to. S is the path to a diffuse skin texture which is
+used instead of the skin supplied with the "md5skin" command only if the user's 3D card supports bumpmapping,
+otherwise the skin supplied with "md5skin" takes precedence and no bumpmapping is done. These
+two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
+little to no directional shading baked into it, whereas flat diffuse skins (no bumpmapping) generally should,
+and this command allows you to provide a separate skin for the bumpmapping case. N is a normal map texture which is
+used to shade the supplied diffuse skin texture.
+</p>
+
+<pre id="md5spec">md5spec MESH S</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. S is the specular intensity (not given or 0 gives the default of 100, good for metal/plastics and anything shiny, use lower values like 50 for wood etc, -1 means off entirely).</p>
+
+<pre id="md5alphatest">md5alphatest MESH T</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Controls the cut-off threshold, T, at which alpha-channel skins will discard pixels where alpha is less than T.
+T is a floating point value in the range of 0 to 1 (Default: 0.9).
+</p>
+
+<pre id="md5alphablend">md5alphablend MESH B</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Controls whether a model with an alpha-channel skin will alpha blend (Default: 1).
+</p>
+
+<pre id="md5shader">md5shader MESH S</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. S is the name of the shader to use for rendering the model (Default: "stdmodel").
+</p>
+
+<pre id="md5glow">md5glow MESH G</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. G is the glowmap scale (not given or 0 gives the default of 300, -1 means off entirely), such that
+the glow is G percent of the diffuse skin color.
+</p>
+
+<pre id="md5envmap">md5envmap MESH P</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Sets the environment map used for the model, where P is a pathname in the same syntax as the
+"loadsky" command. If this is not specified, the mesh will use the closest "envmap" entity,
+or skybox, if none is available (unless overridden by "mdlenvmap").
+</p>
+
+<pre id="md5ambient">md5ambient MESH A</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to.  A is the percent of the ambient light that should be used for shading. Not given or 0 gives the
+default of 30%, -1 means no ambient.
+</p>
+
+<pre id="md5fullbright">md5fullbright MESH N</pre>
+<p>
+MESH specifies the name of the mesh this setting applies to. Uses a constant lighting level of N instead of the normal lighting. N is a floating-point value on a scale of 0 to 1.
+</p>
+
+<pre id="md5anim">md5anim A F N [S [P]]</pre>
+<p>
+This assigns a new animation to the current animation part of the last loaded model (md5load). A is the name of the animation
+to define. Any of the following names may be used:
+</p>
+<ul>
+    <li>dying</li>
+    <li>dead</li>
+    <li>pain</li>
+    <li>idle</li>
+    <li>forward</li>
+    <li>backward</li>
+    <li>left</li>
+    <li>right</li>
+    <li>punch</li>
+    <li>shoot</li>
+    <li>jump</li>
+    <li>sink</li>
+    <li>swim</li>
+    <li>edit</li>
+    <li>lag</li>
+    <li>taunt</li>
+    <li>win</li>
+    <li>lose</li>
+    <li>gun shoot</li>
+    <li>gun idle</li>
+    <li>mapmodel</li>
+    <li>trigger</li>
+</ul>
+
+<p>
+F is the frame number the animation starts at. N is the number of frames in the animation.
+S is frames per second at which to run the anim. If none is specified or S=0, 10 FPS is the default.
+P specifies an optional priority for the animation (defaults to P=0).
+</p>
+
+<p>
+A character model will have up to 2 animations simultaneously playing - a primary animation
+and a secondary animation. If a character model defines the primary animation, it will be used,
+otherwise the secondary will be used if it is available. Primary animations are:
+</p>
+<ul>
+    <li>dying</li>
+    <li>dead</li>
+    <li>pain</li>
+    <li>punch</li>
+    <li>shoot</li>
+    <li>edit</li>
+    <li>lag</li>
+    <li>taunt</li>
+    <li>win</li>
+    <li>lose</li>
+</ul>
+
+<p>
+Secondary animations are:
+</p>
+<ul>
+    <li>idle</li>
+    <li>forward</li>
+    <li>backward</li>
+    <li>left</li>
+    <li>right</li>
+    <li>punch</li>
+    <li>shoot</li>
+    <li>jump</li>
+    <li>sink</li>
+    <li>swim</li>
+</ul>
+
+<pre id="md5animpart">md5animpart B</pre>
+<p>
+Starts a new animation part that will include bone B and all its sub-bones. This effectively splits animations up at the bone B, such that each animation part animates as if it were a separate model. Note that a new animation part has no animations (does not inherit any from the previous animation part). After an "md5load", an implicit animation part is started that involves all bones not used by other animation parts. Each model currently may only have 2 animation parts, including the implicit default part, so this command may only be used once and only once per md5mesh loaded. However, you do not need to specify any animation parts explicitly and can just use the default part for all animations, if you do not wish the animations to be split up/blended together.
+</p>
+
+<pre id="md5tag">md5tag B T</pre>
+<p>
+Assigns the tag name T to the bone B, for either use with "md5link" or attachment of other models via tags.
+</p>
+
+<pre id="md5link">md5link P C T</pre>
+<p>
+This links two models together. Every model you load with md5load has an ID. The first model
+you load has the ID 0, the second has the ID 1, and so on, those ID's are now used to identify
+the models and link them together. P the ID of the parent model. C to ID of the
+child model. T name of the tag that specifies at which vertex the models should be linked.
+</p>
+ 
 <h2 id="common_commands">Common Commands</h2>
 <pre id="mdlcollide">mdlcollide N</pre>
 <p>
 If N is 0, collisions with the model are disabled (Default: 1).
+</p>
+
+<pre id="mdlellipsecollide">mdlellipsecollide N</pre>
+<p>
+If N is 1, the model uses an elliptical collision volume instead of a box (Default: 0). This setting is good for barrels, trees, etc.
 </p>
 
 <pre id="mdlbb">mdlbb R H [E]</pre>
@@ -451,6 +781,11 @@ interpreted as a chrome map. E (maximum envmap intensity) and F (minimum envmap 
 values in the range of 0 to 1, and specify the range in which the envmapping intensity will vary based on a viewing angle
 (a Fresnel term that is maximal at glancing angles, minimal when viewed dead-on). The intensity,
 after scaled into this range, is then multiplied by the chrome map.
+</p>
+
+<pre id="mdlfullbright">mdlfullbright N</pre>
+<p>
+Uses a constant lighting level of N instead of the normal lighting. N is a floating-point value on a scale of 0 to 1.
 </p>
 
 <pre id="mdlshadow">mdlshadow B</pre>
