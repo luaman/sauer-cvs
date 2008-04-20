@@ -327,7 +327,7 @@ struct fpsstate
         else if(m_ctf)
         {
             armourtype = A_BLUE;
-            armour = 100;
+            armour = 50;
             ammo[GUN_PISTOL] = 40;
             ammo[GUN_GL] = 1;
         }
