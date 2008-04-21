@@ -130,7 +130,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 
 VARP(consize, 0, 5, 100);
 VARP(confade, 0, 20, 60);
-VARP(fullconsize, 0, 33, 100);
+VARP(fullconsize, 0, 75, 100);
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
