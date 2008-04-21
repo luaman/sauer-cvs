@@ -397,6 +397,8 @@ extern void writecompletions(FILE *f);
 // main
 extern bool initwarning();
 
+extern void pushevent(const SDL_Event &e);
+extern bool interceptkey(int sym);
 extern void computescreen(const char *text = NULL, Texture *t = NULL, const char *overlaytext = NULL);
 extern void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2 = 0, const char *text2 = NULL, GLuint tex = 0);
 
