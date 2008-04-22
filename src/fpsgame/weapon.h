@@ -57,13 +57,15 @@ struct weaponstate
             gun = (gun + dir)%NUMGUNS;
             if(force || player1->ammo[gun]) break;
         }
-        gunselect(gun);
+        if(gun != player1->gunselect) gunselect(gun);
+        else playsound(S_NOAMMO);
     }
 
     void setweapon(int gun, bool force = false)
     {
         if(player1->state!=CS_ALIVE || gun<GUN_FIST || gun>GUN_PISTOL) return;
         if(force || player1->ammo[gun]) gunselect(gun);
+        else playsound(S_NOAMMO);
     }
 
     void cycleweapon(int numguns, int *guns, bool force = false)
@@ -77,9 +79,10 @@ struct weaponstate
             if(gun>=0 && gun<NUMGUNS && (force || player1->ammo[gun]))
             {
                 gunselect(gun);
-                break;
+                return;
             }
         }
+        playsound(S_NOAMMO);
     }
 
     void weaponswitch(int a = -1, int b = -1, int c = -1)
