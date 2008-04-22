@@ -320,7 +320,7 @@ struct gui : g3d_gui
     char *field(const char *name, int color, int length, const char *initval)
 	{	
         length = min(length, (int)sizeof(string)-1);
-        int w = char_width('%')*length + FONTW;
+        int w = FONTW*(length + 1);
         char *result = NULL;
         if(visible() && !layoutpass)
 		{
@@ -346,17 +346,7 @@ struct gui : g3d_gui
                 else fieldactive = true;
             }
             if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
-            {
-                int x = curx+FONTW/2;
-                fieldpos = 0;
-                while(fieldtext[fieldpos] && fieldpos < length)
-                {
-                    int nx = char_width(fieldtext[fieldpos], x);
-                    if(nx > hitx) break;
-                    x = nx;
-                    fieldpos++;
-                }
-            }
+                fieldpos = text_visible(fieldtext, hitx-curx);
                            
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
