@@ -14,8 +14,8 @@ struct weaponstate
 
     weaponstate(fpsclient &_cl) : cl(_cl), player1(_cl.player1)
     {
-        CCOMMAND(nextweapon, "i", (weaponstate *self, int *dir), self->nextweapon(*dir));
-        CCOMMAND(setweapon, "ii", (weaponstate *self, int *gun, int *force), self->setweapon(*gun, force!=0));
+        CCOMMAND(nextweapon, "ii", (weaponstate *self, int *dir, int *force), self->nextweapon(*dir, *force!=0));
+        CCOMMAND(setweapon, "ii", (weaponstate *self, int *gun, int *force), self->setweapon(*gun, *force!=0));
         CCOMMAND(cycleweapon, "sssss", (weaponstate *self, char *w1, char *w2, char *w3, char *w4, char *w5),
         {
             int numguns = 0;
