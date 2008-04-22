@@ -189,6 +189,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
         float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
         float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
 
+        glColor4ub(r, g, b, a);
         glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
         glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
         glTexCoord2f(tc_right, tc_bottom); glVertex2i(x + info.w, y + info.h);
