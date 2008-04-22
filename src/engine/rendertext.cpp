@@ -187,7 +187,11 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
 
         x += draw_char(c, x, y);
     }
-    if(cursor >= 0 && (totalmillis/250)&1) draw_char('_', cx > INT_MIN ? cx : x, y);
+    if(cursor >= 0 && (totalmillis/250)&1) 
+    {
+        glColor4ub(r, g, b, a);
+        draw_char('_', cx > INT_MIN ? cx : x, y);
+    }
     glEnd();
 }
 
