@@ -310,7 +310,7 @@ struct ctfclient : ctfstate
             {
                 if(cl.lastmillis%1000 >= 500) continue;
             }
-            else if(f.droptime && cl.lastmillis%300 >= 150) continue;
+            else if(f.droptime && (f.droploc.x < 0 || cl.lastmillis%300 >= 150)) continue;
             drawblips(x, y, s, i, true);
         }
         if(cl.player1->state == CS_DEAD)
