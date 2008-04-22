@@ -312,6 +312,9 @@
 <a href="#watercolour"><tt>watercolour</tt></a>
 </li>
 <li>
+<a href="#waterfallcolour"><tt>waterfallcolour</tt></a>
+</li>
+<li>
 <a href="#shader"><tt>shader</tt></a>
 </li>
 <li>
@@ -1244,6 +1247,11 @@ Sets the distance beneath the surface of water at which it fogs, from 1..10000 (
 <pre id="watercolour">watercolour R G B</pre>
 <p>
 Sets the the colour of fog inside the water to the specified R G B value from 0..255 (default: 20 80 80). Used to give water some colour.
+</p>
+
+<pre id="waterfallcolour">waterfallcolour R G B</pre>
+<p>
+Sets the the colour used for waterfall turbulence to the specified R G B value from 0..255 (default: 0 0 0). If the default of 0 0 0 is specified, waterfalls will use the colour supplied via "watercolour" instead.
 </p>
 
 <pre id="shader">shader TYPE NAME VS PS</pre>
