@@ -106,9 +106,9 @@ extern void registergame(const char *name, igame *ig);
 // rendertext
 extern bool setfont(const char *name);
 extern void gettextres(int &w, int &h);
-extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255);
+extern void draw_text(const char *str, int left, int top, int r = 255, int g = 255, int b = 255, int a = 255, int cursor = -1);
 extern void draw_textf(const char *fstr, int left, int top, ...);
-extern int text_width(const char *str, int limit = -1);
+extern int text_width(const char *str);
 extern int text_visible(const char *str, int max);
 
 // renderva

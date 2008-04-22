@@ -358,20 +358,7 @@ struct gui : g3d_gui
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();
             
-            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF);
-            
-            if(editing && hit && fieldpos>=0 && (totalmillis/250)&1) 
-            {
-                int fx = curx+FONTW/2 + text_width(fieldtext, fieldpos);
-                glColor3f(1, 0, 0);
-                notextureshader->set();
-                glDisable(GL_TEXTURE_2D);
-                glBegin(GL_QUADS);
-                rect_(fx-2, cury, 4, FONTH);
-                glEnd();				
-                glEnable(GL_TEXTURE_2D);
-                defaultshader->set();
-            }
+            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, (editing && hit)?fieldpos:-1);
         }
     	layout(w, FONTH);
 		return result;

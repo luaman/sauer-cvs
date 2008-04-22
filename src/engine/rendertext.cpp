@@ -82,10 +82,10 @@ static int char_width(int c, int x)
     return x;
 }
 
-int text_width(const char *str, int limit)
+int text_width(const char *str)
 {
     int x = 0;
-    for(int i = 0; str[i] && (limit<0 ||i<limit); i++) 
+    for(int i = 0; str[i]; i++) 
     {
         if(str[i]=='\f')
         {
@@ -113,14 +113,14 @@ int text_visible(const char *str, int max)
     }
     return i;
 }
- 
+
 void draw_textf(const char *fstr, int left, int top, ...)
 {
     s_sprintfdlv(str, top, fstr);
     draw_text(str, left, top);
 }
 
-void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
+void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor)
 {
     if(!curfont) return;
 
@@ -130,12 +130,14 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
     static bvec colorstack[8];
     bvec color(r, g, b);
     int colorpos = 0, x = left, y = top;
+    int cx = -1000;
     
     glBegin(GL_QUADS);
     // ATI bug -- initial color must be set after glBegin
     glColor4ub(color.x, color.y, color.z, a);
     for(int i = 0; str[i]; i++)
     {
+        if(i == cursor) cx = x;
         int c = str[i];
         if(c=='\t') { x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left; continue; }
         if(c=='\f')
@@ -177,6 +179,22 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a)
         
         xtraverts += 4;
         x += info.w + 1;
+    }
+    if(cursor >= 0 && (totalmillis/250)&1)
+    {
+        if(cx != -1000) x = cx;
+        font::charinfo &info = curfont->chars['_' - 33];
+        float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
+        float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
+        float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
+        float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
+
+        glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
+        glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
+        glTexCoord2f(tc_right, tc_bottom); glVertex2i(x + info.w, y + info.h);
+        glTexCoord2f(tc_left,  tc_bottom); glVertex2i(x,          y + info.h);
+        
+        xtraverts += 4;
     }
     glEnd();
 }
