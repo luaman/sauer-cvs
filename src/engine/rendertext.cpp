@@ -69,7 +69,7 @@ void gettextres(int &w, int &h)
 
 #define PIXELTAB (8*curfont->defaultw)
 
-int char_width(int c, int x)
+static int char_width(int c, int x)
 {
     if(!curfont) return x;
     else if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
