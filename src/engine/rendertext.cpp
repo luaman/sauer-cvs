@@ -120,6 +120,27 @@ void draw_textf(const char *fstr, int left, int top, ...)
     draw_text(str, left, top);
 }
 
+static int draw_char(int c, int x, int y)
+{
+    c -= 33;
+    if(!curfont->chars.inrange(c)) return 0;
+
+    font::charinfo &info = curfont->chars[c];
+    float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
+    float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
+    float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
+    float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
+
+    glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
+    glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
+    glTexCoord2f(tc_right, tc_bottom); glVertex2i(x + info.w, y + info.h);
+    glTexCoord2f(tc_left,  tc_bottom); glVertex2i(x,          y + info.h);
+
+    xtraverts += 4;
+
+    return info.w + 1;
+}
+
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor)
 {
     if(!curfont) return;
@@ -129,8 +150,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
 
     static bvec colorstack[8];
     bvec color(r, g, b);
-    int colorpos = 0, x = left, y = top;
-    int cx = -1000;
+    int colorpos = 0, x = left, y = top, cx = INT_MIN;
     
     glBegin(GL_QUADS);
     // ATI bug -- initial color must be set after glBegin
@@ -138,9 +158,10 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     for(int i = 0; str[i]; i++)
     {
         if(i == cursor) cx = x;
+
         int c = str[i];
         if(c=='\t') { x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left; continue; }
-        if(c=='\f')
+        else if(c=='\f')
         {
             switch(str[++i])
             {
@@ -162,41 +183,11 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
             }
             glColor4ub(color.x, color.y, color.z, a);
         }
-        if(c==' ') { x += curfont->defaultw; continue; }
-        c -= 33;
-        if(!curfont->chars.inrange(c)) continue;
-        
-        font::charinfo &info = curfont->chars[c];
-        float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
-        float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
-        float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
-        float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
+        else if(c==' ') { x += curfont->defaultw; continue; }
 
-        glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
-        glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
-        glTexCoord2f(tc_right, tc_bottom); glVertex2i(x + info.w, y + info.h);
-        glTexCoord2f(tc_left,  tc_bottom); glVertex2i(x,          y + info.h);
-        
-        xtraverts += 4;
-        x += info.w + 1;
+        x += draw_char(c, x, y);
     }
-    if(cursor >= 0 && (totalmillis/250)&1)
-    {
-        if(cx != -1000) x = cx;
-        font::charinfo &info = curfont->chars['_' - 33];
-        float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
-        float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
-        float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
-        float tc_bottom  = (info.y + info.h + curfont->offseth) / float(curfont->tex->ys);
-
-        glColor4ub(r, g, b, a);
-        glTexCoord2f(tc_left,  tc_top   ); glVertex2i(x,          y);
-        glTexCoord2f(tc_right, tc_top   ); glVertex2i(x + info.w, y);
-        glTexCoord2f(tc_right, tc_bottom); glVertex2i(x + info.w, y + info.h);
-        glTexCoord2f(tc_left,  tc_bottom); glVertex2i(x,          y + info.h);
-        
-        xtraverts += 4;
-    }
+    if(cursor >= 0 && (totalmillis/250)&1) draw_char('_', cx > INT_MIN ? cx : x, y);
     glEnd();
 }
 
