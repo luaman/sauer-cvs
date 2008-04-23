@@ -34,54 +34,11 @@ void conline(const char *sf)        // add a line to the console buffer
 
 void conoutf(const char *s, ...)
 {
-    extern int scr_w, scr_h;
-    int w = screen ? screen->w : scr_w, h = screen ? screen->h : scr_h;
-    gettextres(w, h);
     s_sprintfdv(sf, s);
     string sp;
     filtertext(sp, sf);
     puts(sp);
-    s = sf;
-    int visible;
-
-    string cols;
-    s_strcpy(cols, "\f7");
-    int cpos = 1;
-     
-    while((visible = curfont ? text_visible(s, 3*w - 2*CONSPAD - 2*FONTH/3) : strlen(s))) // cut strings to fit on screen
-    {
-        visible = min(visible, (int)sizeof(cols)-1 - (cpos+1));
-
-        const char *newline = (const char *)memchr(s, '\n', visible);
-        if(newline) visible = newline+1-s;
-        
-        s_strncpy(cols+cpos+1, s, visible+1);
-        conline(cols);
-    
-        for(int i = 0; s[i] && (i<=visible); i++) //process color change info
-            if(s[i]=='\f') 
-                switch(s[++i])
-                {
-                    case 's':
-                        if(cpos<4*8) //8 = stackdepth in textdraw
-                        { 
-                            cols[cpos+1] = '\f';
-                            cols[cpos+2] = 's';
-                            cols[cpos+3] = '\f';
-                            cols[cpos+4] = cols[cpos];
-                            cpos += 4;
-                        }
-                        break;
-                    case 'r': 
-                        if(cpos>4) cpos -= 4; 
-                        break;
-                    default:
-                        cols[cpos] = s[i];
-                        break;
-                }
-
-        s += visible;
-    }
+    conline(sf);
 }
 
 bool fullconsole = false;
@@ -133,32 +90,44 @@ VARP(fullconsize, 0, 75, 100);
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
-    if(fullconsole)
+    int conheight = min(fullconsole?(h*3*fullconsize/100):(FONTH*consize), h*3 - 2*CONSPAD - 2*FONTH/3);
+    int conwidth = w*3 - CONSPAD*2;
+    
+    if(fullconsole) blendbox(CONSPAD, CONSPAD, conwidth + CONSPAD, CONSPAD+conheight+2*FONTH/3, true);
+    
+    int numl = conlines.length();
+    int offset = min(conskip, numl);
+    
+    if(!fullconsole && confade)
     {
-        int numl = min(h*3*fullconsize/100, h*3 - 2*CONSPAD - 2*FONTH/3)/FONTH;
-        int offset = min(conskip, max(conlines.length() - numl, 0));
-        blendbox(CONSPAD, CONSPAD, w*3-CONSPAD, 2*CONSPAD+numl*FONTH+2*FONTH/3, true);
-        loopi(numl) draw_text(offset+i>=conlines.length() ? "" : conlines[offset+i].cref, CONSPAD+FONTH/3, CONSPAD+FONTH*(numl-i-1)+FONTH/3); 
-        return 2*CONSPAD+numl*FONTH+2*FONTH/3;
+        if(!conskip) 
+        {
+            numl = 0;
+            loopvrev(conlines) if(totalmillis-conlines[i].outtime < confade*1000) { numl = i+1; break; }
+        } 
+        else offset--;
     }
-    else
+    
+    int y = 0;
+    loopi(numl) //determine visible height
     {
-        static vector<char *> refs;
-        refs.setsizenodelete(0);
-        if(consize) 
-        {
-            loopv(conlines) if(conskip ? i>=conskip-1 || i>=conlines.length()-consize : (!confade || totalmillis-conlines[i].outtime<confade*1000))
-            {
-                refs.add(conlines[i].cref);
-                if(refs.length()>=consize) break;
-            }
-        }
-        loopvj(refs)
-        {
-            draw_text(refs[j], CONSPAD+FONTH/3, CONSPAD+FONTH*(refs.length()-j-1)+FONTH/3);
-        }
-        return CONSPAD+refs.length()*FONTH+2*FONTH/3;
+        int width, height;
+        int idx = offset+i;
+        if(idx >= numl) idx = --offset; //shuffle backwards to fill
+        text_bounds(conlines[idx].cref, width, height, conwidth);
+        y += height;
+        if(y > conheight) { numl = i; break; }
     }
+    y = CONSPAD+FONTH/3;
+    loopi(numl) 
+    {
+        char *line = conlines[offset+numl-1-i].cref;
+        draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth);
+        int width, height;
+        text_bounds(line, width, height, conwidth);
+        y += height;
+    }
+    return fullconsole?(2*CONSPAD+conheight+2*FONTH/3):(y+CONSPAD+FONTH/3);
 }
 
 // keymap is defined externally in keymap.cfg

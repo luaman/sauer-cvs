@@ -82,22 +82,13 @@ static int char_width(int c, int x)
     return x;
 }
 
-int text_width(const char *str)
-{
-    int x = 0;
-    for(int i = 0; str[i]; i++) 
-    {
-        if(str[i]=='\f')
-        {
-            i++;
-            continue;
-        }
-        x = char_width(str[i], x);
-    }
-    return x;
+int text_width(const char *str) { //@TODO deprecate in favour of text_bounds(..)
+    int width, height;
+    text_bounds(str, width, height);
+    return width;
 }
 
-int text_visible(const char *str, int max)
+int text_visible(const char *str, int max) //@TODO doesnt yet handle multiple lines
 {
     int i = 0, x = 0;
     while(str[i])
@@ -122,10 +113,7 @@ void draw_textf(const char *fstr, int left, int top, ...)
 
 static int draw_char(int c, int x, int y)
 {
-    c -= 33;
-    if(!curfont->chars.inrange(c)) return 0;
-
-    font::charinfo &info = curfont->chars[c];
+    font::charinfo &info = curfont->chars[c-33];
     float tc_left    = (info.x + curfont->offsetx) / float(curfont->tex->xs);
     float tc_top     = (info.y + curfont->offsety) / float(curfont->tex->ys);
     float tc_right   = (info.x + info.w + curfont->offsetw) / float(curfont->tex->xs);
@@ -137,60 +125,128 @@ static int draw_char(int c, int x, int y)
     glTexCoord2f(tc_left,  tc_bottom); glVertex2i(x,          y + info.h);
 
     xtraverts += 4;
-
-    return info.w + 1;
+    return info.w;
 }
 
-void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor)
+static void text_color(int c, bvec &color, bvec *colorstack, int &colorpos, int r, int g, int b, int a) 
+{
+    switch(c)
+    {
+        case '0': color = bvec( 64, 255, 128); break;   // green: player talk
+        case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
+        case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
+        case '3': color = bvec(255,  64,  64); break;   // red: important errors
+        case '4': color = bvec(128, 128, 128); break;   // gray
+        case '5': color = bvec(192,  64, 192); break;   // magenta
+        case '6': color = bvec(255, 128,   0); break;   // orange
+        case 's': // save color
+            if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) colorstack[colorpos++] = color;
+            break;
+        case 'r': // restore color
+            if(colorpos>0)  color = colorstack[--colorpos];
+            break; 
+        default: color = bvec(r, g, b);                 // white: everything else
+    }
+    glColor4ub(color.x, color.y, color.z, a);    
+}
+
+void text_bounds(const char *str, int &width, int &height, int maxwidth)
+{
+    width = 0;
+    height = FONTH;
+    int x = 0;
+    for(int i = 0; str[i]; i++)
+    {
+        int c = str[i];
+        if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
+        else if(c==' ') x += curfont->defaultw;
+        else if(c=='\n') 
+        {
+            if(x > width) width = x;
+            x = 0; height += FONTH; 
+        }
+        else if(c=='\f') i++;
+        else if(curfont->chars.inrange(c-33)) {
+            int w = curfont->chars[c-33].w;
+            if(maxwidth != -1) 
+            {
+                int j = i;
+                for(; str[i+1]; i++) //determine word length for good breakage
+                {
+                    int c = str[i+1];
+                    if(c=='\f') { i++; continue; }
+                    if(!curfont->chars.inrange(c-33)) break;
+                    int cw = curfont->chars[c-33].w + 1;
+                    if(w + cw >= maxwidth) break;
+                    w += cw;
+                }
+                if(x + w >= maxwidth && j!=0) 
+                {
+                    if(x > width) width = x;
+                    x = 0; height += FONTH;
+                }
+            }
+            x += w + 1;
+        }
+    }
+    if(x > width) width = x;
+}
+
+void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor, int maxwidth) 
 {
     if(!curfont) return;
+    
+    static bvec colorstack[8];
+    bvec color(r, g, b);
+    int colorpos = 0, x = left, y = top, cy, cx = INT_MIN;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
-
-    static bvec colorstack[8];
-    bvec color(r, g, b);
-    int colorpos = 0, x = left, y = top, cx = INT_MIN;
-    
     glBegin(GL_QUADS);
-    // ATI bug -- initial color must be set after glBegin
     glColor4ub(color.x, color.y, color.z, a);
     for(int i = 0; str[i]; i++)
     {
-        if(i == cursor) cx = x;
-
+        if(i == cursor) { cx = x; cy = y; }
         int c = str[i];
-        if(c=='\t') { x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left; continue; }
-        else if(c=='\f')
-        {
-            switch(str[++i])
+        if(c=='\t') x = ((x-left+PIXELTAB)/PIXELTAB)*PIXELTAB+left;
+        else if(c==' ') x += curfont->defaultw;
+        else if(c=='\n') { x = left; y += FONTH; }
+        else if(c=='\f') text_color(str[++i], color, colorstack, colorpos, r, g, b, a);
+        else if(curfont->chars.inrange(c-33)) {
+            if(maxwidth != -1) 
             {
-                case '0': color = bvec( 64, 255, 128); break;   // green: player talk
-                case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
-                case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
-                case '3': color = bvec(255,  64,  64); break;   // red: important errors
-                case '4': color = bvec(128, 128, 128); break;   // gray
-                case '5': color = bvec(192,  64, 192); break;   // magenta
-                case '6': color = bvec(255, 128,   0); break;   // orange
-                case 's': // save color
-                    if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) colorstack[colorpos++] = color;
-                    continue;
-                case 'r': // restore color
-                    if(colorpos<=0) continue;
-                    color = colorstack[--colorpos];
-                    break; 
-                default: color = bvec(r, g, b); break;          // white: everything else
-            }
-            glColor4ub(color.x, color.y, color.z, a);
+                int j = i;
+                int w = curfont->chars[c-33].w;
+                for(; str[i+1]; i++) //determine word length for good breakage
+                {
+                    int c = str[i+1];
+                    if(c=='\f') { i++; continue; }
+                    if(!curfont->chars.inrange(c-33)) break;
+                    w += curfont->chars[c-33].w+1;
+                    if(w >= maxwidth) break;
+                }
+                if(x + w >= maxwidth && j!=0) 
+                {
+                    x = left;
+                    y += FONTH;
+                }
+                for(; j <= i; j++)
+                {
+                    if(j == cursor) { cx = x; cy = y; }
+                    int c = str[j];
+                    if(c=='\f') text_color(str[++j], color, colorstack, colorpos, r, g, b, a); 
+                    else x += draw_char(c, x, y)+1;
+                }
+            } 
+            else x += draw_char(c, x, y)+1;
         }
-        else if(c==' ') { x += curfont->defaultw; continue; }
-
-        x += draw_char(c, x, y);
     }
-    if(cursor >= 0 && (totalmillis/250)&1) 
+    if(cursor >= 0 && (totalmillis/250)&1)
     {
         glColor4ub(r, g, b, a);
-        draw_char('_', cx > INT_MIN ? cx : x, y);
+        if(cx == INT_MIN) { cx = x; cy = y; }
+        if(maxwidth != -1 && cx-left >= maxwidth) { cx = left; cy += FONTH; }
+        draw_char('_', cx, cy);
     }
     glEnd();
 }
