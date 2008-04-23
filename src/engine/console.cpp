@@ -90,10 +90,10 @@ VARP(fullconsize, 0, 75, 100);
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
-    int conheight = min(fullconsole?(h*3*fullconsize/100):(FONTH*consize), h*3 - 2*CONSPAD - 2*FONTH/3);
-    int conwidth = w*3 - CONSPAD*2;
+    int conheight = min(fullconsole ? ((h*3*fullconsize/100)/FONTH)*FONTH : (FONTH*consize), h*3 - 2*CONSPAD - 2*FONTH/3);
+    int conwidth = w*3 - 2*CONSPAD - 2*FONTH/3;
     
-    if(fullconsole) blendbox(CONSPAD, CONSPAD, conwidth + CONSPAD, CONSPAD+conheight+2*FONTH/3, true);
+    if(fullconsole) blendbox(CONSPAD, CONSPAD, conwidth+CONSPAD+2*FONTH/3, conheight+CONSPAD+2*FONTH/3, true);
     
     int numl = conlines.length();
     int offset = min(conskip, numl);
@@ -122,7 +122,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
     loopi(numl) 
     {
         char *line = conlines[offset+numl-1-i].cref;
-        draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth - FONTH*2/3);
+        draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth);
         int width, height;
         text_bounds(line, width, height, conwidth);
         y += height;
