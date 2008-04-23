@@ -165,7 +165,10 @@ void text_bounds(const char *str, int &width, int &height, int maxwidth)
             if(x > width) width = x;
             x = 0; height += FONTH; 
         }
-        else if(c=='\f') i++;
+        else if(c=='\f') 
+        {
+            if(str[i+1]) i++;
+        }
         else if(curfont->chars.inrange(c-33)) 
         {
             int w = curfont->chars[c-33].w;
@@ -175,8 +178,8 @@ void text_bounds(const char *str, int &width, int &height, int maxwidth)
                 for(; str[i+1]; i++) //determine word length for good breakage
                 {
                     int c = str[i+1];
-                    if(c=='\f') { i++; continue; }
-                    if(i-j > 10) break;
+                    if(c=='\f') { if(str[i+1]) i++; continue; }
+                    if(i-j > 16) break;
                     if(!curfont->chars.inrange(c-33)) break;
                     int cw = curfont->chars[c-33].w + 1;
                     if(w + cw >= maxwidth) break;
@@ -200,7 +203,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     
     static bvec colorstack[8];
     bvec color(r, g, b);
-    int colorpos = 0, x = 0, y = 0, cx = INT_MIN, cy;
+    int colorpos = 0, x = 0, y = 0, cx = INT_MIN, cy = 0;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
@@ -222,11 +225,12 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
                 for(; str[i+1]; i++) //determine word length for good breakage
                 {
                     int c = str[i+1];
-                    if(c=='\f') { i++; continue; }
-                    if(i-j > 10) break;
+                    if(c=='\f') { if(str[i+1]) i++; continue; }
+                    if(i-j > 16) break;
                     if(!curfont->chars.inrange(c-33)) break;
-                    w += curfont->chars[c-33].w+1;
-                    if(w >= maxwidth) break;
+                    int cw = curfont->chars[c-33].w + 1;
+                    if(w + cw >= maxwidth) break;
+                    w += cw;
                 }
                 if(x + w >= maxwidth && j!=0) 
                 {
@@ -237,7 +241,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
                 {
                     if(j == cursor) { cx = x; cy = y; }
                     int c = str[j];
-                    if(c=='\f') text_color(str[++j], color, colorstack, colorpos, r, g, b, a); 
+                    if(c=='\f') { if(str[j+1]) text_color(str[++j], color, colorstack, colorpos, r, g, b, a); } 
                     else x += draw_char(c, left+x, top+y)+1;
                 }
             } 
