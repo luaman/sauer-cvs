@@ -213,7 +213,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     {
         if(i == cursor) { cx = x; cy = y; }
         int c = str[i];
-        if(c=='\t') x = ((x-PIXELTAB)/PIXELTAB)*PIXELTAB;
+        if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
         else if(c==' ') x += curfont->defaultw;
         else if(c=='\n') { x = 0; y += FONTH; }
         else if(c=='\f') text_color(str[++i], color, colorstack, colorpos, r, g, b, a);
