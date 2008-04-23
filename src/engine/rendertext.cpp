@@ -178,7 +178,7 @@ void text_bounds(const char *str, int &width, int &height, int maxwidth)
                 for(; str[i+1]; i++) //determine word length for good breakage
                 {
                     int c = str[i+1];
-                    if(c=='\f') { if(str[i+1]) i++; continue; }
+                    if(c=='\f') { if(str[i+2]) i++; continue; }
                     if(i-j > 16) break;
                     if(!curfont->chars.inrange(c-33)) break;
                     int cw = curfont->chars[c-33].w + 1;
@@ -225,7 +225,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
                 for(; str[i+1]; i++) //determine word length for good breakage
                 {
                     int c = str[i+1];
-                    if(c=='\f') { if(str[i+1]) i++; continue; }
+                    if(c=='\f') { if(str[i+2]) i++; continue; }
                     if(i-j > 16) break;
                     if(!curfont->chars.inrange(c-33)) break;
                     int cw = curfont->chars[c-33].w + 1;
