@@ -122,7 +122,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
     loopi(numl) 
     {
         char *line = conlines[offset+numl-1-i].cref;
-        draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth);
+        draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth - FONTH*2/3);
         int width, height;
         text_bounds(line, width, height, conwidth);
         y += height;
