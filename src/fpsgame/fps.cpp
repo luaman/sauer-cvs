@@ -410,6 +410,7 @@ struct fpsclient : igameclient
         if(d==player1)
         {
             sb.showscores(true);
+            setvar("zoom", -1, true);
             lastplayerstate = *player1;
             d->attacking = false;
             d->deaths++;
@@ -456,6 +457,7 @@ struct fpsclient : igameclient
                 conoutf("\f2TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
             }
             sb.showscores(true);
+            setvar("zoom", -1, true);
         }
         else if(timeremain > 0)
         {
@@ -587,6 +589,7 @@ struct fpsclient : igameclient
         et.resetspawns();
         s_strcpy(clientmap, name);
         sb.showscores(false);
+        setvar("zoom", -1, true);
         intermission = false;
         maptime = 0;
         if(*name) conoutf("\f2game mode is %s", fpsserver::modestr(gamemode));
