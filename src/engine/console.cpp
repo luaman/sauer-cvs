@@ -116,7 +116,7 @@ int renderconsole(int w, int h)                   // render buffer taking into a
         if(idx >= numl) idx = --offset; //shuffle backwards to fill
         text_bounds(conlines[idx].cref, width, height, conwidth);
         y += height;
-        if(y > conheight) { numl = i; break; }
+        if(y > conheight) { numl = i; if(offset==idx) offset++; break; }
     }
     y = CONSPAD+FONTH/3;
     loopi(numl) 
