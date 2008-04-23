@@ -72,10 +72,9 @@ extern const char *getalias(const char *name);
 
 // console
 extern void keypress(int code, bool isdown, int cooked);
-extern void rendercommand(int x, int y);
+extern int rendercommand(int x, int y, int w);
 extern int renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
-extern char *getcurcommand();
 extern void resetcomplete();
 extern void complete(char *s);
 

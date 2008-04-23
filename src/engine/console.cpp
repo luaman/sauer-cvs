@@ -45,10 +45,16 @@ bool fullconsole = false;
 void toggleconsole() { fullconsole = !fullconsole; }
 COMMAND(toggleconsole, "");
 
-void rendercommand(int x, int y)
+int rendercommand(int x, int y, int w)
 {
+    if(!saycommandon || ! commandbuf) return 0;
+
     s_sprintfd(s)("%s %s", commandprompt ? commandprompt : ">", commandbuf);
-    draw_text(s, x, y, 0xFF, 0xFF, 0xFF, 0xFF, (commandpos>=0) ? (commandpos+1+(commandprompt?strlen(commandprompt):1)) : strlen(s));
+    int width, height;
+    text_bounds(s, width, height, w);
+    y-= height-FONTH;
+    draw_text(s, x, y, 0xFF, 0xFF, 0xFF, 0xFF, (commandpos>=0) ? (commandpos+1+(commandprompt?strlen(commandprompt):1)) : strlen(s), w);
+    return height;
 }
 
 void blendbox(int x1, int y1, int x2, int y2, bool border)
@@ -498,11 +504,6 @@ void keypress(int code, bool isdown, int cooked)
         if(saycommandon) consolekey(code, isdown, cooked);
         else if(haskey) execbind(*haskey, isdown);
     }
-}
-
-char *getcurcommand()
-{
-    return saycommandon ? commandbuf : (char *)NULL;
 }
 
 void clear_console()

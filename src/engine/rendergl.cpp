@@ -1343,7 +1343,7 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
     }
 
     glEnable(GL_BLEND);
-
+    
     if(dblend || fogmat==MAT_WATER || fogmat==MAT_LAVA)
     {
         glBlendFunc(GL_ZERO, GL_SRC_COLOR);
@@ -1379,8 +1379,7 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
     int abovegameplayhud = h*3*1650/1800-FONTH*3/2; // hack
     int hoff = abovegameplayhud - (editmode ? FONTH*4 : 0);
 
-    char *command = getcurcommand();
-    if(command) rendercommand(FONTH/2, hoff); else hoff += FONTH;
+    rendercommand(FONTH/2, hoff, w*3-FONTH);
 
     drawcrosshair(w, h);
 
