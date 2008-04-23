@@ -166,7 +166,8 @@ void text_bounds(const char *str, int &width, int &height, int maxwidth)
             x = 0; height += FONTH; 
         }
         else if(c=='\f') i++;
-        else if(curfont->chars.inrange(c-33)) {
+        else if(curfont->chars.inrange(c-33)) 
+        {
             int w = curfont->chars[c-33].w;
             if(maxwidth != -1) 
             {
@@ -199,7 +200,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     
     static bvec colorstack[8];
     bvec color(r, g, b);
-    int colorpos = 0, x = 0, y = top, cy, cx = INT_MIN;
+    int colorpos = 0, x = 0, y = 0, cx = INT_MIN, cy;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
@@ -209,15 +210,15 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     {
         if(i == cursor) { cx = x; cy = y; }
         int c = str[i];
-        if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
+        if(c=='\t') x = ((x-PIXELTAB)/PIXELTAB)*PIXELTAB;
         else if(c==' ') x += curfont->defaultw;
         else if(c=='\n') { x = 0; y += FONTH; }
         else if(c=='\f') text_color(str[++i], color, colorstack, colorpos, r, g, b, a);
-        else if(curfont->chars.inrange(c-33)) {
+        else if(curfont->chars.inrange(c-33)) 
+        {
             if(maxwidth != -1) 
             {
-                int j = i;
-                int w = curfont->chars[c-33].w;
+                int j = i, w = curfont->chars[c-33].w;
                 for(; str[i+1]; i++) //determine word length for good breakage
                 {
                     int c = str[i+1];
@@ -237,10 +238,10 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
                     if(j == cursor) { cx = x; cy = y; }
                     int c = str[j];
                     if(c=='\f') text_color(str[++j], color, colorstack, colorpos, r, g, b, a); 
-                    else x += draw_char(c, left+x, y)+1;
+                    else x += draw_char(c, left+x, top+y)+1;
                 }
             } 
-            else x += draw_char(c, left+x, y)+1;
+            else x += draw_char(c, left+x, top+y)+1;
         }
     }
     if(cursor >= 0 && (totalmillis/250)&1)
@@ -248,7 +249,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
         glColor4ub(r, g, b, a);
         if(cx == INT_MIN) { cx = x; cy = y; }
         if(maxwidth != -1 && cx >= maxwidth) { cx = 0; cy += FONTH; }
-        draw_char('_', left+cx, cy);
+        draw_char('_', left+cx, top+cy);
     }
     glEnd();
 }
