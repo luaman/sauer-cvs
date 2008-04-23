@@ -122,7 +122,7 @@ struct weaponstate
             vec dir = dest;
             dir.sub(from);
             dir.normalize();
-            raycubepos(from, dir, dest, 0, RAY_CLIPMAT|RAY_POLY);
+            raycubepos(from, dir, dest, 0, RAY_CLIPMAT|RAY_ALPHAPOLY);
             return;
         }
     }
@@ -458,7 +458,7 @@ struct weaponstate
                 {
                     if(p.o!=p.to) // if original target was moving, reevaluate endpoint
                     {
-                        if(raycubepos(p.o, p.dir, p.to, 0, RAY_CLIPMAT|RAY_POLY)>=4) continue;
+                        if(raycubepos(p.o, p.dir, p.to, 0, RAY_CLIPMAT|RAY_ALPHAPOLY)>=4) continue;
                     }
                     splash(p, v, NULL, qdam);
                     exploded = true;
@@ -667,7 +667,7 @@ struct weaponstate
         float shorten = 0;
         if(guns[d->gunselect].range && dist > guns[d->gunselect].range)
             shorten = guns[d->gunselect].range;
-        float barrier = raycube(d->o, unitv, dist, RAY_CLIPMAT|RAY_POLY);
+        float barrier = raycube(d->o, unitv, dist, RAY_CLIPMAT|RAY_ALPHAPOLY);
         if(barrier < dist && (!shorten || barrier < shorten))
             shorten = barrier;
         if(shorten)

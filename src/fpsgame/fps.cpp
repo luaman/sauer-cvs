@@ -832,7 +832,7 @@ struct fpsclient : igameclient
         if(owner->type!=ENT_PLAYER && owner->type!=ENT_AI) return;
         float dist = o.dist(d);
         vecfromyawpitch(owner->yaw, owner->pitch, 1, 0, d);
-        float newdist = raycube(owner->o, d, dist, RAY_CLIPMAT|RAY_POLY);
+        float newdist = raycube(owner->o, d, dist, RAY_CLIPMAT|RAY_ALPHAPOLY);
         d.mul(min(newdist, dist)).add(owner->o);
         o = ws.hudgunorigin(GUN_PISTOL, owner->o, d, (fpsent *)owner);
     }
