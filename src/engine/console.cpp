@@ -47,7 +47,7 @@ COMMAND(toggleconsole, "");
 
 int rendercommand(int x, int y, int w)
 {
-    if(!saycommandon || ! commandbuf) return 0;
+    if(!saycommandon) return 0;
 
     s_sprintfd(s)("%s %s", commandprompt ? commandprompt : ">", commandbuf);
     int width, height;
@@ -673,7 +673,9 @@ void complete(char *s)
 void writecompletions(FILE *f)
 {
     enumeratekt(completions, char *, k, filesval *, v,
-        if(v) fprintf(f, "%scomplete \"%s\" \"%s\" \"%s\"\n", v->type==FILES_LIST ? "list" : "", k, v->dir, v->type==FILES_LIST ? "" : (v->ext ? v->ext : "*"));
+        if(!v) continue;
+        if(v->type==FILES_LIST) fprintf(f, "listcomplete \"%s\" [%s]\n", k, v->dir);
+        else fprintf(f, "complete \"%s\" \"%s\" \"%s\"\n", k, v->dir, v->ext ? v->ext : "*");
     );
 }
 
