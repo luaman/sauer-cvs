@@ -861,6 +861,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
 
 VAR(animoverride, -1, 0, NUMANIMS-1);
 VAR(testanims, 0, 0, 1);
+VAR(testpitch, -90, 0, 90);
 
 void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int attack, int attackdelay, int lastaction, int lastpain, float sink)
 {
@@ -913,7 +914,7 @@ void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int 
     else flags |= MDL_CULL_DIST;
     if(d->state==CS_LAGGED) flags |= MDL_TRANSLUCENT;
     else if((anim&ANIM_INDEX)!=ANIM_DEAD) flags |= MDL_DYNSHADOW;
-    rendermodel(NULL, mdlname, anim, o, testanims && d==player ? 0 : yaw+90, pitch, flags, d, attachments, basetime);
+    rendermodel(NULL, mdlname, anim, o, testanims && d==player ? 0 : yaw+90, testpitch && d==player ? testpitch : pitch, flags, d, attachments, basetime);
 }
 
 void setbbfrommodel(dynent *d, const char *mdl)
