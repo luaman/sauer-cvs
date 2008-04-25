@@ -346,7 +346,7 @@ struct gui : g3d_gui
                 else fieldactive = true;
             }
             if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
-                fieldpos = text_visible(fieldtext, int(floor(hitx-curx)));
+                fieldpos = text_visible(fieldtext, int(floor(hitx-(curx+FONTW/2))));
                            
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
