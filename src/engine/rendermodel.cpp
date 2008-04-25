@@ -878,7 +878,7 @@ void renderclient(dynent *d, const char *mdlname, modelattach *attachments, int 
         basetime = lastpain;
         int t = lastmillis-lastpain;
         if(t<0 || t>20000) return;
-        if(t>500) { anim = ANIM_DEAD|ANIM_LOOP; if(t>1600) { t -= 1600; o.z -= t*t/10000000000.0f*t/16.0f; } }
+        if(t>1000) { anim = ANIM_DEAD|ANIM_LOOP; if(t>1600) { t -= 1600; o.z -= t*t/10000000000.0f*t/16.0f; } }
         if(o.z<-1000) return;
     }
     else if(d->state==CS_EDITING || d->state==CS_SPECTATOR) anim = ANIM_EDIT|ANIM_LOOP;
