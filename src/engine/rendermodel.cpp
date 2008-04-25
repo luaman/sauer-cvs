@@ -394,6 +394,7 @@ void rendershadow(vec &dir, model *m, int anim, const vec &o, vec center, float 
         if(renderpath!=R_FIXEDFUNCTION) setfogplane(0, max(0.1f, reflectz-center.z));
         else intensity *= 1.0f - max(0.0f, min(1.0f, (reflectz - center.z)/waterfog));
     }
+    if((anim&ANIM_INDEX)==ANIM_DYING) intensity *= max(1.0f - (lastmillis - basetime)/1000.0f, 0.0f);
     glColor4f(0, 0, 0, intensity);
 
     if(!hasFBO || !reflecting || !refracting || hasDS)
@@ -476,7 +477,12 @@ void renderbatchedmodel(model *m, batchedmodel &b)
     }
 
     int anim = b.anim;
-    if(shadowmapping) anim |= ANIM_NOSKIN; 
+    if(shadowmapping) 
+    {
+        anim |= ANIM_NOSKIN; 
+        setenvparamf("shadowintensity", SHPARAM_VERTEX, 0,
+            (anim&ANIM_INDEX)==ANIM_DYING ? max(1.0f - (lastmillis - b.basetime)/1000.0f, 0.0f) : 1.0f);
+    }
     else 
     {
         if(b.cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
@@ -765,7 +771,12 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
         if((cull&MDL_CULL_VFC) && refracting<0 && center.z-radius>=reflectz) { m->endrender(); return; }
     }
 
-    if(shadowmapping) anim |= ANIM_NOSKIN;
+    if(shadowmapping)
+    {
+        anim |= ANIM_NOSKIN;
+        setenvparamf("shadowintensity", SHPARAM_VERTEX, 0,
+            (anim&ANIM_INDEX)==ANIM_DYING ? max(1.0f - (lastmillis - basetime)/1000.0f, 0.0f) : 1.0f);
+    }
     else
     {
         if(cull&MDL_TRANSLUCENT) anim |= ANIM_TRANSLUCENT;
