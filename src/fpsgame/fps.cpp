@@ -798,7 +798,7 @@ struct fpsclient : igameclient
         if(player1->state!=CS_ALIVE) return 0;
 
         int crosshair = 0;
-        if(lastmillis - lasthit < hitcrosshair()) crosshair = 2;
+        if(lasthit && lastmillis - lasthit < hitcrosshair()) crosshair = 2;
         else if(teamcrosshair())
         {
             dynent *d = ws.intersectclosest(player1->o, worldpos, player1);
