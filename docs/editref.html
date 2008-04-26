@@ -2151,7 +2151,7 @@ If N=1, this locks the view cell used by the PVS culling to the current view cel
 Generates PVS data for only the current view cell you are inside and locks the view cell to it as if "lockpvs 1" were used. This allows you to quickly test the effectiveness of occlusion in your map without generating full PVS data, so that you can more easily optimize your map for PVS before the actual expensive pre-calculation is done. Use "lockpvs 0" to release the lock on the view cell when you are done testing. Note that this will not overwrite any existing PVS data already calculated for the map. 
 </p>
 
-<pre id="pvsstats">pvsstats</p>
+<pre id="pvsstats">pvsstats</pre>
 <p>
 Prints out some useful info about the PVS data stored with the map, such as the number of view cells, the total amount of storage used for all the view cells, and the average amount of storage used for each individual view cell.
 </p>
