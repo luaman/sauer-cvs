@@ -41,6 +41,7 @@ enum                            // cube empty-space materials
     MAT_NOCLIP,                 // collisions always treat cube as empty
     MAT_LAVA,                   // fill with lava
     MAT_AICLIP,                 // clip monsters only
+    MAT_DEATH,                  // force player suicide
     MAT_EDIT                    // basis for the edit volumes of the above materials
 };
 

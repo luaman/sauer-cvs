@@ -1322,7 +1322,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         else if(pl->inwater && !water) cl->physicstrigger(pl, local, 0, 1);
         pl->inwater = water;
 
-        if(pl->state==CS_ALIVE && material==MAT_LAVA) cl->suicide(pl);
+        if(pl->state==CS_ALIVE && (material==MAT_LAVA || material==MAT_DEATH)) cl->suicide(pl);
     }
 
     return true;
