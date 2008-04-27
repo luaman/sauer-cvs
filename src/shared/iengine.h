@@ -109,7 +109,7 @@ extern void draw_text(const char *str, int left, int top, int r = 255, int g = 2
 extern void draw_textf(const char *fstr, int left, int top, ...);
 extern int text_width(const char *str);
 extern void text_bounds(const char *str, int &width, int &height, int maxwidth = -1);
-extern int text_visible(const char *str, int max);
+extern int text_visible(const char *str, int hitx, int hity, int maxwidth);
 
 // renderva
 enum

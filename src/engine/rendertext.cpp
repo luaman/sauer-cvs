@@ -69,40 +69,10 @@ void gettextres(int &w, int &h)
 
 #define PIXELTAB (8*curfont->defaultw)
 
-static int char_width(int c, int x)
-{
-    if(!curfont) return x;
-    else if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
-    else if(c==' ') x += curfont->defaultw;
-    else if(curfont->chars.inrange(c-33))
-    {
-        c -= 33;
-        x += curfont->chars[c].w+1;
-    }
-    return x;
-}
-
 int text_width(const char *str) { //@TODO deprecate in favour of text_bounds(..)
     int width, height;
     text_bounds(str, width, height);
     return width;
-}
-
-int text_visible(const char *str, int max) //@TODO doesnt yet handle multiple lines
-{
-    int i = 0, x = 0;
-    while(str[i])
-    {
-        if(str[i]=='\f')
-        {
-            i += 2;
-            continue;
-        }
-        x = char_width(str[i], x);
-        if(x > max) return i;
-        ++i;
-    }
-    return i;
 }
 
 void draw_textf(const char *fstr, int left, int top, ...)
@@ -148,6 +118,71 @@ static void text_color(int c, bvec &color, bvec *colorstack, int &colorpos, int 
         default: color = bvec(r, g, b);                 // white: everything else
     }
     glColor4ub(color.x, color.y, color.z, a);    
+}
+
+int text_visible(const char *str, int hitx, int hity, int maxwidth)
+{
+    int y = FONTH;
+    int x = 0;
+    int i;
+    for(i = 0; str[i]; i++)
+    {
+        int c = str[i];
+        if(c=='\t') 
+        {
+            x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
+            if(y > hity && x > hitx) return i;
+        }
+        else if(c==' ') 
+        {
+            x += curfont->defaultw;
+            if(y > hity && x > hitx) return i;
+        }
+        else if(c=='\n') 
+        {
+            if(y > hity) return i;
+            x = 0; y += FONTH;
+        }
+        else if(c=='\f') 
+        {
+            if(str[i+1]) i++;
+        }
+        else if(curfont->chars.inrange(c-33)) 
+        {
+            int j = i;
+            if(maxwidth != -1) 
+            {
+                int w = curfont->chars[c-33].w;
+                for(; str[i+1]; i++) //determine word length for good breakage
+                {
+                    int c = str[i+1];
+                    if(c=='\f') { if(str[i+2]) i++; continue; }
+                    if(i-j > 16) break;
+                    if(!curfont->chars.inrange(c-33)) break;
+                    int cw = curfont->chars[c-33].w + 1;
+                    if(w + cw >= maxwidth) break;
+                    w += cw;
+                }
+                if(x + w >= maxwidth && j!=0) 
+                {
+                    if(y > hity) return j-1;
+                    x = 0;
+                    y += FONTH;
+                }
+            }
+            for(; j <= i; j++)
+            {
+                int c = str[j];
+                if(c=='\f') { if(str[j+1]) j++; } 
+                else 
+                {   
+                    x += curfont->chars[c-33].w+1;
+                    if(y > hity && x > hitx) return j;
+                }
+            }
+        }
+    }
+    return i;
 }
 
 void text_bounds(const char *str, int &width, int &height, int maxwidth)
