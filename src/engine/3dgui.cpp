@@ -319,12 +319,26 @@ struct gui : g3d_gui
 
     char *field(const char *name, int color, int length, const char *initval)
 	{	
-        length = min(length, (int)sizeof(string)-1);
-        int w = FONTW*(length + 1);
+        int w, h;
+        int maxwidth;
+        if(length < 0) 
+        {
+            maxwidth = -length*FONTW;
+            length = (int)sizeof(string)-1;
+            text_bounds((strcmp(fieldname, name) == 0)?fieldtext:initval, w, h, maxwidth);
+            w = maxwidth + FONTW;
+        } 
+        else 
+        {
+            maxwidth = -1;
+            length = min(length, (int)sizeof(string)-1);
+            h = FONTH;
+            w = FONTW*(length + 1);
+        }
         char *result = NULL;
         if(visible() && !layoutpass)
 		{
-            bool hit = ishit(w, FONTH), editing = !strcmp(fieldname, name);            
+            bool hit = ishit(w, h), editing = !strcmp(fieldname, name);            
             if(hit && (mousebuttons&G3D_DOWN) && !editing) //mouse request focus
             {
                 s_strcpy(fieldname, name);
@@ -346,21 +360,21 @@ struct gui : g3d_gui
                 else fieldactive = true;
             }
             if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
-                fieldpos = text_visible(fieldtext, int(floor(hitx-(curx+FONTW/2))));
+                fieldpos = text_visible(fieldtext, int(floor(hitx-(curx+FONTW/2)))); /* @TODO fix for multiple lines */
                            
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
 			if(editing) glColor3f(1, 0, 0);
             else glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
 			glBegin(GL_LINE_LOOP);
-            rect_(curx, cury, w, FONTH);
+            rect_(curx, cury, w, h);
 			glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();
             
-            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, (editing && hit)?fieldpos:-1);
+            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, (editing && hit)?fieldpos:-1, maxwidth);
         }
-    	layout(w, FONTH);
+    	layout(w, h);
 		return result;
 	}
 

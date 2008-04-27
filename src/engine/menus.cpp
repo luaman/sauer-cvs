@@ -195,6 +195,7 @@ void guiradio(char *name, char *var, int *n, char *onchange)
     }
 }
 
+//-ve length indicates a wrapped text field of any (approx 260 chars) length, |length| is the field width
 void guifield(char *var, int *maxlength, char *onchange, char *updateval)
 {   
     if(!cgui) return;
@@ -205,7 +206,7 @@ void guifield(char *var, int *maxlength, char *onchange, char *updateval)
         ident *id = getident(var);
         if(id && id->type==ID_ALIAS) initval = id->action;
     }
-	char *result = cgui->field(var, GUI_BUTTON_COLOR, *maxlength>0 ? *maxlength : 12, initval);
+	char *result = cgui->field(var, GUI_BUTTON_COLOR, (*maxlength!=0) ? *maxlength : 12, initval);
     if(result) 
     {
         alias(var, result);
