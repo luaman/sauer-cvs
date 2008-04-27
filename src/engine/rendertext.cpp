@@ -98,26 +98,31 @@ static int draw_char(int c, int x, int y)
     return info.w;
 }
 
-static void text_color(int c, bvec &color, bvec *colorstack, int &colorpos, int r, int g, int b, int a) 
+//stack[sp] is current color index
+static void text_color(char c, char *stack, int size, int &sp, bvec color, int a) 
 {
-    switch(c)
-    {
-        case '0': color = bvec( 64, 255, 128); break;   // green: player talk
-        case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
-        case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
-        case '3': color = bvec(255,  64,  64); break;   // red: important errors
-        case '4': color = bvec(128, 128, 128); break;   // gray
-        case '5': color = bvec(192,  64, 192); break;   // magenta
-        case '6': color = bvec(255, 128,   0); break;   // orange
-        case 's': // save color
-            if((size_t)colorpos<sizeof(colorstack)/sizeof(colorstack[0])) colorstack[colorpos++] = color;
-            break;
-        case 'r': // restore color
-            if(colorpos>0)  color = colorstack[--colorpos];
-            break; 
-        default: color = bvec(r, g, b);                 // white: everything else
+    if(c=='s') // save color
+    {   
+        c = stack[sp];
+        if(sp<size-1) stack[sp++] = c;
     }
-    glColor4ub(color.x, color.y, color.z, a);    
+    else
+    {
+        if(c=='r') c = stack[(sp > 0) ? --sp : sp]; // restore color
+        else stack[sp] = c;
+        switch(c)
+        {
+            case '0': color = bvec( 64, 255, 128); break;   // green: player talk
+            case '1': color = bvec( 96, 160, 255); break;   // blue: "echo" command
+            case '2': color = bvec(255, 192,  64); break;   // yellow: gameplay messages 
+            case '3': color = bvec(255,  64,  64); break;   // red: important errors
+            case '4': color = bvec(128, 128, 128); break;   // gray
+            case '5': color = bvec(192,  64, 192); break;   // magenta
+            case '6': color = bvec(255, 128,   0); break;   // orange
+            // white (provided color): everything else
+        }
+        glColor4ub(color.x, color.y, color.z, a);
+    } 
 }
 
 int text_visible(const char *str, int hitx, int hity, int maxwidth)
@@ -236,9 +241,10 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
 {
     if(!curfont) return;
     
-    static bvec colorstack[8];
+    char colorstack[10];
     bvec color(r, g, b);
     int colorpos = 0, x = 0, y = 0, cx = INT_MIN, cy = 0;
+    colorstack[0] = 'c'; //indicate user color
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
@@ -251,7 +257,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
         if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
         else if(c==' ') x += curfont->defaultw;
         else if(c=='\n') { x = 0; y += FONTH; }
-        else if(c=='\f') text_color(str[++i], color, colorstack, colorpos, r, g, b, a);
+        else if(c=='\f') text_color(str[++i], colorstack, sizeof(colorstack), colorpos, color, a);
         else if(curfont->chars.inrange(c-33)) 
         {
             if(maxwidth != -1) 
@@ -276,7 +282,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
                 {
                     if(j == cursor) { cx = x; cy = y; }
                     int c = str[j];
-                    if(c=='\f') { if(str[j+1]) text_color(str[++j], color, colorstack, colorpos, r, g, b, a); } 
+                    if(c=='\f') { if(str[j+1]) text_color(str[++j], colorstack, sizeof(colorstack), colorpos, color, a); } 
                     else x += draw_char(c, left+x, top+y)+1;
                 }
             } 
