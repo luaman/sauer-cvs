@@ -200,12 +200,9 @@ void guifield(char *var, int *maxlength, char *onchange, char *updateval)
 {   
     if(!cgui) return;
     const char *initval = "";
-    if(!cguifirstpass && strcmp(g3d_fieldname(), var)) 
-    {
-        if(updateval[0]) execute(updateval);
-        ident *id = getident(var);
-        if(id && id->type==ID_ALIAS) initval = id->action;
-    }
+    if(!cguifirstpass && strcmp(g3d_fieldname(), var) && updateval[0]) execute(updateval);
+    ident *id = getident(var);
+    if(id && id->type==ID_ALIAS) initval = id->action;
 	char *result = cgui->field(var, GUI_BUTTON_COLOR, (*maxlength!=0) ? *maxlength : 12, initval);
     if(result) 
     {
