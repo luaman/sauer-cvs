@@ -1155,39 +1155,47 @@ void drawreflections()
         ref.lastupdate = totalmillis;
         lastdrawn = n;
 
-        bool scissor = false;
-        if(reflectscissor)
+        int sx, sy, sw, sh;
+        bool scissor = reflectscissor && calcscissorbox(ref, size, sx, sy, sw, sh);
+        if(!scissor)
         {
-            int sx, sy, sw, sh;
-            if(calcscissorbox(ref, size, sx, sy, sw, sh))
-            {
-                glEnable(GL_SCISSOR_TEST);
-                glScissor(sx, sy, sw, sh);
-                scissor = true;
-            }
+            sx = hasFBO ? 0 : screen->w-size;
+            sy = hasFBO ? 0 : screen->h-size;
+            sw = sh = size;
         }
 
         if(waterreflect && ref.tex && camera1->o.z >= ref.height+offset)
         {
             if(hasFBO) glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref.tex, 0);
+            if(scissor) // NV bug requires setting scissor after FBO texture change
+            {
+                glScissor(sx, sy, sw, sh);
+                glEnable(GL_SCISSOR_TEST);
+            }
             maskreflection(ref, offset, true);
             drawreflection(ref.height+offset, false, false);
+            if(scissor) glDisable(GL_SCISSOR_TEST);
             if(!hasFBO)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.tex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-size, screen->h-size, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, sx, sy, sw, sh);
             }
         }
 
         if(waterrefract && ref.refracttex)
         {
             if(hasFBO) glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref.refracttex, 0);
+            if(scissor) // NV bug requires setting scissor after FBO texture change
+            {
+                glScissor(sx, sy, sw, sh);
+                glEnable(GL_SCISSOR_TEST);
+            }
             maskreflection(ref, offset, false);
             drawreflection(ref.height+offset, true, ref.depth>=10000);
             if(!hasFBO)
             {
                 glBindTexture(GL_TEXTURE_2D, ref.refracttex);
-                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-size, screen->h-size, size, size);
+                glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, sx, sy, sw, sh);
             }   
         }    
 
@@ -1211,28 +1219,29 @@ void drawreflections()
         refs++;
         ref.lastupdate = totalmillis;
 
-        bool scissor = false;
-        if(reflectscissor)
+        int sx, sy, sw, sh;
+        bool scissor = reflectscissor && calcscissorbox(ref, size, sx, sy, sw, sh);
+        if(!scissor)
         {
-            int sx, sy, sw, sh;
-            if(calcscissorbox(ref, size, sx, sy, sw, sh))
-            {
-                glEnable(GL_SCISSOR_TEST);
-                glScissor(sx, sy, sw, sh);
-                scissor = true;
-            }
+            sx = hasFBO ? 0 : screen->w-size;
+            sy = hasFBO ? 0 : screen->h-size;
+            sw = sh = size;
         }
 
         if(hasFBO) glFramebufferTexture2D_(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, ref.refracttex, 0);
+        if(scissor) // NV bug requires setting scissor after FBO texture change
+        { 
+            glScissor(sx, sy, sw, sh);
+            glEnable(GL_SCISSOR_TEST);
+        }
         maskreflection(ref, -0.1f, false);
         drawreflection(-1, true, false); 
+        if(scissor) glDisable(GL_SCISSOR_TEST);
         if(!hasFBO)
         {
             glBindTexture(GL_TEXTURE_2D, ref.refracttex);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screen->w-size, screen->h-size, size, size);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, sx, sy, sw, sh);
         }
-
-        if(scissor) glDisable(GL_SCISSOR_TEST);
     }
 nowaterfall:
 
