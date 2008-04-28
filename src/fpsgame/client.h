@@ -36,6 +36,7 @@ struct clientcom : iclientcom
         CCOMMAND(stopdemo, "", (clientcom *self), self->stopdemo());
         CCOMMAND(cleardemos, "i", (clientcom *self, int *val), self->cleardemos(*val));
 
+        CCOMMAND(getmode, "", (clientcom *self), intret(self->cl.gamemode));
         CCOMMAND(getname, "", (clientcom *self), result(self->player1->name));
         CCOMMAND(getteam, "", (clientcom *self), result(self->player1->team));
         CCOMMAND(getclientfocus, "", (clientcom *self), intret(self->getclientfocus()));
