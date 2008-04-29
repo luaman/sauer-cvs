@@ -125,170 +125,133 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
     } 
 }
 
+#define TEXTSKELETON \
+    int y = 0, x = 0;\
+    int i;\
+    for(i = 0; str[i]; i++)\
+    {\
+        TEXTINDEX(i)\
+        int c = str[i];\
+        if(c=='\t')\
+        {\
+            x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;\
+            TEXTWHITE(i)\
+        }\
+        else if(c==' ')\
+        {\
+            x += curfont->defaultw;\
+            TEXTWHITE(i)\
+        }\
+        else if(c=='\n')\
+        {\
+            TEXTLINE(i)\
+            x = 0;\
+            y += FONTH;\
+        }\
+        else if(c=='\f')\
+        {\
+            if(str[i+1]) { TEXTCOLOR(i+1); i++; }\
+        }\
+        else if(curfont->chars.inrange(c-33))\
+        {\
+            if(maxwidth != -1)\
+            {\
+                int j = i;\
+                int w = curfont->chars[c-33].w;\
+                for(; str[i+1]; i++)\
+                {\
+                    int c = str[i+1];\
+                    if(c=='\f') { if(str[i+2]) i++; continue; }\
+                    if(i-j > 16) break;\
+                    if(!curfont->chars.inrange(c-33)) break;\
+                    int cw = curfont->chars[c-33].w + 1;\
+                    if(w + cw >= maxwidth) break;\
+                    w += cw;\
+                }\
+                if(x + w >= maxwidth && j!=0) \
+                {\
+                    TEXTLINE(j-1)\
+                    x = 0;\
+                    y += FONTH;\
+                }\
+                TEXTWORD\
+            }\
+            else\
+            {\
+                TEXTINDEX(i)\
+                TEXTCHAR(i)\
+            }\
+        }\
+    }
+
+//all the chars are guaranteed to be either drawable or color commands
+#define TEXTMULTICHAR \
+                for(; j <= i; j++)\
+                {\
+                    TEXTINDEX(j)\
+                    int c = str[j];\
+                    if(c=='\f') { if(str[j+1]) { TEXTCOLOR(j+1); j++; }; }\
+                    else TEXTCHAR(j)\
+                }
+
+
 int text_visible(const char *str, int hitx, int hity, int maxwidth)
 {
-    int y = FONTH;
-    int x = 0;
-    int i;
-    for(i = 0; str[i]; i++)
-    {
-        int c = str[i];
-        if(c=='\t') 
-        {
-            x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
-            if(y > hity && x > hitx) return i;
-        }
-        else if(c==' ') 
-        {
-            x += curfont->defaultw;
-            if(y > hity && x > hitx) return i;
-        }
-        else if(c=='\n') 
-        {
-            if(y > hity) return i;
-            x = 0; y += FONTH;
-        }
-        else if(c=='\f') 
-        {
-            if(str[i+1]) i++;
-        }
-        else if(curfont->chars.inrange(c-33)) 
-        {
-            int j = i;
-            if(maxwidth != -1) 
-            {
-                int w = curfont->chars[c-33].w;
-                for(; str[i+1]; i++) //determine word length for good breakage
-                {
-                    int c = str[i+1];
-                    if(c=='\f') { if(str[i+2]) i++; continue; }
-                    if(i-j > 16) break;
-                    if(!curfont->chars.inrange(c-33)) break;
-                    int cw = curfont->chars[c-33].w + 1;
-                    if(w + cw >= maxwidth) break;
-                    w += cw;
-                }
-                if(x + w >= maxwidth && j!=0) 
-                {
-                    if(y > hity) return j-1;
-                    x = 0;
-                    y += FONTH;
-                }
-            }
-            for(; j <= i; j++)
-            {
-                int c = str[j];
-                if(c=='\f') { if(str[j+1]) j++; } 
-                else 
-                {   
-                    x += curfont->chars[c-33].w+1;
-                    if(y > hity && x > hitx) return j;
-                }
-            }
-        }
-    }
+    #define TEXTINDEX(idx)
+    #define TEXTWHITE(idx) if(y+FONTH > hity && x > hitx) return idx;
+    #define TEXTLINE(idx) if(y+FONTH > hity) return idx;
+    #define TEXTCOLOR(idx)
+    #define TEXTCHAR(idx) \
+                    x += curfont->chars[c-33].w+1;\
+                    TEXTWHITE(idx);
+    #define TEXTWORD TEXTMULTICHAR
+    TEXTSKELETON
+    #undef TEXTINDEX
+    #undef TEXTWHITE
+    #undef TEXTLINE
+    #undef TEXTCOLOR
+    #undef TEXTCHAR
+    #undef TEXTWORD
     return i;
 }
 
 void text_bounds(const char *str, int &width, int &height, int maxwidth)
 {
+    #define TEXTINDEX(idx)
+    #define TEXTWHITE(idx)
+    #define TEXTLINE(idx) if(x > width) width = x;
+    #define TEXTCOLOR(idx)
+    #define TEXTCHAR(idx) x += curfont->chars[c-33].w + 1;
+    #define TEXTWORD x += w + 1;
     width = 0;
-    height = FONTH;
-    int x = 0;
-    for(int i = 0; str[i]; i++)
-    {
-        int c = str[i];
-        if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
-        else if(c==' ') x += curfont->defaultw;
-        else if(c=='\n') 
-        {
-            if(x > width) width = x;
-            x = 0; height += FONTH; 
-        }
-        else if(c=='\f') 
-        {
-            if(str[i+1]) i++;
-        }
-        else if(curfont->chars.inrange(c-33)) 
-        {
-            int w = curfont->chars[c-33].w;
-            if(maxwidth != -1) 
-            {
-                int j = i;
-                for(; str[i+1]; i++) //determine word length for good breakage
-                {
-                    int c = str[i+1];
-                    if(c=='\f') { if(str[i+2]) i++; continue; }
-                    if(i-j > 16) break;
-                    if(!curfont->chars.inrange(c-33)) break;
-                    int cw = curfont->chars[c-33].w + 1;
-                    if(w + cw >= maxwidth) break;
-                    w += cw;
-                }
-                if(x + w >= maxwidth && j!=0) 
-                {
-                    if(x > width) width = x;
-                    x = 0; height += FONTH;
-                }
-            }
-            x += w + 1;
-        }
-    }
-    if(x > width) width = x;
+    TEXTSKELETON
+    height = y + FONTH;
+    TEXTLINE(_)
+    #undef TEXTINDEX
+    #undef TEXTWHITE
+    #undef TEXTLINE
+    #undef TEXTCOLOR
+    #undef TEXTCHAR
+    #undef TEXTWORD
 }
 
 void draw_text(const char *str, int left, int top, int r, int g, int b, int a, int cursor, int maxwidth) 
 {
-    if(!curfont) return;
-    
+    #define TEXTINDEX(idx) if(idx == cursor) { cx = x; cy = y; }
+    #define TEXTWHITE(idx)
+    #define TEXTLINE(idx) 
+    #define TEXTCOLOR(idx) text_color(str[idx], colorstack, sizeof(colorstack), colorpos, color, a);
+    #define TEXTCHAR(idx) x += draw_char(c, left+x, top+y)+1;
+    #define TEXTWORD TEXTMULTICHAR
     char colorstack[10];
     bvec color(r, g, b);
-    int colorpos = 0, x = 0, y = 0, cx = INT_MIN, cy = 0;
+    int colorpos = 0, cx = INT_MIN, cy = 0;
     colorstack[0] = 'c'; //indicate user color
-
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, curfont->tex->id);
     glBegin(GL_QUADS);
     glColor4ub(color.x, color.y, color.z, a);
-    for(int i = 0; str[i]; i++)
-    {
-        if(i == cursor) { cx = x; cy = y; }
-        int c = str[i];
-        if(c=='\t') x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;
-        else if(c==' ') x += curfont->defaultw;
-        else if(c=='\n') { x = 0; y += FONTH; }
-        else if(c=='\f') text_color(str[++i], colorstack, sizeof(colorstack), colorpos, color, a);
-        else if(curfont->chars.inrange(c-33)) 
-        {
-            if(maxwidth != -1) 
-            {
-                int j = i, w = curfont->chars[c-33].w;
-                for(; str[i+1]; i++) //determine word length for good breakage
-                {
-                    int c = str[i+1];
-                    if(c=='\f') { if(str[i+2]) i++; continue; }
-                    if(i-j > 16) break;
-                    if(!curfont->chars.inrange(c-33)) break;
-                    int cw = curfont->chars[c-33].w + 1;
-                    if(w + cw >= maxwidth) break;
-                    w += cw;
-                }
-                if(x + w >= maxwidth && j!=0) 
-                {
-                    x = 0;
-                    y += FONTH;
-                }
-                for(; j <= i; j++)
-                {
-                    if(j == cursor) { cx = x; cy = y; }
-                    int c = str[j];
-                    if(c=='\f') { if(str[j+1]) text_color(str[++j], colorstack, sizeof(colorstack), colorpos, color, a); } 
-                    else x += draw_char(c, left+x, top+y)+1;
-                }
-            } 
-            else x += draw_char(c, left+x, top+y)+1;
-        }
-    }
+    TEXTSKELETON
     if(cursor >= 0 && (totalmillis/250)&1)
     {
         glColor4ub(r, g, b, a);
@@ -297,6 +260,12 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
         draw_char('_', left+cx, top+cy);
     }
     glEnd();
+    #undef TEXTINDEX
+    #undef TEXTWHITE
+    #undef TEXTLINE
+    #undef TEXTCOLOR
+    #undef TEXTCHAR
+    #undef TEXTWORD
 }
 
 void reloadfonts()
