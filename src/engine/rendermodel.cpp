@@ -862,25 +862,23 @@ void findanims(const char *pattern, vector<int> &anims)
 void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&masks) // model skin sharing
 {
 #define ifnoload(tex, path) if((tex = textureload(path, 0, true, false))==notexture)
-#define tryload(tex, path, prefix, name) \
-    s_sprintfd(path)("%spackages/models/%s/%s.jpg", prefix, dir, name); \
-    ifnoload(tex, path) \
+#define tryload(tex, prefix, name) \
+    ifnoload(tex, makerelpath(mdir, name ".jpg", prefix)) \
     { \
-        strcpy(path+strlen(path)-3, "png"); \
-        ifnoload(tex, path) \
+        ifnoload(tex, makerelpath(mdir, name ".png", prefix)) \
         { \
-            s_sprintf(path)("%spackages/models/%s/%s.jpg", prefix, altdir, name); \
-            ifnoload(tex, path) \
+            ifnoload(tex, makerelpath(maltdir, name ".jpg", prefix)) \
             { \
-                strcpy(path+strlen(path)-3, "png"); \
-                ifnoload(tex, path) return; \
+                ifnoload(tex, makerelpath(maltdir, name ".png", prefix)) return; \
             } \
         } \
     }
-     
+   
+    s_sprintfd(mdir)("packages/models/%s", dir);
+    s_sprintfd(maltdir)("packages/models/%s", maltdir);
     masks = notexture;
-    tryload(skin, skinpath, "", "skin");
-    tryload(masks, maskspath, "<ffmask:25>", "masks");
+    tryload(skin, NULL, "skin");
+    tryload(masks, "<ffmask:25>", "masks");
 }
 
 // convenient function that covers the usual anims for players/monsters/npcs

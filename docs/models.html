@@ -324,10 +324,10 @@ values in the range of 0 to 1, and specify the range in which the envmapping int
 after scaled into this range, is then multiplied by the chrome map.
 </p>
 
-<pre id="md3bumpmap">md3bumpmap H S N</pre>
+<pre id="md3bumpmap">md3bumpmap H N [S]</pre>
 <p>
 This command enables bumpmapping for a given mesh in the last loaded model (md3load). H is the name
-of the mesh you want to assign bumpmapping textures to. S is the path to a diffuse skin texture which is
+of the mesh you want to assign bumpmapping textures to. S is the path to a diffuse skin texture which is (if specified)
 used instead of the skin supplied with the "md3skin" command only if the user's 3D card supports bumpmapping, 
 otherwise the skin supplied with "md3skin" takes precedence and no bumpmapping is done. These
 two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
@@ -573,11 +573,11 @@ values in the range of 0 to 1, and specify the range in which the envmapping int
 after scaled into this range, is then multiplied by the chrome map.
 </p>
 
-<pre id="md5bumpmap">md5bumpmap H S N</pre>
+<pre id="md5bumpmap">md5bumpmap H N [S]</pre>
 <p>
 This command enables bumpmapping for a given mesh in the last loaded model (md5load). H is the name
 of the mesh you want to assign bumpmapping textures to. S is the path to a diffuse skin texture which is
-used instead of the skin supplied with the "md5skin" command only if the user's 3D card supports bumpmapping,
+used (if specified) instead of the skin supplied with the "md5skin" command only if the user's 3D card supports bumpmapping,
 otherwise the skin supplied with "md5skin" takes precedence and no bumpmapping is done. These
 two diffuse skins may be the same. However a diffuse skin intended for bumpmapping should generally have
 little to no directional shading baked into it, whereas flat diffuse skins (no bumpmapping) generally should,

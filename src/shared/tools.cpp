@@ -15,8 +15,34 @@
 string homedir = "";
 vector<char *> packagedirs;
 
+char *makerelpath(const char *dir, const char *file, const char *prefix)
+{
+    static string tmp;
+    if(prefix) s_strcpy(tmp, prefix);
+    else tmp[0] = '\0';
+    if(file[0]=='<')
+    {
+        const char *end = strrchr(file, '>');
+        if(end)
+        {
+            int len = strlen(tmp);
+            s_strncpy(&tmp[len], file, min((int)sizeof(tmp)-len, end+2-file));
+            file = end+1;
+        }
+    }
+    s_sprintfd(pname)("%s/%s", dir, file);
+    s_strcat(tmp, pname);
+    return tmp;
+}
+
 char *path(char *s)
 {
+    if(s[0]=='<')
+    {
+        char *file = strrchr(s, '>');
+        if(!file) return s;
+        s = file+1;
+    }
     for(char *t = s; (t = strpbrk(t, "/\\")); *t++ = PATHDIV);
     for(char *prevdir = NULL, *curdir = s;;)
     {
