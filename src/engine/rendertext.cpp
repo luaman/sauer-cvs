@@ -132,26 +132,10 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
     {\
         TEXTINDEX(i)\
         int c = str[i];\
-        if(c=='\t')\
-        {\
-            x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB;\
-            TEXTWHITE(i)\
-        }\
-        else if(c==' ')\
-        {\
-            x += curfont->defaultw;\
-            TEXTWHITE(i)\
-        }\
-        else if(c=='\n')\
-        {\
-            TEXTLINE(i)\
-            x = 0;\
-            y += FONTH;\
-        }\
-        else if(c=='\f')\
-        {\
-            if(str[i+1]) { TEXTCOLOR(i+1); i++; }\
-        }\
+        if(c=='\t')      { x = ((x+PIXELTAB)/PIXELTAB)*PIXELTAB; TEXTWHITE(i) }\
+        else if(c==' ')  { x += curfont->defaultw; TEXTWHITE(i) }\
+        else if(c=='\n') { TEXTLINE(i) x = 0; y += FONTH; }\
+        else if(c=='\f') { if(str[i+1]) { i++; TEXTCOLOR(i) }}\
         else if(curfont->chars.inrange(c-33))\
         {\
             if(maxwidth != -1)\
@@ -168,32 +152,23 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
                     if(w + cw >= maxwidth) break;\
                     w += cw;\
                 }\
-                if(x + w >= maxwidth && j!=0) \
-                {\
-                    TEXTLINE(j-1)\
-                    x = 0;\
-                    y += FONTH;\
-                }\
+                if(x + w >= maxwidth && j!=0) { TEXTLINE(j-1) x = 0; y += FONTH; }\
                 TEXTWORD\
             }\
             else\
-            {\
-                TEXTINDEX(i)\
-                TEXTCHAR(i)\
-            }\
+            { TEXTCHAR(i) }\
         }\
     }
 
 //all the chars are guaranteed to be either drawable or color commands
-#define TEXTMULTICHAR \
+#define TEXTWORDSKELETON \
                 for(; j <= i; j++)\
                 {\
                     TEXTINDEX(j)\
                     int c = str[j];\
-                    if(c=='\f') { if(str[j+1]) { TEXTCOLOR(j+1); j++; }; }\
-                    else TEXTCHAR(j)\
+                    if(c=='\f') { if(str[j+1]) { j++; TEXTCOLOR(j) }}\
+                    else { TEXTCHAR(j) }\
                 }
-
 
 int text_visible(const char *str, int hitx, int hity, int maxwidth)
 {
@@ -201,10 +176,8 @@ int text_visible(const char *str, int hitx, int hity, int maxwidth)
     #define TEXTWHITE(idx) if(y+FONTH > hity && x > hitx) return idx;
     #define TEXTLINE(idx) if(y+FONTH > hity) return idx;
     #define TEXTCOLOR(idx)
-    #define TEXTCHAR(idx) \
-                    x += curfont->chars[c-33].w+1;\
-                    TEXTWHITE(idx);
-    #define TEXTWORD TEXTMULTICHAR
+    #define TEXTCHAR(idx) x += curfont->chars[c-33].w+1; TEXTWHITE(idx)
+    #define TEXTWORD TEXTWORDSKELETON
     TEXTSKELETON
     #undef TEXTINDEX
     #undef TEXTWHITE
@@ -242,7 +215,7 @@ void draw_text(const char *str, int left, int top, int r, int g, int b, int a, i
     #define TEXTLINE(idx) 
     #define TEXTCOLOR(idx) text_color(str[idx], colorstack, sizeof(colorstack), colorpos, color, a);
     #define TEXTCHAR(idx) x += draw_char(c, left+x, top+y)+1;
-    #define TEXTWORD TEXTMULTICHAR
+    #define TEXTWORD TEXTWORDSKELETON
     char colorstack[10];
     bvec color(r, g, b);
     int colorpos = 0, cx = INT_MIN, cy = 0;
