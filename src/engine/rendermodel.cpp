@@ -875,7 +875,7 @@ void loadskin(const char *dir, const char *altdir, Texture *&skin, Texture *&mas
     }
    
     s_sprintfd(mdir)("packages/models/%s", dir);
-    s_sprintfd(maltdir)("packages/models/%s", maltdir);
+    s_sprintfd(maltdir)("packages/models/%s", altdir);
     masks = notexture;
     tryload(skin, NULL, "skin");
     tryload(masks, "<ffmask:25>", "masks");
