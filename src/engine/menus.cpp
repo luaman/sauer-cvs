@@ -3,14 +3,38 @@
 #include "pch.h"
 #include "engine.h"
 
+#define GUI_TITLE_COLOR  0xFFDD88
+#define GUI_BUTTON_COLOR 0xFFFFFF
+#define GUI_TEXT_COLOR   0xDDFFDD
+
 static vec menupos;
 static int menustart = 0;
 static int menutab = 1;
 static g3d_gui *cgui = NULL;
 static bool cguifirstpass;
 
-static hashtable<const char *, char *> guis;
-static vector<char *> guistack;
+struct menu : g3d_callback
+{
+    char *name, *header, *contents;
+
+    menu() : name(NULL), header(NULL), contents(NULL) {}
+
+    void gui(g3d_gui &g, bool firstpass)
+    {
+        cgui = &g;
+        cguifirstpass = firstpass;
+        cgui->start(menustart, 0.03f, &menutab);
+        cgui->tab(header ? header : name, GUI_TITLE_COLOR);
+        execute(contents);
+        cgui->end();
+        cgui = NULL;
+    }
+
+    virtual void clear() {}
+};
+
+static hashtable<const char *, menu> guis;
+static vector<menu *> guistack;
 static vector<char *> executelater;
 static bool shouldclearmenu = true, clearlater = false;
 
@@ -26,12 +50,51 @@ vec menuinfrontofplayer()
     return dir;
 }
 
+void popgui()
+{
+    menu *m = guistack.pop();
+    m->clear();
+}
+
+void pushgui(menu *m, int pos = -1)
+{
+    if(guistack.empty())
+    {
+        menupos = menuinfrontofplayer();
+        g3d_resetcursor();
+    }
+    if(pos < 0) guistack.add(m);
+    else guistack.insert(pos, m);
+    if(pos < 0 || pos==guistack.length()-1)
+    {
+        menutab = 1;
+        menustart = totalmillis;
+    }
+}
+
+void restoregui(int pos)
+{
+    int clear = guistack.length()-pos-1;
+    loopi(clear) popgui();
+    menutab = 1;
+    menustart = totalmillis;
+}
+
+void showgui(const char *name)
+{
+    menu *m = guis.access(name);
+    if(!m) return;
+    int pos = guistack.find(m);
+    if(pos<0) pushgui(m);
+    else restoregui(pos);
+}
+
 int cleargui(int n = 0)
 {
     int clear = guistack.length();
     if(n>0) clear = min(clear, n);
-    loopi(clear) delete[] guistack.pop();
-    if(!guistack.empty()) showgui(guistack.last());
+    loopi(clear) popgui(); 
+    if(!guistack.empty()) restoregui(guistack.length()-1);
     return clear;
 }
 
@@ -47,11 +110,6 @@ void guistayopen(char *contents)
     execute(contents);
     shouldclearmenu = oldclearmenu;
 }
-
-#define GUI_TITLE_COLOR  0xFFDD88
-#define GUI_BUTTON_COLOR 0xFFFFFF
-#define GUI_TEXT_COLOR   0xDDFFDD
-#define GUI_ACTIVE_COLOR 0xFF0000
 
 //@DOC name and icon are optional
 void guibutton(char *name, char *action, char *icon)
@@ -220,36 +278,22 @@ void guilist(char *contents)
     cgui->poplist();
 }
 
-void newgui(char *name, char *contents) 
-{ 
-    if(guis.access(name))
-    {
-        delete[] guis[name];
-        guis[name] = newstring(contents);
-    }
-    else guis[newstring(name)] = newstring(contents); 
-}
-
-void showgui(const char *name)
+void newgui(char *name, char *contents, char *header)
 {
-    int pos = guistack.find(name);
-    if(pos<0) 
-    {   
-        if(!guis.access(name)) return;
-        if(guistack.empty()) 
-        {
-            menupos = menuinfrontofplayer();
-            g3d_resetcursor();
-        }
-        guistack.add(newstring(name));
+    menu *m = guis.access(name);
+    if(!m)
+    {
+        name = newstring(name);
+        m = &guis[name];
+        m->name = name;
     }
     else
     {
-        pos = guistack.length()-pos-1;
-        loopi(pos) delete[] guistack.pop();
+        DELETEA(m->header);
+        DELETEA(m->contents);
     }
-    menutab = 1;
-    menustart = totalmillis;    
+    m->header = header && header[0] ? newstring(header) : NULL;
+    m->contents = newstring(contents);
 }
 
 void guiservers()
@@ -267,7 +311,7 @@ void guiservers()
     }
 }
 
-COMMAND(newgui, "ss");
+COMMAND(newgui, "sss");
 COMMAND(guibutton, "sss");
 COMMAND(guitext, "ss");
 COMMAND(guiservers, "s");
@@ -286,57 +330,15 @@ COMMAND(guicheckbox, "ssiis");
 COMMAND(guitab, "s");
 COMMAND(guifield, "siss");
 
-static struct mainmenucallback : g3d_callback
+static vector<const char *> needsapply;
+static int changetypes = 0;
+
+static struct applymenu : menu
 {
     void gui(g3d_gui &g, bool firstpass)
     {
         if(guistack.empty()) return;
-        char *name = guistack.last();
-        char **contents = guis.access(name);
-        if(!contents) return;
-		cgui = &g;
-        cguifirstpass = firstpass;
-        cgui->start(menustart, 0.03f, &menutab);
-		guitab(name);		
-		execute(*contents);
-        cgui->end();
-		cgui = NULL;
-    }
-} mmcb;
-
-void menuprocess()
-{
-    int level = guistack.length();
-    loopv(executelater) execute(executelater[i]);
-    executelater.deletecontentsa();
-    if(clearlater)
-    {
-        if(level==guistack.length()) guistack.deletecontentsa();
-        clearlater = false;
-    }
-}
-
-VARP(applydialog, 0, 1, 1);
-
-static vector<const char *> needsapply;
-static int changetypes = 0;
-
-void addchange(const char *desc, int type)
-{
-    if(!applydialog) return;
-    loopv(needsapply) if(!strcmp(needsapply[i], desc)) return;
-    needsapply.add(desc);
-    changetypes |= type;
-}
-
-static vec applypos;
-static int applystart = 0;
-
-static struct applychangescallback : g3d_callback
-{
-    void gui(g3d_gui &g, bool firstpass)
-    {
-        g.start(applystart, 0.03f);
+        g.start(menustart, 0.03f);
         g.text("the following settings have changed:", GUI_TEXT_COLOR, "info");
         loopv(needsapply) g.text(needsapply[i], GUI_TEXT_COLOR, "info");
         g.separator();
@@ -345,19 +347,43 @@ static struct applychangescallback : g3d_callback
         {
             if(changetypes&CHANGE_GFX) executelater.add(newstring("resetgl"));
             if(changetypes&CHANGE_SOUND) executelater.add(newstring("resetsound"));
-            applystart = 0;
-            needsapply.setsize(0);
-            changetypes = 0;
+            clearlater = true;
         }
         if(g.button("no", GUI_BUTTON_COLOR, "action")&G3D_UP)
-        {
-            applystart = 0;
-            needsapply.setsize(0);
-            changetypes = 0;
-        }
+            clearlater = true;
         g.end();
     }
-} accb;
+
+    void clear()
+    {
+        needsapply.setsize(0);
+        changetypes = 0;
+    }
+} applymenu;
+
+VARP(applydialog, 0, 1, 1);
+
+void addchange(const char *desc, int type)
+{
+    if(!applydialog) return;
+    loopv(needsapply) if(!strcmp(needsapply[i], desc)) return;
+    needsapply.add(desc);
+    changetypes |= type;
+    if(needsapply.length() && guistack.find(&applymenu) < 0)
+        pushgui(&applymenu, 0);
+}
+
+void menuprocess()
+{
+    int level = guistack.length();
+    loopv(executelater) execute(executelater[i]);
+    executelater.deletecontentsa();
+    if(clearlater)
+    {
+        if(level==guistack.length()) loopi(level) popgui();
+        clearlater = false;
+    }
+}
 
 void g3d_mainmenu()
 {
@@ -365,17 +391,7 @@ void g3d_mainmenu()
     {   
         extern int usegui2d;
         if(!usegui2d && camera1->o.dist(menupos) > menuautoclose) cleargui();
-        else g3d_addgui(&mmcb, menupos, GUI_2D | GUI_FOLLOW);
-    }
-    else if(needsapply.length())
-    {
-        if(!applystart)
-        {
-            applystart = totalmillis;
-            applypos = menuinfrontofplayer();
-            g3d_resetcursor();
-        }
-        g3d_addgui(&accb, applypos, GUI_FORCE_2D);
+        else g3d_addgui(guistack.last(), menupos, GUI_2D | GUI_FOLLOW);
     }
 }
 
