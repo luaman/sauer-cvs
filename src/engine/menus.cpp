@@ -341,9 +341,18 @@ static struct applychangescallback : g3d_callback
         g.text("apply changes now?", GUI_TEXT_COLOR, "info");
         if(g.button("yes", GUI_BUTTON_COLOR, "action")&G3D_UP)
         {
+            loopv(needsapply) if(!strstr(needsapply[i], "sound")) 
+            {
+                executelater.add(newstring("resetgl"));
+                break;
+            }
+            loopv(needsapply) if(strstr(needsapply[i], "sound")) 
+            {
+                executelater.add(newstring("resetsound"));
+                break;
+            }
             applystart = 0;
             needsapply.setsize(0);
-            executelater.add(newstring("resetgl"));
         }
         if(g.button("no", GUI_BUTTON_COLOR, "action")&G3D_UP)
         {

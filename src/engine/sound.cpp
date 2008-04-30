@@ -1,36 +1,18 @@
-// sound.cpp: uses fmod on windows and sdl_mixer on unix (both had problems on the other platform)
+// sound.cpp: basic positional sound using sdl_mixer
 
 #include "pch.h"
 #include "engine.h"
 
-//#ifndef WIN32    // NOTE: fmod not being supported for the moment as it does not allow stereo pan/vol updating during playback
-#define USE_MIXER
-//#endif
+#include "SDL_mixer.h"
+#define MAXVOL MIX_MAX_VOLUME
+Mix_Music *mod = NULL;
 
 bool nosound = true;
-
-#ifdef USE_MIXER
-    #include "SDL_mixer.h"
-    #define MAXVOL MIX_MAX_VOLUME
-    Mix_Music *mod = NULL;
-    void *stream = NULL;    // TODO
-#else
-    #include "fmod.h"
-    FMUSIC_MODULE *mod = NULL;
-    FSOUND_STREAM *stream = NULL;
-
-    #define MAXVOL 255
-    int musicchan;
-#endif
 
 struct sample
 {
     char *name;
-    #ifdef USE_MIXER
-        Mix_Chunk *sound;
-    #else
-        FSOUND_SAMPLE *sound;
-    #endif
+    Mix_Chunk *sound;
 
     sample() : name(NULL) {}
     ~sample() { DELETEA(name); }
@@ -49,39 +31,24 @@ vector<soundloc> soundlocs;
 void setmusicvol(int musicvol)
 {
     if(nosound) return;
-    #ifdef USE_MIXER
-        if(mod) Mix_VolumeMusic((musicvol*MAXVOL)/255);
-    #else
-        if(mod) FMUSIC_SetMasterVolume(mod, musicvol);
-        else if(stream && musicchan>=0) FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255);
-    #endif
+    if(mod) Mix_VolumeMusic((musicvol*MAXVOL)/255);
 }
 
 VARP(soundvol, 0, 255, 255);
 VARFP(musicvol, 0, 128, 255, setmusicvol(musicvol));
 
-char *musicdonecmd = NULL;
+char *musicfile = NULL, *musicdonecmd = NULL;
 
 void stopsound()
 {
     if(nosound) return;
+    DELETEA(musicfile);
     DELETEA(musicdonecmd);
     if(mod)
     {
-        #ifdef USE_MIXER
-            Mix_HaltMusic();
-            Mix_FreeMusic(mod);
-        #else
-            FMUSIC_FreeSong(mod);
-        #endif
+        Mix_HaltMusic();
+        Mix_FreeMusic(mod);
         mod = NULL;
-    }
-    if(stream)
-    {
-        #ifndef USE_MIXER
-            FSOUND_Stream_Close(stream);
-        #endif
-        stream = NULL;
     }
 }
 
@@ -91,35 +58,21 @@ VARF(soundbufferlen, 128, 1024, 4096, initwarning("sound configuration"));
 
 void initsound()
 {
-    #ifdef USE_MIXER
-        if(Mix_OpenAudio(soundfreq, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
-        {
-            conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
-            return;
-        }
-	    Mix_AllocateChannels(soundchans);	
-    #else
-        if(FSOUND_GetVersion()<FMOD_VERSION) fatal("old FMOD dll");
-        if(!FSOUND_Init(soundfreq, soundchans, FSOUND_INIT_GLOBALFOCUS))
-        {
-            conoutf("sound init failed (FMOD): %d", FSOUND_GetError());
-            return;
-        }
-    #endif
+    if(Mix_OpenAudio(soundfreq, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
+    {
+        conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
+        return;
+    }
+	Mix_AllocateChannels(soundchans);	
     nosound = false;
 }
 
 void musicdone()
 {
     if(!musicdonecmd) return;
-#ifdef USE_MIXER
     if(mod) Mix_FreeMusic(mod);
-#else
-    if(mod) FMUSIC_FreeSong(mod);
-    if(stream) FSOUND_Stream_Close(stream);
-#endif
     mod = NULL;
-    stream = NULL;
+    DELETEA(musicfile);
     char *cmd = musicdonecmd;
     musicdonecmd = NULL;
     execute(cmd);
@@ -135,29 +88,16 @@ void music(char *name, char *cmd)
         if(cmd[0]) musicdonecmd = newstring(cmd);
         s_sprintfd(sn)("packages/%s", name);
         const char *file = findfile(path(sn), "rb");
-        #ifdef USE_MIXER
-            if((mod = Mix_LoadMUS(file)))
-            {
-                Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
-                Mix_VolumeMusic((musicvol*MAXVOL)/255);
-            }
-        #else
-            if((mod = FMUSIC_LoadSong(file)))
-            {
-                FMUSIC_PlaySong(mod);
-                FMUSIC_SetMasterVolume(mod, musicvol);
-                FMUSIC_SetLooping(mod, cmd[0] ? FALSE : TRUE);
-            }
-            else if((stream = FSOUND_Stream_Open(file, cmd[0] ? FSOUND_LOOP_OFF : FSOUND_LOOP_NORMAL, 0, 0)))
-            {
-                musicchan = FSOUND_Stream_Play(FSOUND_FREE, stream);
-                if(musicchan>=0) { FSOUND_SetVolume(musicchan, (musicvol*MAXVOL)/255); FSOUND_SetPaused(musicchan, false); }
-            }
-        #endif
-            else
-            {
-                conoutf("could not play music: %s", sn);
-            }
+        if((mod = Mix_LoadMUS(file)))
+        {
+            musicfile = newstring(file);
+            Mix_PlayMusic(mod, cmd[0] ? 0 : -1);
+            Mix_VolumeMusic((musicvol*MAXVOL)/255);
+        }
+        else
+        {
+            conoutf("could not play music: %s", sn);
+        }
     }
 }
 
@@ -206,26 +146,24 @@ void clear_sound()
     gamesounds.setsizenodelete(0);
     mapsounds.setsizenodelete(0);
     samples.clear();
-    #ifdef USE_MIXER
-        Mix_CloseAudio();
-    #else
-        FSOUND_Close();
-    #endif
+    Mix_CloseAudio();
 }
 
-void clearmapsounds()
+void clearsoundlocs()
 {
     loopv(soundlocs) if(soundlocs[i].inuse && soundlocs[i].ent)
     {
-        #ifdef USE_MIXER
-            if(Mix_Playing(i)) Mix_HaltChannel(i);
-        #else
-            if(FSOUND_IsPlaying(i)) FSOUND_StopSound();
-        #endif
+        if(Mix_Playing(i)) Mix_HaltChannel(i);
         soundlocs[i].inuse = false;
         soundlocs[i].ent->visible = false;
         soundlocs[i].slot->uses--;
     }
+    soundlocs.setsize(0);
+}
+
+void clearmapsounds()
+{
+    clearsoundlocs();
     mapsounds.setsizenodelete(0);
 }
 
@@ -272,13 +210,8 @@ void updatechanvol(int chan, int svol, const vec *loc = NULL, extentity *ent = N
     }
     vol = (vol*MAXVOL*svol)/255/255;
     vol = min(vol, MAXVOL);
-    #ifdef USE_MIXER
-        Mix_Volume(chan, vol);
-        Mix_SetPanning(chan, 255-pan, pan);
-    #else
-        FSOUND_SetVolume(chan, vol);
-        FSOUND_SetPan(chan, pan);
-    #endif
+    Mix_Volume(chan, vol);
+    Mix_SetPanning(chan, 255-pan, pan);
 }  
 
 void newsoundloc(int chan, const vec *loc, soundslot *slot, extentity *ent = NULL)
@@ -295,28 +228,19 @@ void updatevol()
     if(nosound) return;
     loopv(soundlocs) if(soundlocs[i].inuse)
     {
-        #ifdef USE_MIXER
-            if(Mix_Playing(i))
-        #else
-            if(FSOUND_IsPlaying(i))
-        #endif
-                updatechanvol(i, soundlocs[i].slot->vol, &soundlocs[i].loc, soundlocs[i].ent);
-            else 
+        if(Mix_Playing(i))
+            updatechanvol(i, soundlocs[i].slot->vol, &soundlocs[i].loc, soundlocs[i].ent);
+        else 
+        {
+            soundlocs[i].inuse = false;
+            if(soundlocs[i].ent) 
             {
-                soundlocs[i].inuse = false;
-                if(soundlocs[i].ent) 
-                {
-                    soundlocs[i].ent->visible = false;
-                    soundlocs[i].slot->uses--;
-                }
+                soundlocs[i].ent->visible = false;
+                soundlocs[i].slot->uses--;
             }
+        }
     }
-#ifndef USE_MIXER
-    if(mod && FMUSIC_IsFinished(mod)) musicdone();
-    else if(stream && !FSOUND_IsPlaying(musicchan)) musicdone();
-#else
     if(mod && !Mix_PlayingMusic()) musicdone();
-#endif
 }
 
 VARP(maxsoundsatonce, 0, 5, 100);
@@ -347,22 +271,14 @@ void playsound(int n, const vec *loc, extentity *ent)
         {
             s_sprintf(buf)("packages/sounds/%s%s", slot.s->name, exts[i]);
             const char *file = findfile(path(buf), "rb");
-            #ifdef USE_MIXER
-                slot.s->sound = Mix_LoadWAV(file);
-            #else
-                slot.s->sound = FSOUND_Sample_Load(ent ? n+gamesounds.length() : n, file, FSOUND_LOOP_OFF, 0, 0);
-            #endif
+            slot.s->sound = Mix_LoadWAV(file);
             if(slot.s->sound) break;
         }
 
         if(!slot.s->sound) { conoutf("failed to load sample: %s", buf); return; }
     }
 
-    #ifdef USE_MIXER
-        int chan = Mix_PlayChannel(-1, slot.s->sound, 0);
-    #else
-        int chan = FSOUND_PlaySoundEx(FSOUND_FREE, slot.s->sound, NULL, true);
-    #endif
+    int chan = Mix_PlayChannel(-1, slot.s->sound, 0);
     if(chan<0) return;
 
     if(ent)
@@ -373,9 +289,6 @@ void playsound(int n, const vec *loc, extentity *ent)
     }
     if(loc) newsoundloc(chan, loc, &slot, ent);
     updatechanvol(chan, slot.vol, loc, ent);
-    #ifndef USE_MIXER
-        FSOUND_SetPaused(chan, false);
-    #endif
 }
 
 void playsoundname(const char *s, const vec *loc, int vol) 
@@ -388,4 +301,43 @@ void playsoundname(const char *s, const vec *loc, int vol)
 
 void sound(int *n) { playsound(*n); }
 COMMAND(sound, "i");
+
+void resetsound()
+{
+    const SDL_version *v = Mix_Linked_Version();
+    if(SDL_VERSIONNUM(v->major, v->minor, v->patch) <= SDL_VERSIONNUM(1, 2, 8))
+    {
+        conoutf("Sound reset not available in-game due to SDL_mixer-1.2.8 bug. Please restart for changes to take effect.");
+        return;
+    }
+    if(!nosound) 
+    {
+        clearsoundlocs();
+        enumerate(samples, sample, s, { Mix_FreeChunk(s.sound); s.sound = NULL; });
+        if(mod)
+        {
+            Mix_HaltMusic();
+            Mix_FreeMusic(mod);
+        }
+        Mix_CloseAudio();
+    }
+    initsound();
+    if(nosound)
+    {
+        DELETEA(musicfile);
+        DELETEA(musicdonecmd);
+        mod = NULL;
+        gamesounds.setsizenodelete(0);
+        mapsounds.setsizenodelete(0);
+        samples.clear();
+        return;
+    }
+    if(mod && (mod = Mix_LoadMUS(musicfile)))
+    {
+        Mix_PlayMusic(mod, musicdonecmd[0] ? 0 : -1);
+        Mix_VolumeMusic((musicvol*MAXVOL)/255);
+    }
+}
+
+COMMAND(resetsound, "");
 
