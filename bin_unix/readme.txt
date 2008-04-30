@@ -1,13 +1,18 @@
 *nix versions of cube clients and standalone servers.
 The clients function identical to the win32 client, see config.html.
 
-Please run "sauerbraten_unix" from the root Sauerbraten dir to launch these.
+Please run "sauerbraten_unix" from the root Sauerbraten dir to launch these, or
+set the SAUER_DIR variable at the top of the "sauerbraten_unix" script to an absolute
+path to allow it to be run from any location. Note that the "sauerbraten_unix" script 
+is set up to write any files (saved maps, configs, etc.) into the user's home 
+directory at "~/.sauerbraten".
+
 Clients will need the following dynamic link libraries present:
 * libGL (OpenGL)
 * libGLU (OpenGL)
 * SDL (>= 1.2.10)
-* SDL_image (>= 1.2.10)
-* SDL_mixer (>= 1.2.10)
+* SDL_image
+* SDL_mixer
 * libpng
 * libjpeg
 * zlib
