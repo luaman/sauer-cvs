@@ -319,12 +319,14 @@ void menuprocess()
 VARP(applydialog, 0, 1, 1);
 
 static vector<const char *> needsapply;
+static int changetypes = 0;
 
-void addchange(const char *desc)
+void addchange(const char *desc, int type)
 {
     if(!applydialog) return;
     loopv(needsapply) if(!strcmp(needsapply[i], desc)) return;
     needsapply.add(desc);
+    changetypes |= type;
 }
 
 static vec applypos;
@@ -341,23 +343,17 @@ static struct applychangescallback : g3d_callback
         g.text("apply changes now?", GUI_TEXT_COLOR, "info");
         if(g.button("yes", GUI_BUTTON_COLOR, "action")&G3D_UP)
         {
-            loopv(needsapply) if(!strstr(needsapply[i], "sound")) 
-            {
-                executelater.add(newstring("resetgl"));
-                break;
-            }
-            loopv(needsapply) if(strstr(needsapply[i], "sound")) 
-            {
-                executelater.add(newstring("resetsound"));
-                break;
-            }
+            if(changetypes&CHANGE_GFX) executelater.add(newstring("resetgl"));
+            if(changetypes&CHANGE_SOUND) executelater.add(newstring("resetsound"));
             applystart = 0;
             needsapply.setsize(0);
+            changetypes = 0;
         }
         if(g.button("no", GUI_BUTTON_COLOR, "action")&G3D_UP)
         {
             applystart = 0;
             needsapply.setsize(0);
+            changetypes = 0;
         }
         g.end();
     }

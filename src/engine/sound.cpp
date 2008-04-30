@@ -52,9 +52,9 @@ void stopsound()
     }
 }
 
-VARF(soundchans, 0, 32, 128, initwarning("sound configuration"));
-VARF(soundfreq, 0, MIX_DEFAULT_FREQUENCY, 44100, initwarning("sound configuration"));
-VARF(soundbufferlen, 128, 1024, 4096, initwarning("sound configuration"));
+VARF(soundchans, 0, 32, 128, initwarning("sound configuration", INIT_RESET, CHANGE_SOUND));
+VARF(soundfreq, 0, MIX_DEFAULT_FREQUENCY, 44100, initwarning("sound configuration", INIT_RESET, CHANGE_SOUND));
+VARF(soundbufferlen, 128, 1024, 4096, initwarning("sound configuration", INIT_RESET, CHANGE_SOUND));
 
 void initsound()
 {
