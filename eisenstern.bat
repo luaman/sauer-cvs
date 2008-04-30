@@ -1,1 +1,1 @@
-bin\sauerbraten.exe -grpg %1 %2 %3 %4 %5
+bin\sauerbraten.exe -r -grpg %1 %2 %3 %4 %5
