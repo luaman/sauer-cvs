@@ -52,9 +52,6 @@ SERVER_OBJS= \
 	engine/server-standalone.o \
 	fpsgame/fps-standalone.o
 
-DTRACE= /usr/sbin/dtrace -G -32
-DPROVIDER= $(if $(wildcard /usr/sbin/dtrace), shared/sbtrace.o, )
-
 default: all
 
 all: client server
@@ -66,17 +63,14 @@ libenet: enet/Makefile
 	$(MAKE)	-C enet/ all
 
 clean: enet/Makefile
-	-$(RM) $(SERVER_OBJS) $(CLIENT_OBJS) $(DPROVIDER) sauer_server sauer_client
+	-$(RM) $(SERVER_OBJS) $(CLIENT_OBJS) sauer_server sauer_client
 	$(MAKE)	-C enet/ clean
 
 %-standalone.o:
 	$(CXX) $(CXXFLAGS) -DSTANDALONE -c -o $@ $(subst -standalone.o,.cpp,$@)
 
-shared/sbtrace.o: shared/sbtrace.d $(CLIENT_OBJS)
-	$(DTRACE) -o $@ -s $< $(CLIENT_OBJS)
-
-client:	libenet $(CLIENT_OBJS) $(DPROVIDER)
-	$(CXX) $(CXXFLAGS) -o sauer_client $(DPROVIDER) $(CLIENT_OBJS) $(CLIENT_LIBS)
+client:	libenet $(CLIENT_OBJS)
+	$(CXX) $(CXXFLAGS) -o sauer_client $(CLIENT_OBJS) $(CLIENT_LIBS)
 
 server:	libenet $(SERVER_OBJS)
 	$(CXX) $(CXXFLAGS) -o sauer_server $(SERVER_OBJS) $(SERVER_LIBS)  

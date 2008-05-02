@@ -51,8 +51,6 @@
 #endif
 #include <zlib.h>
 
-#include "sbtrace.h"
-
 #ifdef __sun__
 #undef sun
 #undef MAXNAMELEN
