@@ -188,6 +188,27 @@ int text_visible(const char *str, int hitx, int hity, int maxwidth)
     return i;
 }
 
+//inverse of text_visible
+void text_pos(const char *str, int cursor, int &cx, int &cy, int maxwidth) 
+{
+    #define TEXTINDEX(idx) if(idx == cursor) { cx = x; cy = y; break; }
+    #define TEXTWHITE(idx)
+    #define TEXTLINE(idx)
+    #define TEXTCOLOR(idx)
+    #define TEXTCHAR(idx) x += curfont->chars[c-33].w + 1;
+    #define TEXTWORD TEXTWORDSKELETON if(i >= cursor) break;
+    cx = INT_MIN;
+    cy = 0;
+    TEXTSKELETON
+    if(cx == INT_MIN) { cx = x; cy = y; }
+    #undef TEXTINDEX
+    #undef TEXTWHITE
+    #undef TEXTLINE
+    #undef TEXTCOLOR
+    #undef TEXTCHAR
+    #undef TEXTWORD
+}
+
 void text_bounds(const char *str, int &width, int &height, int maxwidth)
 {
     #define TEXTINDEX(idx)

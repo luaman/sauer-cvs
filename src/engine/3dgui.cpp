@@ -12,7 +12,7 @@ static struct gui *windowhit = NULL;
 
 //text field state - only one ever active/focused
 static string fieldname, fieldtext;  //copy of while focused
-static int fieldpos = -1, fieldlen = 0; //-1=no focus, -2=wanting to commit
+static int fieldpos = -1, fieldlen = 0, fieldwidth; //fieldpos: -1=no focus, -2=wanting to commit
 static bool fieldactive; 
 
 bool menukey(int code, bool isdown, int cooked) 
@@ -31,6 +31,8 @@ bool menukey(int code, bool isdown, int cooked)
         case SDLK_END:
 		case SDLK_DELETE:
         case SDLK_BACKSPACE:
+        case SDLK_UP:
+        case SDLK_DOWN:
         case SDLK_LEFT:
         case SDLK_RIGHT:
 		case SDLK_TAB:
@@ -48,6 +50,22 @@ bool menukey(int code, bool isdown, int cooked)
             break;
         case SDLK_END:
             fieldpos = len;
+            break;
+        case SDLK_UP:
+            {
+                int cx, cy; 
+                text_pos(fieldtext, fieldpos, cx, cy, fieldwidth);
+                cy -= FONTH;
+                fieldpos = text_visible(fieldtext, cx, cy, fieldwidth);
+            }
+            break;
+        case SDLK_DOWN:
+            {
+                int cx, cy; 
+                text_pos(fieldtext, fieldpos, cx, cy, fieldwidth);
+                cy += FONTH;
+                fieldpos = text_visible(fieldtext, cx, cy, fieldwidth);
+            }
             break;
 		case SDLK_LEFT:
 			if(fieldpos > 0) fieldpos--;
@@ -350,6 +368,7 @@ struct gui : g3d_gui
             }
             if(editing)
             {
+                fieldwidth = maxwidth;
                 if(fieldpos==-2 || !hit) // commit field if user pressed enter or wandered out of focus 
                 {
                     result = fieldtext;
