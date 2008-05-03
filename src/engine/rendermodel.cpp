@@ -700,7 +700,7 @@ void rendermodel(entitylight *light, const char *mdl, int anim, const vec &o, fl
             return;
         }
     }
-    if(showboundingbox && !shadowmapping)
+    if(showboundingbox && !shadowmapping && !reflecting && !refracting)
     {
         if(d && showboundingbox==1) 
         {
