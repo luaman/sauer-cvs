@@ -58,7 +58,6 @@ VARF(soundbufferlen, 128, 1024, 4096, initwarning("sound configuration", INIT_RE
 
 void initsound()
 {
-    initmumble();
     if(Mix_OpenAudio(soundfreq, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
     {
         conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());

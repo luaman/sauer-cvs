@@ -852,6 +852,7 @@ int main(int argc, char **argv)
 
     log("mainloop");
 
+    initmumble();
     resetfpshistory();
 
     for(;;)
