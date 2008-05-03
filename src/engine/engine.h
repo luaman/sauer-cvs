@@ -490,6 +490,10 @@ extern void checkmapsounds();
 extern void clearmapsounds();
 extern void updatevol();
 
+extern void initmumble();
+extern void closemumble();
+extern void updatemumble();
+
 // grass
 extern void rendergrass();
 

@@ -4,7 +4,10 @@ CXXFLAGS= -Wall -fsigned-char $(CXXOPTFLAGS) $(INCLUDES)
 
 PLATFORM_PREFIX=native
 
-CLIENT_LIBS=-Lenet -lenet -L/usr/X11R6/lib `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
+CLIENT_LIBS= -Lenet -lenet -L/usr/X11R6/lib `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU 
+ifeq ($(shell uname -s),Linux)
+CLIENT_LIBS+= -lrt
+endif
 CLIENT_OBJS= \
 	shared/tools.o \
 	shared/geom.o \
@@ -46,7 +49,7 @@ CLIENT_OBJS= \
 	fpsgame/fps.o \
 	rpggame/rpg.o
 
-SERVER_LIBS=-Lenet -lenet -lz
+SERVER_LIBS= -Lenet -lenet -lz
 SERVER_OBJS= \
 	shared/tools-standalone.o \
 	engine/server-standalone.o \
