@@ -345,6 +345,11 @@ COMMAND(resetsound, "");
 
 #ifdef WIN32
 #include <wchar.h>
+
+#ifndef __GNUC__
+#define wcsncpy(dst, src, len) wcscpy_s(dst, len, src)
+#endif
+
 #else
 #include <unistd.h>
 
@@ -396,7 +401,7 @@ void initmumble()
         if(mumblelink)
         {
             mumbleinfo = (MumbleInfo *)MapViewOfFile(mumblelink, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(MumbleInfo));
-            if(mumbleinfo) wcscpy_s(mumbleinfo->name, 256, L"Sauerbraten");
+            if(mumbleinfo) wcsncpy(mumbleinfo->name, L"Sauerbraten", 256);
         }
     #elif defined(_POSIX_SHARED_MEMORY_OBJECTS)
         s_sprintfd(shmname)("/MumbleLink.%d", getuid());
