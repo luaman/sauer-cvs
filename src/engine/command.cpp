@@ -178,13 +178,13 @@ void setvar(const char *name, int i, bool dofunc)
 } 
 void setfvar(const char *name, float f, bool dofunc)
 {
-    GETVAR(id, name, );
+    _GETVAR(id, ID_FVAR, name, );
     *id->storage.f = f;
     if(dofunc) id->changed();
 }
 void setsvar(const char *name, const char *str, bool dofunc)
 {
-    GETVAR(id, name, );
+    _GETVAR(id, ID_SVAR, name, );
     *id->storage.s = exchangestr(*id->storage.s, str);
     if(dofunc) id->changed();
 }
