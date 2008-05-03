@@ -190,14 +190,15 @@ struct scoreboard : g3d_callback
             }
         }
         g.text(modemapstr, 0xFFFF80, "server");
-
+    
+        const playermodelinfo &mdl = cl.fr.getplayermodelinfo();
         int numgroups = groupplayers();
         loopk(numgroups)
         {
             if((k%2)==0) g.pushlist(); // horizontal
             
             scoregroup &sg = *groups[k];
-            const char *icon = cl.fr.ogro() ? "ogro" : (sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? "player_blue" : "player_red") : "player");
+            const char *icon = sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? mdl.blueicon : mdl.redicon) : mdl.ffaicon;
             int bgcolor = sg.team && m_teammode ? (isteam(cl.player1->team, sg.team) ? 0x3030C0 : 0xC03030) : 0,
                 fgcolor = 0xFFFF80;
 
@@ -228,11 +229,11 @@ struct scoreboard : g3d_callback
                     g.background(0x808080, numgroups>1 ? 3 : 5);
                 }
                 const char *oicon = icon;
-                if(!cl.fr.ogro() && m_assassin)
+                if(m_assassin)
                 {
-                    if(cl.asc.targets.find(o)>=0) oicon = "player_red";
-                    else if(cl.asc.hunters.find(o)>=0) oicon = "player";
-                    else oicon = "player_blue";
+                    if(cl.asc.targets.find(o)>=0) oicon = mdl.redicon;
+                    else if(cl.asc.hunters.find(o)>=0) oicon = mdl.ffaicon;
+                    else oicon = mdl.blueicon;
                 }
                 g.text("", 0, oicon);
                 if(o==cl.player1 && highlightscore() && (multiplayer(false) || cl.cc.demoplayback)) g.poplist();
@@ -332,7 +333,7 @@ struct scoreboard : g3d_callback
                         g.pushlist();
                         g.background(0x808080, 3);
                     }
-                    g.text(cl.colorname(o), 0xFFFFDD, cl.fr.ogro() ? "ogro" : "player");
+                    g.text(cl.colorname(o), 0xFFFFDD, mdl.ffaicon);
                     if(o==cl.player1 && highlightscore()) g.poplist();
                 }
                 g.poplist();
@@ -353,7 +354,7 @@ struct scoreboard : g3d_callback
                     if((i%3)==0) 
                     {
                         g.pushlist();
-                        g.text("", 0xFFFFDD, cl.fr.ogro() ? "ogro" : "player");
+                        g.text("", 0xFFFFDD, mdl.ffaicon);
                     }
                     fpsent *o = spectators[i];
                     int status = 0xFFFFDD;

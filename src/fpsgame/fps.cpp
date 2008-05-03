@@ -508,13 +508,6 @@ struct fpsclient : igameclient
         cc.initclientnet();
     }
 
-    void preloadcharacters()
-    {
-        loadmodel(fr.ogro() ? "monster/ogro" : "ironsnout", -1, true);
-        loadmodel(fr.ogro() ? "monster/ogro/blue" : "ironsnout/blue", -1, true);
-        loadmodel(fr.ogro() ? "monster/ogro/red" : "ironsnout/red", -1, true);
-    }
-
     void preloadweapons()
     {
         loopi(NUMGUNS)
@@ -549,7 +542,7 @@ struct fpsclient : igameclient
     {
         preloadweapons();
         preloadbouncers();
-        preloadcharacters();
+        fr.preloadplayermodel();
         et.preloadentities();
         if(m_sp) ms.preloadmonsters();
         else if(m_capture) cpc.preloadbases();

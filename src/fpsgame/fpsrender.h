@@ -1,3 +1,9 @@
+struct playermodelinfo
+{
+    const char *ffa, *blueteam, *redteam, 
+               *vwep, *quad, *armour[3],
+               *ffaicon, *blueicon, *redicon; 
+};
 
 struct fpsrender
 {      
@@ -8,11 +14,33 @@ struct fpsrender
     vector<fpsent *> bestplayers;
     vector<const char *> bestteams;
 
-    IVARP(ogro, 0, 0, 1);
+    IVARP(playermodel, 0, 0, 2);
 
-    void renderplayer(fpsent *d, const char *mdlname)
+    const playermodelinfo &getplayermodelinfo()
     {
-        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = ogro() ? 300 : cl.ws.reloadtime(d->gunselect)+50;
+        static const playermodelinfo playermodels[3] =
+        {
+            { "mrfixit", "mrfixit/blue", "mrfixit/red", NULL, NULL, { NULL, NULL, NULL }, "player", "player_blue", "player_red" },
+            { "ironsnout", "ironsnout/blue", "ironsnout/red", NULL, "quadspheres", { "shield/blue", "shield/green", "shield/yellow" }, "player", "player_blue", "player_red" },
+            { "monster/ogro", "monster/ogro/blue", "monster/ogro/red", "monster/ogro/vwep", NULL, { NULL, NULL, NULL }, "ogro", "ogro", "ogro" }
+        };
+        return playermodels[playermodel()];
+    }
+
+    void preloadplayermodel()
+    {
+        const playermodelinfo &mdl = getplayermodelinfo();
+        loadmodel(mdl.ffa, -1, true);
+        loadmodel(mdl.blueteam, -1, true);
+        loadmodel(mdl.redteam, -1, true);
+        loadmodel(mdl.vwep, -1, true);
+        loadmodel(mdl.quad, -1, true);
+        loopi(3) loadmodel(mdl.armour[i], -1, true);
+    }
+
+    void renderplayer(fpsent *d, const playermodelinfo &mdl, int team)
+    {
+        int lastaction = d->lastaction, attack = d->gunselect==GUN_FIST ? ANIM_PUNCH : ANIM_SHOOT, delay = mdl.vwep ? 300 : cl.ws.reloadtime(d->gunselect)+50;
         if(cl.intermission && d->state!=CS_DEAD)
         {
             lastaction = cl.lastmillis;
@@ -31,19 +59,19 @@ struct fpsrender
         modelattach a[4] = { { NULL }, { NULL }, { NULL }, { NULL } };
         static const char *vweps[] = {"vwep/fist", "vwep/shotg", "vwep/chaing", "vwep/rocket", "vwep/rifle", "vwep/gl", "vwep/pistol"};
         int ai = 0;
-        if((!ogro() || d->gunselect!=GUN_FIST) && d->gunselect<=GUN_PISTOL)
+        if((!mdl.vwep || d->gunselect!=GUN_FIST) && d->gunselect<=GUN_PISTOL)
         {
-            a[ai].name = ogro() ? "monster/ogro/vwep" : vweps[d->gunselect];
+            a[ai].name = mdl.vwep ? mdl.vwep : vweps[d->gunselect];
             a[ai].tag = "tag_weapon";
             a[ai].anim = ANIM_VWEP|ANIM_LOOP;
             a[ai].basetime = 0;
             ai++;
         }
-        if(!ogro() && d->state==CS_ALIVE)
+        if(d->state==CS_ALIVE)
         {
-            if(d->quadmillis)
+            if(d->quadmillis && mdl.quad)
             {
-                a[ai].name = "quadspheres";
+                a[ai].name = mdl.quad;
                 a[ai].tag = "tag_powerup";
                 a[ai].anim = ANIM_POWERUP|ANIM_LOOP;
                 a[ai].basetime = 0;
@@ -51,13 +79,22 @@ struct fpsrender
             }
             if(d->armour)
             {
-                static const char *armormdls[] = { "shield/blue", "shield/green", "shield/yellow" };
-                a[ai].name = armormdls[clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW)];
-                a[ai].tag = "tag_shield";
-                a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
-                a[ai].basetime = 0;
-                ai++;
+                int type = clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW);
+                if(mdl.armour[type])
+                {
+                    a[ai].name = mdl.armour[type];
+                    a[ai].tag = "tag_shield";
+                    a[ai].anim = ANIM_SHIELD|ANIM_LOOP;
+                    a[ai].basetime = 0;
+                    ai++;
+                }
             }
+        }
+        const char *mdlname = mdl.ffa;
+        switch(team)
+        {
+            case 1: mdlname = mdl.blueteam; break;
+            case 2: mdlname = mdl.redteam; break;
         }
         renderclient(d, mdlname, a[0].name ? a : NULL, attack, delay, lastaction, cl.intermission ? 0 : d->lastpain);
 #if 0
@@ -81,12 +118,7 @@ struct fpsrender
 
         startmodelbatches();
 
-        const char *mdlnames[3] = 
-        { 
-            ogro() ? "monster/ogro" : "ironsnout",
-            ogro() ? "monster/ogro/blue" : "ironsnout/blue",
-            ogro() ? "monster/ogro/red" : "ironsnout/red"
-        };
+        const playermodelinfo &mdl = getplayermodelinfo();
 
         fpsent *exclude = NULL;
         if(cl.player1->state==CS_SPECTATOR && cl.following>=0 && !cl.followdist())
@@ -95,15 +127,15 @@ struct fpsrender
         fpsent *d;
         loopv(cl.players) if((d = cl.players[i]) && d->state!=CS_SPECTATOR && d->state!=CS_SPAWNING && d!=exclude)
         {
-            int mdl = 0;
-            if(m_assassin) mdl = cl.asc.targets.find(d)>=0 ? 2 : (cl.asc.hunters.find(d)>=0 ? 0 : 1);
-            else if(teamskins() || m_teammode) mdl = isteam(cl.player1->team, d->team) ? 1 : 2;
-            if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdlnames[mdl]);
+            int team = 0;
+            if(m_assassin) team = cl.asc.targets.find(d)>=0 ? 2 : (cl.asc.hunters.find(d)>=0 ? 0 : 1);
+            else if(teamskins() || m_teammode) team = isteam(cl.player1->team, d->team) ? 1 : 2;
+            if(d->state!=CS_DEAD || d->superdamage<50) renderplayer(d, mdl, team);
             s_strcpy(d->info, cl.colorname(d, NULL, "@"));
             if(d->maxhealth>100) { s_sprintfd(sn)(" +%d", d->maxhealth-100); s_strcat(d->info, sn); }
-            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, mdl ? (mdl==1 ? 16 : 13) : 11, 1);
+            if(d->state!=CS_DEAD) particle_text(d->abovehead(), d->info, team ? (team==1 ? 16 : 13) : 11, 1);
         }
-        if(isthirdperson()) renderplayer(cl.player1, teamskins() || m_teamskins ? mdlnames[1] : mdlnames[0]);
+        if(isthirdperson()) renderplayer(cl.player1, mdl, teamskins() || m_teamskins ? 1 : 0);
         cl.ms.monsterrender();
         cl.mo.render();
         cl.et.renderentities();
