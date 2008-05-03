@@ -173,7 +173,7 @@ static void text_color(char c, char *stack, int size, int &sp, bvec color, int a
 int text_visible(const char *str, int hitx, int hity, int maxwidth)
 {
     #define TEXTINDEX(idx)
-    #define TEXTWHITE(idx) if(y+FONTH > hity && x > hitx) return idx;
+    #define TEXTWHITE(idx) if(y+FONTH > hity && x >= hitx) return idx;
     #define TEXTLINE(idx) if(y+FONTH > hity) return idx;
     #define TEXTCOLOR(idx)
     #define TEXTCHAR(idx) x += curfont->chars[c-33].w+1; TEXTWHITE(idx)
