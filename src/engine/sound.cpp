@@ -379,7 +379,11 @@ static MumbleInfo *mumbleinfo = (MumbleInfo *)-1;
 #define VALID_MUMBLELINK (mumblelink >= 0 && mumbleinfo != (MumbleInfo *)-1)
 #endif
 
+#ifdef VALID_MUMBLELINK
+VARFP(mumble, 0, 1, 1, { if(mumble) initmumble(); else closemumble(); });
+#else
 VARFP(mumble, 0, 0, 1, { if(mumble) initmumble(); else closemumble(); });
+#endif
 
 void initmumble()
 {
@@ -395,7 +399,7 @@ void initmumble()
         }
     #elif defined(_POSIX_SHARED_MEMORY_OBJECTS)
         s_sprintfd(shmname)("/MumbleLink.%d", getuid());
-        mumblelink = shm_open(shmname, O_RDWR,0);
+        mumblelink = shm_open(shmname, O_RDWR, 0);
         if(mumblelink >= 0)
         {
             mumbleinfo = (MumbleInfo *)mmap(NULL, sizeof(MumbleInfo), PROT_READ|PROT_WRITE, MAP_SHARED, mumblelink, 0);
