@@ -170,18 +170,31 @@ struct fpsclient : igameclient
         conoutf("follow off");
     }
 
-    bool detachcamera()
+    fpsent *followingplayer()
     {
-        fpsent *d = hudplayer();
-        return d->state==CS_DEAD;
+        if(player1->state!=CS_SPECTATOR || following<0) return NULL;
+        fpsent *target = getclient(following);
+        if(target && target->state!=CS_SPECTATOR) return target;
+        return NULL;
+    }
+
+    fpsent *hudplayer()
+    {
+        fpsent *target = followingplayer();
+        if(target && (target->state==CS_DEAD || !isthirdperson())) return target;
+        return player1;
     }
 
     void setupcamera()
     {
-        if(player1->state!=CS_SPECTATOR || following<0) return;
-        fpsent *target = getclient(following);
-        if(!target || target->state==CS_SPECTATOR) return;
-        followplayer(target);
+        fpsent *target = followingplayer();
+        if(target) followplayer(target);
+    }
+
+    bool detachcamera()
+    {
+        fpsent *d = hudplayer();
+        return d->state==CS_DEAD;
     }
 
     IVARP(smoothmove, 0, 75, 100);
@@ -427,6 +440,7 @@ struct fpsclient : igameclient
         }
         else
         {
+            if(d==followingplayer()) d->pitch = d->roll = 0;
             d->move = d->strafe = 0;
             playsound(S_DIE1+rnd(2), &d->o);
             ws.superdamageeffect(d->vel, d);
@@ -710,16 +724,6 @@ struct fpsclient : igameclient
         rendermodel(NULL, gunname, anim, sway, d->yaw+90, d->pitch, MDL_LIGHT, NULL, NULL, base, speed);
     }
 
-    fpsent *hudplayer()
-    {
-        if(player1->state==CS_SPECTATOR && following>=0)
-        {
-            fpsent *target = getclient(following);
-            if(target && target->state!=CS_SPECTATOR && (target->state==CS_DEAD || !isthirdperson())) return target;
-        }
-        return player1;
-    }
-
     void drawhudgun()
     {
         if(!hudgun() || editmode) return;
@@ -754,13 +758,28 @@ struct fpsclient : igameclient
   
     void gameplayhud(int w, int h)
     {
+        if(player1->state==CS_SPECTATOR)
+        {
+            glLoadIdentity();
+            glOrtho(0, w*1800/h, 1800, 0, -1, 1);
+
+            int pw, ph, tw, th, fw, fh;
+            text_bounds("  ", pw, ph);
+            text_bounds("SPECTATOR", tw, th);
+            th = max(th, ph);
+            fpsent *f = followingplayer();
+            text_bounds(f ? colorname(f) : " ", fw, fh);
+            fh = max(fh, ph);
+            draw_text("SPECTATOR", w*1800/h - tw - pw, 1650 - th - fh);
+            if(f) draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh);
+        }
+
         glLoadIdentity();
         glOrtho(0, w*900/h, 900, 0, -1, 1);
 
         fpsent *d = hudplayer();
         if(d->state==CS_SPECTATOR)
         {
-            draw_text("SPECTATOR", 10, 827);
             if(m_capture || m_ctf)
             {
                 glLoadIdentity();
