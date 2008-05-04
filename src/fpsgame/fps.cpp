@@ -180,7 +180,7 @@ struct fpsclient : igameclient
     {
         if(player1->state!=CS_SPECTATOR || following<0) return;
         fpsent *target = getclient(following);
-        if(!target) return;
+        if(!target || target->state==CS_SPECTATOR) return;
         followplayer(target);
     }
 
@@ -715,7 +715,7 @@ struct fpsclient : igameclient
         if(player1->state==CS_SPECTATOR && following>=0)
         {
             fpsent *target = getclient(following);
-            if(target && (target->state==CS_DEAD || !isthirdperson())) return target;
+            if(target && target->state!=CS_SPECTATOR && (target->state==CS_DEAD || !isthirdperson())) return target;
         }
         return player1;
     }
@@ -725,7 +725,7 @@ struct fpsclient : igameclient
         if(!hudgun() || editmode) return;
 
         fpsent *d = hudplayer();
-        if(d->state==CS_SPECTATOR) return;
+        if(d->state==CS_SPECTATOR || d->state==CS_EDITING) return;
 
         int rtime = ws.reloadtime(d->gunselect);
         if(d->lastaction && d->lastattackgun==d->gunselect && lastmillis-d->lastaction<rtime)
