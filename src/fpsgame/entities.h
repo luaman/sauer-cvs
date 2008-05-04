@@ -237,16 +237,26 @@ struct entities : icliententities
 
     void putitems(ucharbuf &p, int gamemode)            // puts items in network stream and also spawns them locally
     {
+        putint(p, SV_ITEMLIST);
         loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD && (!m_capture || ents[i]->type<I_SHELLS || ents[i]->type>I_CARTRIDGES))
         {
             putint(p, i);
             putint(p, ents[i]->type);
-            
-            ents[i]->spawned = (m_sp || (ents[i]->type!=I_QUAD && ents[i]->type!=I_BOOST)); 
         }
+        putint(p, -1);
     }
 
     void resetspawns() { loopv(ents) ents[i]->spawned = false; }
+
+    void spawnitems(int gamemode)
+    {
+        if(m_noitems) return;
+        loopv(ents) if(ents[i]->type>=I_SHELLS && ents[i]->type<=I_QUAD && (!m_capture || ents[i]->type<I_SHELLS || ents[i]->type>I_CARTRIDGES))
+        {
+            ents[i]->spawned = (m_sp || (ents[i]->type!=I_QUAD && ents[i]->type!=I_BOOST));
+        }
+    }
+
     void setspawn(int i, bool on) { if(ents.inrange(i)) ents[i]->spawned = on; }
 
     extentity *newentity() { return new fpsentity(); }

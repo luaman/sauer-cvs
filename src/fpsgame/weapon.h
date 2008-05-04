@@ -492,7 +492,7 @@ struct weaponstate
     vec hudgunorigin(int gun, const vec &from, const vec &to, fpsent *d)
     {
         vec offset(from);
-        if(d!=player1 || isthirdperson()) 
+        if(d!=cl.hudplayer() || isthirdperson()) 
         {
             vec front, right;
             vecfromyawpitch(d->yaw, d->pitch, 1, 0, front);

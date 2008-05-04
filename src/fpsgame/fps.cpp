@@ -153,16 +153,6 @@ struct fpsclient : igameclient
         return NULL;
     }
 
-    void followplayer(fpsent *target)
-    {
-        if(target->state!=CS_DEAD)
-        {
-            player1->yaw = target->yaw; 
-            player1->pitch = target->pitch; 
-        }
-        player1->o = target->o;
-    }
-
     void stopfollowing()
     {
         if(following<0) return;
@@ -180,15 +170,21 @@ struct fpsclient : igameclient
 
     fpsent *hudplayer()
     {
+        extern int thirdperson;
+        if(thirdperson) return player1;
         fpsent *target = followingplayer();
-        if(target && (target->state==CS_DEAD || !isthirdperson())) return target;
-        return player1;
+        return target ? target : player1;
     }
 
     void setupcamera()
     {
         fpsent *target = followingplayer();
-        if(target) followplayer(target);
+        if(target) 
+        {
+            player1->yaw = target->yaw;    
+            player1->pitch = target->state==CS_DEAD ? 0 : target->pitch;
+            player1->o = target->o;
+        }
     }
 
     bool detachcamera()
@@ -440,7 +436,6 @@ struct fpsclient : igameclient
         }
         else
         {
-            if(d==followingplayer()) d->pitch = d->roll = 0;
             d->move = d->strafe = 0;
             playsound(S_DIE1+rnd(2), &d->o);
             ws.superdamageeffect(d->vel, d);

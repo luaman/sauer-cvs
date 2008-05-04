@@ -1248,7 +1248,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     int material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (3*pl->aboveeye - pl->eyeheight)/4));
     bool water = isliquid(material);
-    bool floating = (editmode && local) || pl->state==CS_EDITING || pl->state==CS_SPECTATOR;
+    bool floating = (editmode && local) || pl->state==CS_EDITING || (pl->type!=ENT_CAMERA && pl->state==CS_SPECTATOR);
     float secs = curtime/1000.f;
 
     // apply gravity

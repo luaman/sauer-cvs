@@ -281,11 +281,9 @@ struct clientcom : iclientcom
         }
         if(senditemstoserver)
         {
-            reliable = true;
-            putint(p, SV_ITEMLIST);
             int gamemode = cl.gamemode;
+            reliable = !m_noitems || m_capture || m_ctf;
             if(!m_noitems) cl.et.putitems(p, gamemode);
-            putint(p, -1);
             if(m_capture) cl.cpc.sendbases(p);
             else if(m_ctf) cl.ctf.sendflags(p);
             senditemstoserver = false;
@@ -533,6 +531,8 @@ struct clientcom : iclientcom
                 changemapserv(text, getint(p));
                 mapchanged = true;
                 gamemode = cl.gamemode;
+                if(getint(p)) cl.et.spawnitems(gamemode);
+                else senditemstoserver = false;
                 break;
 
             case SV_ARENAWIN:
@@ -564,7 +564,6 @@ struct clientcom : iclientcom
             case SV_ITEMLIST:
             {
                 int n;
-                if(mapchanged) { senditemstoserver = false; cl.et.resetspawns(); }
                 while((n = getint(p))!=-1)
                 {
                     if(mapchanged) cl.et.setspawn(n, true);

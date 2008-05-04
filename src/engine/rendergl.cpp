@@ -604,8 +604,7 @@ void recomputecamera()
     computezoom();
 
     bool shoulddetach = cl->detachcamera();
-    extern int testanims;
-    if(((editmode && !testanims) || !thirdperson) && !shoulddetach)
+    if(!thirdperson && !shoulddetach)
     {
         camera1 = player;
         detachedcamera = false;

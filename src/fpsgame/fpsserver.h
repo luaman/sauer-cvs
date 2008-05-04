@@ -447,7 +447,7 @@ struct fpsserver : igameserver
                 s_sprintfd(msg)("%s forced %s on map %s", privname(ci->privilege), modestr(reqmode), map);
                 sendservmsg(msg);
             }
-            sendf(-1, 1, "risi", SV_MAPCHANGE, ci->mapvote, ci->modevote);
+            sendf(-1, 1, "risii", SV_MAPCHANGE, ci->mapvote, ci->modevote, 1);
             changemap(ci->mapvote, ci->modevote);
         }
         else 
@@ -903,7 +903,7 @@ struct fpsserver : igameserver
             if(best && (best->count > (force ? 1 : maxvotes/2)))
             { 
                 sendservmsg(force ? "vote passed by default" : "vote passed by majority");
-                sendf(-1, 1, "risi", SV_MAPCHANGE, best->map, best->mode);
+                sendf(-1, 1, "risii", SV_MAPCHANGE, best->map, best->mode, 1);
                 changemap(best->map, best->mode); 
             }
             else
@@ -1566,23 +1566,27 @@ struct fpsserver : igameserver
             putint(p, SV_MAPCHANGE);
             sendstring(smapname, p);
             putint(p, gamemode);
+            putint(p, notgotitems ? 1 : 0);
             if(!ci || gamemode>1 || (gamemode==0 && hasnonlocalclients()))
             {
                 putint(p, SV_TIMEUP);
                 putint(p, minremain);
             }
-            putint(p, SV_ITEMLIST);
-            loopv(sents) if(sents[i].spawned)
+            if(!notgotitems)
             {
-                putint(p, i);
-                putint(p, sents[i].type);
-                if(p.remaining() < 256)
+                putint(p, SV_ITEMLIST);
+                loopv(sents) if(sents[i].spawned)
                 {
-                    enet_packet_resize(packet, packet->dataLength + MAXTRANS);
-                    p.buf = packet->data;
+                    putint(p, i);
+                    putint(p, sents[i].type);
+                    if(p.remaining() < 256)
+                    {
+                        enet_packet_resize(packet, packet->dataLength + MAXTRANS);
+                        p.buf = packet->data;
+                    }
                 }
+                putint(p, -1);
             }
-            putint(p, -1);
         }
         if(ci && !ci->local && m_teammode)
         {
