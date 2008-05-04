@@ -52,14 +52,16 @@ bool menukey(int code, bool isdown, int cooked)
             fieldpos = len;
             break;
         case SDLK_UP:
+            if(fieldwidth != -1)
             {
                 int cx, cy; 
                 text_pos(fieldtext+1, fieldpos, cx, cy, fieldwidth);
                 cy -= FONTH;
                 fieldpos = text_visible(fieldtext, cx, cy, fieldwidth);
-            }
+            } 
             break;
         case SDLK_DOWN:
+            if(fieldwidth != -1)
             {
                 int cx, cy; 
                 text_pos(fieldtext+1, fieldpos, cx, cy, fieldwidth);
