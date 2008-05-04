@@ -258,7 +258,7 @@ struct ctfclient : ctfstate
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
 
-    void drawblips(int x, int y, int s, int i, bool flagblip)
+    void drawblips(fpsent *d, int x, int y, int s, int i, bool flagblip)
     {
         flag &f = flags[i];
         settexture(f.team==ctfteamflag(cl.player1->team) ? 
@@ -268,24 +268,24 @@ struct ctfclient : ctfstate
         vec dir;
         if(flagblip) dir = f.owner ? f.owner->o : (f.droptime ? f.droploc : f.spawnloc);
         else dir = f.spawnloc;
-        dir.sub(cl.player1->o);
+        dir.sub(d->o);
         dir.z = 0.0f;
         float size = flagblip ? 0.1f : 0.05f,
               xoffset = flagblip ? -2*(3/32.0f)*size : -size,
               yoffset = flagblip ? -2*(1 - 3/32.0f)*size : -size,
               dist = dir.magnitude();
         if(dist >= scale*(1 - 0.05f)) dir.mul(scale*(1 - 0.05f)/dist);
-        dir.rotate_around_z(-cl.player1->yaw*RAD);
+        dir.rotate_around_z(-d->yaw*RAD);
         glBegin(GL_QUADS);
         drawradar(x + s*0.5f*(1.0f + dir.x/scale + xoffset), y + s*0.5f*(1.0f + dir.y/scale + yoffset), size*s);
         glEnd();
     }
 
-    void drawhud(int w, int h)
+    void drawhud(fpsent *d, int w, int h)
     {
-        if(cl.player1->state == CS_ALIVE)
+        if(d->state == CS_ALIVE)
         {
-            loopv(flags) if(flags[i].owner == cl.player1)
+            loopv(flags) if(flags[i].owner == d)
             {
                 cl.drawicon(320, 0, 1820, 1650);
                 break;
@@ -304,18 +304,18 @@ struct ctfclient : ctfstate
         {
             flag &f = flags[i];
             if(!ctfflagteam(f.team)) continue;
-            drawblips(x, y, s, i, false);
+            drawblips(d, x, y, s, i, false);
             if(!f.ent) continue;
             if(f.owner)
             {
                 if(cl.lastmillis%1000 >= 500) continue;
             }
             else if(f.droptime && (f.droploc.x < 0 || cl.lastmillis%300 >= 150)) continue;
-            drawblips(x, y, s, i, true);
+            drawblips(d, x, y, s, i, true);
         }
-        if(cl.player1->state == CS_DEAD)
+        if(d->state == CS_DEAD)
         {
-            int wait = respawnwait();
+            int wait = respawnwait(d);
             if(wait>=0)
             {
                 glPushMatrix();
@@ -525,9 +525,9 @@ struct ctfclient : ctfstate
        }
     }
 
-    int respawnwait()
+    int respawnwait(fpsent *d)
     {
-        return max(0, RESPAWNSECS-(cl.lastmillis-cl.player1->lastpain)/1000);
+        return max(0, RESPAWNSECS-(cl.lastmillis-d->lastpain)/1000);
     }
 };
 #endif

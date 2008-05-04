@@ -325,7 +325,7 @@ void send_welcome(int n)
 {
     ENetPacket *packet = enet_packet_create (NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
     ucharbuf p(packet->data, packet->dataLength);
-    int chan = sv->welcomepacket(p, n);
+    int chan = sv->welcomepacket(p, n, packet);
     enet_packet_resize(packet, p.length());
     sendpacket(n, chan, packet);
     if(packet->referenceCount==0) enet_packet_destroy(packet);

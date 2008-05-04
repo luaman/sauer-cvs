@@ -373,7 +373,7 @@ struct captureclient : capturestate
         glTexCoord2f(0.0f, 1.0f); glVertex2f(x,   y+s);
     }
    
-    void drawblips(int x, int y, int s, int type, bool skipenemy = false)
+    void drawblips(fpsent *d, int x, int y, int s, int type, bool skipenemy = false)
     {
         const char *textures[3] = {"data/blip_red.png", "data/blip_grey.png", "data/blip_blue.png"};
         settexture(textures[max(type+1, 0)]);
@@ -391,24 +391,24 @@ struct captureclient : capturestate
                 case -2: if(!b.enemy[0] || !strcmp(b.enemy, cl.player1->team)) continue; break;
             } 
             vec dir(b.o);
-            dir.sub(cl.player1->o);
+            dir.sub(d->o);
             dir.z = 0.0f;
             float dist = dir.magnitude();
             if(dist >= scale*(1 - 0.05f)) dir.mul(scale*(1 - 0.05f)/dist);
-            dir.rotate_around_z(-cl.player1->yaw*RAD);
+            dir.rotate_around_z(-d->yaw*RAD);
             drawradar(x + s*0.5f*(1.0f + dir.x/scale - 0.05f), y + s*0.5f*(1.0f + dir.y/scale - 0.05f), 0.05f*s);
         }
         glEnd();
     }
    
-    int respawnwait()
+    int respawnwait(fpsent *d)
     {
         int gamemode = cl.gamemode;
         if(m_regencapture) return -1;
-        return max(0, (m_noitemsrail ? RESPAWNSECS/2 : RESPAWNSECS)-(cl.lastmillis-cl.player1->lastpain)/1000);
+        return max(0, (m_noitemsrail ? RESPAWNSECS/2 : RESPAWNSECS)-(cl.lastmillis-d->lastpain)/1000);
     }
 
-    void capturehud(int w, int h)
+    void capturehud(fpsent *d, int w, int h)
     {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -419,13 +419,13 @@ struct captureclient : capturestate
         drawradar(float(x), float(y), float(s));
         glEnd();
         bool showenemies = cl.lastmillis%1000 >= 500;
-        drawblips(x, y, s, 1, showenemies);
-        drawblips(x, y, s, 0, showenemies);
-        drawblips(x, y, s, -1, showenemies);
-        if(showenemies) drawblips(x, y, s, -2);
-        if(cl.player1->state == CS_DEAD)
+        drawblips(d, x, y, s, 1, showenemies);
+        drawblips(d, x, y, s, 0, showenemies);
+        drawblips(d, x, y, s, -1, showenemies);
+        if(showenemies) drawblips(d, x, y, s, -2);
+        if(d->state == CS_DEAD)
         {
-            int wait = respawnwait();
+            int wait = respawnwait(d);
             if(wait>=0)
             {
                 glPushMatrix();

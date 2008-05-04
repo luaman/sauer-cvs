@@ -26,7 +26,7 @@ struct rpgdummyserver : igameserver
     const char *servername() { return "foo"; }
     void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) {}
     bool sendpackets() { return false; }
-    int welcomepacket(ucharbuf &p, int n) { return -1; }
+    int welcomepacket(ucharbuf &p, int n, ENetPacket *packet) { return -1; }
     void serverinforeply(ucharbuf &p) {}
     void serverupdate(int lastmillis, int totalmillis) {}
     bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) { return false; }

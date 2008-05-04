@@ -381,16 +381,6 @@ struct clientcom : iclientcom
                 d->strafe = (f&3)==3 ? -1 : f&3;
                 f >>= 2;
                 d->move = (f&3)==3 ? -1 : f&3;
-                f >>= 2;
-                if(f&3)
-                {
-                    d->armourtype = (f&3)-1;
-                    d->armour = 1;
-                }
-                else { d->armourtype = A_BLUE; d->armour = 0; }
-                d->quadmillis = f&4 ? 1 : 0;
-                f >>= 3;
-                d->maxhealth = 100 + f*itemstats[I_BOOST-I_SHELLS].add;
                 vec oldpos(d->o);
                 if(cl.allowmove(d))
                 {
@@ -442,6 +432,32 @@ struct clientcom : iclientcom
             case 2: 
                 receivefile(p.buf, p.maxlen);
                 break;
+        }
+    }
+
+    void parsestate(fpsent *d, ucharbuf &p, bool resume = false)
+    {
+        if(!d) { static fpsent dummy; d = &dummy; }
+        if(resume) 
+        {
+            if(d==cl.player1) getint(p);
+            else d->state = getint(p);
+            d->frags = getint(p);
+        }
+        d->lifesequence = getint(p);
+        d->health = getint(p);
+        d->maxhealth = getint(p);
+        d->armour = getint(p);
+        d->armourtype = getint(p);
+        if(resume && d==cl.player1) 
+        {
+            getint(p);
+            loopi(GUN_PISTOL-GUN_SG+1) getint(p);
+        }
+        else
+        {
+            d->gunselect = getint(p);
+            loopi(GUN_PISTOL-GUN_SG+1) d->ammo[GUN_SG+i] = getint(p);
         }
     }
 
@@ -608,11 +624,11 @@ struct clientcom : iclientcom
 
             case SV_SPAWN:
             {
-                int ls = getint(p), gunselect = getint(p);
+                parsestate(d, p);
                 if(!d) break;
-                d->lifesequence = ls;
-                d->gunselect = gunselect;
                 d->state = CS_SPAWNING;
+                if(cl.player1->state==CS_SPECTATOR && cl.following==d->clientnum)
+                    cl.lasthit = 0;
                 break;
             }
 
@@ -620,13 +636,7 @@ struct clientcom : iclientcom
             {
                 if(editmode) toggleedit();
                 player1->respawn();
-                player1->lifesequence = getint(p); 
-                player1->health = getint(p);
-                player1->maxhealth = getint(p);
-                player1->armour = getint(p);
-                player1->armourtype = getint(p);
-                player1->gunselect = getint(p);
-                loopi(GUN_PISTOL-GUN_SG+1) player1->ammo[GUN_SG+i] = getint(p);
+                parsestate(player1, p);
                 player1->state = CS_ALIVE;
                 findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1, m_ctf ? ctfteamflag(player1->team) : 0);
                 cl.sb.showscores(false);
@@ -645,9 +655,10 @@ struct clientcom : iclientcom
                 loopk(3) to[k] = getint(p)/DMF;
                 fpsent *s = cl.getclient(scn);
                 if(!s) break;
+                if(gun>GUN_FIST && gun<=GUN_PISTOL && s->ammo[gun]) s->ammo[gun]--; 
                 if(gun==GUN_SG) cl.ws.createrays(from, to);
-                s->gunselect = max(gun, 0);
-                s->gunwait = 0;
+                s->gunselect = clamp(gun, (int)GUN_FIST, (int)GUN_PISTOL);
+                s->gunwait = guns[s->gunselect].attackdelay;
                 s->lastaction = cl.lastmillis;
                 s->lastattackgun = s->gunselect;
                 cl.ws.shootv(gun, from, to, s, false);
@@ -718,18 +729,8 @@ struct clientcom : iclientcom
                 {
                     int cn = getint(p);
                     if(cn<0) break;
-                    int state = getint(p), lifesequence = getint(p), gunselect = getint(p), maxhealth = getint(p), frags = getint(p);
                     fpsent *d = (cn == player1->clientnum ? player1 : cl.newclient(cn));
-                    if(!d) continue;
-                    if(d!=player1) 
-                    {
-                        d->state = state;
-                        d->gunselect = gunselect;
-                    }
-                    d->lifesequence = lifesequence;
-                    if(d->state==CS_ALIVE && d->health==d->maxhealth) d->health = maxhealth;
-                    d->maxhealth = maxhealth;
-                    d->frags = frags;
+                    parsestate(d, p, true);
                 }
                 break;
             }

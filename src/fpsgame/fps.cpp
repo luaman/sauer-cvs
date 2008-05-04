@@ -38,8 +38,6 @@ struct fpsclient : igameclient
     int lasthit;
 
     int following;
-    IVARP(followdist, 0, 50, 1000);
-    IVARP(followorient, 0, 1, 1);
 
     bool openmainmenu;
 
@@ -157,28 +155,12 @@ struct fpsclient : igameclient
 
     void followplayer(fpsent *target)
     {
-		if(followorient() && target->state!=CS_DEAD) 
-        { 
+        if(target->state!=CS_DEAD)
+        {
             player1->yaw = target->yaw; 
             player1->pitch = target->pitch; 
         }
-
-        if(followdist())
-        {
-            physent followcam;
-            followcam.o = target->o;
-            followcam.yaw = player1->yaw;
-            followcam.pitch = player1->pitch;
-            followcam.type = ENT_CAMERA;
-            followcam.move = -1;
-            followcam.eyeheight = 2;
-            loopi(10)
-            {
-                if(!moveplayer(&followcam, 10, true, followdist())) break;
-            }
-            player1->o = followcam.o;
-        }
-        else player1->o = target->o;
+        player1->o = target->o;
     }
 
     void stopfollowing()
@@ -188,22 +170,35 @@ struct fpsclient : igameclient
         conoutf("follow off");
     }
 
+    bool detachcamera()
+    {
+        fpsent *d = hudplayer();
+        return d->state==CS_DEAD;
+    }
+
     void setupcamera()
     {
         if(player1->state!=CS_SPECTATOR || following<0) return;
         fpsent *target = getclient(following);
-        if(!target || target->state!=CS_ALIVE) return;
+        if(!target) return;
         followplayer(target);
     }
 
     IVARP(smoothmove, 0, 75, 100);
     IVARP(smoothdist, 0, 32, 64);
 
-    void otherplayers()
+    void otherplayers(int curtime)
     {
         loopv(players) if(players[i])
         {
             fpsent *d = players[i];
+            
+            if(d->state==CS_ALIVE)
+            {
+                if(lastmillis - d->lastaction >= d->gunwait) d->gunwait = 0; 
+                if(d->quadmillis) et.checkquad(curtime, d);
+            }
+
             const int lagtime = lastmillis-d->lastupdate;
             if(!lagtime || intermission) continue;
             else if(lagtime>1000 && d->state==CS_ALIVE)
@@ -236,6 +231,20 @@ struct fpsclient : igameclient
         }
     }
 
+    void addsway(int curtime)
+    {
+        fpsent *d = hudplayer();
+        if(d->state!=CS_SPECTATOR)
+        {
+            if(d->physstate>=PHYS_SLOPE) swaymillis += curtime;
+            float k = pow(0.7f, curtime/10.0f);
+            swaydir.mul(k);
+            vec vel(d->vel);
+            vel.add(d->falling);
+            swaydir.add(vec(vel).mul((1-k)/(15*max(vel.magnitude(), d->maxspeed))));
+        }
+    }
+
     void updateworld(vec &pos, int curtime, int lm)        // main game update loop
     {
         if(!maptime)
@@ -264,7 +273,7 @@ struct fpsclient : igameclient
         ws.moveprojectiles(curtime);
         if(player1->clientnum>=0 && player1->state==CS_ALIVE) ws.shoot(player1, pos); // only shoot when connected to server
         ws.bounceupdate(curtime); // need to do this after the player shoots so grenades don't end up inside player's BB next frame
-        otherplayers();
+        otherplayers(curtime);
         gets2c();
         mo.update(curtime);
         ms.monsterthink(curtime, gamemode);
@@ -280,12 +289,7 @@ struct fpsclient : igameclient
         else if(!intermission)
         {
             moveplayer(player1, 20, true);
-            if(player1->physstate>=PHYS_SLOPE) swaymillis += curtime;
-            float k = pow(0.7f, curtime/10.0f);
-            swaydir.mul(k); 
-            vec vel(player1->vel);
-            vel.add(player1->falling);
-            swaydir.add(vec(vel).mul((1-k)/(15*max(vel.magnitude(), player1->maxspeed))));
+            addsway(curtime);
             et.checkitems(player1);
             if(m_classicsp) checktriggers();
             else if(m_capture) cpc.checkbaseammo(player1);
@@ -308,7 +312,7 @@ struct fpsclient : igameclient
             player1->attacking = false;
             if(m_capture || m_ctf)
             {
-                int wait = m_capture ? cpc.respawnwait() : ctf.respawnwait();
+                int wait = m_capture ? cpc.respawnwait(player1) : ctf.respawnwait(player1);
                 if(wait>0)
                 {
                     conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
@@ -352,17 +356,20 @@ struct fpsclient : igameclient
     {
         if(d->state!=CS_ALIVE || intermission) return;
 
+        fpsent *h = local ? player1 : hudplayer();
+        if(actor==h && d!=actor) lasthit = lastmillis;
+
         if(local) damage = d->dodamage(damage);
         else if(actor==player1) return;
 
-        if(d==player1)
+        if(d==h)
         {
             damageblend(damage);
             damagecompass(damage, actor->o);
             d->damageroll(damage);
             if(m_slowmo && player1->health<1) player1->health = 1;
         }
-        ws.damageeffect(damage, d);
+        ws.damageeffect(damage, d, d!=h);
 
         if(d->health<=0) { if(local) killed(d, actor); }
         else if(d==player1) playsound(S_PAIN6);
@@ -671,13 +678,13 @@ struct fpsclient : igameclient
     IVARP(hudgunsway, 0, 1, 1);
     IVARP(teamhudguns, 0, 1, 1);
    
-    void drawhudmodel(int anim, float speed = 0, int base = 0)
+    void drawhudmodel(fpsent *d, int anim, float speed = 0, int base = 0)
     {
-        if(player1->gunselect>GUN_PISTOL) return;
+        if(d->gunselect>GUN_PISTOL) return;
 
         vec sway;
-        vecfromyawpitch(player1->yaw, player1->pitch, 1, 0, sway);
-        float swayspeed = sqrtf(player1->vel.x*player1->vel.x + player1->vel.y*player1->vel.y);
+        vecfromyawpitch(d->yaw, d->pitch, 1, 0, sway);
+        float swayspeed = sqrtf(d->vel.x*d->vel.x + d->vel.y*d->vel.y);
         swayspeed = min(4.0f, swayspeed);
         sway.mul(swayspeed);
         float swayxy = sinf(swaymillis/115.0f)/100.0f,
@@ -686,8 +693,8 @@ struct fpsclient : igameclient
         sway.x *= -swayxy;
         sway.y *= swayxy;
         sway.z = -fabs(swayspeed*swayz);
-        sway.add(swaydir).add(player1->o);
-        if(!hudgunsway()) sway = player1->o;
+        sway.add(swaydir).add(d->o);
+        if(!hudgunsway()) sway = d->o;
 
 #if 0
         if(player1->state!=CS_DEAD && player1->quadmillis)
@@ -697,23 +704,37 @@ struct fpsclient : igameclient
         }
 #endif
 
-        s_sprintfd(gunname)("hudguns/%s", guns[player1->gunselect].file);
-        if((m_teamskins || fr.teamskins()) && teamhudguns()) s_strcat(gunname, "/blue");
-        rendermodel(NULL, gunname, anim, sway, player1->yaw+90, player1->pitch, MDL_LIGHT, NULL, NULL, base, speed);
+        s_sprintfd(gunname)("hudguns/%s", guns[d->gunselect].file);
+        if((m_teamskins || fr.teamskins()) && teamhudguns()) 
+            s_strcat(gunname, d==player1 || isteam(d->team, player1->team) ? "/blue" : "/red");
+        rendermodel(NULL, gunname, anim, sway, d->yaw+90, d->pitch, MDL_LIGHT, NULL, NULL, base, speed);
+    }
+
+    fpsent *hudplayer()
+    {
+        if(player1->state==CS_SPECTATOR && following>=0)
+        {
+            fpsent *target = getclient(following);
+            if(target && (target->state==CS_DEAD || !isthirdperson())) return target;
+        }
+        return player1;
     }
 
     void drawhudgun()
     {
-        if(!hudgun() || editmode || player1->state==CS_SPECTATOR) return;
+        if(!hudgun() || editmode) return;
 
-        int rtime = ws.reloadtime(player1->gunselect);
-        if(player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+        fpsent *d = hudplayer();
+        if(d->state==CS_SPECTATOR) return;
+
+        int rtime = ws.reloadtime(d->gunselect);
+        if(d->lastaction && d->lastattackgun==d->gunselect && lastmillis-d->lastaction<rtime)
         {
-            drawhudmodel(ANIM_GUNSHOOT, rtime/17.0f, player1->lastaction);
+            drawhudmodel(d, ANIM_GUNSHOOT, rtime/17.0f, d->lastaction);
         }
         else
         {
-            drawhudmodel(ANIM_GUNIDLE|ANIM_LOOP);
+            drawhudmodel(d, ANIM_GUNIDLE|ANIM_LOOP);
         }
     }
 
@@ -735,23 +756,25 @@ struct fpsclient : igameclient
     {
         glLoadIdentity();
         glOrtho(0, w*900/h, 900, 0, -1, 1);
-        if(player1->state==CS_SPECTATOR)
+
+        fpsent *d = hudplayer();
+        if(d->state==CS_SPECTATOR)
         {
             draw_text("SPECTATOR", 10, 827);
             if(m_capture || m_ctf)
             {
                 glLoadIdentity();
                 glOrtho(0, w*1800/h, 1800, 0, -1, 1);
-                if(m_capture) cpc.capturehud(w, h);
-                else if(m_ctf) ctf.drawhud(w, h);
+                if(m_capture) cpc.capturehud(d, w, h);
+                else if(m_ctf) ctf.drawhud(d, w, h);
             }
             return;
         }
-        draw_textf("%d",  90, 822, player1->state==CS_DEAD ? 0 : player1->health);
-        if(player1->state!=CS_DEAD)
+        draw_textf("%d",  90, 822, d->state==CS_DEAD ? 0 : d->health);
+        if(d->state!=CS_DEAD)
         {
-            if(player1->armour) draw_textf("%d", 390, 822, player1->armour);
-            draw_textf("%d", 690, 822, player1->ammo[player1->gunselect]);        
+            if(d->armour) draw_textf("%d", 390, 822, d->armour);
+            draw_textf("%d", 690, 822, d->ammo[d->gunselect]);        
         }
 
         glLoadIdentity();
@@ -760,17 +783,17 @@ struct fpsclient : igameclient
         glDisable(GL_BLEND);
 
         drawicon(192, 0, 20, 1650);
-        if(player1->state!=CS_DEAD)
+        if(d->state!=CS_DEAD)
         {
-            if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
+            if(d->armour) drawicon((float)(d->armourtype*64), 0, 620, 1650);
             int g = player1->gunselect;
             int r = 64;
             if(g==GUN_PISTOL) { g = 4; r = 0; }
             drawicon((float)(g*64), (float)r, 1220, 1650);
         }
-        if(m_capture) cpc.capturehud(w, h);
-        else if(m_assassin) asc.drawhud(w, h);
-        else if(m_ctf) ctf.drawhud(w, h);
+        if(m_capture) cpc.capturehud(d, w, h);
+        else if(m_ctf) ctf.drawhud(d, w, h);
+        else if(m_assassin && d==player1) asc.drawhud(w, h);
     }
 
     IVARP(teamcrosshair, 0, 1, 1);
@@ -788,25 +811,28 @@ struct fpsclient : igameclient
 
     int selectcrosshair(float &r, float &g, float &b)
     {
-        if(player1->state!=CS_ALIVE) return 0;
+        fpsent *d = hudplayer();
+        if(d->state==CS_SPECTATOR || d->state==CS_DEAD) return -1;
+
+        if(d->state!=CS_ALIVE) return 0;
 
         int crosshair = 0;
         if(lasthit && lastmillis - lasthit < hitcrosshair()) crosshair = 2;
         else if(teamcrosshair())
         {
-            dynent *d = ws.intersectclosest(player1->o, worldpos, player1);
-            if(d && d->type==ENT_PLAYER && isteam(((fpsent *)d)->team, player1->team))
+            dynent *o = ws.intersectclosest(d->o, worldpos, d);
+            if(o && o->type==ENT_PLAYER && isteam(((fpsent *)o)->team, d->team))
             {
                 crosshair = 1;
                 r = g = 0;
             }
         }
 
-        if(player1->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
+        if(d->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
         else if(!crosshair && r && g && b && !editmode && !m_noitemsrail)
         {
-            if(player1->health<=25) { r = 1.0f; g = b = 0; }
-            else if(player1->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
+            if(d->health<=25) { r = 1.0f; g = b = 0; }
+            else if(d->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
         }
         return crosshair;
     }

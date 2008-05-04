@@ -595,30 +595,30 @@ VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 VAR(thirdperson, 0, 0, 1);
 VAR(thirdpersondistance, 10, 50, 1000);
 physent *camera1 = NULL;
-bool deathcam = false;
-bool isthirdperson() { return player!=camera1 || player->state==CS_DEAD || reflecting; }
+bool detachedcamera = false;
+bool isthirdperson() { return player!=camera1 || detachedcamera || reflecting; }
 
 void recomputecamera()
 {
     cl->setupcamera();
     computezoom();
 
-    if(deathcam && player->state!=CS_DEAD) deathcam = false;
+    bool shoulddetach = cl->detachcamera();
     extern int testanims;
-    if(((editmode && !testanims) || !thirdperson) && player->state!=CS_DEAD)
+    if(((editmode && !testanims) || !thirdperson) && !shoulddetach)
     {
-        //if(camera1->state==CS_DEAD) camera1->o.z -= camera1->eyeheight-0.8f;
         camera1 = player;
+        detachedcamera = false;
     }
     else
     {
         static physent tempcamera;
         camera1 = &tempcamera;
-        if(deathcam) camera1->o = player->o;
+        if(detachedcamera) camera1->o = player->o;
         else
         {
             *camera1 = *player;
-            if(player->state==CS_DEAD) deathcam = true;
+            detachedcamera = shoulddetach;
         }
         camera1->reset();
         camera1->type = ENT_CAMERA;
@@ -1282,7 +1282,7 @@ void writecrosshairs(FILE *f)
 void drawcrosshair(int w, int h)
 {
     bool windowhit = g3d_windowhit(true, false);
-    if(!windowhit && (hidehud || player->state==CS_SPECTATOR || player->state==CS_DEAD)) return;
+    if(!windowhit && hidehud) return; //(hidehud || player->state==CS_SPECTATOR || player->state==CS_DEAD)) return;
 
     float r = 1, g = 1, b = 1, cx = 0.5f, cy = 0.5f, chsize;
     Texture *crosshair;
@@ -1296,7 +1296,9 @@ void drawcrosshair(int w, int h)
     }
     else
     { 
-        int index = crosshairfx ? cl->selectcrosshair(r, g, b) : 0;
+        int index = cl->selectcrosshair(r, g, b);
+        if(index < 0) return;
+        if(!crosshairfx) index = 0;
         crosshair = crosshairs[index];
         if(!crosshair) 
         {

@@ -161,6 +161,7 @@ struct fpsserver : igameserver
 
         void restore(gamestate &gs)
         {
+            if(gs.health==gs.maxhealth) gs.health = maxhealth;
             gs.maxhealth = maxhealth;
             gs.frags = frags;
             gs.timeplayed = timeplayed;
@@ -629,11 +630,13 @@ struct fpsserver : igameserver
         endianswap(&hdr.protocol, sizeof(int), 1);
         gzwrite(demorecord, &hdr, sizeof(demoheader));
 
-        uchar buf[MAXTRANS];
-        ucharbuf p(buf, sizeof(buf));
-        welcomepacket(p, -1);
-        writedemo(1, buf, p.len);
+        ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, 0);
+        ucharbuf p(packet->data, packet->dataLength);
+        welcomepacket(p, -1, packet);
+        writedemo(1, p.buf, p.len);
+        enet_packet_destroy(packet);
 
+        uchar buf[MAXTRANS];
         loopv(clients)
         {
             clientinfo *ci = clients[i];
@@ -743,7 +746,7 @@ struct fpsserver : igameserver
         {
             ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
             ucharbuf p(packet->data, packet->dataLength);
-            welcomepacket(p, clients[i]->clientnum);
+            welcomepacket(p, clients[i]->clientnum, packet);
             enet_packet_resize(packet, p.length());
             sendpacket(clients[i]->clientnum, 1, packet);
             if(!packet->referenceCount) enet_packet_destroy(packet);
@@ -1056,9 +1059,18 @@ struct fpsserver : igameserver
         int cn = -1, type;
         clientinfo *ci = sender>=0 ? (clientinfo *)getinfo(sender) : NULL;
         #define QUEUE_MSG { if(!ci->local) while(curmsg<p.length()) ci->messages.add(p.buf[curmsg++]); }
-        #define QUEUE_INT(n) { if(!ci->local) { curmsg = p.length(); ucharbuf buf = ci->messages.reserve(5); putint(buf, n); ci->messages.addbuf(buf); } }
-        #define QUEUE_UINT(n) { if(!ci->local) { curmsg = p.length(); ucharbuf buf = ci->messages.reserve(4); putuint(buf, n); ci->messages.addbuf(buf); } }
-        #define QUEUE_STR(text) { if(!ci->local) { curmsg = p.length(); ucharbuf buf = ci->messages.reserve(2*strlen(text)+1); sendstring(text, buf); ci->messages.addbuf(buf); } }
+        #define QUEUE_BUF(size, body) { \
+            if(!ci->local) \
+            { \
+                curmsg = p.length(); \
+                ucharbuf buf = ci->messages.reserve(size); \
+                { body; } \
+                ci->messages.addbuf(buf); \
+            } \
+        }
+        #define QUEUE_INT(n) QUEUE_BUF(5, putint(buf, n))
+        #define QUEUE_UINT(n) QUEUE_BUF(4, putuint(buf, n))
+        #define QUEUE_STR(text) QUEUE_BUF(2*strlen(text)+1, sendstring(text, buf))
         int curmsg;
         while((curmsg = p.length()) < p.maxlen) switch(type = checktype(getint(p), ci))
         {
@@ -1077,22 +1089,11 @@ struct fpsserver : igameserver
                 int physstate = getuint(p);
                 if(physstate&0x20) loopi(2) getint(p);
                 if(physstate&0x10) getint(p);
+                getuint(p);
                 if(!ci->local && (ci->state.state==CS_ALIVE || ci->state.state==CS_EDITING))
                 {
                     ci->position.setsizenodelete(0);
                     while(curmsg<p.length()) ci->position.add(p.buf[curmsg++]);
-                }
-                uint f = getuint(p);
-                if(!ci->local && (ci->state.state==CS_ALIVE || ci->state.state==CS_EDITING))
-                {
-                    f &= 0xF;
-                    if(ci->state.armour>0) f |= (ci->state.armourtype+1)<<4;
-                    if(ci->state.quadmillis) f |= 1<<6;
-                    if(ci->state.maxhealth>100) f |= ((ci->state.maxhealth-100)/itemstats[I_BOOST-I_SHELLS].add)<<7;
-                    curmsg = p.length();
-                    ucharbuf buf = ci->position.reserve(4);
-                    putuint(buf, f);
-                    ci->position.addbuf(buf);
                 }
                 if(smode && ci->state.state==CS_ALIVE) smode->moved(ci, oldpos, ci->state.o);
                 break;
@@ -1141,7 +1142,11 @@ struct fpsserver : igameserver
                 ci->state.state = CS_ALIVE;
                 ci->state.gunselect = gunselect;
                 if(smode) smode->spawned(ci);
-                QUEUE_MSG;
+                QUEUE_BUF(100,
+                {
+                    putint(buf, SV_SPAWN);
+                    sendstate(ci->state, buf);
+                });
                 break;
             }
 
@@ -1248,7 +1253,12 @@ struct fpsserver : igameserver
                     if(&sc) 
                     {
                         sc.restore(ci->state);
-                        sendf(-1, 1, "ri8", SV_RESUME, sender, ci->state.state, ci->state.lifesequence, ci->state.gunselect, sc.maxhealth, sc.frags, -1);
+                        gamestate &gs = ci->state;
+                        sendf(-1, 1, "ri2i8vi", SV_RESUME, sender,
+                            gs.state, gs.frags, gs.lifesequence,
+                            gs.health, gs.maxhealth,
+                            gs.armour, gs.armourtype,
+                            gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
                     }
                 }
                 getstring(text, p);
@@ -1532,7 +1542,18 @@ struct fpsserver : igameserver
         }
     }
 
-    int welcomepacket(ucharbuf &p, int n)
+    void sendstate(gamestate &gs, ucharbuf &p)
+    {
+        putint(p, gs.lifesequence);
+        putint(p, gs.health);
+        putint(p, gs.maxhealth);
+        putint(p, gs.armour);
+        putint(p, gs.armourtype);
+        putint(p, gs.gunselect);
+        loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
+    }
+
+    int welcomepacket(ucharbuf &p, int n, ENetPacket *packet)
     {
         clientinfo *ci = (clientinfo *)getinfo(n);
         int hasmap = (gamemode==1 && clients.length()>1) || (smapname[0] && (minremain>0 || (ci && ci->state.state==CS_SPECTATOR) || nonspectators(n)));
@@ -1555,6 +1576,11 @@ struct fpsserver : igameserver
             {
                 putint(p, i);
                 putint(p, sents[i].type);
+                if(p.remaining() < 256)
+                {
+                    enet_packet_resize(packet, packet->dataLength + MAXTRANS);
+                    p.buf = packet->data;
+                }
             }
             putint(p, -1);
         }
@@ -1582,13 +1608,7 @@ struct fpsserver : igameserver
                 gamestate &gs = ci->state;
                 spawnstate(ci);
                 putint(p, SV_SPAWNSTATE);
-                putint(p, gs.lifesequence);
-                putint(p, gs.health);
-                putint(p, gs.maxhealth);
-                putint(p, gs.armour);
-                putint(p, gs.armourtype);
-                putint(p, gs.gunselect);
-                loopi(GUN_PISTOL-GUN_SG+1) putint(p, gs.ammo[GUN_SG+i]);
+                sendstate(gs, p);
                 gs.lastspawn = gamemillis; 
             }
         }
@@ -1606,16 +1626,24 @@ struct fpsserver : igameserver
             {
                 clientinfo *oi = clients[i];
                 if(oi->clientnum==n) continue;
+                if(p.remaining() < 256)
+                {
+                    enet_packet_resize(packet, packet->dataLength + MAXTRANS);
+                    p.buf = packet->data;
+                }
                 putint(p, oi->clientnum);
                 putint(p, oi->state.state);
-                putint(p, oi->state.lifesequence);
-                putint(p, oi->state.gunselect);
-                putint(p, oi->state.maxhealth);
                 putint(p, oi->state.frags);
+                sendstate(oi->state, p);
             }
             putint(p, -1);
         }
-        if(smode) smode->initclient(ci, p, true);
+        if(smode) 
+        {
+            enet_packet_resize(packet, packet->dataLength + MAXTRANS);
+            p.buf = packet->data;
+            smode->initclient(ci, p, true);
+        }
         return 1;
     }
 

@@ -126,9 +126,8 @@ struct entities : icliententities
         itemstat &is = itemstats[type-I_SHELLS];
         if(d!=cl.player1 || isthirdperson()) particle_text(d->abovehead(), is.name, 15);
         playsound(itemstats[type-I_SHELLS].sound, d!=cl.player1 ? &d->o : NULL); 
-        if(d!=cl.player1) return;
         d->pickup(type);
-        switch(type)
+        if(d==cl.player1) switch(type)
         {
             case I_BOOST:
                 conoutf("\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);
@@ -231,7 +230,7 @@ struct entities : icliententities
         if(d->quadmillis && (d->quadmillis -= time)<=0)
         {
             d->quadmillis = 0;
-            cl.playsoundc(S_PUPOUT, d);
+            playsound(S_PUPOUT, d==cl.player1 ? NULL : &d->o);
             if(d==cl.player1) conoutf("\f2quad damage is over");
         }
     }

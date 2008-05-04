@@ -262,12 +262,12 @@ struct weaponstate
 
     IVARP(blood, 0, 1, 1);
 
-    void damageeffect(int damage, fpsent *d)
+    void damageeffect(int damage, fpsent *d, bool thirdperson = true)
     {
         vec p = d->o;
         p.z += 0.6f*(d->eyeheight + d->aboveeye) - d->eyeheight;
         if(blood()) particle_splash(3, damage/10, 1000, p);
-        if(d!=cl.player1)
+        if(thirdperson)
         {
             s_sprintfd(ds)("@%d", damage);
             particle_text(d->abovehead(), ds, 8);
