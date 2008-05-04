@@ -441,6 +441,8 @@ struct clientcom : iclientcom
             if(d==cl.player1) getint(p);
             else d->state = getint(p);
             d->frags = getint(p);
+            if(d==cl.player1) getint(p);
+            else d->quadmillis = getint(p);
         }
         d->lifesequence = getint(p);
         d->health = getint(p);

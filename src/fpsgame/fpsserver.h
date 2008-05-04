@@ -1254,8 +1254,9 @@ struct fpsserver : igameserver
                     {
                         sc.restore(ci->state);
                         gamestate &gs = ci->state;
-                        sendf(-1, 1, "ri2i8vi", SV_RESUME, sender,
-                            gs.state, gs.frags, gs.lifesequence,
+                        sendf(-1, 1, "ri2i9vi", SV_RESUME, sender,
+                            gs.state, gs.frags, gs.quadmillis, 
+                            gs.lifesequence,
                             gs.health, gs.maxhealth,
                             gs.armour, gs.armourtype,
                             gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
@@ -1638,6 +1639,7 @@ struct fpsserver : igameserver
                 putint(p, oi->clientnum);
                 putint(p, oi->state.state);
                 putint(p, oi->state.frags);
+                putint(p, oi->state.quadmillis);
                 sendstate(oi->state, p);
             }
             putint(p, -1);
