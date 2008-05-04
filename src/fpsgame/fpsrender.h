@@ -20,8 +20,8 @@ struct fpsrender
     {
         static const playermodelinfo playermodels[3] =
         {
-            { "mrfixit", "mrfixit/blue", "mrfixit/red", NULL, NULL, { NULL, NULL, NULL }, "player", "player_blue", "player_red" },
-            { "ironsnout", "ironsnout/blue", "ironsnout/red", NULL, "quadspheres", { "shield/blue", "shield/green", "shield/yellow" }, "player", "player_blue", "player_red" },
+            { "mrfixit", "mrfixit/blue", "mrfixit/red", NULL, NULL, { NULL, NULL, NULL }, "mrfixit", "mrfixit_blue", "mrfixit_red" },
+            { "ironsnout", "ironsnout/blue", "ironsnout/red", NULL, "quadspheres", { "shield/blue", "shield/green", "shield/yellow" }, "ironsnout", "ironsnout_blue", "ironsnout_red" },
             { "monster/ogro", "monster/ogro/blue", "monster/ogro/red", "monster/ogro/vwep", NULL, { NULL, NULL, NULL }, "ogro", "ogro", "ogro" }
         };
         return playermodels[playermodel()];
