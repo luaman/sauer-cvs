@@ -20,30 +20,36 @@ bool menukey(int code, bool isdown, int cooked)
     if(code==-1 && g3d_windowhit(isdown, true)) return true;  
     else if(code==-3 && g3d_windowhit(isdown, false)) return true;
     
-	if(fieldpos<0) return false;
-	switch(code) 
-	{
-		case SDLK_RETURN:
+    if(fieldpos<0) return false;
+    switch(code) 
+    {
+        case SDLK_ESCAPE: //cancel editing with commit
+            fieldpos = -1;
+            fieldname[0] = '\0';
+            return true;
+        case SDLK_RETURN:
+            cooked = '\n';
+        case SDLK_TAB:
+            if(cooked && fieldwidth != -1) break;
         case SDLK_KP_ENTER:
-			fieldpos = -2; //signal field commit
-			return false;
+            fieldpos = -2; //signal field commit
+            return false;
         case SDLK_HOME:
         case SDLK_END:
-		case SDLK_DELETE:
+        case SDLK_DELETE:
         case SDLK_BACKSPACE:
         case SDLK_UP:
         case SDLK_DOWN:
         case SDLK_LEFT:
         case SDLK_RIGHT:
-		case SDLK_TAB:
-			break;
-		default:
-			if(!cooked || (code<32) || (code>127)) return false;
-	}
-	if(!isdown) return true;	
-	int len = strlen(fieldtext);
+            break;
+        default:
+            if(!cooked || (code<32)) return false;
+    }
+    if(!isdown) return true;	
+    int len = strlen(fieldtext);
     if(fieldpos>len) fieldpos = len;
-	switch(code) 
+    switch(code) 
     {
         case SDLK_HOME:
             fieldpos = 0;
@@ -69,38 +75,37 @@ bool menukey(int code, bool isdown, int cooked)
                 if(cy < height) fieldpos = text_visible(fieldtext, cx, cy, fieldwidth);
             }
             break;
-		case SDLK_LEFT:
-			if(fieldpos > 0) fieldpos--;
-			break;
-		case SDLK_RIGHT:
-		case SDLK_TAB:
-			if(fieldpos < len) fieldpos++;
-			break;
-		case SDLK_DELETE:
+        case SDLK_LEFT:
+            if(fieldpos > 0) fieldpos--;
+            break;
+        case SDLK_RIGHT:
+            if(fieldpos < len) fieldpos++;
+            break;
+        case SDLK_DELETE:
             if(fieldpos < len) 
             {
                 memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
                 fieldtext[len-1] = '\0';
             }
-			break;
-		case SDLK_BACKSPACE:
+            break;
+        case SDLK_BACKSPACE:
             if(fieldpos > 0) 
             {   
                 fieldpos--;
                 memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
                 fieldtext[len-1] = '\0';
             }
-			break;
-		default:
+            break;
+        default:
             if(fieldpos<fieldlen)
             {
                 memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
-			    fieldtext[fieldpos++] = cooked;
+                fieldtext[fieldpos++] = cooked;
                 fieldtext[len+1] = '\0';
             }
             break;
-	}
-	return true;
+    }
+    return true;
 }
 
 static bool hascursor;
@@ -338,7 +343,7 @@ struct gui : g3d_gui
     }
 
     char *field(const char *name, int color, int length, const char *initval)
-	{	
+    {	
         int w, h;
         int maxwidth;
         if(length < 0) 
@@ -357,7 +362,7 @@ struct gui : g3d_gui
         }
         char *result = NULL;
         if(visible() && !layoutpass)
-		{
+        {
             bool hit = ishit(w, h), editing = !strcmp(fieldname, name);            
             if(hit && (mousebuttons&G3D_DOWN) && !editing) //mouse request focus
             {
@@ -385,19 +390,19 @@ struct gui : g3d_gui
                            
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
-			if(editing) glColor3f(1, 0, 0);
+            if(editing) glColor3f(1, 0, 0);
             else glColor3ub(color>>16, (color>>8)&0xFF, color&0xFF);
-			glBegin(GL_LINE_LOOP);
+            glBegin(GL_LINE_LOOP);
             rect_(curx, cury, w, h);
-			glEnd();
+            glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();
             
             draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, (editing && hit)?fieldpos:-1, maxwidth);
         }
-    	layout(w, h);
-		return result;
-	}
+        layout(w, h);
+        return result;
+    }
 
     void rect_(float x, float y, float w, float h, int usetc = -1) 
     {
