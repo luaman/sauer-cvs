@@ -557,6 +557,7 @@ struct clientcom : iclientcom
                 if(d==player1)
                 {
                     if(editmode) toggleedit();
+                    cl.stopfollowing();
                     cl.sb.showscores(true);
                 }
                 d->state = CS_DEAD;
@@ -636,6 +637,7 @@ struct clientcom : iclientcom
             case SV_SPAWNSTATE:
             {
                 if(editmode) toggleedit();
+                cl.stopfollowing();
                 player1->respawn();
                 parsestate(player1, p);
                 player1->state = CS_ALIVE;
@@ -887,7 +889,11 @@ struct clientcom : iclientcom
                 else if(s->state==CS_SPECTATOR) 
                 {
                     s->state = CS_DEAD;
-                    if(s==player1) cl.sb.showscores(true);
+                    if(s==player1) 
+                    {
+                        cl.stopfollowing();
+                        cl.sb.showscores(true);
+                    }
                 }
                 break;
             }
