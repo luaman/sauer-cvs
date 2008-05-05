@@ -1403,7 +1403,7 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
     glLoadIdentity();
     glOrtho(0, w*3, h*3, 0, -1, 1);
 
-    int abovegameplayhud = (editmode ? h*3 - 5*FONTH : int(h*3*cl->abovegameplayhud()));
+    int abovegameplayhud = (editmode || showeditstats ? h*3 - (editmode ? 5 : 3)*FONTH : int(h*3*cl->abovegameplayhud()));
     int hoff = abovegameplayhud - FONTH*3/2;
 
     rendercommand(FONTH/2, hoff, w*3-FONTH);
@@ -1425,7 +1425,7 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
 
             if(editmode)
             {
-                draw_textf("cube %s%d", FONTH/2, abovegameplayhud+FONTH, selchildcount<0 ? "1/" : "", abs(selchildcount));
+                draw_textf("cube %s%d", FONTH/2, abovegameplayhud, selchildcount<0 ? "1/" : "", abs(selchildcount));
             }
             if(editmode || showeditstats)
             {
@@ -1448,8 +1448,8 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
                 };
                 loopi(8) if(prevstats[i]==curstats[i]) curstats[i] = nextstats[i];
 
-                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud+2*FONTH, wtris/1024, curstats[0], wverts/1024, curstats[1], curstats[2], curstats[3]);
-                draw_textf("ond:%d va:%d gl:%d(%d) oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud+3*FONTH, allocnodes*8, allocva, curstats[4], curstats[5], curstats[6], lightmaps.length(), curstats[7], getnumviewcells());
+                draw_textf("wtr:%dk(%d%%) wvt:%dk(%d%%) evt:%dk eva:%dk", FONTH/2, abovegameplayhud+(editmode ? 2 : 0)*FONTH, wtris/1024, curstats[0], wverts/1024, curstats[1], curstats[2], curstats[3]);
+                draw_textf("ond:%d va:%d gl:%d(%d) oq:%d lm:%d rp:%d pvs:%d", FONTH/2, abovegameplayhud+(editmode ? 3 : 1)*FONTH, allocnodes*8, allocva, curstats[4], curstats[5], curstats[6], lightmaps.length(), curstats[7], getnumviewcells());
             }
         }
 
@@ -1458,12 +1458,12 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
             char *editinfo = executeret("edithud");
             if(editinfo)
             {
-                draw_text(editinfo, FONTH/2, abovegameplayhud);
+                draw_text(editinfo, FONTH/2, abovegameplayhud+FONTH);
                 DELETEA(editinfo);
             }
         }
 
-        cl->gameplayhud(w, h);
+        if(!showeditstats) cl->gameplayhud(w, h);
         render_texture_panel(w, h);
     }
 
