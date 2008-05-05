@@ -427,6 +427,14 @@ void closemumble()
 #endif
 }
 
+static inline vec mumblevec(const vec &v, bool pos = false)
+{
+    // change from Z up, -Y forward to Y up, +Z forward
+    vec m(v.x, v.z, -v.y);
+    if(pos) m.div(8);
+    return m;
+}
+
 void updatemumble()
 {
 #ifdef VALID_MUMBLELINK
@@ -437,9 +445,9 @@ void updatemumble()
     mumbleinfo->version = 1;
     mumbleinfo->timestamp = ++timestamp;
 
-    mumbleinfo->pos = player->o;
-    vecfromyawpitch(player->yaw, player->pitch, 1, 0, mumbleinfo->front);
-    vecfromyawpitch(player->yaw, player->pitch + 90, 1, 0, mumbleinfo->top);
+    mumbleinfo->pos = mumblevec(player->o, true);
+    mumbleinfo->front = mumblevec(vec(RAD*player->yaw, RAD*player->pitch));
+    mumbleinfo->top = mumblevec(vec(RAD*player->yaw, RAD*(player->pitch+90)));
 #endif
 }
 
