@@ -1296,7 +1296,7 @@ struct fpsserver : igameserver
 
             case SV_ITEMLIST:
             {
-                if(ci->state.state==CS_SPECTATOR || !notgotitems) { while(getint(p)!=-1) getint(p); break; }
+                if((ci->state.state==CS_SPECTATOR && !ci->privilege) || !notgotitems) { while(getint(p)!=-1) getint(p); break; }
                 int n;
                 while((n = getint(p))!=-1)
                 {
@@ -1324,7 +1324,7 @@ struct fpsserver : igameserver
                 break;
 
             case SV_BASES:
-                if(ci->state.state!=CS_SPECTATOR && smode==&capturemode) capturemode.parsebases(p);
+                if((ci->state.state!=CS_SPECTATOR || ci->privilege) && smode==&capturemode) capturemode.parsebases(p);
                 break;
 
             case SV_REPAMMO:
@@ -1339,7 +1339,7 @@ struct fpsserver : igameserver
             }
 
             case SV_INITFLAGS:
-                if(ci->state.state!=CS_SPECTATOR && smode==&ctfmode) ctfmode.parseflags(p);
+                if((ci->state.state!=CS_SPECTATOR || ci->privilege) && smode==&ctfmode) ctfmode.parseflags(p);
                 break;
 
             case SV_PING:
@@ -1477,14 +1477,14 @@ struct fpsserver : igameserver
             }
 
             case SV_LISTDEMOS:
-                if(ci->state.state==CS_SPECTATOR) break;
+                if(!ci->privilege && ci->state.state==CS_SPECTATOR) break;
                 listdemos(sender);
                 break;
 
             case SV_GETDEMO:
             {
                 int n = getint(p);
-                if(ci->state.state==CS_SPECTATOR) break;
+                if(!ci->privilege && ci->state.state==CS_SPECTATOR) break;
                 senddemo(sender, n);
                 break;
             }
@@ -1501,7 +1501,7 @@ struct fpsserver : igameserver
             case SV_NEWMAP:
             {
                 int size = getint(p);
-                if(ci->state.state==CS_SPECTATOR) break;
+                if(!ci->privilege && ci->state.state==CS_SPECTATOR) break;
                 if(size>=0)
                 {
                     smapname[0] = '\0';
