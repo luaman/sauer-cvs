@@ -355,11 +355,9 @@ COMMAND(resetsound, "");
 
 #ifdef _POSIX_SHARED_MEMORY_OBJECTS
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include <time.h>
 #include <wchar.h>
 #endif
 
@@ -434,14 +432,10 @@ void updatemumble()
 #ifdef VALID_MUMBLELINK
     if(!VALID_MUMBLELINK) return;
 
+    static int timestamp = 0;
+
     mumbleinfo->version = 1;
-#ifdef WIN32
-    mumbleinfo->timestamp = GetTickCount();
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    mumbleinfo->timestamp = tv.tv_usec/1000 + tv.tv_sec*1000;
-#endif
+    mumbleinfo->timestamp = ++timestamp;
 
     mumbleinfo->pos = player->o;
     vecfromyawpitch(player->yaw, player->pitch, 1, 0, mumbleinfo->front);
