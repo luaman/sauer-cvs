@@ -1002,7 +1002,7 @@ void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapsi
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    int farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    int farplane = hdr.worldsize*2;
 
     project(90.0f, 1.0f, farplane, !side.flipx, !side.flipy, side.swapxy);
 
@@ -1092,7 +1092,7 @@ void gl_drawframe(int w, int h)
         aspect += blend*sinf(lastmillis/1000.0+PI)*0.1f;
     }
 
-    farplane = max(max(fog*2, 384), hdr.worldsize*2);
+    farplane = hdr.worldsize*2;
 
     project(fovy, aspect, farplane);
     transplayer();
