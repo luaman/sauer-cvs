@@ -769,10 +769,9 @@ struct fpsclient : igameclient
             if(f) draw_text(colorname(f), w*1800/h - fw - pw, 1650 - fh);
         }
 
-        glLoadIdentity();
-        glOrtho(0, w*900/h, 900, 0, -1, 1);
-
         fpsent *d = hudplayer();
+        if(d->state==CS_EDITING) return;
+
         if(d->state==CS_SPECTATOR)
         {
             if(m_capture || m_ctf)
@@ -784,6 +783,10 @@ struct fpsclient : igameclient
             }
             return;
         }
+
+        glLoadIdentity();
+        glOrtho(0, w*900/h, 900, 0, -1, 1);
+
         draw_textf("%d",  90, 822, d->state==CS_DEAD ? 0 : d->health);
         if(d->state!=CS_DEAD)
         {
@@ -800,8 +803,7 @@ struct fpsclient : igameclient
         if(d->state!=CS_DEAD)
         {
             if(d->armour) drawicon((float)(d->armourtype*64), 0, 620, 1650);
-            int g = player1->gunselect;
-            int r = 64;
+            int g = d->gunselect, r = 64;
             if(g==GUN_PISTOL) { g = 4; r = 0; }
             drawicon((float)(g*64), (float)r, 1220, 1650);
         }
