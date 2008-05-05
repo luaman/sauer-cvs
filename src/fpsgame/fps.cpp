@@ -37,7 +37,7 @@ struct fpsclient : igameclient
     int lastslowmohealth, slowmorealtimestart;
     int lasthit;
 
-    int following;
+    int following, followdir;
 
     bool openmainmenu;
 
@@ -64,7 +64,7 @@ struct fpsclient : igameclient
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
           respawned(-1), suicided(-1), 
-          following(-1), openmainmenu(true),
+          following(-1), followdir(0), openmainmenu(true),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), 
           cpc(*this), asc(*this), ctf(*this)
@@ -73,6 +73,7 @@ struct fpsclient : igameclient
         CCOMMAND(kill, "",  (fpsclient *self), { self->suicide(self->player1); });
         CCOMMAND(taunt, "", (fpsclient *self), { self->taunt(); });
         CCOMMAND(follow, "s", (fpsclient *self, char *s), { self->follow(s); });
+        CCOMMAND(nextfollow, "i", (fpsclient *self, int *dir), { self->nextfollow(*dir < 0 ? -1 : 1); });
     }
 
     iclientcom      *getcom()  { return &cc; }
@@ -94,10 +95,35 @@ struct fpsclient : igameclient
 
 	void follow(char *arg)
     {
-        if(player1->state!=CS_SPECTATOR && arg[0]) return;
-        following = arg[0] ? cc.parseplayer(arg) : -1;
-        conoutf("follow %s", following>=0 ? "on" : "off");
+        if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
+        {
+            following = arg[0] ? cc.parseplayer(arg) : -1;
+            followdir = 0;
+            conoutf("follow %s", following>=0 ? "on" : "off");
+        }
 	}
+
+    void nextfollow(int dir)
+    {
+        if(player1->state!=CS_SPECTATOR || players.empty())
+        {
+            stopfollowing();
+            return;
+        }
+        int cur = following >= 0 ? following : (dir < 0 ? players.length() - 1 : 0);
+        loopv(players) 
+        {
+            cur = (cur + dir + players.length() - 1) % players.length();
+            if(players[cur])
+            {
+                if(following<0) conoutf("follow on");
+                following = cur;
+                followdir = dir;
+                return;
+            }
+        }
+        stopfollowing();
+    }
 
     char *getclientmap() { return clientmap; }
 
@@ -157,6 +183,7 @@ struct fpsclient : igameclient
     {
         if(following<0) return;
         following = -1;
+        followdir = 0;
         conoutf("follow off");
     }
 
@@ -506,7 +533,11 @@ struct fpsclient : igameclient
     void clientdisconnected(int cn)
     {
         if(!players.inrange(cn)) return;
-        if(following==cn) stopfollowing();
+        if(following==cn) 
+        {
+            if(followdir) nextfollow(followdir);
+            else stopfollowing();
+        }
         fpsent *d = players[cn];
         if(!d) return; 
         if(d->name[0]) conoutf("player %s disconnected", colorname(d));
@@ -750,7 +781,12 @@ struct fpsclient : igameclient
         glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
         glEnd();
     }
-  
+ 
+    float abovegameplayhud()
+    {
+        return 1650.0f/1800.0f;
+    }
+
     void gameplayhud(int w, int h)
     {
         if(player1->state==CS_SPECTATOR)

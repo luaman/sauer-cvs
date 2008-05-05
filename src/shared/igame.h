@@ -62,6 +62,7 @@ struct igameclient
     virtual void newmap(int size) = 0;
     virtual void startmap(const char *name) = 0;
     virtual void preload() {}
+    virtual float abovegameplayhud() { return 1.0f; }
     virtual void gameplayhud(int w, int h) = 0;
     virtual void drawhudgun() = 0;
     virtual bool canjump() = 0;
