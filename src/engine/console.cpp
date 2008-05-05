@@ -153,7 +153,7 @@ struct keym
     char *actions[NUMACTIONS];
     bool pressed;
 
-    keym() : code(-1), name(NULL) { memset(actions, 0, sizeof(actions)); }
+    keym() : code(-1), name(NULL), pressed(false) { memset(actions, 0, sizeof(actions)); }
     ~keym() { DELETEA(name); loopi(NUMACTIONS) DELETEA(actions[i]); }
 };
 
