@@ -513,12 +513,12 @@ void transplayer()
     glTranslatef(-camera1->o.x, -camera1->o.y, -camera1->o.z);   
 }
 
-float curfov = 105, curhgfov = 65, fovy, aspect;
+float curfov = 100, curhgfov = 65, fovy, aspect;
 int farplane;
 VARP(zoominvel, 0, 250, 5000);
 VARP(zoomoutvel, 0, 100, 5000);
 VARP(zoomfov, 10, 35, 60);
-VARFP(fov, 10, 105, 150, curfov = fov);
+VARFP(fov, 10, 100, 150, curfov = fov);
 VAR(hudgunzoomfov, 10, 25, 60);
 VARF(hudgunfov, 10, 65, 150, curhgfov = 65);
 
