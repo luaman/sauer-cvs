@@ -613,7 +613,7 @@ void recomputecamera()
     {
         static physent tempcamera;
         camera1 = &tempcamera;
-        if(detachedcamera) camera1->o = player->o;
+        if(detachedcamera && shoulddetach) camera1->o = player->o;
         else
         {
             *camera1 = *player;
