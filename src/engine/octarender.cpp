@@ -107,7 +107,7 @@ void genvbo(int type, void *buf, int len, vtxarray **vas, int numva)
     vbi.uses = numva;
     vbi.data = data;
  
-    if(printvbo) conoutf("vbo %d: type %d, size %d, %d uses", vbo, type, len, numva);
+    if(printvbo) conoutf(CON_DEBUG, "vbo %d: type %d, size %d, %d uses", vbo, type, len, numva);
 
     loopi(numva)
     {

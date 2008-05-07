@@ -145,7 +145,7 @@ void toggleedit()
 
 bool noedit(bool view)
 {
-    if(!editmode) { conoutf("operation only allowed in edit mode"); return true; }
+    if(!editmode) { conoutf(CON_ERROR, "operation only allowed in edit mode"); return true; }
     if(view || haveselent()) return false;
     float r = 1.0f;
     vec o, s;
@@ -155,7 +155,7 @@ bool noedit(bool view)
     o.add(s);
     r = float(max(s.x, max(s.y, s.z)));
     bool viewable = (isvisiblesphere(r, o) != VFC_NOT_VISIBLE);
-    if(!viewable) conoutf("selection not in view");
+    if(!viewable) conoutf(CON_ERROR, "selection not in view");
     return !viewable;
 }
 
@@ -622,7 +622,7 @@ void pruneundos(int maxremain)                          // bound memory
         t += u.n*sizeof(undoent);
         if(t>maxremain) freeundo(undos.remove(i)); else p = t;
     }
-    //conoutf("undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
+    //conoutf(CON_DEBUG, "undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
     while(!redos.empty()) { freeundo(redos.pop()); }
 }
 
@@ -656,7 +656,7 @@ void makeundo()                        // stores state of selected cubes before 
 void swapundo(vector<undoblock> &a, vector<undoblock> &b, const char *s)
 {
     if(noedit() || multiplayer()) return;
-    if(a.empty()) { conoutf("nothing more to %s", s); return; }	
+    if(a.empty()) { conoutf(CON_WARN, "nothing more to %s", s); return; }	
 	int ts = a.last().ts;
     selinfo l = sel;
 	while(!a.empty() && ts==a.last().ts)
@@ -1375,7 +1375,7 @@ void mpreplacetex(int oldtex, int newtex, selinfo &sel, bool local)
 void replace()
 {
     if(noedit()) return;
-    if(reptex < 0) { conoutf("can only replace after a texture edit"); return; }
+    if(reptex < 0) { conoutf(CON_ERROR, "can only replace after a texture edit"); return; }
     mpreplacetex(reptex, lasttex, sel, true);
 }
 
@@ -1504,7 +1504,7 @@ void editmat(char *name)
 {
     if(noedit()) return;
     int id = findmaterial(name);
-    if(id<0) { conoutf("unknown material \"%s\"", name); return; }
+    if(id<0) { conoutf(CON_ERROR, "unknown material \"%s\"", name); return; }
     mpeditmat(id, sel, true);
 }
 
@@ -1581,7 +1581,7 @@ void g3d_texturemenu()
 
 void showtexgui(int *n) 
 { 
-    if(!editmode) { conoutf("operation only allowed in edit mode"); return; }
+    if(!editmode) { conoutf(CON_ERROR, "operation only allowed in edit mode"); return; }
     gui.showtextures(*n==0 ? !gui.menuon : *n==1); 
 }
 

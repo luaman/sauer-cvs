@@ -240,7 +240,7 @@ struct cubeloader
         s_sprintf(pakname)("cube/%s", mname);
         s_sprintf(cgzname)("packages/%s.cgz", pakname);
         gzFile f = opengzfile(path(cgzname), "rb9");
-        if(!f) { conoutf("could not read cube map %s", cgzname); return; }
+        if(!f) { conoutf(CON_ERROR, "could not read cube map %s", cgzname); return; }
         c_header hdr;
         gzread(f, &hdr, sizeof(c_header)-sizeof(int)*16);
         endianswap(&hdr.version, sizeof(int), 4);
@@ -250,13 +250,13 @@ struct cubeloader
             if(!strncmp(hdr.head, "ACMP", 4)) mod = true;
             else
             {
-                conoutf("map %s has malformatted header", cgzname); 
+                conoutf(CON_ERROR, "map %s has malformatted header", cgzname); 
                 gzclose(f); 
                 return; 
             }
         }
         else if(hdr.version>5) mod = true;
-        if(hdr.version>5 && !mod) { conoutf("map %s requires a newer version of the cube 1 importer", cgzname); gzclose(f); return; }
+        if(hdr.version>5 && !mod) { conoutf(CON_ERROR, "map %s requires a newer version of the cube 1 importer", cgzname); gzclose(f); return; }
         emptymap(12, true);
         freeocta(worldroot);
         worldroot = newcubes(F_SOLID);

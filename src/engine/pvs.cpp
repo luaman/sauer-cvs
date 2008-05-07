@@ -953,7 +953,7 @@ void genpvs(int *viewcellsize)
 {
     if(hdr.worldsize > 1<<15)
     {
-        conoutf("map is too large for PVS");
+        conoutf(CON_ERROR, "map is too large for PVS");
         return;
     }
 

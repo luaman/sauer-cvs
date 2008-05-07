@@ -10,7 +10,7 @@ int connmillis = 0, connattempts = 0, discmillis = 0;
 bool multiplayer(bool msg)
 {
     // check not correct on listen server?
-    if(curpeer && msg) conoutf("operation not available in multiplayer");
+    if(curpeer && msg) conoutf(CON_ERROR, "operation not available in multiplayer");
     return curpeer!=NULL;
 }
 
@@ -62,7 +62,7 @@ void connects(char *servername)
         conoutf("attempting to connect to %s", servername);
         if(!resolverwait(servername, &address))
         {
-            conoutf("could not resolve server %s", servername);
+            conoutf("\f3could not resolve server %s", servername);
             return;
         }
     }
@@ -169,7 +169,7 @@ void c2sinfo(dynent *d, int rate)                     // send update to the serv
 
 void neterr(const char *s)
 {
-    conoutf("\f3illegal network message (%s)", s);
+    conoutf(CON_ERROR, "\f3illegal network message (%s)", s);
     disconnect();
 }
 

@@ -78,7 +78,7 @@ static bool compileasmshader(GLenum type, GLuint &idx, const char *def, const ch
         glGetProgramiv_(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &native);
     if(msg && err!=-1)
     {
-        conoutf("COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+        conoutf(CON_ERROR, "COMPILE ERROR (%s:%s) - %s", tname, name, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
         if(err>=0 && err<(int)strlen(def))
         {
             loopi(err) putchar(*def++);
@@ -86,7 +86,7 @@ static bool compileasmshader(GLenum type, GLuint &idx, const char *def, const ch
             while(*def) putchar(*def++);
         }
     }
-    else if(msg && !native) conoutf("%s:%s EXCEEDED NATIVE LIMITS", tname, name);
+    else if(msg && !native) conoutf(CON_ERROR, "%s:%s EXCEEDED NATIVE LIMITS", tname, name);
     if(err!=-1 || (!native && nativeonly))
     {
         glDeletePrograms_(1, &idx);
@@ -103,7 +103,7 @@ static void showglslinfo(GLhandleARB obj, const char *tname, const char *name)
     {
         GLcharARB *log = new GLcharARB[length];
         glGetInfoLog_(obj, length, &length, log);
-        conoutf("GLSL ERROR (%s:%s)", tname, name);
+        conoutf(CON_ERROR, "GLSL ERROR (%s:%s)", tname, name);
         puts(log);
         delete[] log;
     }
@@ -1117,7 +1117,7 @@ void setshader(char *name)
     Shader *s = lookupshaderbyname(name);
     if(!s)
     {
-        if(renderpath!=R_FIXEDFUNCTION) conoutf("no such shader: %s", name);
+        if(renderpath!=R_FIXEDFUNCTION) conoutf(CON_ERROR, "no such shader: %s", name);
     }
     else curshader = s;
     loopv(curparams)
@@ -1246,7 +1246,7 @@ void setshaderparam(char *name, int type, int n, float x, float y, float z, floa
 {
     if(!name && (n<0 || n>=MAXSHADERPARAMS))
     {
-        conoutf("shader param index must be 0..%d\n", MAXSHADERPARAMS-1);
+        conoutf(CON_ERROR, "shader param index must be 0..%d\n", MAXSHADERPARAMS-1);
         return;
     }
     loopv(curparams)
@@ -1300,7 +1300,7 @@ void setfullscreenshader(char *name, int *x, int *y, int *z, int *w)
     else
     {
         Shader *s = lookupshaderbyname(name);
-        if(!s) return conoutf("no such fullscreen shader: %s", name);
+        if(!s) return conoutf(CON_ERROR, "no such fullscreen shader: %s", name);
         fsshader = s;
         s_sprintfd(ssname)("%s_scale", name);
         s_sprintfd(isname)("%s_init", name);

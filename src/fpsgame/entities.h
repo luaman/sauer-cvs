@@ -130,12 +130,12 @@ struct entities : icliententities
         if(d==cl.player1) switch(type)
         {
             case I_BOOST:
-                conoutf("\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);
+                conoutf(CON_GAMEINFO, "\f2you have a permanent +10 health bonus! (%d)", d->maxhealth);
                 playsound(S_V_BOOST);
                 break;
 
             case I_QUAD:
-                conoutf("\f2you got the quad!");
+                conoutf(CON_GAMEINFO, "\f2you got the quad!");
                 playsound(S_V_QUAD);
                 break;
         }
@@ -149,7 +149,7 @@ struct entities : icliententities
         for(;;)
         {
             e = findentity(TELEDEST, e+1);
-            if(e==beenhere || e<0) { conoutf("no teleport destination for tag %d", tag); return; }
+            if(e==beenhere || e<0) { conoutf(CON_WARN, "no teleport destination for tag %d", tag); return; }
             if(beenhere<0) beenhere = e;
             if(ents[e]->attr2==tag)
             {
@@ -189,7 +189,7 @@ struct entities : icliententities
                 if(d!=cl.player1) break;
                 if(n==cl.respawnent) break;
                 cl.respawnent = n;
-                conoutf("\f2respawn point set!");
+                conoutf(CON_GAMEINFO, "\f2respawn point set!");
                 playsound(S_V_RESPAWNPOINT);
                 break;
 
@@ -231,7 +231,7 @@ struct entities : icliententities
         {
             d->quadmillis = 0;
             playsound(S_PUPOUT, d==cl.player1 ? NULL : &d->o);
-            if(d==cl.player1) conoutf("\f2quad damage is over");
+            if(d==cl.player1) conoutf(CON_GAMEINFO, "\f2quad damage is over");
         }
     }
 

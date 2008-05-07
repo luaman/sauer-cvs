@@ -486,13 +486,13 @@ struct captureclient : capturestate
         {
             if(strcmp(b.owner, owner)) 
             { 
-                conoutf("\f2%s captured %s", owner, b.name); 
+                conoutf(CON_GAMEINFO, "\f2%s captured %s", owner, b.name); 
                 if(!strcmp(owner, cl.player1->team)) playsound(S_V_BASECAP); 
             }
         }
         else if(b.owner[0]) 
         { 
-            conoutf("\f2%s lost %s", b.owner, b.name); 
+            conoutf(CON_GAMEINFO, "\f2%s lost %s", b.owner, b.name); 
             if(!strcmp(b.owner, cl.player1->team)) playsound(S_V_BASELOST); 
         }
         if(strcmp(b.owner, owner)) particle_splash(0, 200, 250, b.ammopos);
@@ -506,7 +506,7 @@ struct captureclient : capturestate
     void setscore(const char *team, int total)
     {
         findscore(team).total = total;
-        if(total>=10000) conoutf("team %s captured all bases", team);
+        if(total>=10000) conoutf(CON_GAMEINFO, "team %s captured all bases", team);
     }
 
     int closesttoenemy(const char *team, bool noattacked = false, bool farthest = false)

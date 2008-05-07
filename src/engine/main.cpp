@@ -361,8 +361,8 @@ VARFP(gamma, 30, 100, 300,
     float f = gamma/100.0f;
     if(SDL_SetGamma(f,f,f)==-1)
     {
-        conoutf("Could not set gamma (card/driver doesn't support it?)");
-        conoutf("sdl: %s", SDL_GetError());
+        conoutf(CON_ERROR, "Could not set gamma (card/driver doesn't support it?)");
+        conoutf(CON_ERROR, "sdl: %s", SDL_GetError());
     }
 });
 
@@ -429,10 +429,10 @@ void setupscreen(int &usedcolorbits, int &useddepthbits, int &usedfsaa)
     if(!screen) fatal("Unable to create OpenGL screen: %s", SDL_GetError());
     else
     {
-        if(!hasbpp) conoutf("%d bit color buffer not supported - disabling", colorbits);
-        if(depthbits && (config&1)==0) conoutf("%d bit z-buffer not supported - disabling", depthbits);
-        if(stencilbits && (config&2)==0) conoutf("Stencil buffer not supported - disabling");
-        if(fsaa>0 && (config&4)==0) conoutf("%dx anti-aliasing not supported - disabling", fsaa);
+        if(!hasbpp) conoutf(CON_WARN, "%d bit color buffer not supported - disabling", colorbits);
+        if(depthbits && (config&1)==0) conoutf(CON_WARN, "%d bit z-buffer not supported - disabling", depthbits);
+        if(stencilbits && (config&2)==0) conoutf(CON_WARN, "Stencil buffer not supported - disabling");
+        if(fsaa>0 && (config&4)==0) conoutf(CON_WARN, "%dx anti-aliasing not supported - disabling", fsaa);
     }
 
     scr_w = screen->w;

@@ -3,42 +3,51 @@
 #include "pch.h"
 #include "engine.h"
 
-struct cline { char *cref; int outtime; };
+struct cline { char *line; int type, outtime; };
 vector<cline> conlines;
-
-int conskip = 0;
 
 bool saycommandon = false;
 string commandbuf;
 char *commandaction = NULL, *commandprompt = NULL;
 int commandpos = -1;
 
-void setconskip(int *n)
-{
-    conskip += *n;
-    if(conskip<0) conskip = 0;
-}
+VARFP(maxcon, 10, 200, 1000, { while(conlines.length() > maxcon) delete[] conlines.pop().line; });
 
-COMMANDN(conskip, setconskip, "i");
-
-void conline(const char *sf)        // add a line to the console buffer
+void conline(int type, const char *sf)        // add a line to the console buffer
 {
     cline cl;
-    cl.cref = conlines.length()>100 ? conlines.pop().cref : newstringbuf("");   // constrain the buffer size
+    cl.line = conlines.length()>maxcon ? conlines.pop().line : newstringbuf("");   // constrain the buffer size
+    cl.type = type;
     cl.outtime = totalmillis;                       // for how long to keep line on screen
     conlines.insert(0, cl);
-    s_strcpy(cl.cref, sf);
+    s_strcpy(cl.line, sf);
 }
 
 #define CONSPAD (FONTH/3)
 
-void conoutf(const char *s, ...)
+void conoutfv(int type, const char *fmt, va_list args)
 {
-    s_sprintfdv(sf, s);
-    string sp;
+    string sf, sp;
+    formatstring(sf, fmt, args);
     filtertext(sp, sf);
     puts(sp);
-    conline(sf);
+    conline(type, sf);
+}
+
+void conoutf(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    conoutfv(CON_INFO, fmt, args);
+    va_end(args); 
+}
+
+void conoutf(int type, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    conoutfv(type, fmt, args);
+    va_end(args);
 }
 
 bool fullconsole = false;
@@ -93,16 +102,40 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 VARP(consize, 0, 5, 100);
 VARP(confade, 0, 20, 60);
 VARP(fullconsize, 0, 75, 100);
+VARP(confilter, 0, 0xFFFFFF, 0xFFFFFF);
+VARP(fullconfilter, 0, 0xFFFFFF, 0xFFFFFF);
+
+int conskip = 0;
+
+void setconskip(int *n)
+{
+    int filter = fullconsole ? fullconfilter : confilter,
+        skipped = abs(*n),
+        dir = *n < 0 ? -1 : 1;
+    conskip = clamp(conskip, 0, conlines.length()-1);
+    while(skipped)
+    {
+        conskip += dir;
+        if(!conlines.inrange(conskip))
+        {
+            conskip = clamp(conskip, 0, conlines.length()-1);
+            return;
+        }
+        if(conlines[conskip].type&filter) --skipped;
+    }
+}
+
+COMMANDN(conskip, setconskip, "i");
 
 int renderconsole(int w, int h)                   // render buffer taking into account time & scrolling
 {
-    int conheight = min(fullconsole ? ((h*3*fullconsize/100)/FONTH)*FONTH : (FONTH*consize), h*3 - 2*CONSPAD - 2*FONTH/3);
-    int conwidth = w*3 - 2*CONSPAD - 2*FONTH/3;
+    int conheight = min(fullconsole ? ((h*3*fullconsize/100)/FONTH)*FONTH : (FONTH*consize), h*3 - 2*CONSPAD - 2*FONTH/3),
+        conwidth = w*3 - 2*CONSPAD - 2*FONTH/3,
+        filter = fullconsole ? fullconfilter : confilter;
     
     if(fullconsole) blendbox(CONSPAD, CONSPAD, conwidth+CONSPAD+2*FONTH/3, conheight+CONSPAD+2*FONTH/3, true);
     
-    int numl = conlines.length();
-    int offset = min(conskip, numl);
+    int numl = conlines.length(), offset = min(conskip, numl);
     
     if(!fullconsole && confade)
     {
@@ -113,27 +146,31 @@ int renderconsole(int w, int h)                   // render buffer taking into a
         } 
         else offset--;
     }
-    
+   
     int y = 0;
     loopi(numl) //determine visible height
     {
+        // shuffle backwards to fill if necessary
+        int idx = offset+i < numl ? offset+i : --offset;
+        if(!(conlines[idx].type&filter)) continue;
+        char *line = conlines[idx].line;
         int width, height;
-        int idx = offset+i;
-        if(idx >= numl) idx = --offset; //shuffle backwards to fill
-        text_bounds(conlines[idx].cref, width, height, conwidth);
+        text_bounds(line, width, height, conwidth);
         y += height;
-        if(y > conheight) { numl = i; if(offset==idx) offset++; break; }
+        if(y > conheight) { numl = i; if(offset == idx) ++offset; break; }
     }
     y = CONSPAD+FONTH/3;
-    loopi(numl) 
+    loopi(numl)
     {
-        char *line = conlines[offset+numl-1-i].cref;
+        int idx = offset + numl-i-1;
+        if(!(conlines[idx].type&filter)) continue;
+        char *line = conlines[idx].line;
         draw_text(line, CONSPAD+FONTH/3, y, 0xFF, 0xFF, 0xFF, 0xFF, -1, conwidth);
         int width, height;
         text_bounds(line, width, height, conwidth);
         y += height;
     }
-    return fullconsole?(2*CONSPAD+conheight+2*FONTH/3):(y+CONSPAD+FONTH/3);
+    return fullconsole ? (2*CONSPAD+conheight+2*FONTH/3) : (y+CONSPAD+FONTH/3);
 }
 
 // keymap is defined externally in keymap.cfg
@@ -161,7 +198,7 @@ vector<keym> keyms;
 
 void keymap(char *code, char *key)
 {
-    if(overrideidents) { conoutf("cannot override keymap %s", code); return; }
+    if(overrideidents) { conoutf(CON_ERROR, "cannot override keymap %s", code); return; }
     keym &km = keyms.add();
     km.code = atoi(code);
     km.name = newstring(key);
@@ -199,9 +236,9 @@ void geteditbind(char *key)
 
 void bindkey(char *key, char *action, int state, const char *cmd)
 {
-    if(overrideidents) { conoutf("cannot override %s \"%s\"", cmd, key); return; }
+    if(overrideidents) { conoutf(CON_ERROR, "cannot override %s \"%s\"", cmd, key); return; }
     keym *km = findbind(key);
-    if(!km) { conoutf("unknown key \"%s\"", key); return; }
+    if(!km) { conoutf(CON_ERROR, "unknown key \"%s\"", key); return; }
     char *&binding = km->actions[state];
     if(!keypressed || keyaction!=binding) delete[] binding;
     binding = newstring(action);
@@ -583,7 +620,7 @@ void addcomplete(char *command, int type, char *dir, char *ext)
 {
     if(overrideidents)
     {
-        conoutf("cannot override complete %s", command);
+        conoutf(CON_ERROR, "cannot override complete %s", command);
         return;
     }
     if(!dir[0])

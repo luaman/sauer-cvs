@@ -258,7 +258,7 @@ bool save_world(const char *mname, bool nolms)
     setnames(*mname ? mname : "untitled");
     if(savebak) backup(cgzname, bakname);
     gzFile f = opengzfile(cgzname, "wb9");
-    if(!f) { conoutf("could not write map to %s", cgzname); return false; }
+    if(!f) { conoutf(CON_WARN, "could not write map to %s", cgzname); return false; }
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
@@ -348,17 +348,17 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     int loadingstart = SDL_GetTicks();
     setnames(mname, cname);
     gzFile f = opengzfile(cgzname, "rb9");
-    if(!f) { conoutf("could not read map %s", cgzname); return false; }
+    if(!f) { conoutf(CON_ERROR, "could not read map %s", cgzname); return false; }
     header newhdr;
     gzread(f, &newhdr, sizeof(header));
     endianswap(&newhdr.version, sizeof(int), 9);
-    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf("map %s has malformatted header", cgzname); gzclose(f); return false; }
-    if(newhdr.version>MAPVERSION) { conoutf("map %s requires a newer version of cube 2", cgzname); gzclose(f); return false; }
+    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf(CON_ERROR, "map %s has malformatted header", cgzname); gzclose(f); return false; }
+    if(newhdr.version>MAPVERSION) { conoutf(CON_ERROR, "map %s requires a newer version of cube 2", cgzname); gzclose(f); return false; }
     hdr = newhdr;
     resetmap();
     Texture *mapshot = textureload(picname, 0, true, false);
     computescreen("loading...", mapshot!=notexture ? mapshot : NULL, mname);
-    if(hdr.version<=20) conoutf("loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
+    if(hdr.version<=20) conoutf(CON_WARN, "loading older / less efficient map format, may benefit from \"calclight 2\", then \"savecurrentmap\"");
     if(!hdr.ambient) hdr.ambient = 25;
     if(!hdr.lerpsubdivsize)
     {
@@ -389,7 +389,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     if(strcmp(gametype, cl->gameident())!=0)
     {
         samegame = false;
-        conoutf("WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
+        conoutf(CON_WARN, "WARNING: loading map from %s game, ignoring entities except for lights/mapmodels)", gametype);
     }
     if(hdr.version>=16)
     {
@@ -461,13 +461,13 @@ bool load_world(const char *mname, const char *cname)        // still supports a
         {
             if(e.type != ET_LIGHT && e.type != ET_SPOTLIGHT)
             {
-                conoutf("warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
+                conoutf(CON_WARN, "warning: ent outside of world: enttype[%s] index %d (%f, %f, %f)", et->entname(e.type), i, e.o.x, e.o.y, e.o.z);
             }
         }
         if(hdr.version <= 14 && e.type == ET_MAPMODEL)
         {
             e.o.z += e.attr3;
-            if(e.attr4) conoutf("warning: mapmodel ent (index %d) uses texture slot %d", i, e.attr4);
+            if(e.attr4) conoutf(CON_WARN, "warning: mapmodel ent (index %d) uses texture slot %d", i, e.attr4);
             e.attr3 = e.attr4 = 0;
         }
     }
@@ -514,7 +514,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     gzclose(f);
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
-    conoutf("%s", hdr.maptitle);
+    conoutf(CON_ECHO, "%s", hdr.maptitle);
 
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
@@ -531,8 +531,8 @@ bool load_world(const char *mname, const char *cname)        // still supports a
         if(e.type==ET_MAPMODEL && e.attr2 >= 0)
         {
             mapmodelinfo &mmi = getmminfo(e.attr2);
-            if(!&mmi) conoutf("could not find map model: %d", e.attr2);
-            else if(!loadmodel(NULL, e.attr2, true)) conoutf("could not load model: %s", mmi.name);
+            if(!&mmi) conoutf(CON_WARN, "could not find map model: %d", e.attr2);
+            else if(!loadmodel(NULL, e.attr2, true)) conoutf(CON_WARN, "could not load model: %s", mmi.name);
         }
     }
 

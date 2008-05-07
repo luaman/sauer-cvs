@@ -100,7 +100,7 @@ struct clientcom : iclientcom
     bool allowedittoggle()
     {
         bool allow = !connected || !remote || cl.gamemode==1;
-        if(!allow) conoutf("editing in multiplayer requires coopedit mode (1)");
+        if(!allow) conoutf(CON_ERROR, "editing in multiplayer requires coopedit mode (1)");
         if(allow && spectator) return false;
         return allow;
     }
@@ -245,8 +245,8 @@ struct clientcom : iclientcom
         loopi(len) messages.add(buf[i]);
     }
 
-    void toserver(char *text) { conoutf("%s:\f0 %s", cl.colorname(player1), text); addmsg(SV_TEXT, "rs", text); }
-    void sayteam(char *text) { conoutf("%s:\f1 %s", cl.colorname(player1), text); addmsg(SV_SAYTEAM, "rs", text); }
+    void toserver(char *text) { conoutf(CON_CHAT, "%s:\f0 %s", cl.colorname(player1), text); addmsg(SV_TEXT, "rs", text); }
+    void sayteam(char *text) { conoutf(CON_TEAMCHAT, "%s:\f1 %s", cl.colorname(player1), text); addmsg(SV_SAYTEAM, "rs", text); }
 
     int sendpacketclient(ucharbuf &p, bool &reliable, dynent *d)
     {
@@ -475,7 +475,7 @@ struct clientcom : iclientcom
                 int mycn = getint(p), prot = getint(p), hasmap = getint(p);
                 if(prot!=PROTOCOL_VERSION)
                 {
-                    conoutf("you are using a different game protocol (you: %d, server: %d)", PROTOCOL_VERSION, prot);
+                    conoutf(CON_ERROR, "you are using a different game protocol (you: %d, server: %d)", PROTOCOL_VERSION, prot);
                     disconnect();
                     return;
                 }
@@ -508,7 +508,7 @@ struct clientcom : iclientcom
                     s_sprintfd(ds)("@%s", &text);
                     particle_text(d->abovehead(), ds, 9);
                 }
-                conoutf("%s:\f0 %s", cl.colorname(d), text);
+                conoutf(CON_CHAT, "%s:\f0 %s", cl.colorname(d), text);
                 break;
             }
 
@@ -524,7 +524,7 @@ struct clientcom : iclientcom
                     s_sprintfd(ts)("@%s", &text);
                     particle_text(t->abovehead(), ts, 34);
                 }
-                conoutf("%s:\f1 %s", cl.colorname(t), text);
+                conoutf(CON_TEAMCHAT, "%s:\f1 %s", cl.colorname(t), text);
                 break;
             }
 
@@ -541,11 +541,11 @@ struct clientcom : iclientcom
             {
                 int acn = getint(p);
                 fpsent *alive = acn<0 ? NULL : (acn==player1->clientnum ? player1 : cl.getclient(acn));
-                conoutf("arena round is over! next round in 5 seconds...");
-                if(!alive) conoutf("everyone died!");
-                else if(m_teammode) conoutf("team %s has won the round", alive->team);
-                else if(alive==player1) conoutf("you are the last man standing!");
-                else conoutf("%s is the last man standing", cl.colorname(alive));
+                conoutf(CON_GAMEINFO, "arena round is over! next round in 5 seconds...");
+                if(!alive) conoutf(CON_GAMEINFO, "everyone died!");
+                else if(m_teammode) conoutf(CON_GAMEINFO, "team %s has won the round", alive->team);
+                else if(alive==player1) conoutf(CON_GAMEINFO, "you are the last man standing!");
+                else conoutf(CON_GAMEINFO, "%s is the last man standing", cl.colorname(alive));
                 break;
             }
 
@@ -644,7 +644,7 @@ struct clientcom : iclientcom
                 findplayerspawn(player1, m_capture ? cl.cpc.pickspawn(player1->team) : -1, m_ctf ? ctfteamflag(player1->team) : 0);
                 cl.sb.showscores(false);
                 cl.lasthit = 0;
-                if(m_arena) conoutf("new round starting... fight!");
+                if(m_arena) conoutf(CON_GAMEINFO, "new round starting... fight!");
                 else if(m_capture) cl.cpc.lastrepammo = -1;
                 addmsg(SV_SPAWN, "rii", player1->lifesequence, player1->gunselect);
                 break;
@@ -824,7 +824,7 @@ struct clientcom : iclientcom
 
             case SV_SERVMSG:
                 getstring(text, p);
-                conoutf("%s", text);
+                conoutf(CON_ECHO, "%s", text);
                 break;
 
             case SV_SENDDEMOLIST:
@@ -1014,8 +1014,8 @@ struct clientcom : iclientcom
             case SV_ANNOUNCE:
             {
                 int t = getint(p);
-                if     (t==I_QUAD)  { playsound(S_V_QUAD10);  conoutf("\f2quad damage will spawn in 10 seconds!"); }
-                else if(t==I_BOOST) { playsound(S_V_BOOST10); conoutf("\f2+10 health will spawn in 10 seconds!"); }
+                if     (t==I_QUAD)  { playsound(S_V_QUAD10);  conoutf(CON_GAMEINFO, "\f2quad damage will spawn in 10 seconds!"); }
+                else if(t==I_BOOST) { playsound(S_V_BOOST10); conoutf(CON_GAMEINFO, "\f2+10 health will spawn in 10 seconds!"); }
                 break;
             }
 
@@ -1155,7 +1155,7 @@ struct clientcom : iclientcom
 
     void getmap()
     {
-        if(cl.gamemode!=1) { conoutf("\"getmap\" only works in coopedit mode"); return; }
+        if(cl.gamemode!=1) { conoutf(CON_ERROR, "\"getmap\" only works in coopedit mode"); return; }
         conoutf("getting map...");
         addmsg(SV_GETMAP, "r");
     }
@@ -1203,7 +1203,7 @@ struct clientcom : iclientcom
 
     void sendmap()
     {
-        if(cl.gamemode!=1 || (spectator && !player1->privilege)) { conoutf("\"sendmap\" only works in coopedit mode"); return; }
+        if(cl.gamemode!=1 || (spectator && !player1->privilege)) { conoutf(CON_ERROR, "\"sendmap\" only works in coopedit mode"); return; }
         conoutf("sending map...");
         s_sprintfd(mname)("sendmap_%d", cl.lastmillis);
         save_world(mname, true);
@@ -1213,11 +1213,11 @@ struct clientcom : iclientcom
         if(map)
         {
             fseek(map, 0, SEEK_END);
-            if(ftell(map) > 1024*1024) conoutf("map is too large");
+            if(ftell(map) > 1024*1024) conoutf(CON_ERROR, "map is too large");
             else sendfile(-1, 2, map);
             fclose(map);
         }
-        else conoutf("could not read map");
+        else conoutf(CON_ERROR, "could not read map");
         remove(file);
     }
 

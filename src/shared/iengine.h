@@ -71,10 +71,22 @@ extern void alias(const char *name, const char *action);
 extern const char *getalias(const char *name);
 
 // console
+
+enum
+{
+    CON_INFO  = 1<<0,
+    CON_WARN  = 1<<1,
+    CON_ERROR = 1<<2,
+    CON_DEBUG = 1<<3,
+    CON_INIT  = 1<<4,
+    CON_ECHO  = 1<<5
+};
+
 extern void keypress(int code, bool isdown, int cooked);
 extern int rendercommand(int x, int y, int w);
 extern int renderconsole(int w, int h);
 extern void conoutf(const char *s, ...);
+extern void conoutf(int type, const char *s, ...);
 extern void resetcomplete();
 extern void complete(char *s);
 

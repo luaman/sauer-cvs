@@ -81,7 +81,7 @@ struct fpsclient : igameclient
 
     void setmode(int mode)
     {
-        if(multiplayer(false) && !m_mp(mode)) { conoutf("mode %d not supported in multiplayer", mode); return; }
+        if(multiplayer(false) && !m_mp(mode)) { conoutf(CON_ERROR, "mode %d not supported in multiplayer", mode); return; }
         nextmode = mode;
     }
 
@@ -351,16 +351,16 @@ struct fpsclient : igameclient
                 int wait = m_capture ? cpc.respawnwait(player1) : ctf.respawnwait(player1);
                 if(wait>0)
                 {
-                    conoutf("\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
+                    conoutf(CON_GAMEINFO, "\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
                     return;
                 }
             }
-            if(m_arena) { conoutf("\f2waiting for new round to start..."); return; }
+            if(m_arena) { conoutf(CON_GAMEINFO, "\f2waiting for new round to start..."); return; }
             if(m_dmsp) { nextmode = gamemode; cc.changemap(clientmap); return; }    // if we die in SP we try the same map again
             if(m_classicsp)
             {
                 respawnself();
-                conoutf("\f2You wasted another life! The monsters stole your armour and some ammo...");
+                conoutf(CON_GAMEINFO, "\f2You wasted another life! The monsters stole your armour and some ammo...");
                 loopi(NUMGUNS) if(i!=GUN_PISTOL && (player1->ammo[i] = lastplayerstate.ammo[i])>5) player1->ammo[i] = max(player1->ammo[i]/3, 5); 
                 return;
             }
@@ -416,35 +416,36 @@ struct fpsclient : igameclient
     {
         if(d->state!=CS_ALIVE || intermission) return;
 
+        int contype = d==player1 || actor==player1 ? CON_FRAG_SELF : CON_FRAG_OTHER;
         string dname, aname;
         s_strcpy(dname, d==player1 ? "you" : colorname(d));
         s_strcpy(aname, actor==player1 ? "you" : (actor->type!=ENT_INANIMATE ? colorname(actor) : ""));
         if(actor->type==ENT_AI)
-            conoutf("\f2%s got killed by %s!", dname, aname);
+            conoutf(contype, "\f2%s got killed by %s!", dname, aname);
         else if(d==actor || actor->type==ENT_INANIMATE)
-            conoutf("\f2%s suicided%s", dname, d==player1 ? "!" : "");
+            conoutf(contype, "\f2%s suicided%s", dname, d==player1 ? "!" : "");
         else if(isteam(d->team, actor->team))
         {
-            if(d==player1) conoutf("\f2you got fragged by a teammate (%s)", aname);
-            else conoutf("\f2%s fragged a teammate (%s)", aname, dname);
+            if(d==player1) conoutf(contype, "\f2you got fragged by a teammate (%s)", aname);
+            else conoutf(contype, "\f2%s fragged a teammate (%s)", aname, dname);
         }
         else if(m_assassin && (d==player1 || actor==player1))
         {
             if(d==player1) 
             {   
-                conoutf("\f2you got fragged by %s (%s)", aname, asc.hunters.find(actor)>=0 ? "assassin" : (asc.targets.find(actor)>=0 ? "target" : "friend"));
+                conoutf(contype, "\f2you got fragged by %s (%s)", aname, asc.hunters.find(actor)>=0 ? "assassin" : (asc.targets.find(actor)>=0 ? "target" : "friend"));
                 if(asc.hunters.find(actor)>=0) asc.hunters.removeobj(actor);
             }
             else 
             {
-                conoutf("\f2you fragged %s (%s)", dname, asc.targets.find(d)>=0 ? "target +1" : (asc.hunters.find(d)>=0 ? "assassin +0" : "friend -1")); 
+                conoutf(contype, "\f2you fragged %s (%s)", dname, asc.targets.find(d)>=0 ? "target +1" : (asc.hunters.find(d)>=0 ? "assassin +0" : "friend -1")); 
                 if(asc.targets.find(d)>=0) asc.targets.removeobj(d);
             }
         }
         else
         {
-            if(d==player1) conoutf("\f2you got fragged by %s", aname);
-            else conoutf("\f2%s fragged %s", aname, dname);
+            if(d==player1) conoutf(contype, "\f2you got fragged by %s", aname);
+            else conoutf(contype, "\f2%s fragged %s", aname, dname);
         }
 
         d->state = CS_DEAD;
@@ -476,35 +477,35 @@ struct fpsclient : igameclient
         {
             intermission = true;
             player1->attacking = false;
-            conoutf("\f2intermission:");
-            conoutf("\f2game has ended!");
-            conoutf("\f2player frags: %d, deaths: %d", player1->frags, player1->deaths);
+            conoutf(CON_GAMEINFO, "\f2intermission:");
+            conoutf(CON_GAMEINFO, "\f2game has ended!");
+            conoutf(CON_GAMEINFO, "\f2player frags: %d, deaths: %d", player1->frags, player1->deaths);
             int accuracy = player1->totaldamage*100/max(player1->totalshots, 1);
-            conoutf("\f2player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);               
+            conoutf(CON_GAMEINFO, "\f2player total damage dealt: %d, damage wasted: %d, accuracy(%%): %d", player1->totaldamage, player1->totalshots-player1->totaldamage, accuracy);               
             if(m_sp)
             {
-                conoutf("\f2--- single player time score: ---");
+                conoutf(CON_GAMEINFO, "\f2--- single player time score: ---");
                 int pen, score = 0;
                 extern int totalmillis;
-                pen = (totalmillis-slowmorealtimestart)/1000; score += pen; if(pen) conoutf("\f2time taken: %d seconds (%d simulated seconds)", pen, (lastmillis-maptime)/1000); 
-                pen = player1->deaths*60; score += pen; if(pen) conoutf("\f2time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
-                pen = ms.remain*10;       score += pen; if(pen) conoutf("\f2time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
-                pen = (10-ms.skill())*20; score += pen; if(pen) conoutf("\f2time penalty for lower skill level (20 seconds each): %d seconds", pen);
-                pen = 100-accuracy;       score += pen; if(pen) conoutf("\f2time penalty for missed shots (1 second each %%): %d seconds", pen);
+                pen = (totalmillis-slowmorealtimestart)/1000; score += pen; if(pen) conoutf(CON_GAMEINFO, "\f2time taken: %d seconds (%d simulated seconds)", pen, (lastmillis-maptime)/1000); 
+                pen = player1->deaths*60; score += pen; if(pen) conoutf(CON_GAMEINFO, "\f2time penalty for %d deaths (1 minute each): %d seconds", player1->deaths, pen);
+                pen = ms.remain*10;       score += pen; if(pen) conoutf(CON_GAMEINFO, "\f2time penalty for %d monsters remaining (10 seconds each): %d seconds", ms.remain, pen);
+                pen = (10-ms.skill())*20; score += pen; if(pen) conoutf(CON_GAMEINFO, "\f2time penalty for lower skill level (20 seconds each): %d seconds", pen);
+                pen = 100-accuracy;       score += pen; if(pen) conoutf(CON_GAMEINFO, "\f2time penalty for missed shots (1 second each %%): %d seconds", pen);
                 s_sprintfd(aname)("bestscore_%s", getclientmap());
                 const char *bestsc = getalias(aname);
                 int bestscore = *bestsc ? atoi(bestsc) : score;
                 if(score<bestscore) bestscore = score;
                 s_sprintfd(nscore)("%d", bestscore);
                 alias(aname, nscore);
-                conoutf("\f2TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
+                conoutf(CON_GAMEINFO, "\f2TOTAL SCORE (time + time penalties): %d seconds (best so far: %d seconds)", score, bestscore);
             }
             sb.showscores(true);
             setvar("zoom", -1, true);
         }
         else if(timeremain > 0)
         {
-            conoutf("\f2time remaining: %d %s", timeremain, timeremain==1 ? "minute" : "minutes");
+            conoutf(CON_GAMEINFO, "\f2time remaining: %d %s", timeremain, timeremain==1 ? "minute" : "minutes");
         }
     }
 
@@ -603,7 +604,7 @@ struct fpsclient : igameclient
         respawned = suicided = -1;
         respawnent = -1;
         lasthit = 0;
-        if(multiplayer(false) && m_sp) { gamemode = 0; conoutf("coop sp not supported yet"); }
+        if(multiplayer(false) && m_sp) { gamemode = 0; conoutf(CON_ERROR, "coop sp not supported yet"); }
         cc.mapstart();
         mo.clear(gamemode);
         ms.monsterclear(gamemode);
@@ -632,12 +633,12 @@ struct fpsclient : igameclient
         setvar("zoom", -1, true);
         intermission = false;
         maptime = 0;
-        if(*name) conoutf("\f2game mode is %s", fpsserver::modestr(gamemode));
+        if(*name) conoutf(CON_GAMEINFO, "\f2game mode is %s", fpsserver::modestr(gamemode));
         if(m_sp)
         {
             s_sprintfd(aname)("bestscore_%s", getclientmap());
             const char *best = getalias(aname);
-            if(*best) conoutf("\f2try to beat your best score so far: %s", best);
+            if(*best) conoutf(CON_GAMEINFO, "\f2try to beat your best score so far: %s", best);
             lastslowmohealth = lastmillis;
         }
 

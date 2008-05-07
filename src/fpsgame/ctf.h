@@ -429,7 +429,7 @@ struct ctfclient : ctfstate
             f.droploc = vec(-1, -1, -1);
             f.interptime = 0;
         }
-        conoutf("%s dropped %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
+        conoutf(CON_GAMEINFO, "%s dropped %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGDROP);
     }
 
@@ -467,7 +467,7 @@ struct ctfclient : ctfstate
         flageffect(i, interpflagpos(f), f.spawnloc);
         f.interptime = 0;
         ctfstate::returnflag(i);
-        conoutf("%s returned %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
+        conoutf(CON_GAMEINFO, "%s returned %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGRETURN);
     }
 
@@ -477,7 +477,7 @@ struct ctfclient : ctfstate
         flageffect(i, interpflagpos(f), f.spawnloc);
         f.interptime = 0;
         ctfstate::returnflag(i);
-        conoutf("%s flag reset", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
+        conoutf(CON_GAMEINFO, "%s flag reset", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGRESET);
     }
 
@@ -493,7 +493,7 @@ struct ctfclient : ctfstate
             s_sprintfd(ds)("@%d", score);
             particle_text(d->abovehead(), ds, 9);
         }
-        conoutf("%s scored for %s team", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
+        conoutf(CON_GAMEINFO, "%s scored for %s team", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGSCORE);
     }
 
@@ -502,7 +502,7 @@ struct ctfclient : ctfstate
         flag &f = flags[i];
         f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = cl.lastmillis;
-        conoutf("%s %s %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.droptime ? "picked up" : "stole", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
+        conoutf(CON_GAMEINFO, "%s %s %s flag", d==cl.player1 ? "you" : cl.colorname(d), f.droptime ? "picked up" : "stole", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         ctfstate::takeflag(i, d);
         playsound(S_FLAGPICKUP);
     }

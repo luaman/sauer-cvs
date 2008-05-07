@@ -12,7 +12,7 @@ void loadsky(const char *basename)
         if((sky[i] = textureload(name, 3, true, false))==notexture)
         {
             strcpy(name+strlen(name)-3, "png");
-            if((sky[i] = textureload(name, 3, true, false))==notexture) conoutf("could not load sky texture packages/%s_%s", basename, side);
+            if((sky[i] = textureload(name, 3, true, false))==notexture) conoutf(CON_ERROR, "could not load sky texture packages/%s_%s", basename, side);
         }
     }
 }

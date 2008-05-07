@@ -38,7 +38,7 @@ struct monsterset
             respawn();
             if(_type>=NUMMONSTERTYPES || _type < 0)
             {
-                conoutf("warning: unknown monster in spawn: %d", _type);
+                conoutf(CON_WARN, "warning: unknown monster in spawn: %d", _type);
                 _type = 0;
             }
             monstertype *t = monstertypes+(mtype = _type);
@@ -317,7 +317,7 @@ struct monsterset
 
     void endsp(bool allkilled)
     {
-        conoutf(allkilled ? "\f2you have cleared the map!" : "\f2you reached the exit!");
+        conoutf(CON_GAMEINFO, allkilled ? "\f2you have cleared the map!" : "\f2you reached the exit!");
         monstertotal = 0;
         cl.cc.addmsg(SV_FORCEINTERMISSION, "r");
     }
@@ -327,14 +327,14 @@ struct monsterset
         numkilled++;
         cl.player1->frags = numkilled;
         remain = monstertotal-numkilled;
-        if(remain>0 && remain<=5) conoutf("\f2only %d monster(s) remaining", remain);
+        if(remain>0 && remain<=5) conoutf(CON_GAMEINFO, "\f2only %d monster(s) remaining", remain);
     }
 
     void monsterthink(int curtime, int gamemode)
     {
         if(m_dmsp && spawnremain && cl.lastmillis>nextmonster)
         {
-            if(spawnremain--==monstertotal) { conoutf("\f2The invasion has begun!"); playsound(S_V_FIGHT); }
+            if(spawnremain--==monstertotal) { conoutf(CON_GAMEINFO, "\f2The invasion has begun!"); playsound(S_V_FIGHT); }
             nextmonster = cl.lastmillis+1000;
             spawnmonster();
         }

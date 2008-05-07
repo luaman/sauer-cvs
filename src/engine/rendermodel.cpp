@@ -13,7 +13,7 @@ model *loadingmodel = NULL;
 #include "md3.h"
 #include "md5.h"
 
-#define checkmdl if(!loadingmodel) { conoutf("not loading a model"); return; }
+#define checkmdl if(!loadingmodel) { conoutf(CON_ERROR, "not loading a model"); return; }
 
 void mdlcullface(int *cullface)
 {

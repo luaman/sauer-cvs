@@ -263,13 +263,13 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, bool mipit, 
             if(hasGM && hwmipmap) glTexImage1D(subtarget, 0, compressed, w, 0, format, type, pixels);
             else if(gluBuild1DMipmaps(subtarget, compressed, w, format, type, pixels))
             {
-                if(compressed==component || gluBuild1DMipmaps(subtarget, component, w, format, type, pixels)) conoutf("could not build mipmaps");
+                if(compressed==component || gluBuild1DMipmaps(subtarget, component, w, format, type, pixels)) conoutf(CON_ERROR, "could not build mipmaps");
             }
         }
         else if(hasGM && hwmipmap) glTexImage2D(subtarget, 0, compressed, w, h, 0, format, type, pixels);
         else if(gluBuild2DMipmaps(subtarget, compressed, w, h, format, type, pixels))
         {
-            if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) conoutf("could not build mipmaps");
+            if(compressed==component || gluBuild2DMipmaps(subtarget, component, w, h, format, type, pixels)) conoutf(CON_ERROR, "could not build mipmaps");
         }
     }
     else if(target==GL_TEXTURE_1D) glTexImage1D(subtarget, 0, component, w, 0, format, type, pixels);
@@ -381,7 +381,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         {
             cmds = tex->name;
             file = strrchr(tex->name, '>');
-            if(!file) { if(msg) conoutf("could not load texture packages/%s", tex->name); return NULL; }
+            if(!file) { if(msg) conoutf(CON_ERROR, "could not load texture packages/%s", tex->name); return NULL; }
             file++;
         }
         else file = tex->name;
@@ -394,7 +394,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     {
         cmds = tname;
         file = strrchr(tname, '>');
-        if(!file) { if(msg) conoutf("could not load texture %s", tname); return NULL; }
+        if(!file) { if(msg) conoutf(CON_ERROR, "could not load texture %s", tname); return NULL; }
         file++;
     }
 
@@ -406,9 +406,9 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
     if(msg) show_out_of_renderloop_progress(0, file);
 
     SDL_Surface *s = IMG_Load(findfile(file, "rb"));
-    if(!s) { if(msg) conoutf("could not load texture %s", file); return NULL; }
+    if(!s) { if(msg) conoutf(CON_ERROR, "could not load texture %s", file); return NULL; }
     int bpp = s->format->BitsPerPixel;
-    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf("texture must be 8, 16, 24, or 32 bpp: %s", file); return NULL; }
+    if(!texformat(bpp)) { SDL_FreeSurface(s); conoutf(CON_ERROR, "texture must be 8, 16, 24, or 32 bpp: %s", file); return NULL; }
 
     while(cmds)
     {
@@ -529,7 +529,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     Slot &s = matslot>=0 ? materialslots[matslot] : (tnum!=TEX_DIFFUSE ? slots.last() : slots.add());
     s.loaded = false;
     s.texmask |= 1<<tnum;
-    if(s.sts.length()>=8) conoutf("warning: too many textures in slot %d", curtexnum);
+    if(s.sts.length()>=8) conoutf(CON_WARN, "warning: too many textures in slot %d", curtexnum);
     Slot::Tex &st = s.sts.add();
     st.type = tnum;
     st.combined = -1;
@@ -894,7 +894,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg)
         if(!format) format = texformat(surface[i]->format->BitsPerPixel);
         else if(texformat(surface[i]->format->BitsPerPixel)!=format)
         {
-            if(surface[i] && msg) conoutf("cubemap texture %s doesn't match other sides' format", sname);
+            if(surface[i] && msg) conoutf(CON_ERROR, "cubemap texture %s doesn't match other sides' format", sname);
             loopj(i) SDL_FreeSurface(surface[j]);
             return NULL;
         }
@@ -946,7 +946,7 @@ Texture *cubemapload(const char *name, bool mipit, bool msg)
         {
             s_sprintfd(pngname)("%s_*.png", pname);
             t = cubemaploadwildcard(NULL, pngname, mipit, false);
-            if(!t && msg) conoutf("could not load envmap %s", name);
+            if(!t && msg) conoutf(CON_ERROR, "could not load envmap %s", name);
         }
     }
     else t = cubemaploadwildcard(NULL, pname, mipit, msg);

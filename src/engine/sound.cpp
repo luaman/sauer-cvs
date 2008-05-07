@@ -60,7 +60,7 @@ void initsound()
 {
     if(Mix_OpenAudio(soundfreq, MIX_DEFAULT_FORMAT, 2, soundbufferlen)<0)
     {
-        conoutf("sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
+        conoutf(CON_ERROR, "sound init failed (SDL_mixer): %s", (size_t)Mix_GetError());
         return;
     }
 	Mix_AllocateChannels(soundchans);	
@@ -96,7 +96,7 @@ void music(char *name, char *cmd)
         }
         else
         {
-            conoutf("could not play music: %s", sn);
+            conoutf(CON_ERROR, "could not play music: %s", sn);
         }
     }
 }
@@ -261,7 +261,7 @@ void playsound(int n, const vec *loc, extentity *ent)
     }
 
     vector<soundslot> &sounds = ent ? mapsounds : gamesounds;
-    if(!sounds.inrange(n)) { conoutf("unregistered sound: %d", n); return; }
+    if(!sounds.inrange(n)) { conoutf(CON_WARN, "unregistered sound: %d", n); return; }
     soundslot &slot = sounds[n];
     if(ent && slot.maxuses && slot.uses>=slot.maxuses) return;
 
@@ -277,7 +277,7 @@ void playsound(int n, const vec *loc, extentity *ent)
             if(slot.s->sound) break;
         }
 
-        if(!slot.s->sound) { conoutf("failed to load sample: %s", buf); return; }
+        if(!slot.s->sound) { conoutf(CON_ERROR, "failed to load sample: %s", buf); return; }
     }
 
     int chan = Mix_PlayChannel(-1, slot.s->sound, 0);
@@ -309,7 +309,7 @@ void resetsound()
     const SDL_version *v = Mix_Linked_Version();
     if(SDL_VERSIONNUM(v->major, v->minor, v->patch) <= SDL_VERSIONNUM(1, 2, 8))
     {
-        conoutf("Sound reset not available in-game due to SDL_mixer-1.2.8 bug. Please restart for changes to take effect.");
+        conoutf(CON_ERROR, "Sound reset not available in-game due to SDL_mixer-1.2.8 bug. Please restart for changes to take effect.");
         return;
     }
     if(!nosound) 
@@ -412,7 +412,7 @@ void initmumble()
     #endif
     if(!VALID_MUMBLELINK) closemumble();
 #else
-    conoutf("Mumble positional audio is not available on this platform.");
+    conoutf(CON_ERROR, "Mumble positional audio is not available on this platform.");
 #endif
 }
 

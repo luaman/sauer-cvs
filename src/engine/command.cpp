@@ -120,7 +120,7 @@ void aliasa(const char *name, char *action)
     }
     else if(b->type != ID_ALIAS)
     {
-        conoutf("cannot redefine builtin %s with an alias", name);
+        conoutf(CON_ERROR, "cannot redefine builtin %s with an alias", name);
         delete[] action;
     }
     else 
@@ -291,7 +291,7 @@ char *parseexp(const char *&p, int right)          // parse any nested set of ()
         else if(!c) 
         { 
             p--;
-            conoutf("missing \"%c\"", right);
+            conoutf(CON_ERROR, "missing \"%c\"", right);
             wordbuf.setsize(0); 
             bufnest--;
             return NULL; 
@@ -326,7 +326,7 @@ char *lookup(char *n)                           // find value of ident reference
         case ID_SVAR: return exchangestr(n, *id->storage.s);
         case ID_ALIAS: return exchangestr(n, id->action);
     }
-    conoutf("unknown alias lookup: %s", n+1);
+    conoutf(CON_ERROR, "unknown alias lookup: %s", n+1);
     return n;
 }
 
@@ -421,7 +421,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
             if(!id)
             {
                 if(!isdigit(*c) && ((*c!='+' && *c!='-') || (*c && !isdigit(c[1])))) 
-                    conoutf("unknown command: %s", c);
+                    conoutf(CON_ERROR, "unknown command: %s", c);
                 setretval(newstring(c));
             }
             else switch(id->type)
@@ -469,7 +469,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
 
                 case ID_VAR:                        // game defined variables 
                     if(!w[1][0]) conoutf("%s = %d", c, *id->storage.i);      // var with no value just prints its current value
-                    else if(id->minval>id->maxval) conoutf("variable %s is read-only", id->name);
+                    else if(id->minval>id->maxval) conoutf(CON_ERROR, "variable %s is read-only", id->name);
                     else
                     {
                         #define OVERRIDEVAR(saveval, resetval) \
@@ -477,7 +477,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                             { \
                                 if(id->persist) \
                                 { \
-                                    conoutf("cannot override persistent variable %s", id->name); \
+                                    conoutf(CON_ERROR, "cannot override persistent variable %s", id->name); \
                                     break; \
                                 } \
                                 if(id->override==NO_OVERRIDE) { saveval; id->override = OVERRIDDEN; } \
@@ -488,7 +488,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                         if(i1<id->minval || i1>id->maxval)
                         {
                             i1 = i1<id->minval ? id->minval : id->maxval;                // clamp to valid range
-                            conoutf("valid range for %s is %d..%d", id->name, id->minval, id->maxval);
+                            conoutf(CON_ERROR, "valid range for %s is %d..%d", id->name, id->minval, id->maxval);
                         }
                         *id->storage.i = i1;
                         id->changed();                                             // call trigger function if available
@@ -567,7 +567,7 @@ bool execfile(const char *cfgfile)
 
 void exec(const char *cfgfile)
 {
-    if(!execfile(cfgfile)) conoutf("could not read \"%s\"", cfgfile);
+    if(!execfile(cfgfile)) conoutf(CON_ERROR, "could not read \"%s\"", cfgfile);
 }
 
 void writecfg()
@@ -738,7 +738,7 @@ void rndn(int *a)          { intret(*a>0 ? rnd(*a) : 0); }  COMMANDN(rnd, rndn, 
 
 void strcmpa(char *a, char *b) { intret(strcmp(a,b)==0); }  COMMANDN(strcmp, strcmpa, "ss");
 
-ICOMMAND(echo, "C", (char *s), conoutf("\f1%s", s));
+ICOMMAND(echo, "C", (char *s), conoutf(CON_ECHO, "\f1%s", s));
 
 void strstra(char *a, char *b) { char *s = strstr(a, b); intret(s ? s-a : -1); } COMMANDN(strstr, strstra, "ss");
 

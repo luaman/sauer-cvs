@@ -1058,7 +1058,7 @@ void calclight(int *quality)
 {
     if(!setlightmapquality(*quality))
     {
-        conoutf("valid range for calclight quality is -2..3"); 
+        conoutf(CON_ERROR, "valid range for calclight quality is -2..3"); 
         return;
     }
     computescreen("computing lightmaps... (esc to abort)");
@@ -1109,7 +1109,7 @@ void patchlight(int *quality)
     if(noedit(true)) return;
     if(!setlightmapquality(*quality))
     {
-        conoutf("valid range for patchlight quality is -2..3"); 
+        conoutf(CON_ERROR, "valid range for patchlight quality is -2..3"); 
         return;
     }
     computescreen("patching lightmaps... (esc to abort)");
@@ -1492,7 +1492,7 @@ void lightreaching(const vec &target, vec &color, vec &dir, extentity *t, float 
 
         //if(target==player->o)
         //{
-        //    conoutf("%d - %f %f", i, intensity, mag);
+        //    conoutf(CON_DEBUG, "%d - %f %f", i, intensity, mag);
         //}
  
         color.add(vec(e.attr2, e.attr3, e.attr4).div(255).mul(intensity));

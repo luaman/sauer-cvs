@@ -254,6 +254,16 @@ void guiradio(char *name, char *var, int *n, char *onchange)
     }
 }
 
+void guibitfield(char *name, char *var, int *mask, char *onchange)
+{
+    int val = getval(var);
+    bool enabled = (val & *mask) != 0;
+    if(cgui && cgui->button(name, GUI_BUTTON_COLOR, enabled ? "checkbox_on" : "checkbox_off")&G3D_UP)
+    {
+        updateval(var, enabled ? val & ~*mask : val | *mask, onchange);
+    }
+}
+
 //-ve length indicates a wrapped text field of any (approx 260 chars) length, |length| is the field width
 void guifield(char *var, int *maxlength, char *onchange, char *updateval)
 {   
@@ -326,6 +336,7 @@ COMMAND(guiimage,"ssfis");
 COMMAND(guislider,"siis");
 COMMAND(guilistslider, "sss");
 COMMAND(guiradio,"ssis");
+COMMAND(guibitfield, "ssis");
 COMMAND(guicheckbox, "ssiis");
 COMMAND(guitab, "s");
 COMMAND(guifield, "siss");

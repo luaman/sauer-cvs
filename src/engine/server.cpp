@@ -55,7 +55,7 @@ void initgame(const char *game)
 #ifdef STANDALONE
                 printf("unknown command-line option: %s\n", gameargs[i]);
 #else
-                conoutf("unknown command-line option: %s", gameargs[i]);
+                conoutf(CON_ERROR, "unknown command-line option: %s", gameargs[i]);
 #endif
         }
     }

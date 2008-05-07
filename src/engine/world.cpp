@@ -213,7 +213,7 @@ VAR(entediting, 0, 0, 1);
 
 bool noentedit()
 {
-    if(!editmode) { conoutf("operation only allowed in edit mode"); return true; }
+    if(!editmode) { conoutf(CON_ERROR, "operation only allowed in edit mode"); return true; }
     return !entediting;
 }
 
@@ -710,7 +710,7 @@ void delent()
 int findtype(char *what)
 {
     for(int i = 0; *et->entname(i); i++) if(strcmp(what, et->entname(i))==0) return i;
-    conoutf("unknown entity type \"%s\"", what);
+    conoutf(CON_ERROR, "unknown entity type \"%s\"", what);
     return ET_EMPTY;
 }
 
@@ -978,7 +978,7 @@ bool emptymap(int scale, bool force, const char *mname)    // main empty world c
 {
     if(!force && !editmode) 
     {
-        conoutf("newmap only allowed in edit mode");
+        conoutf(CON_ERROR, "newmap only allowed in edit mode");
         return false;
     }
 
@@ -1023,7 +1023,7 @@ bool enlargemap(bool force)
 {
     if(!force && !editmode)
     {
-        conoutf("mapenlarge only allowed in edit mode");
+        conoutf(CON_ERROR, "mapenlarge only allowed in edit mode");
         return false;
     }
     if(hdr.worldsize >= 1<<20) return false;
