@@ -32,19 +32,6 @@ struct header                   // map file format header
     char maptitle[128];
 };
 
-enum                            // cube empty-space materials
-{
-    MAT_AIR = 0,                // the default, fill the empty space with air
-    MAT_WATER,                  // fill with water, showing waves at the surface
-    MAT_CLIP,                   // collisions always treat cube as solid
-    MAT_GLASS,                  // behaves like clip but is blended blueish
-    MAT_NOCLIP,                 // collisions always treat cube as empty
-    MAT_LAVA,                   // fill with lava
-    MAT_AICLIP,                 // clip monsters only
-    MAT_DEATH,                  // force player suicide
-    MAT_EDIT                    // basis for the edit volumes of the above materials
-};
-
 #define WATER_AMPLITUDE 0.8f
 #define WATER_OFFSET 1.1f
 

@@ -1318,9 +1318,9 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
             material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (pl->aboveeye - pl->eyeheight)/2));
             water = isliquid(material);
         }
-        if(!pl->inwater && water) cl->physicstrigger(pl, local, 0, -1);
-        else if(pl->inwater && !water) cl->physicstrigger(pl, local, 0, 1);
-        pl->inwater = water;
+        if(!pl->inwater && water) cl->physicstrigger(pl, local, 0, -1, material);
+        else if(pl->inwater && !water) cl->physicstrigger(pl, local, 0, 1, pl->inwater);
+        pl->inwater = water ? material : MAT_AIR;
 
         if(pl->state==CS_ALIVE && (material==MAT_LAVA || material==MAT_DEATH)) cl->suicide(pl);
     }

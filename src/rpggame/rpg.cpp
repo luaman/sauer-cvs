@@ -90,7 +90,7 @@ struct rpgclient : igameclient, g3d_callback
     
     void initclient() {}
         
-    void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)
+    void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel, int material)
     {
         if     (waterlevel>0) playsoundname("free/splash1", d==&player1 ? NULL : &d->o);
         else if(waterlevel<0) playsoundname("free/splash2", d==&player1 ? NULL : &d->o);

@@ -104,6 +104,8 @@ enum
     S_FLAGRETURN,
     S_FLAGSCORE,
     S_FLAGRESET,
+
+    S_BURN
 };
 
 // network messages codes, c2s, c2c, s2c

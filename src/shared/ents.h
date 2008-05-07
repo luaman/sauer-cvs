@@ -60,7 +60,7 @@ struct physent                                  // base entity type, can be affe
     float xradius, yradius, zmargin;
     vec floor;                                  // the normal of floor the dynent is on
 
-    bool inwater;
+    int inwater;
     bool jumpnext;
     bool blocked, moving;                       // used by physics to signal ai
     physent *onplayer;
@@ -83,7 +83,7 @@ struct physent                                  // base entity type, can be affe
                
     void reset()
     {
-    	inwater = false;
+    	inwater = 0;
         timeinair = 0;
         strafe = move = 0;
         physstate = PHYS_FALL;

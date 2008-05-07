@@ -651,11 +651,11 @@ struct fpsclient : igameclient
         }
     }
 
-    void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel)
+    void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel, int material)
     {
         if(d->type==ENT_INANIMATE) return;
-        if     (waterlevel>0) playsound(S_SPLASH1, d==player1 ? NULL : &d->o);
-        else if(waterlevel<0) playsound(S_SPLASH2, d==player1 ? NULL : &d->o);
+        if     (waterlevel>0) { if(material!=MAT_LAVA) playsound(S_SPLASH1, d==player1 ? NULL : &d->o); }
+        else if(waterlevel<0) playsound(material==MAT_LAVA ? S_BURN : S_SPLASH2, d==player1 ? NULL : &d->o);
         if     (floorlevel>0) { if(local) playsoundc(S_JUMP, (fpsent *)d); else if(d->type==ENT_AI) playsound(S_JUMP, &d->o); }
         else if(floorlevel<0) { if(local) playsoundc(S_LAND, (fpsent *)d); else if(d->type==ENT_AI) playsound(S_LAND, &d->o); }
     }

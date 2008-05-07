@@ -1,5 +1,18 @@
 // the interface the game uses to access the engine
 
+enum                            // cube empty-space materials
+{
+    MAT_AIR = 0,                // the default, fill the empty space with air
+    MAT_WATER,                  // fill with water, showing waves at the surface
+    MAT_CLIP,                   // collisions always treat cube as solid
+    MAT_GLASS,                  // behaves like clip but is blended blueish
+    MAT_NOCLIP,                 // collisions always treat cube as empty
+    MAT_LAVA,                   // fill with lava
+    MAT_AICLIP,                 // clip monsters only
+    MAT_DEATH,                  // force player suicide
+    MAT_EDIT                    // basis for the edit volumes of the above materials
+};
+
 extern void lightent(extentity &e, float height = 8.0f);
 extern void lightreaching(const vec &target, vec &color, vec &dir, extentity *e = 0, float ambient = 0.4f);
 extern entity *brightestlight(const vec &target, const vec &dir);
