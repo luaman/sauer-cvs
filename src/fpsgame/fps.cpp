@@ -416,7 +416,8 @@ struct fpsclient : igameclient
     {
         if(d->state!=CS_ALIVE || intermission) return;
 
-        int contype = d==player1 || actor==player1 ? CON_FRAG_SELF : CON_FRAG_OTHER;
+        fpsent *h = hudplayer();
+        int contype = d==h || actor==h ? CON_FRAG_SELF : CON_FRAG_OTHER;
         string dname, aname;
         s_strcpy(dname, d==player1 ? "you" : colorname(d));
         s_strcpy(aname, actor==player1 ? "you" : (actor->type!=ENT_INANIMATE ? colorname(actor) : ""));
