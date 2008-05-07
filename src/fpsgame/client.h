@@ -824,7 +824,7 @@ struct clientcom : iclientcom
 
             case SV_SERVMSG:
                 getstring(text, p);
-                conoutf(CON_ECHO, "%s", text);
+                conoutf("%s", text);
                 break;
 
             case SV_SENDDEMOLIST:
