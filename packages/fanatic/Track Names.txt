@@ -53,3 +53,18 @@ http://www2.fanaticalproductions.net:8080/index.htm?module=music_album_view&albu
 29 - Kakos
 30 - Katalabaino
 31 - Epinoo
+
+Song titles for "Spontaneous Failure":
+
+http://www2.fanaticalproductions.net:8080/index.htm?module=music_album_view&albumId=35
+
+32 - Singularity
+33 - Fractured Reality
+34 - Probability
+35 - Hopelessly Unattainable
+36 - Furious Hatred
+37 - Antagonism
+38 - Icosahedron
+39 - Silent Killer
+40 - Rational Thoughts
+41 - Repulsive
