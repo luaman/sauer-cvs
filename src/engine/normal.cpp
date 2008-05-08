@@ -17,7 +17,7 @@ struct nvec : svec
         
 struct normal
 {
-    uchar face;
+    uchar corner;
     nvec surface;
     nvec average;
 };
@@ -55,23 +55,20 @@ VARF(lerpangle, 0, 44, 180, hdr.lerpangle = lerpangle);
 
 static float lerpthreshold = 0;
 
-void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &surface)
+void addnormal(const ivec &origin, int orient, int index, const vvec &offset, const vec &surface)
 {
     nkey key(origin, offset);
     nval &val = normals[key];
 
-    uchar face = orient<<2;
-    int dim = dimension(orient), r = R[dim], c = C[dim], originr = origin[r]<<VVEC_FRAC, originc = origin[c]<<VVEC_FRAC;
-    if(originr >= int(offset[r])+(originr&(~VVEC_INT_MASK<<VVEC_FRAC))) face |= 1;
-    if(originc >= int(offset[c])+(originc&(~VVEC_INT_MASK<<VVEC_FRAC))) face |= 2;
+    uchar corner = (orient<<4) | index;
 
-    loopv(val.normals) if(val.normals[i].face == face) return;
+    loopv(val.normals) if(val.normals[i].corner == corner) return;
 
-    normal n = {face, surface, surface};
+    normal n = {corner, surface, surface};
     loopv(val.normals)
     {
         normal &o = val.normals[i];
-        if(o.face != n.face && o.surface.dot(surface) > lerpthreshold)
+        if(o.corner != n.corner && o.surface.dot(surface) > lerpthreshold)
         {
             o.average.add(n.surface);
             n.average.add(o.surface);
@@ -80,32 +77,18 @@ void addnormal(const ivec &origin, int orient, const vvec &offset, const vec &su
     val.normals.add(n);
 }
 
-bool findnormal(const ivec &origin, int orient, const vvec &offset, vec &v, int index)
+bool findnormal(const ivec &origin, int orient, int index, const vvec &offset, vec &v)
 {
     nkey key(origin, offset);
     nval *val = normals.access(key);
     if(!val) return false;
 
-    uchar face = orient<<2;
-    int dim = dimension(orient), r = R[dim], c = C[dim];
-
-    if(index>=0)
-    {
-        const ivec &coords = cubecoords[fv[orient][index]];
-        if(!coords[r]) face |= 1;
-        if(!coords[c]) face |= 2;
-    }
-    else
-    {
-        int originr = origin[r]<<VVEC_FRAC, originc = origin[c]<<VVEC_FRAC;
-        if(originr >= int(offset[r])+(originr&(~VVEC_INT_MASK<<VVEC_FRAC))) face |= 1;
-        if(originc >= int(offset[c])+(originc&(~VVEC_INT_MASK<<VVEC_FRAC))) face |= 2;
-    }
+    uchar corner = (orient<<4) | index;
 
     loopv(val->normals)
     {
         normal &n = val->normals[i];
-        if(n.face == face)
+        if(n.corner == corner)
         {
             v = n.average.tovec();
             return true;
@@ -171,7 +154,7 @@ void addnormals(cube &c, const ivec &o, int size)
         {
             const vvec &v = vvecs[index];
             const vec &cur = numplanes < 2 || j == 1 ? planes[0] : (j == 3 ? planes[1] : avg);
-            addnormal(o, i, v, cur);
+            addnormal(o, i, index, v, cur);
             index = faceverts(c, i, (j+1)%4);
             if(subdiv < 2) continue;
             const vvec &v2 = vvecs[index];
@@ -183,7 +166,7 @@ void addnormals(cube &c, const ivec &o, int size)
             if(numplanes < 2) loopk(subdiv - 1)
             {
                 vs.add(dv);
-                addnormal(o, i, vs, planes[0]);
+                addnormal(o, i, index, vs, planes[0]);
             }
             else
             {
@@ -195,7 +178,7 @@ void addnormals(cube &c, const ivec &o, int size)
                 {
                     vs.add(dv);
                     n.add(dn);
-                    addnormal(o, i, vs, vec(dn).normalize());
+                    addnormal(o, i, index, vs, vec(dn).normalize());
                 }
             }
         }

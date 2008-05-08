@@ -973,7 +973,7 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
             loopj(4)
             {
                 v[j] = mv[j].tovec(mo);
-                if(!findnormal(mo, i, mv[j], n[j], j)) n[j] = planes[0];
+                if(!findnormal(mo, i, fv[i][j], mv[j], n[j])) n[j] = planes[0];
             }
 
             if(!find_lights(mo.x, mo.y, mo.z, 1<<msz, v, n, NULL))
@@ -993,10 +993,10 @@ void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
                 int index = faceverts(c, i, j);
                 const vvec &vv = vvecs[index];
                 v[j] = verts[index];
-                if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, vv, n[j]);
+                if(numplanes < 2 || j == 1) findnormal(ivec(cx, cy, cz), i, index, vv, n[j]);
                 else
                 {
-                    findnormal(ivec(cx, cy, cz), i, vv, n2[j >= 2 ? j-1 : j]);
+                    findnormal(ivec(cx, cy, cz), i, index, vv, n2[j >= 2 ? j-1 : j]);
                     if(j == 0) n[0] = n2[0];
                     else if(j == 2) n[2] = n2[1];
                 }
