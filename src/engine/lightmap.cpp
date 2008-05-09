@@ -1244,7 +1244,7 @@ static void rotatenormals(cube *c)
                 continue;
             surfaceinfo &surface = ch.ext->surfaces[j];
             LightMap &lmlv = lightmaps[surface.lmid+1-LMID_RESERVED];
-            rotatenormals(lmlv, surface.x, surface.y, surface.w, surface.h, slot.rotation);
+            rotatenormals(lmlv, surface.x, surface.y, surface.w, surface.h, slot.rotation < 4 ? 4-slot.rotation : slot.rotation);
         }
     }
 }
