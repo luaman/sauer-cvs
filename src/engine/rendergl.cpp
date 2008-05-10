@@ -593,7 +593,7 @@ int xtraverts, xtravertsva;
 VAR(fog, 16, 4000, 1000024);
 VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
-VAR(thirdperson, 0, 0, 1);
+VAR(thirdperson, 0, 0, 2);
 VAR(thirdpersondistance, 10, 50, 1000);
 physent *camera1 = NULL;
 bool detachedcamera = false;
@@ -604,7 +604,7 @@ void recomputecamera()
     cl->setupcamera();
     computezoom();
 
-    bool shoulddetach = cl->detachcamera();
+    bool shoulddetach = thirdperson > 1 || cl->detachcamera();
     if(!thirdperson && !shoulddetach)
     {
         camera1 = player;
