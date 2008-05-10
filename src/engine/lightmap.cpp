@@ -3,7 +3,7 @@
 
 vector<LightMap> lightmaps;
 
-VARF(lightprecision, 1, 32, 256, hdr.mapprec = lightprecision);
+VARF(lightprecision, 1, 32, 1024, hdr.mapprec = lightprecision);
 VARF(lighterror, 1, 8, 16, hdr.maple = lighterror);
 VARF(bumperror, 1, 3, 16, hdr.mapbe = bumperror);
 VARF(lightlod, 0, 0, 10, hdr.mapllod = lightlod);
