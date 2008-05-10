@@ -514,7 +514,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     gzclose(f);
 
     conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
-    conoutf(CON_ECHO, "%s", hdr.maptitle);
+    if(hdr.maptitle[0]) conoutf(CON_ECHO, "%s", hdr.maptitle);
 
     overrideidents = true;
     execfile("data/default_map_settings.cfg");
