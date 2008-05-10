@@ -298,7 +298,11 @@ struct fpsstate
 
     void spawnstate(int gamemode)
     {
-        if(m_noitems || m_capture)
+        if(m_demo)
+        {
+            gunselect = GUN_FIST;
+        }
+        else if(m_noitems || m_capture)
         {
             armour = 0;
             if(m_noitemsrail)
