@@ -567,7 +567,7 @@ struct clientcom : iclientcom
             case SV_ITEMLIST:
             {
                 int n;
-                while((n = getint(p))!=-1)
+                while((n = getint(p))>=0 && !p.overread())
                 {
                     if(mapchanged) cl.et.setspawn(n, true);
                     getint(p); // type
@@ -731,7 +731,7 @@ struct clientcom : iclientcom
                 for(;;)
                 {
                     int cn = getint(p);
-                    if(cn<0) break;
+                    if(p.overread() || cn<0) break;
                     fpsent *d = (cn == player1->clientnum ? player1 : cl.newclient(cn));
                     parsestate(d, p, true);
                 }
