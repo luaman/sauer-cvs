@@ -412,7 +412,7 @@ struct ctfclient : ctfstate
                 
                 if(dropped)
                 {
-                    if(!droptofloor(f.droploc, 2, 0)) f.droploc = vec(-1, -1, -1);
+                    if(!droptofloor(f.droploc, 4, 0)) f.droploc = vec(-1, -1, -1);
                 }
             }
         }
@@ -424,7 +424,7 @@ struct ctfclient : ctfstate
         f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = cl.lastmillis;
         ctfstate::dropflag(i, droploc, 1);
-        if(!droptofloor(f.droploc, 2, 0)) 
+        if(!droptofloor(f.droploc, 4, 0)) 
         {
             f.droploc = vec(-1, -1, -1);
             f.interptime = 0;
