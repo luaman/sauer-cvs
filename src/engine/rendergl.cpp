@@ -570,6 +570,12 @@ VARP(sensitivity, 0, 3, 10000);
 VARP(sensitivityscale, 1, 1, 10000);
 VARP(invmouse, 0, 0, 1);
 
+VAR(thirdperson, 0, 0, 2);
+VAR(thirdpersondistance, 10, 50, 1000);
+physent *camera1 = NULL;
+bool detachedcamera = false;
+bool isthirdperson() { return player!=camera1 || detachedcamera || reflecting; }
+
 void fixcamerarange()
 {
     const float MAXPITCH = 90.0f;
@@ -591,23 +597,12 @@ void mousemove(int dx, int dy)
     camera1->yaw += dx*cursens;
     camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
     fixcamerarange();
-    if(camera1!=player && player->state!=CS_DEAD)
+    if(camera1!=player && !detachedcamera)
     {
         player->yaw = camera1->yaw;
         player->pitch = camera1->pitch;
     }
 }
-
-int xtraverts, xtravertsva;
-
-VAR(fog, 16, 4000, 1000024);
-VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
-
-VAR(thirdperson, 0, 0, 2);
-VAR(thirdpersondistance, 10, 50, 1000);
-physent *camera1 = NULL;
-bool detachedcamera = false;
-bool isthirdperson() { return player!=camera1 || detachedcamera || reflecting; }
 
 void recomputecamera()
 {
@@ -687,6 +682,9 @@ void undoclipmatrix()
 
 VAR(reflectclip, 0, 6, 64);
 VARP(reflectmms, 0, 1, 1);
+
+VAR(fog, 16, 4000, 1000024);
+VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
 void setfogplane(const plane &p, bool flush)
 {
@@ -1072,6 +1070,8 @@ void getmvpmatrix()
 }
 
 void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat);
+
+int xtraverts, xtravertsva;
 
 void gl_drawframe(int w, int h)
 {
