@@ -424,6 +424,9 @@
 <a href="#_playerstart_"><tt>"playerstart"</tt></a>
 </li>
 <li>
+<a href="#_flag_"><tt>"flag"</tt></a>
+</li>
+<li>
 <a href="#_base_"><tt>"base"</tt></a>
 </li>
 <li>
@@ -1784,9 +1787,14 @@ Will play map-specific sound N so long as the player is within the radius. Howev
 By default (size 0), the sound is a point source. Its volume is maximal at the entity's location, and tapers off to 0 at the radius. If size is specified, the volume is maximal within the specified size, and only starts tapering once outside this distance. Radius is always defined as distance from the entity's location, so a size greater than or equal to the radius will just make a sound that is always max volume within the radius, and off outside.
 </p>
 
-<pre id="_playerstart_">"playerstart"</pre>
+<pre id="_playerstart_">"playerstart" [Y] [T]</pre>
 <p>
-Spawn spot, yaw is taken from the current camera yaw.
+Spawn spot, yaw Y is taken from the current camera yaw (should not be explicitly specified to "newent"). If T is specified, then the playerstart is used as a team-spawn for CTF modes ONLY, where team T may be either 1 or 2, matching the parameter supplied to "flag" entities. For all other modes, team T should either be 0 or simply not specified at all! Note that normal playerstarts are never used for CTF, and CTF playerstarts are never used for spawns in other modes.
+</p>
+
+<pre id="_flag_">"flag" [Y] T</pre>
+<p>
+A team flag for CTF maps ONLY. Yaw Y is taken from the current camera yaw (should not be explicitly specified to "newent"). Team T may be either 1 or 2. Playerstarts with a matching team will be chosen in CTF mode. 
 </p>
 
 <pre id="_base_">"base" [ammo [N]]</pre>
