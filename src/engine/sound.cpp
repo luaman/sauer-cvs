@@ -344,13 +344,11 @@ void resetsound()
 COMMAND(resetsound, "");
 
 #ifdef WIN32
+
 #include <wchar.h>
 
-#ifndef __GNUC__
-#define wcsncpy(dst, src, len) wcscpy_s(dst, len, src)
-#endif
-
 #else
+
 #include <unistd.h>
 
 #ifdef _POSIX_SHARED_MEMORY_OBJECTS
