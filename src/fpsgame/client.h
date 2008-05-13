@@ -1099,7 +1099,11 @@ struct clientcom : iclientcom
         cl.minremain = -1;
         if(editmode && !allowedittoggle()) toggleedit();
         if(m_demo) { cl.et.resetspawns(); return; }
-        if((gamemode==1 && !name[0]) || (!load_world(name) && remote)) emptymap(0, true, name);
+        if((gamemode==1 && !name[0]) || (!load_world(name) && remote)) 
+        {
+            emptymap(0, true, name);
+            senditemstoserver = false;
+        }
         if(m_capture) cl.cpc.setupbases();
         else if(m_assassin) cl.asc.reset();
         else if(m_ctf) cl.ctf.setupflags();
