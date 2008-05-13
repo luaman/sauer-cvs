@@ -412,7 +412,8 @@ struct ctfclient : ctfstate
                 
                 if(dropped)
                 {
-                    if(!droptofloor(vec(f.droploc).add(vec(0, 0, 4)), 4, 0)) f.droploc = vec(-1, -1, -1);
+                    f.droploc.z += 4;
+                    if(!droptofloor(f.droploc, 4, 0)) f.droploc = vec(-1, -1, -1);
                 }
             }
         }
@@ -420,11 +421,13 @@ struct ctfclient : ctfstate
 
     void dropflag(fpsent *d, int i, const vec &droploc)
     {
+        if(!flags.inrange(i)) return;
         flag &f = flags[i];
         f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = cl.lastmillis;
         ctfstate::dropflag(i, droploc, 1);
-        if(!droptofloor(vec(f.droploc).add(vec(0, 0, 4)), 4, 0)) 
+        f.droploc.z += 4;
+        if(!droptofloor(f.droploc, 4, 0)) 
         {
             f.droploc = vec(-1, -1, -1);
             f.interptime = 0;
@@ -463,6 +466,7 @@ struct ctfclient : ctfstate
  
     void returnflag(fpsent *d, int i)
     {
+        if(!flags.inrange(i)) return;
         flag &f = flags[i];
         flageffect(i, interpflagpos(f), f.spawnloc);
         f.interptime = 0;
@@ -473,6 +477,7 @@ struct ctfclient : ctfstate
 
     void resetflag(int i)
     {
+        if(!flags.inrange(i)) return;
         flag &f = flags[i];
         flageffect(i, interpflagpos(f), f.spawnloc);
         f.interptime = 0;
@@ -483,6 +488,7 @@ struct ctfclient : ctfstate
 
     void scoreflag(fpsent *d, int relay, int goal, int score)
     {
+        if(!flags.inrange(goal) || !flags.inrange(relay)) return;
         flag &f = flags[goal];
         flageffect(goal, flags[goal].spawnloc, flags[relay].spawnloc);
         f.score = score;
@@ -499,6 +505,7 @@ struct ctfclient : ctfstate
 
     void takeflag(fpsent *d, int i)
     {
+        if(!flags.inrange(i)) return;
         flag &f = flags[i];
         f.interploc = interpflagpos(f, f.interpangle);
         f.interptime = cl.lastmillis;
