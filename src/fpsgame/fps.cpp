@@ -649,6 +649,8 @@ struct fpsclient : igameclient
             showgui("main");
             openmainmenu = false;
         }
+
+        if(identexists("mapstart")) execute("mapstart");
     }
 
     void physicstrigger(physent *d, bool local, int floorlevel, int waterlevel, int material)

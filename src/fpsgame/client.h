@@ -845,6 +845,8 @@ struct clientcom : iclientcom
                 if(on) player1->state = CS_SPECTATOR;
                 else stopdemo();
                 demoplayback = on!=0;
+                const char *alias = on ? "demostart" : "demoend";
+                if(identexists(alias)) execute(alias);
                 break;
             }
 
