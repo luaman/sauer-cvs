@@ -547,7 +547,7 @@ struct captureclient : capturestate
         loopv(cl.et.ents)
         {
             extentity *e = cl.et.ents[i];
-            if(e->type!=PLAYERSTART) continue;
+            if(e->type!=PLAYERSTART || e->attr2) continue;
             float dist = e->o.dist(b.o);
             if(dist < bestdist)
             {
