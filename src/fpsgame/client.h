@@ -1219,7 +1219,9 @@ struct clientcom : iclientcom
         if(map)
         {
             fseek(map, 0, SEEK_END);
-            if(ftell(map) > 1024*1024) conoutf(CON_ERROR, "map is too large");
+            int len = ftell(map);
+            if(len > 1024*1024) conoutf(CON_ERROR, "map is too large");
+            else if(!len) conoutf(CON_ERROR, "could not read map");
             else sendfile(-1, 2, map);
             fclose(map);
         }

@@ -2058,7 +2058,7 @@ struct fpsserver : igameserver
         if(mapdata) { fclose(mapdata); mapdata = NULL; }
         if(!len) return;
         mapdata = tmpfile();
-        if(!mapdata) return;
+        if(!mapdata) { sendf(sender, 1, "ris", SV_SERVMSG, "failed to open temporary file for map"); return; }
         fwrite(data, 1, len, mapdata);
         s_sprintfd(msg)("[%s uploaded map to server, \"/getmap\" to receive it]", colorname(ci));
         sendservmsg(msg);
