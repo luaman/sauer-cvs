@@ -509,6 +509,7 @@ template <class K, class T> struct hashtable
 
     void clear()
     {
+        if(!numelems) return;
         loopi(size) table[i] = NULL;
         numelems = 0;
         unused = NULL;
