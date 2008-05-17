@@ -2154,9 +2154,9 @@ Clears the PVS data for the map. Use this to clear away stale PVS data if you ar
 If N=1, this locks the view cell used by the PVS culling to the current view cell, even if you happen to move outside of it. Everything that was occluded/invisible from that view cell will still be so, even if you move outside of it. This is useful for seeing all the things that are being culled from a current vantage point by the PVS system. If N=0, the view cell is unlocked and PVS will function as normal again.
 </p>
 
-<pre id="testpvs">testpvs</pre>
+<pre id="testpvs">testpvs [N]</pre>
 <p>
-Generates PVS data for only the current view cell you are inside and locks the view cell to it as if "lockpvs 1" were used. This allows you to quickly test the effectiveness of occlusion in your map without generating full PVS data, so that you can more easily optimize your map for PVS before the actual expensive pre-calculation is done. Use "lockpvs 0" to release the lock on the view cell when you are done testing. Note that this will not overwrite any existing PVS data already calculated for the map. 
+Generates PVS data for only the current view cell you are inside (of size N, or default 32 if not specified) and locks the view cell to it as if "lockpvs 1" were used. This allows you to quickly test the effectiveness of occlusion in your map without generating full PVS data, so that you can more easily optimize your map for PVS before the actual expensive pre-calculation is done. Use "lockpvs 0" to release the lock on the view cell when you are done testing. Note that this will not overwrite any existing PVS data already calculated for the map. 
 </p>
 
 <pre id="pvsstats">pvsstats</pre>
