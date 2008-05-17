@@ -962,6 +962,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\obj.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\rendergl.cpp"
 					>
 					<FileConfiguration
