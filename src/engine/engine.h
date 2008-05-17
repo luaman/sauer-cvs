@@ -418,6 +418,7 @@ extern void show_out_of_renderloop_progress(float bar1, const char *text1, float
 // menu
 extern void menuprocess();
 extern void addchange(const char *desc, int type);
+extern void clearchanges(int type);
 
 // physics
 extern void mousemove(int dx, int dy);
