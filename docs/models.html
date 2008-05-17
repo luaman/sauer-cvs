@@ -87,6 +87,10 @@
 </li>
 
 <li>
+<a href="#obj_format"><b>OBJ Format</b></a>
+</li>
+
+<li>
 <a href="#md5_format"><b>MD5 Format</b></a>
 <ul class="contents2">
 <li>
@@ -521,6 +525,11 @@ mdlspec 50
 mdlscale 20         // 20 percent of the original size
 mdltrans 0 0 -1.5   // lower the model a bit
 </pre>
+
+<h2 id="obj_format">OBJ Format</h2>
+<p>
+The Wavefront OBJ format is configured almost identically to how MD3s are used in Sauerbraten. The only differences are that OBJ specific commands are prefixed with "obj" instead of "md3" (i.e. "objskin" instead of "md3skin") which are specified in "obj.cfg" instead of "md3.cfg", it looks for "tris.obj" instead of "tris.md3" by default, and there is no support for animation ("objanim") or linking ("objlink").
+</p>
 
 <h2 id="md5_format">MD5 Format</h2>
 <p>
