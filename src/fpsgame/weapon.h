@@ -195,7 +195,7 @@ struct weaponstate
             if(bnc.bouncetype==BNC_GRENADE) stopped = bounce(&bnc, 0.6f, 0.5f) || (bnc.lifetime -= time)<0;
             else
             {
-                // cheaper variable rate stuff physics for debris, gibs, etc.
+                // cheaper variable rate physics for debris, gibs, etc.
                 for(int rtime = time; rtime > 0;)
                 {
                     int qtime = min(30, rtime);
@@ -218,11 +218,12 @@ struct weaponstate
                 }
                 delete &bnc;
                 bouncers.remove(i--);
-                goto next;
             }
-            bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
-            bnc.offsetmillis = max(bnc.offsetmillis-time, 0);
-            next:;
+            else
+            {
+                bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
+                bnc.offsetmillis = max(bnc.offsetmillis-time, 0);
+            }
         }
     }
 
