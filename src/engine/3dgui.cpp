@@ -132,6 +132,7 @@ struct gui : g3d_gui
     static vector<list> lists;
     static float hitx, hity;
     static int curdepth, curlist, xsize, ysize, curx, cury;
+    static bool shouldmergehits;
 
     static void reset()
     {
@@ -149,13 +150,44 @@ struct gui : g3d_gui
         }
     }
 
+    bool shouldtab()
+    {
+        if(tcurrent)
+        {
+            if(layoutpass)
+            {
+                int space = guiautotab*FONTH - ysize;
+                if(space < 0) return true;
+                int l = lists[curlist].parent;
+                while(l >= 0)
+                {
+                    space -= lists[l].h;
+                    if(space < 0) return true;
+                    l = lists[l].parent;
+                }
+            }
+            else
+            {
+                int space = guiautotab*FONTH - cury;
+                if(ysize > space) return true;
+                int l = lists[curlist].parent;
+                while(l >= 0)
+                {
+                    if(lists[l].h > space) return true;
+                    l = lists[l].parent;
+                }
+            }
+        }
+        return false;
+    }
+
     bool visible() { return (!tcurrent || tpos==*tcurrent) && !layoutpass; }
 
     //tab is always at top of page
     void tab(const char *name, int color) 
     {
         if(curdepth != 0) return;
-        tcolor = color;
+        if(color) tcolor = color;
         tpos++; 
         if(!name) 
         {
@@ -185,7 +217,7 @@ struct gui : g3d_gui
             }
             
             skin_(x1-skinx[visible()?2:6]*SKIN_SCALE, y1-skiny[1]*SKIN_SCALE, w, h, visible()?10:19, 9);
-            text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, color, visible());
+            text_(name, x1 + (skinx[3]-skinx[2])*SKIN_SCALE - INSERT, y1 + (skiny[2]-skiny[1])*SKIN_SCALE - INSERT, tcolor, visible());
         }
         tx += w + ((skinx[5]-skinx[4]) + (skinx[3]-skinx[2]))*SKIN_SCALE; 
     }
@@ -273,8 +305,11 @@ struct gui : g3d_gui
         }
     }
 
+    void mergehits(bool on) { shouldmergehits = on; }
+
     bool ishit(int w, int h, int x = curx, int y = cury)
     {
+        if(shouldmergehits) return windowhit==this && (ishorizontal() ? hitx>=x && hitx<x+w : hity>=y && hity<y+h);
         if(ishorizontal()) h = ysize;
         else w = xsize;
         return windowhit==this && hitx>=x && hity>=y && hitx<x+w && hity<y+h;
@@ -835,7 +870,7 @@ const gui::patch gui::patches[] =
 
 vector<gui::list> gui::lists;
 float gui::basescale, gui::hitx, gui::hity;
-bool gui::passthrough;
+bool gui::passthrough, gui::shouldmergehits = false;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;

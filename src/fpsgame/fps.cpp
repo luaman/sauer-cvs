@@ -961,7 +961,94 @@ struct fpsclient : igameclient
             }
         }
     }
-   
+
+    bool serverinfostartcolumn(g3d_gui *g, int i)
+    {
+        static const char *names[] = { "ping ", "players ", "map ", "mode ", "status ", "host ", "description " };
+        if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
+        g->pushlist();
+        g->text(names[i], 0xFFFF80, !i ? "server" : NULL);
+        g->mergehits(true);
+        return true;
+    }
+
+    void serverinfoendcolumn(g3d_gui *g, int i)
+    {
+        g->mergehits(false);
+        g->poplist();
+    }
+
+    bool serverinfoentry(g3d_gui *g, int i, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
+    {
+        if(ping < 0 || attr.empty() || attr[0]!=PROTOCOL_VERSION)
+        {
+            switch(i)
+            {
+                case 0:
+                    if(g->button(" ", 0xFFFFDD, "server")&G3D_UP) return true;
+                    break;
+
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    if(g->button(" ", 0xFFFFDD)&G3D_UP) return true; 
+                    break;
+
+                case 5:
+                    if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
+                    break;
+
+                case 6:
+                    if(ping < 0)
+                    {
+                        if(g->button(sdesc, 0xFFFFDD)&G3D_UP) return true;
+                    }
+                    else if(g->buttonf("[%s protocol] ", 0xFFFFDD, NULL, attr.empty() ? "unknown" : (attr[0] < PROTOCOL_VERSION ? "older" : "newer"))&G3D_UP) return true;
+                    break;
+            }        
+            return false;
+        }
+    
+        switch(i)
+        {
+            case 0:
+                if(g->buttonf("%d ", 0xFFFFDD, "server", ping)&G3D_UP) return true;
+                break;
+
+            case 1:
+                if(attr.length()>=4)
+                {
+                    if(g->buttonf("%d/%d ", 0xFFFFDD, NULL, np, attr[3])&G3D_UP) return true;
+                }
+                else if(g->buttonf("%d ", 0xFFFFDD, NULL, np)&G3D_UP) return true;
+                break;
+
+            case 2:
+                if(g->buttonf("%s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
+                break;
+
+            case 3:
+                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? fpsserver::modestr(attr[1], "") : "")&G3D_UP) return true;
+                break;
+
+            case 4:
+                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=5 ? fpsserver::mastermodestr(attr[4], "") : "")&G3D_UP) return true;
+                break;
+            
+            case 5:
+                if(g->buttonf("%s ", 0xFFFFDD, NULL, name)&G3D_UP) return true;
+                break;
+
+            case 6:
+            {
+                if(g->buttonf("%.25s", 0xFFFFDD, NULL, sdesc)&G3D_UP) return true;
+                break;
+            }
+        }
+        return false;
+    }
+ 
     void g3d_gamemenus() { sb.show(); }
 
     // any data written into this vector will get saved with the map data. Must take care to do own versioning, and endianess if applicable. Will not get called when loading maps from other games, so provide defaults.

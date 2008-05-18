@@ -264,7 +264,6 @@ enum { UNRESOLVED = 0, RESOLVING, RESOLVED };
 struct serverinfo
 {
     string name;
-    string full;
     string map;
     string sdesc;
     int numplayers, ping, resolved;
@@ -274,7 +273,7 @@ struct serverinfo
     serverinfo()
      : numplayers(0), ping(999), resolved(UNRESOLVED)
     {
-        name[0] = full[0] = map[0] = sdesc[0] = '\0';
+        name[0] = map[0] = sdesc[0] = '\0';
     }
 };
 
@@ -435,29 +434,34 @@ void refreshservers()
     checkpings();
     if(totalmillis - lastinfo >= 5000) pingservers();
     servers.sort(sicompare);
-    loopv(servers)
-    {
-        serverinfo &si = *servers[i];
-        if(si.address.host != ENET_HOST_ANY && si.ping != 999)
-        {
-            sv->serverinfostr(si.full, si.name, si.sdesc, si.map, si.ping, si.attr, si.numplayers);
-        }
-        else
-        {
-            s_sprintf(si.full)(si.address.host != ENET_HOST_ANY ? "[waiting for response] %s" : "[unknown host] %s\t", si.name);
-        }
-        si.full[60] = 0; // cut off too long server descriptions
-    }
 }
 
 const char *showservers(g3d_gui *cgui)
 {
     refreshservers();
     const char *name = NULL;
-    loopv(servers)
+    for(int start = 0; start < servers.length();)
     {
-        serverinfo &si = *servers[i];
-        if(cgui->button(si.full, 0xFFFFDD, "server")&G3D_UP) name = si.name;
+        if(start > 0) cgui->tab();
+        int end = servers.length();
+        cgui->pushlist();
+        loopi(10)
+        {
+            if(!cl->serverinfostartcolumn(cgui, i)) break;
+            for(int j = start; j < end; j++)
+            {
+                if(!i && cgui->shouldtab()) { end = j; break; }
+                serverinfo &si = *servers[j];
+                const char *sdesc = si.sdesc;
+                if(si.address.host == ENET_HOST_ANY) sdesc = "[unknown host]";
+                else if(si.ping == 999) sdesc = "[waiting for response]";
+                if(cl->serverinfoentry(cgui, i, si.name, sdesc, si.map, sdesc == si.sdesc ? si.ping : -1, si.attr, si.numplayers))
+                    name = si.name;
+            }
+            cl->serverinfoendcolumn(cgui, i);
+        }
+        cgui->poplist();
+        start = end;
     }
     return name;
 }

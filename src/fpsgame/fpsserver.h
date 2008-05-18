@@ -376,7 +376,7 @@ struct fpsserver : igameserver
     vector<server_entity> sents;
     vector<savedscore> scores;
 
-    static const char *modestr(int n)
+    static const char *modestr(int n, const char *unknown = "unknown")
     {
         static const char *modenames[] =
         {
@@ -386,7 +386,16 @@ struct fpsserver : igameserver
             "capture", "insta capture", "regen capture", "assassin", "insta assassin",
             "ctf", "insta ctf"
         };
-        return (n>=-5 && size_t(n+5)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+5] : "unknown";
+        return (n>=-5 && size_t(n+5)<sizeof(modenames)/sizeof(modenames[0])) ? modenames[n+5] : unknown;
+    }
+
+    static const char *mastermodestr(int n, const char *unknown = "unknown")
+    {
+        static const char *mastermodenames[] =
+        {
+            "open", "veto", "locked", "private"
+        };
+        return (n>=0 && size_t(n)<sizeof(mastermodenames)/sizeof(mastermodenames[0])) ? mastermodenames[n] : unknown;
     }
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", SV_SERVMSG, s); }
@@ -2029,25 +2038,6 @@ struct fpsserver : igameserver
     bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np)
     {
         return attr.length() && attr[0]==PROTOCOL_VERSION;
-    }
-
-    void serverinfostr(char *buf, const char *name, const char *sdesc, const char *map, int ping, const vector<int> &attr, int np)
-    {
-        if(attr.empty()) s_strcpy(buf, "[unknown protocol]");
-        else if(attr[0]!=PROTOCOL_VERSION) s_sprintf(buf)("[%s protocol] %s", attr[0]<PROTOCOL_VERSION ? "older" : "newer", name);
-        else 
-        {
-            string numcl;
-            if(attr.length()>=4) s_sprintf(numcl)("%d/%d", np, attr[3]);
-            else s_sprintf(numcl)("%d", np);
-            if(attr.length()>=5) switch(attr[4])
-            {
-                case MM_LOCKED: s_strcat(numcl, " L"); break;
-                case MM_PRIVATE: s_strcat(numcl, " P"); break;
-            }
-            
-            s_sprintf(buf)("%d\t%s\t%s, %s: %s %s", ping, numcl, map[0] ? map : "[unknown]", attr.length()>=2 ? modestr(attr[1]) : "unknown", name, sdesc);
-        }
     }
 
     void receivefile(int sender, uchar *data, int len)
