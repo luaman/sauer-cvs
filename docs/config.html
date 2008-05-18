@@ -142,6 +142,9 @@
 <a href="#jump"><tt>jump</tt></a>
 </li>
 <li>
+<a href="#zoom"><tt>zoom</tt></a>
+</li>
+<li>
 <a href="#taunt"><tt>taunt</tt></a>
 </li>
 <li>
@@ -161,6 +164,21 @@
 </li>
 <li>
 <a href="#fov"><tt>fov</tt></a>
+</li>
+<li>
+<a href="#zoomfov"><tt>zoomfov</tt></a>
+</li>
+<li>
+<a href="#zoominvel"><tt>zoominvel</tt></a>
+</li>
+<li>
+<a href="#zoomoutvel"><tt>zoomoutvel</tt></a>
+</li>
+<li>
+<a href="#zoomsens"><tt>zoomsens</tt></a>
+</li>
+<li>
+<a href="#zoomautosens"><tt>zoomautosens</tt></a>
 </li>
 <li>
 <a href="#hudgun"><tt>hudgun</tt></a>
@@ -206,6 +224,12 @@
 </li>
 <li>
 <a href="#waterfade"><tt>waterfade</tt></a>
+</li>
+<li>
+<a href="#waterfallrefract"><tt>waterfallrefract</tt></a>
+</li>
+<li>
+<a href="#waterfallenv"><tt>waterfallenv</tt></a>
 </li>
 <li>
 <a href="#reflectdist"><tt>reflectdist</tt></a>
@@ -642,6 +666,11 @@ Fires the current weapon (default key: left mouse).
 Triggers a jump (default key: space, right mouse).
 </p>
 
+<pre id="zoom">zoom N</pre>
+<p>
+Zooms in if N is -1, zooms out if N is 1, and turns off zoom if N is 0.
+</p>
+
 <pre id="taunt">taunt</pre>
 <p>
 Plays your player model's taunt animation.
@@ -659,7 +688,7 @@ Toggles mouse between regular and inverted (flight sim) mode (default: 0 (uninve
 
 <pre id="sensitivity">sensitivity S</pre>
 <p>
-Sets mouse sensitivity (default: 7). The feel of which should be a similar number to Quake.
+Sets mouse sensitivity (default: 3). The feel of which should be a similar number to Quake.
 </p>
 
 <pre id="sensitivityscale">sensitivityscale S</pre>
@@ -678,6 +707,31 @@ Be aware that maxfps is not a replacement for vsync (default: 200).
 <pre id="fov">fov N</pre>
 <p>
 Sets your FOV to 10..150.
+</p>
+
+<pre id="zoomfov">zoomfov N</pre>
+<p>
+Sets your zoomed-in FOV to N.
+</p>
+
+<pre id="zoominvel">zoominvel N</pre>
+<p>
+Sets the number of milliseconds over which zoom-in happens. Zoom-in is instant if N is 0. (default: 250)
+</p>
+
+<pre id="zoomoutvel">zoomoutvel N</pre>
+<p>
+Sets the number of milliseconds over which zoom-out happens. Zoom-out is instant if N is 0. (default: 100)
+</p>
+
+<pre id="zoomsens">zoomsens S</pre>
+<p>
+Sets mouse sensitivity when zoomed-in (default: 1).
+</p>
+
+<pre id="zoomautosens">zoomautosens B</pre>
+<p>
+Toggles whether mouse sensitivity should be automatically scaled to match the zoomed-in FOV relative to FOV. This overrides "zoomsens" if enabled. (default: 1)
 </p>
 
 <pre id="hudgun">hudgun N</pre>
@@ -763,6 +817,16 @@ Enables or disables water refractions. (default: 1).
 <pre id="waterfade">waterfade B</pre>
 <p>
 Enables or disables soft fading of water edges. This option only works if "waterrefract" is enabled. (default: 1).
+</p>
+
+<pre id="waterfallrefract">waterfallrefract B</pre>
+<p>
+Enables or disables refractive waterfalls. (default: 0).
+</p>
+
+<pre id="waterfallenv">waterfallenv B</pre>
+<p>
+Enables or disables environment-mapped waterfall reflections. (default: 1).
 </p>
 
 <pre id="reflectdist">reflectdist N</pre>
