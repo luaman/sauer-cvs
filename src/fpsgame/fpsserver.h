@@ -1373,7 +1373,7 @@ struct fpsserver : igameserver
                         {
                             loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
                         }
-                        s_sprintfd(s)("mastermode is now %d", mastermode);
+                        s_sprintfd(s)("mastermode is now %s (%d)", mastermodestr(mastermode), mastermode);
                         sendservmsg(s);
                     }
                     else
