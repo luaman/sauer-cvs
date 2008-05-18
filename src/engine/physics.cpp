@@ -760,8 +760,6 @@ bool collide(physent *d, const vec &dir, float cutoff, bool playercol)
     return !playercol || plcollide(d, dir);
 }
 
-VARP(minframetime, 5, 10, 20);
-
 void recalcdir(physent *d, const vec &oldvel, vec &dir)
 {
     float speed = oldvel.magnitude();
@@ -1331,25 +1329,29 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
 int physicsfraction = 0, physicsrepeat = 0;
 
+#define PHYSFRAMETIME 5
+
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
-    if(curtime>=minframetime)
-    {
-        int faketime = curtime+physicsfraction;
-        physicsrepeat = faketime/minframetime;
-        physicsfraction = faketime%minframetime;
-    }
-    else
-    {
-        physicsrepeat = curtime>0 ? 1 : 0;
-    }
+    int faketime = curtime+physicsfraction;
+    physicsrepeat = faketime/PHYSFRAMETIME;
+    physicsfraction = faketime%PHYSFRAMETIME;
     cleardynentcache();
 }
 
 void moveplayer(physent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, min(curtime, minframetime));
+    loopi(physicsrepeat) moveplayer(pl, moveres, local, PHYSFRAMETIME);
     if(pl->o.z<0 && pl->state==CS_ALIVE) cl->suicide(pl);
+}
+
+bool bounce(physent *d, float elasticity, float waterfric)
+{
+    loopi(physicsrepeat)
+    {
+        if(bounce(d, PHYSFRAMETIME/1000.0f, elasticity, waterfric)) return true;
+    }
+    return false;
 }
 
 void updatephysstate(physent *d)

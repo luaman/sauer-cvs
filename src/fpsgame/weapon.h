@@ -191,28 +191,34 @@ struct weaponstate
                 regular_particle_splash(5, 1, 150, pos);
             }
             vec old(bnc.o);
-            int rtime = time;
-            while(rtime > 0)
+            bool stopped = false;
+            if(bnc.bouncetype==BNC_GRENADE) stopped = bounce(&bnc, 0.6f, 0.5f) || (bnc.lifetime -= time)<0;
+            else
             {
-                int qtime = min(bnc.bouncetype==BNC_GRENADE ? 5 : 30, rtime);
-                rtime -= qtime;
-                if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f))
+                // cheaper variable rate stuff physics for debris, gibs, etc.
+                for(int rtime = time; rtime > 0;)
                 {
-                    if(bnc.bouncetype==BNC_GRENADE)
-                    {
-                        int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
-                        if(bnc.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
-                        hits.setsizenodelete(0);
-                        explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
-                        adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), RL_DAMRAD/2);
-                        if(bnc.local)
-                            cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, GUN_GL, bnc.id-cl.maptime,
-                                    hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
-                    }
-                    delete &bnc;
-                    bouncers.remove(i--);
-                    goto next;
+                    int qtime = min(30, rtime);
+                    rtime -= qtime;
+                    if((bnc.lifetime -= qtime)<0 || bounce(&bnc, qtime/1000.0f, 0.6f, 0.5f)) { stopped = true; break; }
                 }
+            }
+            if(stopped)
+            {
+                if(bnc.bouncetype==BNC_GRENADE)
+                {
+                    int qdam = guns[GUN_GL].damage*(bnc.owner->quadmillis ? 4 : 1);
+                    if(bnc.owner->type==ENT_AI) qdam /= MONSTERDAMAGEFACTOR;
+                    hits.setsizenodelete(0);
+                    explode(bnc.local, bnc.owner, bnc.o, NULL, qdam, GUN_GL);                    
+                    adddecal(DECAL_SCORCH, bnc.o, vec(0, 0, 1), RL_DAMRAD/2);
+                    if(bnc.local)
+                        cl.cc.addmsg(SV_EXPLODE, "ri3iv", cl.lastmillis-cl.maptime, GUN_GL, bnc.id-cl.maptime,
+                                hits.length(), hits.length()*sizeof(hitmsg)/sizeof(int), hits.getbuf());
+                }
+                delete &bnc;
+                bouncers.remove(i--);
+                goto next;
             }
             bnc.roll += old.sub(bnc.o).magnitude()/(4*RAD);
             bnc.offsetmillis = max(bnc.offsetmillis-time, 0);
