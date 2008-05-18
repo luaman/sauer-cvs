@@ -446,7 +446,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
 void loadalphamask(Texture *t)
 {
     if(t->alphamask || t->bpp!=32) return;
-    SDL_Surface *s = IMG_Load(findfile(t->name, "rb"));
+    SDL_Surface *s = texturedata(t->name, NULL, false);
     if(!s || !s->format->Amask) { if(s) SDL_FreeSurface(s); return; }
     uint alpha = s->format->Amask;
     t->alphamask = new uchar[s->h * ((s->w+7)/8)];
