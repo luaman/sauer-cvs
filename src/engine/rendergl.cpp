@@ -1248,7 +1248,7 @@ void drawdamagecompass()
 }
 
 VARNP(damageblend, usedamageblend, 0, 1, 1);
-VARP(damageblendfactor, 0, 300, 1000);
+VARP(damageblendfactor, 1, 300, 1000);
 
 int dblend = 0;
 void damageblend(int n) { if(usedamageblend) dblend += n; }
