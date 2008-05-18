@@ -964,7 +964,7 @@ struct fpsclient : igameclient
 
     bool serverinfostartcolumn(g3d_gui *g, int i)
     {
-        static const char *names[] = { "ping ", "players ", "map ", "mode ", "status ", "host ", "description " };
+        static const char *names[] = { "ping ", "players ", "map ", "mode ", "master ", "host ", "description " };
         if(size_t(i) >= sizeof(names)/sizeof(names[0])) return false;
         g->pushlist();
         g->text(names[i], 0xFFFF80, !i ? "server" : NULL);
