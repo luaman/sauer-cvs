@@ -1025,7 +1025,7 @@ struct fpsclient : igameclient
                 break;
 
             case 2:
-                if(g->buttonf("%s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
+                if(g->buttonf("%.25s ", 0xFFFFDD, NULL, map)&G3D_UP) return true;
                 break;
 
             case 3:
