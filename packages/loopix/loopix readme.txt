@@ -10,3 +10,17 @@ Loopix
 More stuff on:
 
 http://www.loopix-project.com
+
+
+------------------------------------------------------------
+------------------------------------------------------------
+
+Normal maps were made using the nVidia plugin for Photoshop. Specular maps were "made by hand" using brightness / contrast filters. 
+
+A texture config template (mpsp9_template.cfg) is included to make it easy to use the textures in your own map.
+
+Enjoy!
+
+MitaMAN (Mike Poeschl)
+mitaman1@optonline.net
+03-30-08
