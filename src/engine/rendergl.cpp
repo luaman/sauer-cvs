@@ -1243,7 +1243,7 @@ void drawdamagecompass()
 VARNP(damageblend, usedamageblend, 0, 1, 1);
 VARP(damageblendfactor, 1, 300, 1000);
 
-int dblend = 0;
+float dblend = 0;
 void damageblend(int n) { if(usedamageblend) dblend += n; }
 
 VARP(hidestats, 0, 0, 1);
@@ -1381,7 +1381,7 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
         if(dblend) 
         {
             glColor3f(1.0f, 0.1f, 0.1f);
-            dblend -= curtime*100/damageblendfactor;
+            dblend -= curtime*(100.0f/damageblendfactor);
             if(dblend<0) dblend = 0;
         }
         else
