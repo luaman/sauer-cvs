@@ -50,3 +50,16 @@ Credits
 - Ubisoft Pictures for giving me the opportunity to provide even more free stuff to the web =P
 - the whole Renegade Gods team who trusted me on the Eden Eclipse mod for which the majority of these texs have been made
 - Hazel H. for the ReadMe template ;]
+
+------------------------------------------------------------
+------------------------------------------------------------
+
+Normal maps were made using the nVidia plugin for Photoshop. Specular maps were "made by hand" using brightness / contrast filters. 
+
+A texture config template (mpsp9_template.cfg) is included to make it easy to use the textures in your own map.
+
+Enjoy!
+
+MitaMAN (Mike Poeschl)
+mitaman1@optonline.net
+03-30-08
