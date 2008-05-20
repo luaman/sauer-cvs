@@ -1327,21 +1327,24 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     return true;
 }
 
-int physicsfraction = 0, physicsrepeat = 0;
-
 #define PHYSFRAMETIME 5
+
+int physicsfraction = 0, physicsrepeat = 0, physframetime = PHYSFRAMETIME;
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
+    extern int gamespeed;
+    physframetime = clamp((PHYSFRAMETIME*gamespeed)/100, 1, PHYSFRAMETIME);
+
     int faketime = curtime+physicsfraction;
-    physicsrepeat = faketime/PHYSFRAMETIME;
-    physicsfraction = faketime%PHYSFRAMETIME;
+    physicsrepeat = faketime/physframetime;
+    physicsfraction = faketime%physframetime;
     cleardynentcache();
 }
 
 void moveplayer(physent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, PHYSFRAMETIME);
+    loopi(physicsrepeat) moveplayer(pl, moveres, local, physframetime);
     if(pl->o.z<0 && pl->state==CS_ALIVE) cl->suicide(pl);
 }
 
@@ -1349,7 +1352,7 @@ bool bounce(physent *d, float elasticity, float waterfric)
 {
     loopi(physicsrepeat)
     {
-        if(bounce(d, PHYSFRAMETIME/1000.0f, elasticity, waterfric)) return true;
+        if(bounce(d, physframetime/1000.0f, elasticity, waterfric)) return true;
     }
     return false;
 }
