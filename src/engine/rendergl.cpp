@@ -432,7 +432,6 @@ void gl_checkextensions()
     hwtexsize = val;
 }
 
-extern float polygonoffsetfactor, polygonoffsetunits;
 FVARF(polygonoffsetfactor, -3.0f, glPolygonOffset(polygonoffsetfactor, polygonoffsetunits));
 FVARF(polygonoffsetunits, -3.0f, glPolygonOffset(polygonoffsetfactor, polygonoffsetunits));
 

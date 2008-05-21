@@ -171,6 +171,7 @@ extern bool hasVBO, hasDRE, hasOQ, hasTR, hasFBO, hasDS, hasTF, hasBE, hasCM, ha
 
 extern bool envmapping, renderedgame;
 extern GLfloat mvmatrix[16], projmatrix[16], mvpmatrix[16], invmvmatrix[16];
+extern float polygonoffsetfactor, polygonoffsetunits;
 
 extern void gl_checkextensions();
 extern void gl_init(int w, int h, int bpp, int depth, int fsaa);
