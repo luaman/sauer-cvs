@@ -1145,11 +1145,23 @@ void gl_drawframe(int w, int h)
 
     if(limitsky()) drawskybox(farplane, true);
 
+    extern int outline;
+    if(!wireframe && editmode && outline) 
+    {
+        glPolygonOffset(-polygonoffsetfactor, -polygonoffsetunits);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+    }
+
     rendergeom(causticspass);
 
-    queryreflections();
+    if(!wireframe && editmode && outline) 
+    {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(polygonoffsetfactor, polygonoffsetunits);
+        renderoutline();
+    }
 
-    if(!wireframe) renderoutline();
+    queryreflections();
 
     if(!limitsky()) drawskybox(farplane, false);
 

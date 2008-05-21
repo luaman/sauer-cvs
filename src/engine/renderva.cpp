@@ -561,8 +561,6 @@ VAR(dtoutline, 0, 1, 1);
 
 void renderoutline()
 {
-    if(!editmode || !outline) return;
-
     notextureshader->set();
 
     glDisable(GL_TEXTURE_2D);
@@ -570,15 +568,7 @@ void renderoutline()
 
     glPushMatrix();
 
-    extern int filltjoints;
-    if(filltjoints) 
-    {
-        glPolygonOffset(0, polygonoffsetunits);
-        glLineWidth(3);
-    }
-
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glEnable(GL_POLYGON_OFFSET_LINE);
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
     if(!dtoutline) glDisable(GL_DEPTH_TEST);
@@ -608,14 +598,7 @@ void renderoutline()
 
     if(!dtoutline) glEnable(GL_DEPTH_TEST);
 
-    glDisable(GL_POLYGON_OFFSET_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    if(filltjoints) 
-    {
-        glPolygonOffset(polygonoffsetfactor, polygonoffsetunits);
-        glLineWidth(1);
-    }
 
     glPopMatrix();
 
