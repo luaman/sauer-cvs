@@ -557,7 +557,7 @@ bool bboccluded(const ivec &bo, const ivec &br)
 }
 
 VAR(outline, 0, 0, 0xFFFFFF);
-VAR(dtoutline, 0, 0, 1);
+VAR(dtoutline, 0, 1, 1);
 
 void renderoutline()
 {
@@ -581,7 +581,7 @@ void renderoutline()
     glEnable(GL_POLYGON_OFFSET_LINE);
     glColor3ub((outline>>16)&0xFF, (outline>>8)&0xFF, outline&0xFF);
 
-    if(dtoutline) glDisable(GL_DEPTH_TEST);
+    if(!dtoutline) glDisable(GL_DEPTH_TEST);
 
     resetorigin();    
     vtxarray *prev = NULL;
@@ -606,7 +606,7 @@ void renderoutline()
         prev = va;
     }
 
-    if(dtoutline) glEnable(GL_DEPTH_TEST);
+    if(!dtoutline) glEnable(GL_DEPTH_TEST);
 
     glDisable(GL_POLYGON_OFFSET_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
