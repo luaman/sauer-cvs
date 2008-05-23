@@ -587,6 +587,7 @@ int *selgridmap(selinfo &sel)                           // generates a map of th
 vector<undoblock> undos;                                // unlimited undo
 vector<undoblock> redos;
 VARP(undomegs, 0, 5, 100);                              // bounded by n megs
+int totalundos = 0;
 
 void freeundo(undoblock u)
 {
@@ -606,23 +607,33 @@ void pasteundo(undoblock &u)
     pasteundoents(u);
 }
 
+static inline int undosize(undoblock &u)
+{
+    int t = u.n*sizeof(undoent);
+    if(u.b)
+    {
+        cube *q = u.b->c();
+        t += u.b->size()*sizeof(int);
+        loopj(u.b->size())
+            t += familysize(*q++)*sizeof(cube);
+    }
+    return t;
+}
+
 void pruneundos(int maxremain)                          // bound memory
 {
-    int t = 0, p = 0;
-    loopvrev(undos)
+    int removed = 0;
+    loopv(undos)
     {
+        if(totalundos <= maxremain) break;
+
         undoblock &u = undos[i];
-        if(u.b)
-        {
-            cube *q = u.b->c();
-            t += u.b->size()*sizeof(int);
-            loopj(u.b->size())
-                t += familysize(*q++)*sizeof(cube);
-        }
-        t += u.n*sizeof(undoent);
-        if(t>maxremain) freeundo(undos.remove(i)); else p = t;
+        totalundos -= undosize(u);
+        freeundo(u);
+        removed = i;
     }
-    //conoutf(CON_DEBUG, "undo: %d of %d(%%%d)", p, undomegs<<20, p*100/(undomegs<<20));
+    if(removed > 0) undos.remove(0, removed);
+    //conoutf(CON_DEBUG, "undo: %d of %d(%%%d)", totalundos, undomegs<<20, totalundos*100/(undomegs<<20));
     while(!redos.empty()) { freeundo(redos.pop()); }
 }
 
@@ -635,6 +646,7 @@ void initundocube(undoblock &u, selinfo &s)
 void addundo(undoblock &u)
 {
     undos.add(u);
+    totalundos += undosize(u);
     pruneundos(undomegs<<20);
 }
 
