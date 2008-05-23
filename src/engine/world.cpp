@@ -245,19 +245,20 @@ void entadd(int id)
     entgroup.add(id);
 }
 
-void initundoent(undoblock &u)
+undoblock *newundoent()
 {
-    u.n = 0; u.e = NULL;
-    u.n = entgroup.length();
-    if(u.n<=0) return;
-    u.e = new undoent[u.n];
+    int numents = entgroup.length();
+    if(numents <= 0) return NULL;
+    undoblock *u = (undoblock *)new uchar[sizeof(undoblock) + numents*sizeof(undoent)];
+    u->numents = numents;
+    undoent *e = (undoent *)(u + 1);
     loopv(entgroup)
     {
-        u.e->i = entgroup[i];
-        u.e->e = *et->getents()[entgroup[i]];
-        u.e++;
+        e->i = entgroup[i];
+        e->e = *et->getents()[entgroup[i]];
+        e++;
     }
-    u.e -= u.n;    
+    return u;
 }
 
 void makeundoent()
@@ -265,9 +266,8 @@ void makeundoent()
     if(!undonext) return;
     undonext = false;
     oldhover = enthover;
-    undoblock u;
-    initundoent(u);
-    if(u.n) addundo(u);
+    undoblock *u = newundoent();
+    if(u) addundo(u);
 }
 
 void detachentity(extentity &e)
@@ -350,20 +350,23 @@ void attachentities()
 #define groupeditundo(f){ makeundoent(); groupeditpure(f); }
 #define groupedit(f)    { addimplicit(groupeditundo(f)); }
 
-void copyundoents(undoblock &d, undoblock &s)
+undoblock *copyundoents(undoblock *u)
 {
     entcancel();
-    loopi(s.n)
-        entadd(s.e[i].i);
-    initundoent(d);
-   	loopi(s.n) if(s.e[i].e.type==ET_EMPTY)
-		entgroup.removeobj(s.e[i].i);
+    undoent *e = u->ents();
+    loopi(u->numents)
+        entadd(e[i].i);
+    undoblock *c = newundoent();
+   	loopi(u->numents) if(e[i].e.type==ET_EMPTY)
+		entgroup.removeobj(e[i].i);
+    return c;
 }
 
-void pasteundoents(undoblock &u)
+void pasteundoents(undoblock *u)
 {
-    loopi(u.n)
-        entedit(u.e[i].i, (entity &)e = u.e[i].e);
+    undoent *ue = u->ents();
+    loopi(u->numents)
+        entedit(ue[i].i, (entity &)e = ue[i].e);
 }
 
 void entflip()
