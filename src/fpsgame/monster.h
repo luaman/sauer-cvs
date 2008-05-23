@@ -9,6 +9,8 @@ struct monsterset
     static const int TOTMFREQ = 14;
     static const int NUMMONSTERTYPES = 9;
 
+    IVAR(killsendsp, 0, 1, 1);
+
     struct monstertype      // see docs for how these values modify behaviour
     {
         short gun, speed, health, freq, lag, rate, pain, loyalty, bscale, weight; 
@@ -339,7 +341,7 @@ struct monsterset
             spawnmonster();
         }
         
-        if(monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
+        if(killsendsp() && monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
         
         bool monsterwashurt = monsterhurt;
         
