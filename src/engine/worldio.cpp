@@ -229,7 +229,7 @@ void loadc(gzFile f, cube &c)
                             endianswap(m, sizeof(ushort), 4);
                             if(hdr.version <= 25)
                             {
-                                int uorigin = m->u1 & 0xF000, vorigin = m->v1 & 0xF000;
+                                int uorigin = m->u1 & 0xE000, vorigin = m->v1 & 0xE000;
                                 m->u1 = (m->u1 - uorigin) << 2;
                                 m->u2 = (m->u2 - uorigin) << 2;
                                 m->v1 = (m->v1 - vorigin) << 2;
@@ -571,13 +571,12 @@ void writeobj(char *name)
         uchar *vert = vdata;
         loopj(va.verts) 
         {
-            vvec vv;
-            if(floatvtx) { vec &f = *(vec *)vert; loopk(3) vv[k] = short(f[k]); }
-            else vv = *(vvec *)vert;
-            vec v = vv.tovec(va.o);
-            if(vv.x&((1<<VVEC_FRAC)-1)) fprintf(f, "v %.3f ", v.x); else fprintf(f, "v %d ", int(v.x));
-            if(vv.y&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f ", v.y); else fprintf(f, "%d ", int(v.y));
-            if(vv.z&((1<<VVEC_FRAC)-1)) fprintf(f, "%.3f\n", v.z); else fprintf(f, "%d\n", int(v.z));
+            vec v;
+            if(floatvtx) (v = *(vec *)vert).div(1<<VVEC_FRAC); 
+            else v = ((vvec *)vert)->tovec(va.o).add(0x8000>>VVEC_FRAC);
+            if(v.x != floor(v.x)) fprintf(f, "v %.3f ", v.x); else fprintf(f, "v %d ", int(v.x));
+            if(v.y != floor(v.y)) fprintf(f, "%.3f ", v.y); else fprintf(f, "%d ", int(v.y));
+            if(v.z != floor(v.z)) fprintf(f, "%.3f\n", v.z); else fprintf(f, "%d\n", int(v.z));
             vert += vtxsize;
         }
         ushort *tri = edata;
