@@ -80,7 +80,7 @@ struct gui : g3d_gui
     static vector<list> lists;
     static float hitx, hity;
     static int curdepth, curlist, xsize, ysize, curx, cury;
-    static bool shouldmergehits;
+    static bool shouldmergehits, shouldautotab;
 
     static void reset()
     {
@@ -89,18 +89,23 @@ struct gui : g3d_gui
 
     static int ty, tx, tpos, *tcurrent, tcolor; //tracking tab size and position since uses different layout method...
 
+    void allowautotab(bool on)
+    {
+        shouldautotab = on;
+    }
+
     void autotab() 
     { 
         if(tcurrent)
         {
             if(layoutpass && !tpos) tcurrent = NULL; //disable tabs because you didn't start with one
-            if(!curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab*FONTH) tab(NULL, tcolor); 
+            if(shouldautotab && !curdepth && (layoutpass ? 0 : cury) + ysize > guiautotab*FONTH) tab(NULL, tcolor); 
         }
     }
 
     bool shouldtab()
     {
-        if(tcurrent)
+        if(tcurrent && shouldautotab)
         {
             if(layoutpass)
             {
@@ -344,18 +349,20 @@ struct gui : g3d_gui
         if(visible() && !layoutpass)
         {
             bool hit = ishit(w, h);
-            if(hit) {
+            if(hit) 
+            {
                 if(mousebuttons&G3D_DOWN) //mouse request focus
                 {   
                     useeditor(name, false, true); 
                     e->mark(false);
                     fieldmode = FIELDEDIT;
-                } else if(mousebuttons&G3D_PRESSED) e->hit(int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), mousebuttons&G3D_DRAGGED); //mouse request position
+                } 
+                else if(mousebuttons&G3D_PRESSED) e->hit(int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), mousebuttons&G3D_DRAGGED); //mouse request position
             }
             bool editing = (fieldmode != FIELDSHOW) && (e==currentfocus());
             if(editing && ((fieldmode==FIELDCOMMIT) || (fieldmode==FIELDABORT) || !hit)) // commit field if user pressed enter or wandered out of focus 
             {
-                if(fieldmode==FIELDCOMMIT) result = e->currentline().text;
+                if(fieldmode==FIELDCOMMIT || (fieldmode!=FIELDABORT && !hit)) result = e->currentline().text;
                 e->active = (e->mode!=EDITORFOCUSED);
                 fieldmode = FIELDSHOW;
             } 
@@ -809,7 +816,7 @@ const gui::patch gui::patches[] =
 
 vector<gui::list> gui::lists;
 float gui::basescale, gui::hitx, gui::hity;
-bool gui::passthrough, gui::shouldmergehits = false;
+bool gui::passthrough, gui::shouldmergehits = false, gui::shouldautotab = true;
 vec gui::light;
 int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
