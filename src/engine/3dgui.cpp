@@ -357,7 +357,7 @@ struct gui : g3d_gui
                     e->mark(false);
                     fieldmode = FIELDEDIT;
                 } 
-                else if(mousebuttons&G3D_PRESSED) e->hit(int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), mousebuttons&G3D_DRAGGED); //mouse request position
+                else if(mousebuttons&G3D_PRESSED) e->hit(int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), (mousebuttons&G3D_DRAGGED)!=0); //mouse request position
             }
             bool editing = (fieldmode != FIELDSHOW) && (e==currentfocus());
             if(editing && ((fieldmode==FIELDCOMMIT) || (fieldmode==FIELDABORT) || !hit)) // commit field if user pressed enter or wandered out of focus 

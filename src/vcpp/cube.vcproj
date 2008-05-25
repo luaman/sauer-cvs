@@ -1143,6 +1143,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\textedit.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\texture.cpp"
 					>
 					<FileConfiguration
