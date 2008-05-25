@@ -119,6 +119,14 @@ void guistayopen(char *contents)
     shouldclearmenu = oldclearmenu;
 }
 
+void guinoautotab(char *contents)
+{
+    if(!cgui) return;
+    cgui->allowautotab(false);
+    execute(contents);
+    cgui->allowautotab(true);
+}
+
 //@DOC name and icon are optional
 void guibutton(char *name, char *action, char *icon)
 {
@@ -348,6 +356,7 @@ COMMAND(guiservers, "s");
 COMMANDN(cleargui, cleargui_, "i");
 COMMAND(showgui, "s");
 COMMAND(guistayopen, "s");
+COMMAND(guinoautotab, "s");
 
 COMMAND(guilist, "s");
 COMMAND(guititle, "s");

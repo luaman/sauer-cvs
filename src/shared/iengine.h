@@ -289,6 +289,7 @@ struct g3d_gui
     virtual void pushlist() {}
     virtual void poplist() {}
 
+    virtual void allowautotab(bool on) = 0;
     virtual bool shouldtab() { return false; }
 	virtual void tab(const char *name = NULL, int color = 0) = 0;
     virtual int title(const char *text, int color, const char *icon = NULL) = 0;
