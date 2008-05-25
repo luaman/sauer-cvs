@@ -392,7 +392,7 @@ struct editor
         }
     }
 
-    void draw(float x, float y, int color, bool hit)
+    void draw(int x, int y, int color, bool hit)
     {
         int maxwidth = linewrap?pixelwidth:-1;
         
