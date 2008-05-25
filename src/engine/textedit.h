@@ -47,7 +47,7 @@ struct editor
     vector <char*>lines; // MUST always contain at least one line!
         
     editor(const char *name, bool keep, const char *initval) : 
-        active(true), mode(keep?EDITORFOREVER:EDITORFOCUSED), name(newstring(name)), filename(NULL),
+        mode(keep?EDITORFOREVER:EDITORFOCUSED), active(true), name(newstring(name)), filename(NULL),
         cx(0), cy(0), mx(-1), maxx(sizeof(string)-1), maxy(-1), scrolly(0), linewrap(false), pixelwidth(-1), pixelheight(-1)
     {
         //printf("editor %08x '%s'\n", this, name);
@@ -150,7 +150,7 @@ struct editor
         assert(n != 0);
         if(cy < 0) cy = 0; else if(cy >= n) cy = n-1;
         char *str = lines[cy];
-        if(cx < 0) cx = 0; else if(cx > strlen(str)) cx = strlen(str);
+        if(cx < 0) cx = 0; else if(cx > (int)strlen(str)) cx = (int)strlen(str);
         return str;
     }
 
@@ -209,13 +209,13 @@ struct editor
         if(!region(sx, sy, ex, ey)) return;
         if(sy == ey) 
         {
-            if(sx == 0 || ex == strlen(lines[ey])) lines.remove(sy); 
-            else memmove(lines[sy]+sx, lines[ey]+ex, strlen(lines[ey])+1-ex);
+            if(sx == 0 || ex == (int)strlen(lines[ey])) lines.remove(sy); 
+            else memmove(lines[sy]+sx, lines[ey]+ex, (int)strlen(lines[ey])+1-ex);
         }
         else
         {
             if(ey > sy+2) { lines.remove(sy+1, ey-(sy+2)); ey = sy+1; }
-            if(ex == strlen(lines[ey])) lines.remove(ey); else memmove(lines[ey], lines[ey]+ex, strlen(lines[ey])+1-ex);
+            if(ex == (int)strlen(lines[ey])) lines.remove(ey); else memmove(lines[ey], lines[ey]+ex, (int)strlen(lines[ey])+1-ex);
             if(sx == 0) lines.remove(sy); else lines[sy][sx] = '\0';
         }
         if(lines.length() == 0) lines.add(newstringbuf(""));
