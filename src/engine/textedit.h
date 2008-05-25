@@ -581,13 +581,13 @@ TEXTCOMMAND(textmode, "i", (int *m), // (1= keep while focused, 2= keep while us
     } 
 );
 TEXTCOMMAND(textsave, "s", (char *file),  // saves the topmost (filename is optional)
-    if(*file) top->setfile(file); 
+    if(*file) top->setfile(path(file, true)); 
     top->save();
 );  
 TEXTCOMMAND(textload, "s", (char *file), // loads into the topmost editor, returns filename if no args
     if(*file)
     {
-        top->setfile(file);
+        top->setfile(path(file, true));
         top->load();
     }
     else if(top->filename) result(top->filename);
