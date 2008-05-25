@@ -222,6 +222,8 @@ const char *mapmodelname(int i) { return mapmodels.inrange(i) ? mapmodels[i].nam
 COMMAND(mmodel, "s");
 COMMANDN(mapmodel, mapmodelcompat, "iiiss");
 COMMAND(mapmodelreset, "");
+ICOMMAND(mapmodelname, "i", (int *index), { result(mapmodels.inrange(*index) ? mapmodels[*index].name : ""); });
+ICOMMAND(nummapmodels, "", (), { intret(mapmodels.length()); });
 
 // model registry
 
