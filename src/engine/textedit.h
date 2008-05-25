@@ -319,6 +319,12 @@ struct editor
                 }
                 cy++;
                 break;
+            case SDLK_PAGEUP:
+                cy-=pixelheight/FONTH;
+                break;
+            case SDLK_PAGEDOWN:
+                cy+=pixelheight/FONTH;
+                break;
             case SDLK_HOME:
                 cx = cy = 0;
                 break;

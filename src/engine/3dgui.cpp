@@ -38,6 +38,8 @@ bool menukey(int code, bool isdown, int cooked)
             return false;
         case SDLK_HOME:
         case SDLK_END:
+        case SDLK_PAGEUP:
+        case SDLK_PAGEDOWN:
         case SDLK_DELETE:
         case SDLK_BACKSPACE:
         case SDLK_UP:
