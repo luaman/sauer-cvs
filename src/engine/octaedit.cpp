@@ -424,7 +424,7 @@ void cursorupdate()
 
     renderentselection(player->o, ray, entmoving!=0);
 
-    glEnable(GL_POLYGON_OFFSET_LINE);
+    enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
 
     if(!moving && !hovering)
     {
@@ -458,7 +458,7 @@ void cursorupdate()
         boxs3D(sel.o.tovec(), sel.s.tovec(), sel.grid);
     }
    
-    glDisable(GL_POLYGON_OFFSET_LINE);
+    disablepolygonoffset(GL_POLYGON_OFFSET_LINE);
 
     glDisable(GL_BLEND);
 }
