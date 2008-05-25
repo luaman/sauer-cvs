@@ -479,6 +479,20 @@ struct editor
             if(h + height > pixelheight) break;
             
             draw_text(lines[i], x, y+h, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, hit&&(cy==i)?cx:-1, maxwidth);
+            if(linewrap && height > FONTH) // lines are wrapping
+            {   
+                notextureshader->set();
+                glDisable(GL_TEXTURE_2D);
+                glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
+                glBegin(GL_QUADS);
+                glVertex2f(x,         y+FONTH);
+                glVertex2f(x,         y+height);
+                glVertex2f(x-FONTW/2, y+height);
+                glVertex2f(x-FONTW/2, y+FONTH);
+                glEnd();
+                glEnable(GL_TEXTURE_2D);
+                defaultshader->set();
+            }
             h+=height;
         }
     }
