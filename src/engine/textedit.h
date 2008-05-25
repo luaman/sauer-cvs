@@ -267,7 +267,9 @@ struct editor
         else if(sy==ey && sx > ex) swap(sx, ex);        
         return (sx != ex) || (sy != ey);
     }
-    
+   
+    bool region() { int sx, sy, ex, ey; return region(sx, sy, ex, ey); }
+
     // also ensures that cy is always within lines[] and cx is valid
     editline &currentline()
     {
@@ -712,14 +714,7 @@ TEXTCOMMAND(textcopy, "", (), editor *b = useeditor(PASTEBUFFER, true, false); t
 TEXTCOMMAND(textpaste, "", (), editor *b = useeditor(PASTEBUFFER, true, false); top->insertallfrom(b););
 TEXTCOMMAND(textmark, "i", (int *m),  // (1=mark, 2=unmark), return current mark setting if no args
     if(*m) top->mark(*m==1);
-    else
-    {
-        int sx; // macro expansion gets *confused* if I declare these separated by ','
-        int sy;
-        int ex;
-        int ey;
-        result(top->region(sx, sy, ex, ey)?"1":"2");
-    }
+    else result(top->region() ? "1" : "2");
 );
 TEXTCOMMAND(textselectall, "", (), top->selectall(););
 TEXTCOMMAND(textclear, "", (), top->clear(););
