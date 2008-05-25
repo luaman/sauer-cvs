@@ -189,6 +189,7 @@ struct editor
         //printf("~editor %08x '%s'\n", this, name);
         DELETEA(name);
         DELETEA(filename);
+        clear(NULL);
     }
     
     bool allowsnewline() { return linewrap && (maxy == 1); } // a single line(wrap) field can contain '\n's, whilst a multi-line does not
