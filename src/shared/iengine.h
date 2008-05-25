@@ -263,7 +263,7 @@ extern void gets2c();
 // 3dgui
 struct Texture;
 
-enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8 };
+enum { G3D_DOWN = 1, G3D_UP = 2, G3D_PRESSED = 4, G3D_ROLLOVER = 8, G3D_DRAGGED = 16 };
 
 struct g3d_gui
 {
@@ -299,8 +299,8 @@ struct g3d_gui
 	virtual void progress(float percent) = 0;
 	virtual void strut(int size) = 0;
     virtual void space(int size) = 0;
+    virtual char *field(const char *name, int color, int length, int height = 0, const char *initval = "") = 0;
     virtual void mergehits(bool on) = 0;
-    virtual char *field(const char *name, int color, int length, const char *initval = "") = 0;
 };
 
 struct g3d_callback

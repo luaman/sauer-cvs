@@ -6,33 +6,35 @@
 #include "pch.h"
 #include "engine.h"
 
+#include "textedit.h"
+
 static bool layoutpass, actionon = false;
 static int mousebuttons = 0;
 static struct gui *windowhit = NULL;
 
-//text field state - only one ever active/focused
-static string fieldname, fieldtext;  //copy of while focused
-static int fieldpos = -1, fieldlen = 0, fieldwidth; //fieldpos: -1=no focus, -2=wanting to commit
-static bool fieldactive; 
+static float firstx, firsty;
+
+static enum {FIELDCOMMIT, FIELDABORT, FIELDEDIT, FIELDSHOW} fieldmode = FIELDSHOW; 
+static bool fieldsactive = false;
+
 
 bool menukey(int code, bool isdown, int cooked) 
 {
     if(code==-1 && g3d_windowhit(isdown, true)) return true;  
     else if(code==-3 && g3d_windowhit(isdown, false)) return true;
     
-    if(fieldpos<0) return false;
+    editor *e = currentfocus();
+    if((fieldmode == FIELDSHOW) || !e) return false;
     switch(code) 
     {
-        case SDLK_ESCAPE: //cancel editing with commit
-            fieldpos = -1;
-            fieldname[0] = '\0';
+        case SDLK_ESCAPE: //cancel editing without commit
+            fieldmode = FIELDABORT;
             return true;
         case SDLK_RETURN:
-            cooked = '\n';
         case SDLK_TAB:
-            if(cooked && fieldwidth != -1) break;
+            if(cooked && (e->allowsnewline() || e->maxy != 1)) break;
         case SDLK_KP_ENTER:
-            fieldpos = -2; //signal field commit
+            fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
             return false;
         case SDLK_HOME:
         case SDLK_END:
@@ -46,67 +48,11 @@ bool menukey(int code, bool isdown, int cooked)
         default:
             if(!cooked || (code<32)) return false;
     }
-    if(!isdown) return true;	
-    int len = strlen(fieldtext);
-    if(fieldpos>len) fieldpos = len;
-    switch(code) 
-    {
-        case SDLK_HOME:
-            fieldpos = 0;
-            break;
-        case SDLK_END:
-            fieldpos = len;
-            break;
-        case SDLK_UP:
-            if(fieldwidth != -1)
-            {
-                int cx, cy; 
-                text_pos(fieldtext, fieldpos+1, cx, cy, fieldwidth);
-                if(cy > 0) fieldpos = text_visible(fieldtext, cx, cy-FONTH, fieldwidth);
-            } 
-            break;
-        case SDLK_DOWN:
-            if(fieldwidth != -1)
-            {
-                int cx, cy, width, height; 
-                text_pos(fieldtext, fieldpos, cx, cy, fieldwidth);
-                text_bounds(fieldtext, width, height, fieldwidth);
-                cy += FONTH;
-                if(cy < height) fieldpos = text_visible(fieldtext, cx, cy, fieldwidth);
-            }
-            break;
-        case SDLK_LEFT:
-            if(fieldpos > 0) fieldpos--;
-            break;
-        case SDLK_RIGHT:
-            if(fieldpos < len) fieldpos++;
-            break;
-        case SDLK_DELETE:
-            if(fieldpos < len) 
-            {
-                memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
-                fieldtext[len-1] = '\0';
-            }
-            break;
-        case SDLK_BACKSPACE:
-            if(fieldpos > 0) 
-            {   
-                fieldpos--;
-                memmove(fieldtext+fieldpos, fieldtext+fieldpos+1, len-fieldpos);
-                fieldtext[len-1] = '\0';
-            }
-            break;
-        default:
-            if(fieldpos<fieldlen)
-            {
-                memmove(fieldtext+fieldpos+1, fieldtext+fieldpos, len-fieldpos); //length then limited inside field draw code
-                fieldtext[fieldpos++] = cooked;
-                fieldtext[len+1] = '\0';
-            }
-            break;
-    }
+    if(!isdown) return true;
+    e->key(code, cooked);
     return true;
 }
+
 
 static bool hascursor;
 static float cursorx = 0.5f, cursory = 0.5f;
@@ -377,52 +323,44 @@ struct gui : g3d_gui
         }
     }
 
-    char *field(const char *name, int color, int length, const char *initval)
+    char *field(const char *name, int color, int length, int height, const char *initval)
     {	
-        int w, h;
-        int maxwidth;
-        if(length < 0) 
+        editor *e = useeditor(name, false, false, initval); // generate a new editor if necessary
+        if(layoutpass)
         {
-            maxwidth = -length*FONTW;
-            length = (int)sizeof(string)-1;
-            text_bounds((strcmp(fieldname, name) == 0)?fieldtext:initval, w, h, maxwidth);
-            w = maxwidth + FONTW;
-        } 
-        else 
-        {
-            maxwidth = -1;
-            length = min(length, (int)sizeof(string)-1);
-            h = FONTH;
-            w = FONTW*(length + 1);
+            e->linewrap = (length<0);
+            e->maxx = (e->linewrap) ? sizeof(string)-1 : min(length, (int)sizeof(string)-1);
+            e->maxy = (height<=0)?1:-1;
+            e->pixelwidth = abs(length)*FONTW;
+            int temp;
+            if(e->allowsnewline()) e->bounds(temp, e->pixelheight); else e->pixelheight = FONTH*max(height, 1); //only single line editors can have variable height
         }
+        int h = e->pixelheight;
+        int w = e->pixelwidth + FONTW;
+        
         char *result = NULL;
         if(visible() && !layoutpass)
         {
-            bool hit = ishit(w, h), editing = !strcmp(fieldname, name);            
-            if(hit && (mousebuttons&G3D_DOWN) && !editing) //mouse request focus
-            {
-                s_strcpy(fieldname, name);
-                s_strcpy(fieldtext, initval);
-                fieldtext[length] = '\0';
-                fieldpos = strlen(fieldtext);
-                fieldlen = length;
-                editing = true;
+            bool hit = ishit(w, h);
+            if(hit) {
+                if(mousebuttons&G3D_DOWN) //mouse request focus
+                {   
+                    useeditor(name, false, true); 
+                    e->mark(false);
+                    fieldmode = FIELDEDIT;
+                } else if(mousebuttons&G3D_PRESSED) e->hit(int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), mousebuttons&G3D_DRAGGED); //mouse request position
             }
-            if(editing)
+            bool editing = (fieldmode != FIELDSHOW) && (e==currentfocus());
+            if(editing && ((fieldmode==FIELDCOMMIT) || (fieldmode==FIELDABORT) || !hit)) // commit field if user pressed enter or wandered out of focus 
             {
-                fieldwidth = maxwidth;
-                if(fieldpos==-2 || !hit) // commit field if user pressed enter or wandered out of focus 
-                {
-                    result = fieldtext;
-                    fieldpos = -1;
-                    fieldname[0] = '\0';
-                    editing = false;
-                } 
-                else fieldactive = true;
-            }
-            if(editing && hit && (mousebuttons&G3D_PRESSED)) //mouse request position
-                fieldpos = text_visible(fieldtext, int(floor(hitx-(curx+FONTW/2))), int(floor(hity-cury)), maxwidth); 
-                           
+                if(fieldmode==FIELDCOMMIT) result = e->currentline();
+                e->active = (e->mode!=EDITORFOCUSED);
+                fieldmode = FIELDSHOW;
+            } 
+            else fieldsactive = true;
+            
+            e->draw(curx+FONTW/2, cury, color, hit && editing);
+            
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
             if(editing) glColor3f(1, 0, 0);
@@ -432,8 +370,6 @@ struct gui : g3d_gui
             glEnd();
             glEnable(GL_TEXTURE_2D);
             defaultshader->set();
-            
-            draw_text(editing ? fieldtext : (result ? result : initval), curx+FONTW/2, cury, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, (editing && hit)?fieldpos:-1, maxwidth);
         }
         layout(w, h);
         return result;
@@ -808,6 +744,7 @@ struct gui : g3d_gui
                     hitx = xaxis.dot(intersectionvec)/scale.x;
                     hity = -intersectionvec.z/scale.y;
                 }
+                if((mousebuttons & G3D_PRESSED) && (fabs(hitx-firstx) > 2 || fabs(hity - firsty) > 2)) mousebuttons |= G3D_DRAGGED;
                 if(intersects>=INTERSECT_MIDDLE && hitx>=-xsize/2 && hitx<=xsize/2 && hity<=0)
                 {
                     if(hity>=-ysize || (tcurrent && hity>=-ysize-(FONTH-2*INSERT)-((skiny[5]-skiny[1])-(skiny[3]-skiny[2]))*SKIN_SCALE && hitx<=tx-xsize/2))
@@ -915,20 +852,26 @@ int g3d_sort(gui *a, gui *b) { return (int)(a->dist>b->dist)*2-1; }
 bool g3d_windowhit(bool on, bool act)
 {
     extern int cleargui(int n);
-    if(act) mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
-    else if(!on && windowhit) cleargui(1);
+    if(act) 
+    {
+        if(on) { firstx = gui::hitx; firsty = gui::hity; }
+        mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
+    } else if(!on && windowhit) cleargui(1);
     return (guis2d.length() && hascursor) || (windowhit && !windowhit->gui2d);
 }
 
-char *g3d_fieldname()
+const char *g3d_fieldname()
 {
-    return fieldname;
+    editor *top = currentfocus();
+    if(!layoutpass || (fieldmode==FIELDSHOW) || !top) return "";
+    return top->name;
 }
 
 void g3d_render()   
 {
-    windowhit = NULL;
+    windowhit = NULL;    
     if(actionon) mousebuttons |= G3D_PRESSED;
+    
     gui::reset();
     guis2d.setsize(0);
     guis3d.setsize(0);
@@ -943,8 +886,10 @@ void g3d_render()
     guis2d.sort(g3d_sort);
     guis3d.sort(g3d_sort);
     
-    bool fieldfocus = (fieldpos>=0);
-    fieldactive = false;
+    readyeditors();
+    bool wasfocused = (fieldmode!=FIELDSHOW);
+    fieldsactive = false;
+
     hascursor = false;
 
     layoutpass = true;
@@ -997,8 +942,10 @@ void g3d_render()
         glDisable(GL_BLEND);
     }
 
-    if(!fieldactive) fieldpos = -1; //no hit fields, so loose focus - mainly for menu closed
-    if((fieldpos>=0) != fieldfocus) SDL_EnableUNICODE(fieldpos>=0);
+    flusheditors();
+    if(!fieldsactive) fieldmode = FIELDSHOW; //didn't draw any fields, so loose focus - mainly for menu closed
+    if((fieldmode!=FIELDSHOW) != wasfocused) SDL_EnableUNICODE(fieldmode!=FIELDSHOW);
     
     mousebuttons = 0;
 }
+
