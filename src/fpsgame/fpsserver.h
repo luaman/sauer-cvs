@@ -98,7 +98,7 @@ struct fpsserver : igameserver
     struct gamestate : fpsstate
     {
         vec o;
-        int state;
+        int state, editstate;
         int lastdeath, lastspawn, lifesequence;
         int lastshot;
         projectilestate<8> rockets, grenades;
@@ -106,7 +106,7 @@ struct fpsserver : igameserver
         int lasttimeplayed, timeplayed;
         float effectiveness;
 
-        gamestate() : state(CS_DEAD) {}
+        gamestate() : state(CS_DEAD), editstate(CS_DEAD) {}
     
         bool isalive(int gamemillis)
         {
@@ -120,7 +120,7 @@ struct fpsserver : igameserver
 
         void reset()
         {
-            if(state!=CS_SPECTATOR) state = CS_DEAD;
+            if(state!=CS_SPECTATOR) state = editstate = CS_DEAD;
             lifesequence = 0;
             maxhealth = 100;
             rockets.reset();
@@ -1111,13 +1111,19 @@ struct fpsserver : igameserver
             case SV_EDITMODE:
             {
                 int val = getint(p);
-                if(ci->state.state!=(val ? CS_ALIVE : CS_EDITING) || (!ci->local && gamemode!=1)) break;
+                if(!ci->local && gamemode!=1) break;
+                if(val ? ci->state.state!=CS_ALIVE && ci->state.state!=CS_DEAD : ci->state.state!=CS_EDITING) break;
                 if(smode)
                 {
                     if(val) smode->leavegame(ci);
                     else smode->entergame(ci);
                 }
-                ci->state.state = val ? CS_EDITING : CS_ALIVE;
+                if(val)
+                {
+                    ci->state.editstate = ci->state.state;
+                    ci->state.state = CS_EDITING;
+                }
+                else ci->state.state = ci->state.editstate;
                 if(val)
                 {
                     ci->events.setsizenodelete(0);

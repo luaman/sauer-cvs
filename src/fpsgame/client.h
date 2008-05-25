@@ -108,6 +108,8 @@ struct clientcom : iclientcom
     void edittoggled(bool on)
     {
         addmsg(SV_EDITMODE, "ri", on ? 1 : 0);
+        if(player1->state==CS_DEAD) cl.deathstate(player1, true);
+        else if(player1->state==CS_EDITING && player1->editstate==CS_DEAD) cl.sb.showscores(false);
     }
 
     int getclientfocus()
@@ -867,8 +869,16 @@ struct clientcom : iclientcom
             {
                 int val = getint(p);
                 if(!d) break;
-                if(val) d->state = CS_EDITING;
-                else d->state = CS_ALIVE;
+                if(val) 
+                {
+                    d->editstate = d->state;
+                    d->state = CS_EDITING;
+                }
+                else 
+                {
+                    d->state = d->editstate;
+                    if(d->state==CS_DEAD) cl.deathstate(d, true);
+                }
                 break;
             }
 

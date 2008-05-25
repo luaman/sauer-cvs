@@ -120,19 +120,20 @@ void cancelsel()
     entcancel();
 }
 
-void toggleedit()
+void toggleedit(bool force)
 {
-    if(player->state!=CS_ALIVE && player->state!=CS_EDITING) return; // do not allow dead players to edit to avoid state confusion
+    if(player->state!=CS_ALIVE && player->state!=CS_DEAD && player->state!=CS_EDITING) return; // do not allow dead players to edit to avoid state confusion
     if(!editmode && !cc->allowedittoggle()) return;         // not in most multiplayer modes
     if(!(editmode = !editmode))
     {
-        player->state = CS_ALIVE;
+        player->state = player->editstate;
         player->o.z -= player->eyeheight;       // entinmap wants feet pos
         entinmap(player);                       // find spawn closest to current floating pos
     }
     else
     {
         cl->resetgamestate();
+        player->editstate = player->state;
         player->state = CS_EDITING;
     }
     cancelsel();
@@ -140,7 +141,7 @@ void toggleedit()
     editing = entediting = editmode;
     extern int fullbright;
     if(fullbright) initlights();
-    cc->edittoggled(editmode);
+    if(!force) cc->edittoggled(editmode);
 }
 
 bool noedit(bool view)
@@ -187,7 +188,7 @@ void selextend()
     }
 }
 
-COMMANDN(edittoggle, toggleedit, "");
+ICOMMAND(edittoggle, "", (), toggleedit(false));
 COMMAND(entcancel, "");
 COMMAND(cubecancel, "");
 COMMAND(cancelsel, "");

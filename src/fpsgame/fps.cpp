@@ -412,9 +412,39 @@ struct fpsclient : igameclient
         else playsound(S_PAIN1+rnd(5), &d->o);
     }
 
+    void deathstate(fpsent *d, bool restore = false)
+    {
+        d->state = CS_DEAD;
+        d->lastpain = lastmillis;
+        d->superdamage = restore ? 0 : max(-d->health, 0);
+        if(d==player1)
+        {
+            sb.showscores(true);
+            setvar("zoom", -1, true);
+            if(!restore) lastplayerstate = *player1;
+            d->attacking = false;
+            if(!restore) d->deaths++;
+            d->pitch = 0;
+            d->roll = 0;
+            playsound(S_DIE1+rnd(2));
+        }
+        else
+        {
+            d->move = d->strafe = 0;
+            playsound(S_DIE1+rnd(2), &d->o);
+            if(!restore) ws.superdamageeffect(d->vel, d);
+        }
+    }
+
     void killed(fpsent *d, fpsent *actor)
     {
-        if(d->state!=CS_ALIVE || intermission) return;
+        if(d->state==CS_EDITING)
+        {
+            d->editstate = CS_DEAD;
+            if(d==player1) d->deaths++;
+            return;
+        }
+        else if(d->state!=CS_ALIVE || intermission) return;
 
         fpsent *h = followingplayer();
         if(!h) h = player1;
@@ -450,26 +480,7 @@ struct fpsclient : igameclient
             else conoutf(contype, "\f2%s fragged %s", aname, dname);
         }
 
-        d->state = CS_DEAD;
-        d->lastpain = lastmillis;
-        d->superdamage = max(-d->health, 0);
-        if(d==player1)
-        {
-            sb.showscores(true);
-            setvar("zoom", -1, true);
-            lastplayerstate = *player1;
-            d->attacking = false;
-            d->deaths++;
-            d->pitch = 0;
-            d->roll = 0;
-            playsound(S_DIE1+rnd(2));
-        }
-        else
-        {
-            d->move = d->strafe = 0;
-            playsound(S_DIE1+rnd(2), &d->o);
-            ws.superdamageeffect(d->vel, d);
-        }
+        deathstate(d);
     }
 
     void timeupdate(int timeremain)

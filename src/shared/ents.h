@@ -69,7 +69,7 @@ struct physent                                  // base entity type, can be affe
     char move, strafe;
 
     uchar physstate;                            // one of PHYS_* above
-    uchar state;                                // one of CS_* above
+    uchar state, editstate;                     // one of CS_* above
     uchar type;                                 // one of ENT_* above
     uchar collidetype;                          // one of COLLIDE_* above           
 
@@ -77,7 +77,7 @@ struct physent                                  // base entity type, can be affe
                radius(4.1f), eyeheight(14), aboveeye(1), xradius(4.1f), yradius(4.1f), zmargin(0),
                blocked(false), moving(true), 
                onplayer(NULL), lastmove(0), lastmoveattempt(0), collisions(0), stacks(0),
-               state(CS_ALIVE), type(ENT_PLAYER),
+               state(CS_ALIVE), editstate(CS_ALIVE), type(ENT_PLAYER),
                collidetype(COLLIDE_ELLIPSE)
                { reset(); }
                
