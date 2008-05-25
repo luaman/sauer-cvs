@@ -331,7 +331,7 @@ struct gui : g3d_gui
         if(layoutpass)
         {
             e->linewrap = (length<0);
-            e->maxx = (e->linewrap) ? sizeof(string)-1 : min(length, (int)sizeof(string)-1);
+            e->maxx = (e->linewrap) ? -1 : length;
             e->maxy = (height<=0)?1:-1;
             e->pixelwidth = abs(length)*FONTW;
             int temp;
@@ -355,7 +355,7 @@ struct gui : g3d_gui
             bool editing = (fieldmode != FIELDSHOW) && (e==currentfocus());
             if(editing && ((fieldmode==FIELDCOMMIT) || (fieldmode==FIELDABORT) || !hit)) // commit field if user pressed enter or wandered out of focus 
             {
-                if(fieldmode==FIELDCOMMIT) result = e->currentline();
+                if(fieldmode==FIELDCOMMIT) result = e->currentline().text;
                 e->active = (e->mode!=EDITORFOCUSED);
                 fieldmode = FIELDSHOW;
             } 

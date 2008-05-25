@@ -1,32 +1,162 @@
 
-static void splitlines(vector <char*>dest, char *src)
-{
-    dest.setsize(0);
-    string buf;
-    s_strcpy(buf, src);            
-    char *p = buf;
-    char *nl;
-    do {
-        nl = strchr(p, '\n');
-        if(nl) *nl = '\0';
-        dest.add(newstringbuf(p));
-        p = nl+1;
-    } while(nl);
-}
-
-static char *combinelines(string dest, vector <char*>src)
-{
-    *dest = '\0';
-    loopv(src)
-    {
-        if(i > 0) s_strcat(dest, "\n");
-        s_strcat(dest, src[i]);
-    }
-    return dest;
-}
-
 typedef enum {EDITORFOCUSED=1, EDITORUSED, EDITORFOREVER} editormode; 
 
+struct editline
+{
+    enum { CHUNKSIZE = 256 };
+
+    char *text;
+    int len, maxlen;
+
+    editline() : text(NULL), len(0), maxlen(0) {}
+    editline(const char *init) : text(NULL), len(0), maxlen(0)
+    {
+        set(init);
+    }
+
+    bool empty() { return len <= 1; }
+
+    void clear()
+    {
+        DELETEA(text);
+        len = maxlen = 0;
+    }
+
+    bool grow(int total, const char *fmt = NULL, ...)
+    {
+        if(total + 1 <= maxlen) return false;
+        maxlen = (total + CHUNKSIZE) - total%CHUNKSIZE;
+        char *newtext = new char[maxlen];
+        va_list args;
+        va_start(args, fmt);
+        _vsnprintf(newtext, maxlen, fmt, args);
+        va_end(args);
+        DELETEA(text);
+        text = newtext;
+        return true;
+    }
+
+    void set(const char *str, int slen = -1)
+    {
+        if(slen < 0)
+        {
+            slen = strlen(str);
+            if(!grow(slen, "%s", str)) memcpy(text, str, slen + 1);
+        }
+        else
+        {
+            grow(slen);
+            memcpy(text, str, slen);
+            text[slen] = '\0';
+        }
+        len = slen;
+    }
+
+    void prepend(const char *str)
+    {
+        int slen = strlen(str);
+        if(!grow(slen + len, "%s%s", str, text ? text : ""))
+        {
+            memmove(&text[slen], text, len + 1);
+            memcpy(text, str, slen + 1);
+        }
+        len += slen;
+    }
+
+    void append(const char *str)
+    {
+        int slen = strlen(str);
+        if(!grow(len + slen, "%s%s", text ? text : "", str)) memcpy(&text[len], str, slen + 1);
+        len += slen;
+    }
+
+    bool read(FILE *f, int chop = -1)
+    {
+        if(chop < 0) chop = INT_MAX; else chop++;
+        set("");
+        while(len + 1 < chop && fgets(&text[len], min(maxlen, chop) - len, f))
+        {
+            len += strlen(&text[len]);
+            if(len > 0 && text[len-1] == '\n')
+            {
+                text[--len] = '\0';
+                return true;
+            }
+            if(len + 1 >= maxlen && len + 1 < chop) grow(len + CHUNKSIZE, "%s", text);
+        }
+        if(len + 1 >= chop)
+        {
+            char buf[CHUNKSIZE];
+            while(fgets(buf, sizeof(buf), f))
+            {
+                int blen = strlen(buf);
+                if(blen > 0 && buf[blen-1] == '\n') return true;
+            }
+        }
+        return false;
+    }
+
+    void del(int start, int count)
+    {
+        if(!text) return;
+        if(start < 0) { count += start; start = 0; } 
+        if(count <= 0 || start + 1 >= maxlen) return;
+        if(start + count + 1 > maxlen) count = maxlen - start - 1;
+        memmove(&text[start], &text[start+count], len + 1 - (start + count));
+        len -= count;
+    }
+
+    void chop(int newlen)
+    {
+        if(!text) return;
+        len = clamp(newlen, 0, len);
+        text[len] = '\0';
+    }
+
+    void insert(char *str, int start, int count = 0)
+    {
+        if(count <= 0) count = strlen(str);
+        start = clamp(start, 0, len);
+        grow(len + count, "%s", text ? text : "");
+        memmove(&text[start + count], &text[start], len - start + 1);
+        memcpy(&text[start], str, count);
+        len += count;
+    }
+
+    void splitlines(vector<editline> &dest, int start = 0, int count = -1)
+    {
+        if(count < 0) count = len - start;
+        loopv(dest) dest[i].clear();
+        dest.setsize(0);
+        char *cur = &text[start];
+        for(;;)
+        {
+            char *end = strchr(cur, '\n');
+            if(end > &text[start+count] || !end)
+            {
+                dest.add().set(cur, &text[start+count] - cur);
+                break;
+            }
+            else 
+            {
+                dest.add().set(cur, end - cur);
+                cur = end + 1;
+            }
+        }
+        if(dest.empty()) dest.add().set("");
+    }
+
+    void combinelines(vector<editline> &src)
+    {
+        if(src.empty()) set("");
+        else loopv(src)
+        {
+            if(!i) set(src[i].text, src[i].len);
+            else insert(src[i].text, len, src[i].len);
+        }
+    }
+};
+        
 struct editor 
 {
     int mode; //editor mode - 1= keep while focused, 2= keep while used in gui, 3= keep forever (i.e. until mode changes)
@@ -44,14 +174,14 @@ struct editor
     int pixelwidth; // required for up/down/hit/draw/bounds
     int pixelheight; // -1 for variable sized, i.e. from bounds()
     
-    vector <char*>lines; // MUST always contain at least one line!
+    vector<editline> lines; // MUST always contain at least one line!
         
     editor(const char *name, bool keep, const char *initval) : 
         mode(keep?EDITORFOREVER:EDITORFOCUSED), active(true), name(newstring(name)), filename(NULL),
-        cx(0), cy(0), mx(-1), maxx(sizeof(string)-1), maxy(-1), scrolly(0), linewrap(false), pixelwidth(-1), pixelheight(-1)
+        cx(0), cy(0), mx(-1), maxx(-1), maxy(-1), scrolly(0), linewrap(false), pixelwidth(-1), pixelheight(-1)
     {
         //printf("editor %08x '%s'\n", this, name);
-        lines.add(newstringbuf(initval?initval:""));
+        lines.add().set(initval ? initval : "");
     }
     
     ~editor()
@@ -63,40 +193,33 @@ struct editor
     
     bool allowsnewline() { return linewrap && (maxy == 1); } // a single line(wrap) field can contain '\n's, whilst a multi-line does not
     
-    void clear()
+    void clear(const char *init = "")
     {
         cx = cy = 0;
         mark(false);
+        loopv(lines) lines[i].clear();
         lines.setsize(0);
-        lines.add(newstringbuf(""));
+        if(init) lines.add().set(init);
     }
     
     void setfile(const char *fname)
     {
         DELETEA(filename); 
-        filename = (fname) ? newstring(fname) : NULL;
+        if(fname) filename = newstring(fname);
     }
     
     void load()
     {
         if(!filename) return;
-        cx = cy = 0;
-        mark(false);
-        lines.setsize(0);
+        clear(NULL);
         FILE *file = openfile(filename, "r");
         if(file) 
         {
-            string line;
-            while(fgets(line, maxx, file)) // warning - will chop lines up if too long
-            {
-                if(maxy != -1 && lines.length() >= maxy) break; // warning - will omit lines if too many
-                int len = strlen(line);
-                if(len > 1 && line[len-1]=='\n') line[len-1] = '\0';
-                lines.add(newstringbuf(line));
-            }
+            while(lines.add().read(file, maxx) && (maxy < 0 || lines.length() <= maxy));
+            lines.pop().clear();
             fclose(file);
         }
-        if(lines.length() == 0) lines.add(newstringbuf(""));
+        if(lines.empty()) lines.add().set("");
     }
     
     void save()
@@ -104,11 +227,12 @@ struct editor
         if(!filename) return;
         FILE *file = openfile(filename, "w");
         if(!file) return;
-        loopv(lines) fprintf(file, "%s\n", lines[i]);
+        loopv(lines) fprintf(file, "%s\n", lines[i].text);
         fclose(file);
     }
     
-    void mark(bool enable) {
+    void mark(bool enable) 
+    {
         mx = (enable) ? cx : -1;
         my = cy;
     }
@@ -126,12 +250,12 @@ struct editor
         int n = lines.length(); 
         assert(n != 0);
         if(cy < 0) cy = 0; else if(cy >= n) cy = n-1;
-        int len = strlen(lines[cy]);
+        int len = lines[cy].len;
         if(cx < 0) cx = 0; else if(cx > len) cx = len;
         if(mx >= 0) 
         {
             if(my < 0) my = 0; else if(my >= n) my = n-1;
-            len = strlen(lines[my]);
+            len = lines[my].len;
             if(mx > len) mx = len;
         }
         sx = (mx >= 0) ? mx : cx;
@@ -144,81 +268,69 @@ struct editor
     }
     
     // also ensures that cy is always within lines[] and cx is valid
-    char *currentline()
+    editline &currentline()
     {
         int n = lines.length(); 
         assert(n != 0);
         if(cy < 0) cy = 0; else if(cy >= n) cy = n-1;
-        char *str = lines[cy];
-        if(cx < 0) cx = 0; else if(cx > (int)strlen(str)) cx = (int)strlen(str);
-        return str;
+        if(cx < 0) cx = 0; else if(cx > lines[cy].len) cx = lines[cy].len;
+        return lines[cy];
     }
-
-    void prepend(int y, char *str)
-    {
-        string temp;
-        char *line = lines[y];
-        s_strcpy(temp, str);
-        s_strcat(temp, line);
-        temp[maxx] = '\0';
-        s_strcpy(line, temp);
-    }
-    
-    void append(int y, char *str) 
-    {
-        char *line = lines[y];
-        s_strcat(line, str);
-        line[maxx] = '\0';
-    }
-
 
     void copyselectionto(editor *b)
     {
         assert(!b->allowsnewline()); // only support #pastebuffer case
         
-        b->lines.setsize(0);
+        b->clear(NULL);
         
         int sx, sy, ex, ey;
         region(sx, sy, ex, ey);
         if(allowsnewline()) // create a vector from single line split via '\n'
         {
-            string sel;
-            s_strncpy(sel, lines[0]+sx, 1+ex-sx); 
-            splitlines(b->lines, sel);
+            lines[0].splitlines(b->lines, sx, ex - sx);
         } 
         else
         {
             loopi(1+ey-sy)
             {
                 int y = sy+i;
-                char *line = lines[y];
-                string sub;
-                if(y == sy && y == ey) s_strncpy(sub, line+sx, 1+ex-sx);
-                else if(y == sy) s_strcpy(sub, line+sx);
-                else if(y == ey) s_strncpy(sub, line, ex);
-                else s_strcpy(sub, line);
-                b->lines.add(newstringbuf(sub));
+                char *line = lines[y].text;
+                int len = lines[y].len;
+                if(y == sy && y == ey)
+                {
+                    line += sx;
+                    len = ex - sx;
+                }
+                else if(y == sy) line += sx;
+                else if(y == ey) len = ex;
+                b->lines.add().set(line, len);
             }
         }
-        if(b->lines.length() == 0) b->lines.add(newstringbuf(""));
+        if(b->lines.empty()) b->lines.add().set("");
     }
 
+    void removelines(int start, int count)
+    {
+        loopi(count) lines[start+i].clear();
+        lines.remove(start, count);
+    }
+            
     void del() // removes the current selection (if any)
     {
         int sx, sy, ex, ey;
         if(!region(sx, sy, ex, ey)) return;
         if(sy == ey) 
         {
-            if(sx == 0 || ex == (int)strlen(lines[ey])) lines.remove(sy); 
-            else memmove(lines[sy]+sx, lines[ey]+ex, (int)strlen(lines[ey])+1-ex);
+            if(sx == 0 || ex == lines[ey].len) removelines(sy, 1);
+            else lines[sy].del(sx, ex - sx);
         }
         else
         {
-            if(ey > sy+2) { lines.remove(sy+1, ey-(sy+2)); ey = sy+1; }
-            if(ex == (int)strlen(lines[ey])) lines.remove(ey); else memmove(lines[ey], lines[ey]+ex, (int)strlen(lines[ey])+1-ex);
-            if(sx == 0) lines.remove(sy); else lines[sy][sx] = '\0';
+            if(ey > sy+2) { removelines(sy+1, ey-(sy+2)); ey = sy+1; }
+            if(ex == lines[ey].len) removelines(ey, 1); else lines[ey].del(0, ex);
+            if(sx == 0) removelines(sy, 1); else lines[sy].del(sx, lines[sy].len - sx);
         }
-        if(lines.length() == 0) lines.add(newstringbuf(""));
+        if(lines.empty()) lines.add().set("");
         mark(false);
         cx = sx;
         cy = sy;
@@ -227,28 +339,24 @@ struct editor
     void insert(char ch) 
     {
         del();
-        char *current = currentline();
+        editline &current = currentline();
         if(ch == '\n' && !allowsnewline()) 
         {
-            string sub;
-            s_strcpy(sub, current+cx);
-            current[cx] = '\0';
             if(maxy == -1 || cy < maxy-1)
             {
+                editline newline(&current.text[cx]);
+                current.chop(cx);
                 cy = min(lines.length(), cy+1);
-                lines.insert(cy, newstringbuf(sub));
+                lines.insert(cy, newline);
             }
+            else current.chop(cx);
             cx = 0;
         } 
         else
         {
-            int len = strlen(current);
-            if(len > maxx-1) len = maxx-1;
-            if(cx <= len) {
-                memmove(current+cx+1, current+cx, len-cx);
-                current[cx++] = ch;
-                current[len+1] = '\0';
-            }
+            int len = current.len;
+            if(maxx >= 0 && len > maxx-1) len = maxx-1;
+            if(cx <= len) current.insert(&ch, cx++, 1);
         }
     }
 
@@ -256,39 +364,43 @@ struct editor
     {   
         del();
         
-        vector <char*>temp; //transform b into correct format for this editor to use
-        if(allowsnewline() && !b->allowsnewline()) temp.add(combinelines(newstringbuf(""), b->lines));
-        else if(!allowsnewline() && b->allowsnewline()) splitlines(temp, b->lines[0]);
-        else loopv(b->lines) temp.add(newstringbuf(b->lines[i]));
+        vector<editline> temp; //transform b into correct format for this editor to use
+        if(allowsnewline() && !b->allowsnewline()) temp.add().combinelines(b->lines);
+        else if(!allowsnewline() && b->allowsnewline()) b->lines[0].splitlines(temp);
+        else loopv(b->lines) temp.add().set(b->lines[i].text, b->lines[i].len);
         
-        //@TODO respect maxy
         if(temp.length() == 1 || maxy == 1) 
         {
-            char *current = currentline();
-            char *str = temp[0];            
-            int slen = strlen(str);
-            if(slen + cx > maxx) slen = maxx-cx;
+            editline &current = currentline();
+            char *str = temp[0].text;            
+            int slen = temp[0].len;
+            if(maxx >= 0 && temp[0].len + cx > maxx) slen = maxx-cx;
             if(slen > 0) 
             {
-                int len = strlen(current);
-                if(slen + cx + len > maxx) len = max(0, maxx-(cx+slen));
-                if(len-cx > 0) memmove(current+cx+slen, current+cx, len-cx);
-                memmove(current+cx, str, slen);
+                int len = current.len;
+                if(maxx >= 0 && slen + cx + len > maxx) len = max(0, maxx-(cx+slen));
+                current.insert(str, cx, slen); 
                 cx += slen;
-                current[len+slen] = '\0';
             }
+            loopv(temp) temp[i].clear();
         } 
         else 
         {
             loopv(temp) 
             {   
-                char *line = temp[i];
-                if(i == 0) append(cy++, line);
-                else if(i == b->lines.length()) {
-                    cx = strlen(line);
-                    prepend(cy, line);
-                } 
-                else lines.insert(cy++, newstringbuf(line));
+                if(!i) 
+                {
+                    lines[cy++].append(temp[i].text);
+                    temp[i].clear();
+                }
+                else if(i >= b->lines.length())
+                {
+                    cx = temp[i].len;
+                    lines[cy].prepend(temp[i].text);
+                    temp[i].clear();
+                }
+                else if(maxy >= 0 && lines.length() < maxy) lines.insert(cy++, temp[i]);
+                else temp[i].clear();
             }
         }
     }
@@ -301,7 +413,7 @@ struct editor
                 if(linewrap) 
                 {
                     int x, y; 
-                    char *str = currentline();
+                    char *str = currentline().text;
                     text_pos(str, cx+1, x, y, pixelwidth);
                     if(y > 0) { cx = text_visible(str, x, y-FONTH, pixelwidth); break; }
                 }
@@ -311,7 +423,7 @@ struct editor
                 if(linewrap) 
                 {
                     int x, y, width, height;
-                    char *str = currentline();
+                    char *str = currentline().text;
                     text_pos(str, cx, x, y, pixelwidth);
                     text_bounds(str, width, height, pixelwidth);
                     y += FONTH;
@@ -340,41 +452,34 @@ struct editor
             case SDLK_DELETE:
             {
                 del();
-                char *current = currentline();
-                int len = strlen(current);
-                if(cx < len) 
-                {
-                    memmove(current+cx, current+cx+1, len-cx);
-                    current[len-1] = '\0';
-                } else if(cy < lines.length()-1) 
+                editline &current = currentline();
+                if(cx < current.len) current.del(cx, 1);
+                else if(cy < lines.length()-1)
                 {   //combine with next line
-                    append(cy, lines[cy+1]);
-                    lines.remove(cy+1);
+                    current.append(lines[cy+1].text);
+                    removelines(cy+1, 1);
                 }
                 break;
             }
             case SDLK_BACKSPACE:
             {
                 del();
-                char *current = currentline();
-                int len = strlen(current);
-                if(cx > 0) 
-                {   
-                    cx--;
-                    memmove(current+cx, current+cx+1, len-cx);
-                    current[len-1] = '\0';
-                } else if(cy > 0)
+                editline &current = currentline();
+                if(cx > 0) current.del(--cx, 1); 
+                else if(cy > 0)
                 {   //combine with previous line
-                    cx = strlen(lines[cy-1]);
-                    append(cy-1, current);
-                    lines.remove(cy--);
+                    cx = lines[cy-1].len;
+                    lines[cy-1].append(current.text);
+                    removelines(cy--, 1);
                 }
                 break;
             }
             case SDLK_RETURN:    
                 cooked = '\n';
+                // fall through
             default:
                 insert(cooked);
+                break;
         }
     }
 
@@ -385,12 +490,12 @@ struct editor
         for(int i = scrolly; i < lines.length(); i++)
         {
             int width, height;
-            text_bounds(lines[i], width, height, maxwidth);
+            text_bounds(lines[i].text, width, height, maxwidth);
             if(h + height > pixelheight) break;
             
             if(hity >= h && hity <= h+height) 
             {
-                int x = text_visible(lines[i], hitx, hity-h, maxwidth); 
+                int x = text_visible(lines[i].text, hitx, hity-h, maxwidth); 
                 if(dragged) { mx = x; my = i; } else { cx = x; cy = i; };
                 break;
             }
@@ -413,7 +518,7 @@ struct editor
             for(int i = cy; i >= scrolly; i--)
             {
                 int width, height;
-                text_bounds(lines[i], width, height, maxwidth);
+                text_bounds(lines[i].text, width, height, maxwidth);
                 if(h + height > pixelheight) { scrolly = i+1; break; }
                 h += height;
             }
@@ -423,14 +528,14 @@ struct editor
         {
             // convert from cursor coords into pixel coords
             int psx, psy, pex, pey;
-            text_pos(lines[sy], sx, psx, psy, maxwidth);
-            text_pos(lines[ey], ex, pex, pey, maxwidth);
+            text_pos(lines[sy].text, sx, psx, psy, maxwidth);
+            text_pos(lines[ey].text, ex, pex, pey, maxwidth);
             int maxy = lines.length();
             int h = 0;
             for(int i = scrolly; i < maxy; i++)
             {
                 int width, height;
-                text_bounds(lines[i], width, height, maxwidth);                
+                text_bounds(lines[i].text, width, height, maxwidth);                
                 if(h + height > pixelheight) { maxy = i; break; }
                 if(i == sy) psy += h;
                 if(i == ey) { pey += h; break; }
@@ -481,20 +586,20 @@ struct editor
         for(int i = scrolly; i < lines.length(); i++)
         {
             int width, height;
-            text_bounds(lines[i], width, height, maxwidth);
+            text_bounds(lines[i].text, width, height, maxwidth);
             if(h + height > pixelheight) break;
             
-            draw_text(lines[i], x, y+h, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, hit&&(cy==i)?cx:-1, maxwidth);
+            draw_text(lines[i].text, x, y+h, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, hit&&(cy==i)?cx:-1, maxwidth);
             if(linewrap && height > FONTH) // lines are wrapping
             {   
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
                 glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
                 glBegin(GL_QUADS);
-                glVertex2f(x,         y+FONTH);
-                glVertex2f(x,         y+height);
-                glVertex2f(x-FONTW/2, y+height);
-                glVertex2f(x-FONTW/2, y+FONTH);
+                glVertex2f(x,         y+h+FONTH);
+                glVertex2f(x,         y+h+height);
+                glVertex2f(x-FONTW/2, y+h+height);
+                glVertex2f(x-FONTW/2, y+h+FONTH);
                 glEnd();
                 glEnable(GL_TEXTURE_2D);
                 defaultshader->set();
@@ -511,7 +616,7 @@ struct editor
         loopv(lines)
         {
             int width, height;
-            text_bounds(lines[i], width, height, maxwidth);
+            text_bounds(lines[i].text, width, height, maxwidth);
             if(width > w) w = width;
             h += height;
         }
@@ -569,9 +674,10 @@ ICOMMAND(textlist, "", (), // @DEBUG return list of all the editors
     result(s);
 );
 TEXTCOMMAND(textshow, "", (), // @DEBUG return the start of the buffer
-    string s;
-    combinelines(s, top->lines);
-    result(s);
+    editline line;
+    line.combinelines(top->lines);
+    result(line.text);
+    line.clear();
 );
 ICOMMAND(textfocus, "s", (char *name), // focus on a (or create a persistent) specific editor, else returns current name
     if(*name) useeditor(name, true, true);
@@ -616,4 +722,4 @@ TEXTCOMMAND(textmark, "i", (int *m),  // (1=mark, 2=unmark), return current mark
 );
 TEXTCOMMAND(textselectall, "", (), top->selectall(););
 TEXTCOMMAND(textclear, "", (), top->clear(););
-TEXTCOMMAND(textcurrentline, "",  (), result(top->currentline()););
+TEXTCOMMAND(textcurrentline, "",  (), result(top->currentline().text););
