@@ -565,7 +565,7 @@ struct editor
             if(h + height > pixelheight) break;
             
             draw_text(lines[i].text, x, y+h, color>>16, (color>>8)&0xFF, color&0xFF, 0xFF, hit&&(cy==i)?cx:-1, maxwidth);
-            if(linewrap && height > FONTH) // lines are wrapping
+            if(linewrap && height > FONTH) // line wrap indicator
             {   
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
@@ -580,6 +580,23 @@ struct editor
                 defaultshader->set();
             }
             h+=height;
+        }
+        
+        int slines = lines.length()-pixelheight/FONTH;
+        if(maxy != 1 && slines > 0 && slines >= scrolly) // scroll indicator
+        {
+            float s = (pixelheight-FONTH)*scrolly/float(slines);
+            notextureshader->set();
+            glDisable(GL_TEXTURE_2D);
+            glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
+            glBegin(GL_QUADS);
+            glVertex2f(x+pixelwidth,         y+s+FONTH);
+            glVertex2f(x+pixelwidth,         y+s);
+            glVertex2f(x+pixelwidth+FONTW/2, y+s);
+            glVertex2f(x+pixelwidth+FONTW/2, y+s+FONTH);
+            glEnd();
+            glEnable(GL_TEXTURE_2D);
+            defaultshader->set();
         }
     }
 };
