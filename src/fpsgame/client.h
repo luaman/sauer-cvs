@@ -1109,7 +1109,7 @@ struct clientcom : iclientcom
         cl.gamemode = gamemode;
         cl.nextmode = gamemode;
         cl.minremain = -1;
-        if(editmode && !allowedittoggle()) toggleedit();
+        if(editmode) toggleedit();
         if(m_demo) { cl.et.resetspawns(); return; }
         if((gamemode==1 && !name[0]) || (!load_world(name) && remote)) 
         {
@@ -1119,7 +1119,6 @@ struct clientcom : iclientcom
         if(m_capture) cl.cpc.setupbases();
         else if(m_assassin) cl.asc.reset();
         else if(m_ctf) cl.ctf.setupflags();
-        if(editmode) edittoggled(editmode);
     }
 
     void changemap(const char *name) // request map change, server may ignore
