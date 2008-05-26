@@ -468,7 +468,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                 }
 
                 case ID_VAR:                        // game defined variables 
-                    if(!w[1][0]) conoutf("%s = %d", c, *id->storage.i);      // var with no value just prints its current value
+                    if(numargs <= 1) conoutf("%s = %d", c, *id->storage.i);      // var with no value just prints its current value
                     else if(id->minval>id->maxval) conoutf(CON_ERROR, "variable %s is read-only", id->name);
                     else
                     {
@@ -496,7 +496,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     break;
                   
                 case ID_FVAR:
-                    if(!w[1][0]) conoutf("%s = %f", c, *id->storage.f);
+                    if(numargs <= 1) conoutf("%s = %f", c, *id->storage.f);
                     else
                     {
                         OVERRIDEVAR(id->overrideval.f = *id->storage.f, );
@@ -506,7 +506,7 @@ char *executeret(const char *p)               // all evaluation happens here, re
                     break;
  
                 case ID_SVAR:
-                    if(!w[1][0]) conoutf(strchr(*id->storage.s, '"') ? "%s = [%s]" : "%s = \"%s\"", c, *id->storage.s);
+                    if(numargs <= 1) conoutf(strchr(*id->storage.s, '"') ? "%s = [%s]" : "%s = \"%s\"", c, *id->storage.s);
                     else
                     {
                         OVERRIDEVAR(id->overrideval.s = *id->storage.s, delete[] id->overrideval.s);
