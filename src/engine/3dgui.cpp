@@ -32,7 +32,7 @@ bool menukey(int code, bool isdown, int cooked)
             return true;
         case SDLK_RETURN:
         case SDLK_TAB:
-            if(cooked && (e->allowsnewline() || e->maxy != 1)) break;
+            if(cooked && (e->maxy != 1)) break;
         case SDLK_KP_ENTER:
             fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
             return false;
@@ -339,8 +339,13 @@ struct gui : g3d_gui
             e->maxx = (e->linewrap) ? -1 : length;
             e->maxy = (height<=0)?1:-1;
             e->pixelwidth = abs(length)*FONTW;
-            int temp;
-            if(e->allowsnewline()) e->bounds(temp, e->pixelheight); else e->pixelheight = FONTH*max(height, 1); //only single line editors can have variable height
+            if(e->linewrap && e->maxy==1) 
+            {
+                int temp;
+                text_bounds(e->lines[0].text, temp, e->pixelheight, e->pixelwidth); //only single line editors can have variable height
+            }
+            else 
+                e->pixelheight = FONTH*max(height, 1); 
         }
         int h = e->pixelheight;
         int w = e->pixelwidth + FONTW;

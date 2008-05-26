@@ -22,7 +22,7 @@ struct editline
         len = maxlen = 0;
     }
 
-    bool grow(int total, const char *fmt = NULL, ...)
+    bool grow(int total, const char *fmt = "", ...)
     {
         if(total + 1 <= maxlen) return false;
         maxlen = (total + CHUNKSIZE) - total%CHUNKSIZE;
@@ -126,34 +126,12 @@ struct editline
         len += count;
     }
 
-    void splitlines(vector<editline> &dest, int start = 0, int count = -1)
-    {
-        if(count < 0) count = len - start;
-        loopv(dest) dest[i].clear();
-        dest.setsize(0);
-        char *cur = &text[start];
-        for(;;)
-        {
-            char *end = strchr(cur, '\n');
-            if(end > &text[start+count] || !end)
-            {
-                dest.add().set(cur, &text[start+count] - cur);
-                break;
-            }
-            else 
-            {
-                dest.add().set(cur, end - cur);
-                cur = end + 1;
-            }
-        }
-        if(dest.empty()) dest.add().set("");
-    }
-
     void combinelines(vector<editline> &src)
     {
         if(src.empty()) set("");
         else loopv(src)
         {
+            if(i) append("\n");
             if(!i) set(src[i].text, src[i].len);
             else insert(src[i].text, len, src[i].len);
         }
@@ -194,9 +172,7 @@ struct editor
         DELETEA(filename);
         clear(NULL);
     }
-    
-    bool allowsnewline() { return linewrap && (maxy == 1); } // a single line(wrap) field can contain '\n's, whilst a multi-line does not
-    
+        
     void clear(const char *init = "")
     {
         cx = cy = 0;
@@ -285,32 +261,22 @@ struct editor
 
     void copyselectionto(editor *b)
     {
-        assert(!b->allowsnewline()); // only support #pastebuffer case
-        
         b->clear(NULL);
-        
         int sx, sy, ex, ey;
         region(sx, sy, ex, ey);
-        if(allowsnewline()) // create a vector from single line split via '\n'
+        loopi(1+ey-sy)
         {
-            lines[0].splitlines(b->lines, sx, ex - sx);
-        } 
-        else
-        {
-            loopi(1+ey-sy)
+            int y = sy+i;
+            char *line = lines[y].text;
+            int len = lines[y].len;
+            if(y == sy && y == ey)
             {
-                int y = sy+i;
-                char *line = lines[y].text;
-                int len = lines[y].len;
-                if(y == sy && y == ey)
-                {
-                    line += sx;
-                    len = ex - sx;
-                }
-                else if(y == sy) line += sx;
-                else if(y == ey) len = ex;
-                b->lines.add().set(line, len);
+                line += sx;
+                len = ex - sx;
             }
+            else if(y == sy) line += sx;
+            else if(y == ey) len = ex;
+            b->lines.add().set(line, len);
         }
         if(b->lines.empty()) b->lines.add().set("");
     }
@@ -346,7 +312,7 @@ struct editor
     {
         del();
         editline &current = currentline();
-        if(ch == '\n' && !allowsnewline()) 
+        if(ch == '\n') 
         {
             if(maxy == -1 || cy < maxy-1)
             {
@@ -370,17 +336,12 @@ struct editor
     {   
         del();
         
-        vector<editline> temp; //transform b into correct format for this editor to use
-        if(allowsnewline() && !b->allowsnewline()) temp.add().combinelines(b->lines);
-        else if(!allowsnewline() && b->allowsnewline()) b->lines[0].splitlines(temp);
-        else loopv(b->lines) temp.add().set(b->lines[i].text, b->lines[i].len);
-        
-        if(temp.length() == 1 || maxy == 1) 
+        if(b->lines.length() == 1 || maxy == 1) 
         {
             editline &current = currentline();
-            char *str = temp[0].text;            
-            int slen = temp[0].len;
-            if(maxx >= 0 && temp[0].len + cx > maxx) slen = maxx-cx;
+            char *str = b->lines[0].text;            
+            int slen = b->lines[0].len;
+            if(maxx >= 0 && b->lines[0].len + cx > maxx) slen = maxx-cx;
             if(slen > 0) 
             {
                 int len = current.len;
@@ -388,25 +349,21 @@ struct editor
                 current.insert(str, cx, slen); 
                 cx += slen;
             }
-            loopv(temp) temp[i].clear();
         } 
         else 
         {
-            loopv(temp) 
+            loopv(b->lines) 
             {   
                 if(!i) 
                 {
-                    lines[cy++].append(temp[i].text);
-                    temp[i].clear();
+                    lines[cy++].append(b->lines[i].text);
                 }
                 else if(i >= b->lines.length())
                 {
-                    cx = temp[i].len;
-                    lines[cy].prepend(temp[i].text);
-                    temp[i].clear();
+                    cx = b->lines[i].len;
+                    lines[cy].prepend(b->lines[i].text);
                 }
-                else if(maxy >= 0 && lines.length() < maxy) lines.insert(cy++, temp[i]);
-                else temp[i].clear();
+                else if(maxy >= 0 && lines.length() < maxy) lines.insert(cy++, b->lines[i]);
             }
         }
     }
@@ -613,21 +570,6 @@ struct editor
             h+=height;
         }
     }
-    
-    // only used when allownewline(), thus scrolly and pixelheight arent relevant
-    void bounds(int &w, int &h)
-    {
-        int maxwidth = linewrap?pixelwidth:-1;
-        w = h = 0;
-        loopv(lines)
-        {
-            int width, height;
-            text_bounds(lines[i].text, width, height, maxwidth);
-            if(width > w) w = width;
-            h += height;
-        }
-    }
-
 };
 
 // a 'stack' where the last is the current focused editor
