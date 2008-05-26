@@ -261,6 +261,8 @@ struct editor
 
     void copyselectionto(editor *b)
     {
+        if(b==this) return;
+
         b->clear(NULL);
         int sx, sy, ex, ey;
         region(sx, sy, ex, ey);
@@ -335,6 +337,8 @@ struct editor
 
     void insertallfrom(editor *b) 
     {   
+        if(b==this) return;
+
         del();
         
         if(b->lines.length() == 1 || maxy == 1) 
