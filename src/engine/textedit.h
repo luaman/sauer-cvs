@@ -27,10 +27,13 @@ struct editline
         if(total + 1 <= maxlen) return false;
         maxlen = (total + CHUNKSIZE) - total%CHUNKSIZE;
         char *newtext = new char[maxlen];
-        va_list args;
-        va_start(args, fmt);
-        _vsnprintf(newtext, maxlen, fmt, args);
-        va_end(args);
+        if(fmt)
+        {
+            va_list args;
+            va_start(args, fmt);
+            _vsnprintf(newtext, maxlen, fmt, args);
+            va_end(args);
+        }
         DELETEA(text);
         text = newtext;
         return true;
