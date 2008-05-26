@@ -266,6 +266,7 @@ struct editor
         region(sx, sy, ex, ey);
         loopi(1+ey-sy)
         {
+            if(b->maxy != -1 && b->lines.length() >= b->maxy) break;
             int y = sy+i;
             char *line = lines[y].text;
             int len = lines[y].len;
