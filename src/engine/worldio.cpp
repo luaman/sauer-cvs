@@ -11,7 +11,7 @@ void backup(char *name, char *backupname)
     rename(findfile(name, "wb"), backupfile);
 }
 
-string cgzname, bakname, pcfname, mcfname, picname;
+string ogzname, bakname, pcfname, mcfname, picname;
 
 VARP(savebak, 0, 2, 2);
 
@@ -21,10 +21,10 @@ void cutogz(char *s)
     if(ogzp) *ogzp = '\0';
 }
 
-void setnames(const char *fname, const char *cname = 0)
+void getnames(const char *fname, const char *cname, char *pakname, char *mapname, char *cfgname)
 {
     if(!cname) cname = fname;
-    string name, pakname, mapname, cfgname;
+    string name;
     s_strncpy(name, cname, 100);
     cutogz(name);
     char *slash = strpbrk(name, "/\\");
@@ -41,18 +41,38 @@ void setnames(const char *fname, const char *cname = 0)
     if(strpbrk(fname, "/\\")) s_strcpy(mapname, fname);
     else s_sprintf(mapname)("base/%s", fname);
     cutogz(mapname);
+}
 
-    s_sprintf(cgzname)("packages/%s.ogz", mapname);
+void setnames(const char *fname, const char *cname = 0)
+{
+    string pakname, mapname, cfgname;
+    getnames(fname, cname, pakname, mapname, cfgname);
+
+    s_sprintf(ogzname)("packages/%s.ogz", mapname);
     if(savebak==1) s_sprintf(bakname)("packages/%s.BAK", mapname);
     else s_sprintf(bakname)("packages/%s_%d.BAK", mapname, lastmillis);
     s_sprintf(pcfname)("packages/%s/package.cfg", pakname);
-    s_sprintf(mcfname)("packages/%s/%s.cfg",      pakname, cfgname);
+    s_sprintf(mcfname)("packages/%s/%s.cfg", pakname, cfgname);
     s_sprintf(picname)("packages/%s.jpg", mapname);
 
-    path(cgzname);
+    path(ogzname);
     path(bakname);
     path(picname);
 }
+
+void mapcfgname()
+{
+    const char *mname = cl->getclientmap();
+    if(!*mname) mname = "untitled";
+
+    string pakname, mapname, cfgname;
+    getnames(mname, NULL, pakname, mapname, cfgname);
+    s_sprintfd(mcfname)("packages/%s/%s.cfg", pakname, cfgname);
+    path(mcfname);
+    result(mcfname);
+}
+
+COMMAND(mapcfgname, "");
 
 ushort readushort(gzFile f)
 {
@@ -256,9 +276,9 @@ bool save_world(const char *mname, bool nolms)
 {
     if(!*mname) mname = cl->getclientmap();
     setnames(*mname ? mname : "untitled");
-    if(savebak) backup(cgzname, bakname);
-    gzFile f = opengzfile(cgzname, "wb9");
-    if(!f) { conoutf(CON_WARN, "could not write map to %s", cgzname); return false; }
+    if(savebak) backup(ogzname, bakname);
+    gzFile f = opengzfile(ogzname, "wb9");
+    if(!f) { conoutf(CON_WARN, "could not write map to %s", ogzname); return false; }
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
@@ -313,7 +333,7 @@ bool save_world(const char *mname, bool nolms)
     }
 
     gzclose(f);
-    conoutf("wrote map file %s", cgzname);
+    conoutf("wrote map file %s", ogzname);
     return true;
 }
 
@@ -347,13 +367,13 @@ bool load_world(const char *mname, const char *cname)        // still supports a
 {
     int loadingstart = SDL_GetTicks();
     setnames(mname, cname);
-    gzFile f = opengzfile(cgzname, "rb9");
-    if(!f) { conoutf(CON_ERROR, "could not read map %s", cgzname); return false; }
+    gzFile f = opengzfile(ogzname, "rb9");
+    if(!f) { conoutf(CON_ERROR, "could not read map %s", ogzname); return false; }
     header newhdr;
     gzread(f, &newhdr, sizeof(header));
     endianswap(&newhdr.version, sizeof(int), 9);
-    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf(CON_ERROR, "map %s has malformatted header", cgzname); gzclose(f); return false; }
-    if(newhdr.version>MAPVERSION) { conoutf(CON_ERROR, "map %s requires a newer version of cube 2", cgzname); gzclose(f); return false; }
+    if(strncmp(newhdr.head, "OCTA", 4)!=0) { conoutf(CON_ERROR, "map %s has malformatted header", ogzname); gzclose(f); return false; }
+    if(newhdr.version>MAPVERSION) { conoutf(CON_ERROR, "map %s requires a newer version of cube 2", ogzname); gzclose(f); return false; }
     hdr = newhdr;
     resetmap();
     Texture *mapshot = textureload(picname, 0, true, false);
@@ -513,7 +533,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
 
     gzclose(f);
 
-    conoutf("read map %s (%.1f seconds)", cgzname, (SDL_GetTicks()-loadingstart)/1000.0f);
+    conoutf("read map %s (%.1f seconds)", ogzname, (SDL_GetTicks()-loadingstart)/1000.0f);
     if(hdr.maptitle[0]) conoutf(CON_ECHO, "%s", hdr.maptitle);
 
     overrideidents = true;
