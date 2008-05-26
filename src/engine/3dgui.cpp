@@ -296,6 +296,10 @@ struct gui : g3d_gui
         editor *e = useeditor(name, false, false, initval); // generate a new editor if necessary
         if(layoutpass)
         {
+            if(initval && e->mode==EDITORFOCUSED && (e!=currentfocus() || fieldmode == FIELDSHOW))
+            {
+                if(strcmp(e->lines[0].text, initval)) e->clear(initval);
+            }
             e->linewrap = (length<0);
             e->maxx = (e->linewrap) ? -1 : length;
             e->maxy = (height<=0)?1:-1;
@@ -917,13 +921,6 @@ bool g3d_windowhit(bool on, bool act)
         mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
     } else if(!on && windowhit) cleargui(1);
     return (guis2d.length() && hascursor) || (windowhit && !windowhit->gui2d);
-}
-
-const char *g3d_fieldname()
-{
-    editor *top = currentfocus();
-    if(!layoutpass || (fieldmode==FIELDSHOW) || !top) return "";
-    return top->name;
 }
 
 void g3d_render()   

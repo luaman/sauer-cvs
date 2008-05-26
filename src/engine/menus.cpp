@@ -281,10 +281,9 @@ void guibitfield(char *name, char *var, int *mask, char *onchange)
 }
 
 //-ve length indicates a wrapped text field of any (approx 260 chars) length, |length| is the field width
-void guifield(char *var, int *maxlength, char *onchange, char *updateval)
+void guifield(char *var, int *maxlength, char *onchange)
 {   
     if(!cgui) return;
-    if(updateval[0] && strcmp(g3d_fieldname(), var)) execute(updateval);
     const char *initval = "";
     ident *id = getident(var);
     if(id && id->type==ID_ALIAS) initval = id->action;
@@ -368,7 +367,7 @@ COMMAND(guiradio,"ssis");
 COMMAND(guibitfield, "ssis");
 COMMAND(guicheckbox, "ssiis");
 COMMAND(guitab, "s");
-COMMAND(guifield, "siss");
+COMMAND(guifield, "sis");
 
 struct change
 {
