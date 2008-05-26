@@ -17,45 +17,6 @@ static float firstx, firsty;
 static enum {FIELDCOMMIT, FIELDABORT, FIELDEDIT, FIELDSHOW} fieldmode = FIELDSHOW; 
 static bool fieldsactive = false;
 
-
-bool menukey(int code, bool isdown, int cooked) 
-{
-    if(code==-1 && g3d_windowhit(isdown, true)) return true;  
-    else if(code==-3 && g3d_windowhit(isdown, false)) return true;
-    
-    editor *e = currentfocus();
-    if((fieldmode == FIELDSHOW) || !e) return false;
-    switch(code) 
-    {
-        case SDLK_ESCAPE: //cancel editing without commit
-            fieldmode = FIELDABORT;
-            return true;
-        case SDLK_RETURN:
-        case SDLK_TAB:
-            if(cooked && (e->maxy != 1)) break;
-        case SDLK_KP_ENTER:
-            fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
-            return false;
-        case SDLK_HOME:
-        case SDLK_END:
-        case SDLK_PAGEUP:
-        case SDLK_PAGEDOWN:
-        case SDLK_DELETE:
-        case SDLK_BACKSPACE:
-        case SDLK_UP:
-        case SDLK_DOWN:
-        case SDLK_LEFT:
-        case SDLK_RIGHT:
-            break;
-        default:
-            if(!cooked || (code<32)) return false;
-    }
-    if(!isdown) return true;
-    e->key(code, cooked);
-    return true;
-}
-
-
 static bool hascursor;
 static float cursorx = 0.5f, cursory = 0.5f;
 
@@ -660,7 +621,7 @@ struct gui : g3d_gui
         if(!gui2d) glDepthFunc(GL_ALWAYS);
     } 
 
-    vec origin, scale;
+    vec origin, scale, *savedorigin;
     float dist;
     g3d_callback *cb;
     bool gui2d;
@@ -827,6 +788,89 @@ int gui::curdepth, gui::curlist, gui::xsize, gui::ysize, gui::curx, gui::cury;
 int gui::ty, gui::tx, gui::tpos, *gui::tcurrent, gui::tcolor;
 static vector<gui> guis2d, guis3d;
 
+VARP(guipushdist, 1, 4, 64);
+
+bool menukey(int code, bool isdown, int cooked)
+{
+    if(code==-1 && g3d_windowhit(isdown, true)) return true;
+    else if(code==-3 && g3d_windowhit(isdown, false)) return true;
+
+    editor *e = currentfocus();
+    if((fieldmode == FIELDSHOW) || !e)
+    {
+        if(windowhit) switch(code)
+        {
+            case -4: // window "management" 
+                if(isdown)
+                {
+                    if(windowhit->gui2d) 
+                    {
+                        vec origin = *guis2d.last().savedorigin;
+                        int i = windowhit - &guis2d[0];
+                        for(int j = guis2d.length()-1; j > i; j--) *guis2d[j].savedorigin = *guis2d[j-1].savedorigin;
+                        *windowhit->savedorigin = origin;
+                        if(guis2d.length() > 1)
+                        {
+                            if(camera1->o.dist(*windowhit->savedorigin) <= camera1->o.dist(*guis2d.last().savedorigin))
+                                windowhit->savedorigin->add(camdir);
+                        }
+                    }
+                    else windowhit->savedorigin->add(vec(camdir).mul(guipushdist));
+                }
+                return true;
+            case -5:
+                if(isdown)
+                {
+                    if(windowhit->gui2d)
+                    {
+                        vec origin = *guis2d[0].savedorigin;
+                        loopj(guis2d.length()-1) *guis2d[j].savedorigin = *guis2d[j + 1].savedorigin;
+                        *guis2d.last().savedorigin = origin;
+                        if(guis2d.length() > 1)
+                        {
+                            if(camera1->o.dist(*guis2d.last().savedorigin) >= camera1->o.dist(*guis2d[0].savedorigin))
+                                guis2d.last().savedorigin->sub(camdir);
+                        }
+                    }
+                    else windowhit->savedorigin->sub(vec(camdir).mul(guipushdist));
+                }
+                return true;
+        }
+
+        return false;
+    }
+    switch(code)
+    {
+        case SDLK_ESCAPE: //cancel editing without commit
+            fieldmode = FIELDABORT;
+            return true;
+        case SDLK_RETURN:
+        case SDLK_TAB:
+            if(cooked && (e->maxy != 1)) break;
+        case SDLK_KP_ENTER:
+            fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
+            return false;
+        case SDLK_HOME:
+        case SDLK_END:
+        case SDLK_PAGEUP:
+        case SDLK_PAGEDOWN:
+        case SDLK_DELETE:
+        case SDLK_BACKSPACE:
+        case SDLK_UP:
+        case SDLK_DOWN:
+        case SDLK_LEFT:
+        case SDLK_RIGHT:
+        case -4:
+        case -5:
+            break;
+        default:
+            if(!cooked || (code<32)) return false;
+    }
+    if(!isdown) return true;
+    e->key(code, cooked);
+    return true;
+}
+
 void g3d_cursorpos(float &x, float &y)
 {
     if(guis2d.length()) { x = cursorx; y = cursory; }
@@ -857,6 +901,7 @@ void g3d_addgui(g3d_callback *cb, vec &origin, int flags)
     gui &g = (gui2d ? guis2d : guis3d).add();
     g.cb = cb;
     g.origin = origin;
+    g.savedorigin = &origin;
     g.dist = camera1->o.dist(g.origin);
     g.gui2d = gui2d;
 }

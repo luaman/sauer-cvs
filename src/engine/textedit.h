@@ -395,6 +395,12 @@ struct editor
                 }
                 cy++;
                 break;
+            case -4:
+                cy--;
+                break;
+            case -5:
+                cy++;
+                break;
             case SDLK_PAGEUP:
                 cy-=pixelheight/FONTH;
                 break;
@@ -507,10 +513,11 @@ struct editor
             }
             maxy--;
             
-            if(ey >= scrolly && sy <= maxy) {
+            if(ey >= scrolly && sy <= maxy) 
+            {
                 // crop top/bottom within window
                 if(sy < scrolly) { sy = scrolly; psy = 0; psx = 0; }
-                if(ey > maxy) { ey = maxy; pey = pixelheight; pex = pixelwidth; }
+                if(ey > maxy) { ey = maxy; pey = pixelheight - FONTH; pex = pixelwidth; }
 
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
