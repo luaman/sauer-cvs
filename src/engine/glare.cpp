@@ -36,7 +36,7 @@ void drawglaretex()
 {
     if(!glare || renderpath==R_FIXEDFUNCTION) return;
 
-    glaretex.render(1<<glaresize, blurglare, blurglaresigma/100.0f);
+    glaretex.render(1<<glaresize, 1<<glaresize, blurglare, blurglaresigma/100.0f);
 }
 
 FVARP(glarescale, 1);
