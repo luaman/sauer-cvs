@@ -295,7 +295,7 @@ void cursorupdate()
         od  = dimension(orient),
         odc = dimcoord(orient);
 
-    bool hovering = false;
+    bool hidecursor = g3d_windowhit(true, false), hovering = false;
     hmapsel = false;
            
     if(moving)
@@ -341,9 +341,10 @@ void cursorupdate()
                 }
             }
 
-        if((hovering = hoveringonent(ent, entorient)))
+        if((hovering = hoveringonent(hidecursor ? -1 : ent, entorient)))
         {
-           if(!havesel) {
+           if(!havesel) 
+           {
                selchildcount = 0;
                sel.s = ivec(0, 0, 0);
            }
@@ -426,7 +427,7 @@ void cursorupdate()
 
     enablepolygonoffset(GL_POLYGON_OFFSET_LINE);
 
-    if(!moving && !hovering)
+    if(!moving && !hovering && !hidecursor)
     {
         if(hmapedit==1)
             glColor3ub(0, hmapsel ? 255 : 40, 0);
