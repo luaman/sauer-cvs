@@ -583,9 +583,9 @@ struct editor
         }
         
         int slines = lines.length()-pixelheight/FONTH;
-        if(maxy != 1 && slines > 0 && slines >= scrolly) // scroll indicator
+        if(maxy != 1 && slines > 0) // scroll indicator
         {
-            float s = (pixelheight-FONTH)*scrolly/float(slines);
+            float s = (pixelheight-FONTH)*min(1.0f, scrolly/float(slines));
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
             glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
