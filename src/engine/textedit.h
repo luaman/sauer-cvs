@@ -459,6 +459,12 @@ struct editor
 
     void hit(int hitx, int hity, bool dragged)
     {
+        int slines = lines.length()-pixelheight/FONTH;
+        if(maxy != 1 && slines > 0 && hitx > pixelwidth) // scroll region
+        {
+            cy = scrolly = ((hity-FONTH/2)*slines)/(pixelheight-FONTH);
+            return;
+        }
         int maxwidth = linewrap?pixelwidth:-1;
         int h = 0;
         for(int i = scrolly; i < lines.length(); i++)
@@ -488,6 +494,7 @@ struct editor
         if(cy < scrolly) scrolly = cy;
         else 
         {
+            if(scrolly < 0) scrolly = 0;
             int h = 0;
             for(int i = cy; i >= scrolly; i--)
             {
