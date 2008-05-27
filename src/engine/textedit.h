@@ -525,7 +525,7 @@ struct editor
 
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
-                glColor3f(0.98, 0.77, 0.65);
+                glColor3ub(0xA0, 0x80, 0x80);
                 glBegin(GL_QUADS);
                 if(psy == pey) 
                 {
@@ -569,7 +569,7 @@ struct editor
             {   
                 notextureshader->set();
                 glDisable(GL_TEXTURE_2D);
-                glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
+                glColor3ub(0x80, 0xA0, 0x80);
                 glBegin(GL_QUADS);
                 glVertex2f(x,         y+h+FONTH);
                 glVertex2f(x,         y+h+height);
@@ -588,7 +588,7 @@ struct editor
             float s = (pixelheight-FONTH)*min(1.0f, scrolly/float(slines));
             notextureshader->set();
             glDisable(GL_TEXTURE_2D);
-            glColor3ub((color>>16)/2, ((color>>8)&0xFF)/2, (color&0xFF)/2);
+            glColor3ub(0x80, 0x80, 0xA0);
             glBegin(GL_QUADS);
             glVertex2f(x+pixelwidth,         y+s+FONTH);
             glVertex2f(x+pixelwidth,         y+s);
