@@ -20,7 +20,7 @@ struct fpsrender
     {
         static const playermodelinfo playermodels[3] =
         {
-            { "mrfixit", "mrfixit/blue", "mrfixit/red", NULL, NULL, { NULL, NULL, NULL }, "mrfixit", "mrfixit_blue", "mrfixit_red" },
+            { "mrfixit", "mrfixit/blue", "mrfixit/red", NULL, "mrfixit/horns", { NULL, NULL, NULL }, "mrfixit", "mrfixit_blue", "mrfixit_red" },
             { "ironsnout", "ironsnout/blue", "ironsnout/red", NULL, "quadspheres", { "shield/blue", "shield/green", "shield/yellow" }, "ironsnout", "ironsnout_blue", "ironsnout_red" },
             { "monster/ogro", "monster/ogro/blue", "monster/ogro/red", "monster/ogro/vwep", NULL, { NULL, NULL, NULL }, "ogro", "ogro", "ogro" }
         };
@@ -37,6 +37,9 @@ struct fpsrender
         loadmodel(mdl.quad, -1, true);
         loopi(3) loadmodel(mdl.armour[i], -1, true);
     }
+    
+    IVAR(testquad, 0, 0, 1);
+    IVAR(testarmour, 0, 0, 1);
 
     void renderplayer(fpsent *d, const playermodelinfo &mdl, int team)
     {
@@ -69,7 +72,7 @@ struct fpsrender
         }
         if(d->state==CS_ALIVE)
         {
-            if(d->quadmillis && mdl.quad)
+            if((testquad() || d->quadmillis) && mdl.quad)
             {
                 a[ai].name = mdl.quad;
                 a[ai].tag = "tag_powerup";
@@ -77,7 +80,7 @@ struct fpsrender
                 a[ai].basetime = 0;
                 ai++;
             }
-            if(d->armour)
+            if(testarmour() || d->armour)
             {
                 int type = clamp(d->armourtype, (int)A_BLUE, (int)A_YELLOW);
                 if(mdl.armour[type])
