@@ -103,8 +103,8 @@ struct editline
     {
         if(!text) return;
         if(start < 0) { count += start; start = 0; } 
-        if(count <= 0 || start + 1 >= maxlen) return;
-        if(start + count + 1 > maxlen) count = maxlen - start - 1;
+        if(count <= 0 || start >= len) return;
+        if(start + count > len) count = len - start - 1;
         memmove(&text[start], &text[start+count], len + 1 - (start + count));
         len -= count;
     }
@@ -368,7 +368,7 @@ struct editor
                     cx = b->lines[i].len;
                     lines[cy].prepend(b->lines[i].text);
                 }
-                else if(maxy >= 0 && lines.length() < maxy) lines.insert(cy++, b->lines[i]);
+                else if(maxy < 0 || lines.length() < maxy) lines.insert(cy++, editline(b->lines[i].text));
             }
         }
     }
