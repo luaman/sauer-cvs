@@ -846,17 +846,14 @@ bool menukey(int code, bool isdown, int cooked)
     switch(code)
     {
         case SDLK_ESCAPE: //cancel editing without commit
-            fieldmode = FIELDABORT;
+            if(isdown) fieldmode = FIELDABORT;
             return true;
         case SDLK_RETURN:
         case SDLK_TAB:
+            if(cooked && (e->maxy != 1)) break;
         case SDLK_KP_ENTER:
-            if(e->maxy == 1) 
-            {
-                fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
-                return false;
-            }
-            break;
+            if(isdown) fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
+            return true;
         case SDLK_HOME:
         case SDLK_END:
         case SDLK_PAGEUP:

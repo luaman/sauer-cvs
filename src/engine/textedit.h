@@ -448,7 +448,6 @@ struct editor
                 }
                 break;
             }
-            case SDLK_KP_ENTER:
             case SDLK_RETURN:    
                 cooked = '\n';
                 // fall through
