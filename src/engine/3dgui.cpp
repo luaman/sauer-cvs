@@ -850,10 +850,13 @@ bool menukey(int code, bool isdown, int cooked)
             return true;
         case SDLK_RETURN:
         case SDLK_TAB:
-            if(cooked && (e->maxy != 1)) break;
         case SDLK_KP_ENTER:
-            fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
-            return false;
+            if(e->maxy == 1) 
+            {
+                fieldmode = FIELDCOMMIT; //signal field commit (handled when drawing field)
+                return false;
+            }
+            break;
         case SDLK_HOME:
         case SDLK_END:
         case SDLK_PAGEUP:
