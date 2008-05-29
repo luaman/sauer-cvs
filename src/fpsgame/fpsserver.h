@@ -102,7 +102,7 @@ struct fpsserver : igameserver
         int lastdeath, lastspawn, lifesequence;
         int lastshot;
         projectilestate<8> rockets, grenades;
-        int frags;
+        int frags, deaths, teamkills, shotdamage, damage;
         int lasttimeplayed, timeplayed;
         float effectiveness;
 
@@ -128,7 +128,7 @@ struct fpsserver : igameserver
 
             timeplayed = 0;
             effectiveness = 0;
-            frags = 0;
+            frags = deaths = teamkills = shotdamage = damage = 0;
 
             respawn();
         }
@@ -147,7 +147,7 @@ struct fpsserver : igameserver
     {
         uint ip;
         string name;
-        int maxhealth, frags;
+        int maxhealth, frags, deaths, teamkills, shotdamage, damage;
         int timeplayed;
         float effectiveness;
 
@@ -155,6 +155,10 @@ struct fpsserver : igameserver
         {
             maxhealth = gs.maxhealth;
             frags = gs.frags;
+            deaths = gs.deaths;
+            teamkills = gs.teamkills;
+            shotdamage = gs.shotdamage;
+            damage = gs.damage;
             timeplayed = gs.timeplayed;
             effectiveness = gs.effectiveness;
         }
@@ -164,6 +168,10 @@ struct fpsserver : igameserver
             if(gs.health==gs.maxhealth) gs.health = maxhealth;
             gs.maxhealth = maxhealth;
             gs.frags = frags;
+            gs.deaths = deaths;
+            gs.teamkills = teamkills;
+            gs.shotdamage = shotdamage;
+            gs.damage = damage;
             gs.timeplayed = timeplayed;
             gs.effectiveness = effectiveness;
         }
@@ -517,19 +525,19 @@ struct fpsserver : igameserver
         }
     }
 
-    struct teamscore
+    struct teamrank
     {
         const char *name;
         float rank;
         int clients;
 
-        teamscore(const char *name) : name(name), rank(0), clients(0) {}
+        teamrank(const char *name) : name(name), rank(0), clients(0) {}
     };
     
     const char *chooseworstteam(const char *suggest = NULL, clientinfo *exclude = NULL)
     {
-        teamscore teamscores[2] = { teamscore("good"), teamscore("evil") };
-        const int numteams = sizeof(teamscores)/sizeof(teamscores[0]);
+        teamrank teamranks[2] = { teamrank("good"), teamrank("evil") };
+        const int numteams = sizeof(teamranks)/sizeof(teamranks[0]);
         loopv(clients)
         {
             clientinfo *ci = clients[i];
@@ -537,18 +545,18 @@ struct fpsserver : igameserver
             ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
             ci->state.lasttimeplayed = lastmillis;
 
-            loopj(numteams) if(!strcmp(ci->team, teamscores[j].name)) 
+            loopj(numteams) if(!strcmp(ci->team, teamranks[j].name)) 
             { 
-                teamscore &ts = teamscores[j];
+                teamrank &ts = teamranks[j];
                 ts.rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
                 ts.clients++;
                 break;
             }
         }
-        teamscore *worst = &teamscores[numteams-1];
+        teamrank *worst = &teamranks[numteams-1];
         loopi(numteams-1)
         {
-            teamscore &ts = teamscores[i];
+            teamrank &ts = teamranks[i];
             if(m_capture || m_ctf)
             {
                 if(ts.clients < worst->clients || (ts.clients == worst->clients && ts.rank < worst->rank)) worst = &ts;
@@ -1710,6 +1718,7 @@ struct fpsserver : igameserver
     {
         gamestate &ts = target->state;
         ts.dodamage(damage);
+        actor->state.damage += damage;
         sendf(-1, 1, "ri6", SV_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health); 
         if(target!=actor && !hitpush.iszero()) 
         {
@@ -1720,6 +1729,8 @@ struct fpsserver : igameserver
         }
         if(ts.health<=0)
         {
+            target->state.deaths++;
+            if(actor!=target && isteam(actor->team, target->team)) actor->state.teamkills++;
             int fragvalue = smode ? smode->fragvalue(target, actor) : (target==actor || isteam(target->team, actor->team) ? -1 : 1);
             actor->state.frags += fragvalue;
             if(fragvalue>0)
@@ -1744,6 +1755,7 @@ struct fpsserver : igameserver
         gamestate &gs = ci->state;
         if(gs.state!=CS_ALIVE) return;
         ci->state.frags += smode ? smode->fragvalue(ci, ci) : -1;
+        ci->state.deaths++;
         sendf(-1, 1, "ri4", SV_DIED, ci->clientnum, ci->clientnum, gs.frags);
         ci->position.setsizenodelete(0);
         if(smode) smode->died(ci, NULL);
@@ -1801,6 +1813,7 @@ struct fpsserver : igameserver
                 int(e.from[0]*DMF), int(e.from[1]*DMF), int(e.from[2]*DMF),
                 int(e.to[0]*DMF), int(e.to[1]*DMF), int(e.to[2]*DMF),
                 ci->clientnum);
+        gs.shotdamage += guns[e.gun].damage*(gs.quadmillis ? 4 : 1)*(e.gun==GUN_SG ? SGRAYS : 1);
         switch(e.gun)
         {
             case GUN_RL: gs.rockets.add(e.id); break;
@@ -2028,8 +2041,16 @@ struct fpsserver : igameserver
     int serverport() { return SAUERBRATEN_SERVER_PORT; }
     const char *getdefaultmaster() { return "sauerbraten.org/masterserver/"; } 
 
-    void serverinforeply(ucharbuf &p)
+    #include "extinfo.h"
+
+    void serverinforeply(ucharbuf &req, ucharbuf &p)
     {
+        if(!getint(req))
+        {
+            extserverinforeply(req, p);
+            return;
+        }
+
         putint(p, clients.length());
         putint(p, 5);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // a // generic attributes, passed back below
@@ -2039,6 +2060,7 @@ struct fpsserver : igameserver
         putint(p, mastermode);
         sendstring(smapname, p);
         sendstring(serverdesc, p);
+        sendserverinforeply(p);
     }
 
     bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np)

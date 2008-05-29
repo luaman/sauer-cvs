@@ -103,7 +103,7 @@ struct igameserver
     virtual void parsepacket(int sender, int chan, bool reliable, ucharbuf &p) = 0;
     virtual bool sendpackets() = 0;
     virtual int welcomepacket(ucharbuf &p, int n, ENetPacket *packet) = 0;
-    virtual void serverinforeply(ucharbuf &p) = 0;
+    virtual void serverinforeply(ucharbuf &req, ucharbuf &p) = 0;
     virtual void serverupdate(int lastmillis, int totalmillis) = 0;
     virtual bool servercompatible(char *name, char *sdec, char *map, int ping, const vector<int> &attr, int np) = 0;
     virtual int serverinfoport() = 0;

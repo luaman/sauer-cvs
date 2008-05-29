@@ -250,6 +250,7 @@ extern void filtertext(char *dst, const char *src, bool whitespace = true, int l
 extern void disconnect_client(int n, int reason);
 extern bool hasnonlocalclients();
 extern bool haslocalclients();
+extern void sendserverinforeply(ucharbuf &p);
 
 // client
 extern void c2sinfo(dynent *d, int rate = 33);
