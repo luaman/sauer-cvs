@@ -274,7 +274,7 @@ struct gui : g3d_gui
             else
             {
                 hit = ishit(xsize, FONTH, x, y);
-                px = x + ((xsize-w)*(val-vmin))/((vmax==vmin) ? 1 : (vmax-vmin)); //vmin at left
+                px = x + FONTH/2 - w/2 + ((xsize-w)*(val-vmin))/((vmax==vmin) ? 1 : (vmax-vmin)); //vmin at left
                 py = y;
             }
 
@@ -282,11 +282,11 @@ struct gui : g3d_gui
             text_(label, px, py, color, hit && actionon);
             if(hit && actionon)
             {
-                int vnew = 1+abs(vmax-vmin);
-                if(vmax < vmin) vnew = -vnew;
-                if(ishorizontal()) vnew = int(vnew*(y+ysize-hity)/ysize);
-                else vnew = int(vnew*(hitx-x)/xsize);
+                int vnew = (vmin < vmax ? 1 : -1)+vmax-vmin;
+                if(ishorizontal()) vnew = int(vnew*(y+ysize-FONTH/2-hity)/(ysize-FONTH));
+                else vnew = int(vnew*(hitx-x-FONTH/2)/(xsize-w));
                 vnew += vmin;
+                vnew = vmin < vmax ? clamp(vnew, vmin, vmax) : clamp(vnew, vmax, vmin);
                 if(vnew != val) val = vnew;
             }
         }
