@@ -13,20 +13,20 @@
     Client:
     -----
     A: 0 EXT_UPTIME
-    B: 0 EXT_PLAYERSTATS pid (a player id or -1 for all players)
+    B: 0 EXT_PLAYERSTATS cn #a client number or -1 for all players#
     C: 0 EXT_TEAMSCORE
 
-    Server:
+    Server:  
     --------
-    A: EXT_ACK EXT_VERSION <uptime>
-    B: EXT_ACK EXT_VERSION 0 EXT_PLAYERSTATS_RESP_IDS <pid(s)> [1 packet]
-       EXT_ACK EXT_VERSION 0 EXT_PLAYERSTATS_RESP_STATS pid <data> [1 packet for each player]
-    C: EXT_ACK EXT_VERSION 0 <data> (<numbases><bases>> or -1)
+    A: 0 EXT_UPTIME EXT_ACK EXT_VERSION uptime #in seconds#
+    B: 0 EXT_PLAYERSTATS cn #send by client# EXT_ACK EXT_VERSION 0 or 1 #error, if cn was > -1 and client does not exist# ...
+         EXT_PLAYERSTATS_RESP_IDS pid(s) #1 packet#
+         EXT_PLAYERSTATS_RESP_STATS pid playerdata #1 packet for each player#
+    C: 0 EXT_TEAMSCORE EXT_ACK EXT_VERSION 0 or 1 #error, no teammode# remaining_time gamemode loop(teamdata [numbases bases] or -1)
 
     Errors:
     --------------
-    B:C:default: EXT_ACK EXT_ERROR EXT_VERSION EXT_ERROR
-
+    B:C:default: 0 command EXT_ACK EXT_VERSION EXT_ERROR
 */
 
     void extinfoplayer(ucharbuf &p, clientinfo *ci)
