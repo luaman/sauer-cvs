@@ -269,12 +269,12 @@ struct gui : g3d_gui
             {
                 hit = ishit(FONTH, ysize, x, y);
                 px = x + (FONTH-w)/2;
-                py = y + (ysize-FONTH) - ((ysize-FONTH)*(val-vmin))/max(vmax-vmin, 1); //zero at the bottom
+                py = y + (ysize-FONTH) - ((ysize-FONTH)*(val-vmin))/((vmax==vmin) ? 1 : (vmax-vmin)); //vmin at bottom
             }
             else
             {
                 hit = ishit(xsize, FONTH, x, y);
-                px = x + ((xsize-w)*(val-vmin))/max(vmax-vmin, 1);
+                px = x + ((xsize-w)*(val-vmin))/((vmax==vmin) ? 1 : (vmax-vmin)); //vmin at left
                 py = y;
             }
 
@@ -315,6 +315,9 @@ struct gui : g3d_gui
         int h = e->pixelheight;
         int w = e->pixelwidth + FONTW;
         
+        bool wasvertical = isvertical();
+        if(wasvertical && e->maxy != 1) pushlist();
+        
         char *result = NULL;
         if(visible() && !layoutpass)
         {
@@ -351,6 +354,19 @@ struct gui : g3d_gui
             defaultshader->set();
         }
         layout(w, h);
+        
+        if(e->maxy != 1)
+        {
+            int slines = e->lines.length()-e->pixelheight/FONTH;
+            if(slines > 0) 
+            {
+                int pos = e->scrolly;
+                slider(e->scrolly, slines, 0, color, NULL);
+                if(pos != e->scrolly) e->cy = e->scrolly; 
+            }
+            if(wasvertical) poplist();
+        }
+        
         return result;
     }
 
