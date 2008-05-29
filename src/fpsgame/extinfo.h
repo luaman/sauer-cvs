@@ -139,7 +139,7 @@
                 int cn = getint(req); //a special player, -1 for all
                 
                 clientinfo *ci = NULL;
-                if(cn < 0)
+                if(cn >= 0)
                 {
                     loopv(clients) if(clients[i]->clientnum == cn) { ci = clients[i]; break; }
                     if(!ci)
