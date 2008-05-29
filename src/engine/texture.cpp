@@ -1185,6 +1185,7 @@ void cleanuptextures()
     loopi(MAT_EDIT) materialslots[i].cleanup();
     vector<Texture *> transient;
     enumerate(textures, Texture, tex,
+        DELETEA(tex.alphamask);
         if(tex.id) { glDeleteTextures(1, &tex.id); tex.id = 0; }
         if(tex.type==Texture::TRANSIENT) transient.add(&tex);
     );
@@ -1218,6 +1219,24 @@ bool reloadtexture(Texture &tex)
     }    
     return true;
 }
+
+void reloadtex(char *name)
+{
+    Texture *t = textures.access(path(name, true));
+    if(!t) { conoutf("texture %s is not loaded", name); return; }
+    if(t->type==Texture::TRANSIENT) { conoutf("can't reload transient texture %s", name); return; }
+    DELETEA(t->alphamask);
+    Texture oldtex = *t;
+    t->id = 0;
+    if(!reloadtexture(*t))
+    {
+        if(t->id) glDeleteTextures(1, &t->id);
+        *t = oldtex;
+        conoutf("failed to reload texture %s", name);
+    }
+}
+
+COMMAND(reloadtex, "s");
 
 void reloadtextures()
 {
