@@ -282,7 +282,8 @@ struct gui : g3d_gui
             text_(label, px, py, color, hit && actionon);
             if(hit && actionon)
             {
-                int vnew = 1+vmax-vmin;
+                int vnew = 1+abs(vmax-vmin);
+                if(vmax < vmin) vnew = -vnew;
                 if(ishorizontal()) vnew = int(vnew*(y+ysize-hity)/ysize);
                 else vnew = int(vnew*(hitx-x)/xsize);
                 vnew += vmin;
