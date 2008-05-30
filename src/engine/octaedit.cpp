@@ -1417,6 +1417,7 @@ void gettex()
 void getcurtex()
 {
     if(noedit()) return;
+    filltexlist();
     int index = curtexindex < 0 ? 0 : curtexindex;
     if(!texmru.inrange(index)) return;
     intret(texmru[index]);
