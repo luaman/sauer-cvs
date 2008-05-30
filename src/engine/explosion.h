@@ -13,7 +13,7 @@ VARFP(depthfxsize, 6, 7, 12, cleanupdepthfx());
 VARP(depthfx, 0, 1, 1);
 VARFP(depthfxrect, 0, 0, 1, cleanupdepthfx());
 VARFP(depthfxfilter, 0, 1, 1, cleanupdepthfx());
-VARFP(blurdepthfx, 0, 1, 7, cleanupdepthfx());
+VARP(blurdepthfx, 0, 1, 7);
 VARP(blurdepthfxsigma, 1, 50, 200);
 VAR(depthfxscissor, 0, 2, 2);
 VAR(debugdepthfx, 0, 0, 1);
@@ -102,7 +102,7 @@ static struct depthfxtexture : rendertarget
     bool texrect() const { return depthfxrect && hasTR; }
     bool filter() const { return depthfxfilter!=0; }
     bool highprecision() const { return colorfmt==GL_FLOAT_RG16_NV || colorfmt==GL_RGB16F_ARB || colorfmt==GL_RGB16; }
-    bool emulatehighprecision() const { return depthfxemuprecision && !depthfxfilter && !blurdepthfx; }
+    bool emulatehighprecision() const { return depthfxemuprecision && !depthfxfilter; }
 
     bool shouldrender()
     {
