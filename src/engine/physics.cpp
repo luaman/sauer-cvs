@@ -1221,7 +1221,7 @@ void modifygravity(physent *pl, bool water, int curtime)
     float secs = curtime/1000.0f;
     vec g(0, 0, 0);
     if(pl->physstate == PHYS_FALL) g.z -= GRAVITY*secs;
-    else if(!pl->floor.iszero() && pl->floor.z < FLOORZ)
+    else if(pl->floor.z > 0 && pl->floor.z < FLOORZ)
     {
         g.z = -1;
         g.project(pl->floor);
