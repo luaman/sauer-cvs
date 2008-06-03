@@ -65,7 +65,7 @@ struct vec
     void rescale(float k)
     {
         float mag = magnitude();
-        if(mag > 0) mul(k / mag);
+        if(mag > 1e-6f) mul(k / mag);
     }
 
     void rotate_around_z(float angle) { *this = vec(cosf(angle)*x-sinf(angle)*y, cosf(angle)*y+sinf(angle)*x, z); }
