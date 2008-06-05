@@ -295,9 +295,9 @@ void clearmodel(char *name)
 {
     model **m = mdllookup.access(name);
     if(!m) { conoutf("model %s is not loaded", name); return; }
+    mdllookup.remove(name);
     (*m)->cleanup();
     delete *m;
-    mdllookup.remove(name);
     conoutf("cleared model %s", name);
 }
 
