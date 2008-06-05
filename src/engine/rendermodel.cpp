@@ -291,6 +291,18 @@ void cleanupmodels()
     enumerate(mdllookup, model *, m, m->cleanup());
 }
 
+void clearmodel(char *name)
+{
+    model **m = mdllookup.access(name);
+    if(!m) { conoutf("model %s is not loaded", name); return; }
+    (*m)->cleanup();
+    delete *m;
+    mdllookup.remove(name);
+    conoutf("cleared model %s", name);
+}
+
+COMMAND(clearmodel, "s");
+
 bool modeloccluded(const vec &center, float radius)
 {
     int br = int(radius*2)+1;
