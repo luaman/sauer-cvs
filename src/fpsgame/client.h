@@ -40,7 +40,7 @@ struct clientcom : iclientcom
         CCOMMAND(getname, "", (clientcom *self), result(self->player1->name));
         CCOMMAND(getteam, "", (clientcom *self), result(self->player1->team));
         CCOMMAND(getclientfocus, "", (clientcom *self), intret(self->getclientfocus()));
-        CCOMMAND(getclientname, "", (clientcom *self, int *cn), result(self->getclientname(*cn)));
+        CCOMMAND(getclientname, "i", (clientcom *self, int *cn), result(self->getclientname(*cn)));
     }
 
     void switchname(const char *name)
