@@ -1799,7 +1799,7 @@ A team flag for CTF maps ONLY. Yaw Y is taken from the current camera yaw (shoul
 
 <pre id="_base_">"base" [ammo [N]]</pre>
 <p>
-A base for capture mode. If N is specified, the alias "base_N" will be looked up, and its value used for the name of the base, or otherwise a default name will be assigned. If ammo is specified, the base will always produce that type of ammo. If ammo is unspecified or 0, the server will randomly choose a type of ammo to produce at the start of the match. Ammo types are:</p>
+A base for capture mode. If N is specified, the alias "base_N" will be looked up, and its value used for the name of the base, or otherwise a default name will be assigned. If ammo is specified, the base will always produce that type of ammo. If ammo is unspecified or 0, the server will randomly choose a type of ammo to produce at the start of the match. If ammo is negative, then it will pick a random type, but will match all other bases with the same negative ammo value. Ammo types are:</p>
 <ul>
 <li>1: shells (shotgun)</li>
 <li>2: bullets (chaingun)</li>
