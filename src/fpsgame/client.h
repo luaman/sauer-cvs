@@ -947,16 +947,17 @@ struct clientcom : iclientcom
 
             case SV_BASES:
             {
-                int base = 0, ammotype;
-                while((ammotype = getint(p))>=0)
+                int numbases = getint(p);
+                loopi(numbases)
                 {
+                    int ammotype = getint(p);
                     string owner, enemy;
                     getstring(text, p);
                     s_strcpy(owner, text);
                     getstring(text, p);
                     s_strcpy(enemy, text);
                     int converted = getint(p), ammo = getint(p);
-                    cl.cpc.initbase(base++, ammotype, owner, enemy, converted, ammo);
+                    cl.cpc.initbase(i, ammotype, owner, enemy, converted, ammo);
                 }
                 break;
             }
