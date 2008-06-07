@@ -46,6 +46,7 @@ FVAR(yawcloudlayer, 0);
 FVAR(cloudheight, 0.2f);
 FVAR(cloudfade, 0.2f);
 VAR(cloudsubdiv, 4, 16, 64);
+VAR(cloudcolour, 0, 0xFFFFFF, 0xFFFFFF);
 
 void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
                       float s1, float t1, int x1, int y1, int z1,
@@ -109,7 +110,8 @@ void draw_env_overlay(int w, Texture *overlay = NULL, float tx = 0, float ty = 0
 {
     float z = -w*cloudheight, tsz = 0.5f*(1-cloudfade)/cloudscale, psz = w*(1-cloudfade);
     glBindTexture(GL_TEXTURE_2D, overlay ? overlay->id : notexture->id);
-    glColor3f(1, 1, 1);
+    float r = (cloudcolour>>16)/255.0f, g = ((cloudcolour>>8)&255)/255.0f, b = (cloudcolour&255)/255.0f;
+    glColor3f(r, g, b);
     glBegin(GL_POLYGON);
     loopi(cloudsubdiv)
     {
@@ -124,9 +126,9 @@ void draw_env_overlay(int w, Texture *overlay = NULL, float tx = 0, float ty = 0
     {
         vec p(1, 1, 0);
         p.rotate_around_z((-2.0f*M_PI*i)/cloudsubdiv);
-        glColor4f(1, 1, 1, 1);
+        glColor4f(r, g, b, 1);
         glTexCoord2f(tx + p.x*tsz, ty + p.y*tsz); glVertex3f(p.x*psz, p.y*psz, z);
-        glColor4f(1, 1, 1, 0);
+        glColor4f(r, g, b, 0);
         glTexCoord2f(tx + p.x*tsz2, ty + p.y*tsz2); glVertex3f(p.x*w, p.y*w, z);
     }
     glEnd();    
