@@ -49,6 +49,7 @@ struct clientcom : iclientcom
         { 
             c2sinit = false; 
             filtertext(player1->name, name, false, MAXNAMELEN);
+            if(!player1->name[0]) s_strcpy(player1->name, "unnamed");
         }
         else conoutf("your name is: %s", cl.colorname(player1));
     }
