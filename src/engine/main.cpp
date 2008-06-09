@@ -372,13 +372,21 @@ COMMAND(screenres, "ii");
 
 VARFP(gamma, 30, 100, 300,
 {
-    float f = gamma/100.0f;
+	float f = gamma/100.0f;
     if(SDL_SetGamma(f,f,f)==-1)
     {
         conoutf(CON_ERROR, "Could not set gamma (card/driver doesn't support it?)");
         conoutf(CON_ERROR, "sdl: %s", SDL_GetError());
     }
 });
+
+void resetgamma()
+{
+	float f = gamma/100.0f;
+	if(f==1) return;
+	SDL_SetGamma(1, 1, 1);
+	SDL_SetGamma(f, f, f);
+}
 
 void setupscreen(int &usedcolorbits, int &useddepthbits, int &usedfsaa)
 {
@@ -498,8 +506,6 @@ void resetgl()
     setupscreen(usedcolorbits, useddepthbits, usedfsaa);
     gl_init(scr_w, scr_h, usedcolorbits, useddepthbits, usedfsaa);
 
-    touchvar("gamma");
-
     extern void reloadfonts();
     extern void reloadtextures();
     extern void reloadshaders();
@@ -510,6 +516,7 @@ void resetgl()
     reloadfonts();
     inbetweenframes = true;
     computescreen("initializing...");
+	resetgamma();
     reloadshaders();
     reloadtextures();
     initlights();
