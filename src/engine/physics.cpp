@@ -1373,6 +1373,7 @@ void moveplayer(physent *pl, int moveres, bool local)
     {
         pl->newpos = pl->o;
         pl->deltapos.sub(pl->newpos);
+        interppos(pl);
     }
 }
 
@@ -1394,6 +1395,7 @@ bool bounce(physent *d, float elasticity, float waterfric)
     if(bounce(d, physframetime/1000.0f, elasticity, waterfric)) hitplayer = true; 
     d->newpos = d->o;
     d->deltapos.sub(d->newpos);
+    interppos(d);
     return hitplayer;
 }
 
