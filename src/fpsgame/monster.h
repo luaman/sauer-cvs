@@ -307,6 +307,7 @@ struct monsterset
                 monsters.add(m);
                 m->o = ents[i]->o;
                 entinmap(m);
+                updatedynentcache(m);
                 monstertotal++;
             }
         }

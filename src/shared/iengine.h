@@ -195,6 +195,7 @@ extern bool intersect(physent *d, vec &from, vec &to);
 extern bool moveplatform(physent *p, const vec &dir);
 extern void updatephysstate(physent *d);
 extern void cleardynentcache();
+extern void updatedynentcache(physent *d);
 extern bool entinmap(dynent *d, bool avoidplayers = false);
 extern void findplayerspawn(dynent *d, int forceent = -1, int tag = 0);
 

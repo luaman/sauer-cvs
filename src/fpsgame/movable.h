@@ -95,7 +95,8 @@ struct movableset
             movable *m = new movable(e, this);
             movables.add(m);
             m->o = e.o;
-            entinmap(m, true);
+            entinmap(m);
+            updatedynentcache(m);
         }
     }
 
