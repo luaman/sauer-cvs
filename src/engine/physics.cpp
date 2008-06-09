@@ -1247,7 +1247,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     int material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (3*pl->aboveeye - pl->eyeheight)/4));
     bool water = isliquid(material);
-    bool floating = (editmode && local) || pl->state==CS_EDITING || (pl->type!=ENT_CAMERA && pl->state==CS_SPECTATOR);
+    bool floating = pl->state==CS_EDITING || (pl->type!=ENT_CAMERA && pl->state==CS_SPECTATOR);
     float secs = curtime/1000.f;
 
     // apply gravity
@@ -1321,7 +1321,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
         else if(pl->inwater && !water) cl->physicstrigger(pl, local, 0, 1, pl->inwater);
         pl->inwater = water ? material : MAT_AIR;
 
-        if(pl->state==CS_ALIVE && (material==MAT_LAVA || material==MAT_DEATH)) cl->suicide(pl);
+        if(pl->state==CS_ALIVE && (pl->o.z < 0 || material==MAT_LAVA || material==MAT_DEATH)) cl->suicide(pl);
     }
 
     return true;
@@ -1329,32 +1329,72 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 
 #define PHYSFRAMETIME 5
 
-int physicsfraction = 0, physicsrepeat = 0, physframetime = PHYSFRAMETIME;
+int physsteps = 0, physframetime = PHYSFRAMETIME, lastphysframe = 0;
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
-    extern int gamespeed;
-    physframetime = clamp((PHYSFRAMETIME*gamespeed)/100, 1, PHYSFRAMETIME);
-
-    int faketime = curtime+physicsfraction;
-    physicsrepeat = faketime/physframetime;
-    physicsfraction = faketime%physframetime;
+    int diff = lastmillis + curtime - lastphysframe;
+    if(diff <= 0) physsteps = 0;
+    else
+    {
+        extern int gamespeed;
+        physframetime = clamp((PHYSFRAMETIME*gamespeed)/100, 1, PHYSFRAMETIME);
+        physsteps = (diff + physframetime - 1)/physframetime;
+        lastphysframe += physsteps * physframetime;
+    }
     cleardynentcache();
+}
+
+void interppos(physent *pl)
+{
+    pl->o = pl->newpos;
+
+    int diff = lastphysframe - (lastmillis + curtime); 
+    if(diff <= 0) return; 
+        
+    vec deltapos(pl->deltapos);
+    deltapos.mul(min(diff, physframetime)/float(physframetime));
+    pl->o.sub(deltapos);
 }
 
 void moveplayer(physent *pl, int moveres, bool local)
 {
-    loopi(physicsrepeat) moveplayer(pl, moveres, local, physframetime);
-    if(pl->o.z<0 && pl->state==CS_ALIVE) cl->suicide(pl);
+    if(physsteps <= 0)
+    {
+        if(local) interppos(pl);
+        return;
+    }
+        
+    if(local) pl->o = pl->newpos;
+    loopi(physsteps-1) moveplayer(pl, moveres, local, physframetime);
+    if(local) pl->deltapos = pl->o;
+    moveplayer(pl, moveres, local, physframetime);
+    if(local)
+    {
+        pl->newpos = pl->o;
+        pl->deltapos.sub(pl->newpos);
+    }
 }
 
 bool bounce(physent *d, float elasticity, float waterfric)
 {
-    loopi(physicsrepeat)
+    if(physsteps <= 0) 
     {
-        if(bounce(d, physframetime/1000.0f, elasticity, waterfric)) return true;
+        interppos(d);
+        return false;
     }
-    return false;
+
+    d->o = d->newpos;
+    bool hitplayer = false;
+    loopi(physsteps-1)
+    {
+        if(bounce(d, physframetime/1000.0f, elasticity, waterfric)) hitplayer = true;
+    }
+    d->deltapos = d->o;
+    if(bounce(d, physframetime/1000.0f, elasticity, waterfric)) hitplayer = true; 
+    d->newpos = d->o;
+    d->deltapos.sub(d->newpos);
+    return hitplayer;
 }
 
 void updatephysstate(physent *d)
@@ -1455,10 +1495,10 @@ bool platformcollide(physent *d, physent *o, const vec &dir, float margin = 0)
 
 bool moveplatform(physent *p, const vec &dir)
 {   
-    if(!insideworld(p->o)) return false;
+    if(!insideworld(p->newpos)) return false;
 
     vec oldpos(p->o);
-    p->o.add(dir);
+    (p->o = p->newpos).add(dir);
     if(!collide(p, dir, 0, dir.z<=0))
     {
         p->o = oldpos; 
@@ -1492,7 +1532,7 @@ bool moveplatform(physent *p, const vec &dir)
         // check if the dynent is on top of the platform
         if(!platformcollide(p, d, vec(0, 0, 1), PLATFORMMARGIN)) passengers.add(d);
         vec doldpos(d->o);
-        d->o.add(dir);
+        (d->o = d->newpos).add(dir);
         if(!collide(d, dir, 0, false)) colliders.add(d);
         d->o = doldpos;
         loopvj(candidates)
@@ -1535,6 +1575,7 @@ bool moveplatform(physent *p, const vec &dir)
         {
             physent *d = passengers[i];
             d->o.add(dir);
+            d->newpos.add(dir);
             d->lastmove = lastmillis;
             if(dir.x || dir.y) updatedynentcache(d);
         }
@@ -1545,6 +1586,7 @@ bool moveplatform(physent *p, const vec &dir)
         if(colliders.find(d)>=0) continue;
 
         d->o.add(dir);
+        d->newpos.add(dir);
         d->lastmove = lastmillis;
         if(dir.x || dir.y) updatedynentcache(d);
 
@@ -1556,6 +1598,7 @@ bool moveplatform(physent *p, const vec &dir)
     }
 
     p->o.add(dir);
+    p->newpos.add(dir);
     p->lastmove = lastmillis;
     if(dir.x || dir.y) updatedynentcache(p);
 
@@ -1574,24 +1617,36 @@ ICOMMAND(attack, "D", (int *down), { cl->doattack(*down!=0); });
 
 bool entinmap(dynent *d, bool avoidplayers)        // brute force but effective way to find a free spawn spot in the map
 {
-    d->o.z += d->eyeheight;     // pos specified is at feet
+    d->o.z += d->eyeheight; // pos specified is at feet
     vec orig = d->o;
-    loopi(100)                  // try max 100 times
+    loopi(100)              // try max 100 times
     {
-        if(collide(d) && !inside) return true;
-        if(hitplayer && avoidplayers)
+        if(i)
         {
             d->o = orig;
-            return false;
+            d->o.x += (rnd(21)-10)*i/5;  // increasing distance
+            d->o.y += (rnd(21)-10)*i/5;
+            d->o.z += (rnd(21)-10)*i/5;
+        }   
+
+        if(collide(d) && !inside)
+        {
+            if(hitplayer)
+            {
+                if(!avoidplayers) continue;
+                d->o = orig;
+                d->resetinterp();
+                return false;
+            }
+
+            d->resetinterp();
+            return true;
         }
-        d->o = orig;
-        d->o.x += (rnd(21)-10)*i/5;  // increasing distance
-        d->o.y += (rnd(21)-10)*i/5;
-        d->o.z += (rnd(21)-10)*i/5;
     }
-    conoutf(CON_WARN, "can't find entity spawn spot! (%.1f, %.1f, %.1f)", d->o.x, d->o.y, d->o.z);
     // leave ent at original pos, possibly stuck
     d->o = orig;
+    d->resetinterp();
+    conoutf(CON_WARN, "can't find entity spawn spot! (%.1f, %.1f, %.1f)", d->o.x, d->o.y, d->o.z);
     return false;
 }
 

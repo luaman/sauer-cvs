@@ -200,7 +200,7 @@ struct monsterset
                     if(dist<16) cl.et.teleport(ms->teleports[i], this);
                 }
 
-                moveplayer(this, 1, false);        // use physics to move monster
+                moveplayer(this, 1, true);        // use physics to move monster
             }
         }
 
@@ -354,7 +354,7 @@ struct monsterset
                 {
                     //monsters[i]->move = 0;
                     monsters[i]->move = monsters[i]->strafe = 0;
-                    moveplayer(monsters[i], 1, false);
+                    moveplayer(monsters[i], 1, true);
                 }
             }
         }

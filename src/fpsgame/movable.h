@@ -147,7 +147,7 @@ struct movableset
                 cl.ws.explode(true, (fpsent *)m, m->o, m, guns[GUN_BARREL].damage, GUN_BARREL);
                 adddecal(DECAL_SCORCH, m->o, vec(0, 0, 1), RL_DAMRAD/2);
             }
-            else if(m->moving || (m->onplayer && (m->onplayer->state!=CS_ALIVE || m->lastmoveattempt <= m->onplayer->lastmove))) moveplayer(m, 1, false);
+            else if(m->moving || (m->onplayer && (m->onplayer->state!=CS_ALIVE || m->lastmoveattempt <= m->onplayer->lastmove))) moveplayer(m, 1, true);
         }
     }
 
