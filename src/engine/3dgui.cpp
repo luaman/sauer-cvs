@@ -294,7 +294,7 @@ struct gui : g3d_gui
 
     char *field(const char *name, int color, int length, int height, const char *initval)
     {	
-        editor *e = useeditor(name, false, false, initval); // generate a new editor if necessary
+        editor *e = useeditor(name, height>0, false, initval); // generate a new editor if necessary
         if(layoutpass)
         {
             if(initval && e->mode==EDITORFOCUSED && (e!=currentfocus() || fieldmode == FIELDSHOW))
@@ -327,7 +327,7 @@ struct gui : g3d_gui
             {
                 if(mousebuttons&G3D_DOWN) //mouse request focus
                 {   
-                    useeditor(name, false, true); 
+                    useeditor(name, height>0, true); 
                     e->mark(false);
                     fieldmode = FIELDEDIT;
                 } 
