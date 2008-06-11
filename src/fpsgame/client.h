@@ -131,8 +131,11 @@ struct clientcom : iclientcom
     {
         char *end;
         int n = strtol(arg, &end, 10);
-        if(!cl.players.inrange(n)) return -1;
-        if(*arg && !*end) return n;
+        if(*arg && !*end) 
+        {
+            if(n!=player1->clientnum && !cl.players.inrange(n)) return -1;
+            return n;
+        }
         // try case sensitive first
         loopi(cl.numdynents())
         {
