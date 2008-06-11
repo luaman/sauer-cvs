@@ -635,6 +635,7 @@ struct clientcom : iclientcom
 
             case SV_SPAWN:
             {
+                if(d) d->respawn();
                 parsestate(d, p);
                 if(!d) break;
                 d->state = CS_SPAWNING;
