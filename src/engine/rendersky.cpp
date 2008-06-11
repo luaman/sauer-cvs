@@ -30,23 +30,23 @@ Texture *loadskyoverlay(const char *basename)
     return t;
 }
 
-SVARF(skybox, "", { if(skybox[0]) loadsky(skybox, sky); }); 
-FVAR(spinsky, 0);
-VAR(yawsky, 0, 0, 360);
-SVARF(cloudbox, "", { if(cloudbox[0]) loadsky(cloudbox, clouds); });
-FVAR(spinclouds, 0);
-VAR(yawclouds, 0, 0, 360);
-FVAR(cloudclip, 0.5f);
-SVARF(cloudlayer, "", { if(cloudlayer[0]) cloudoverlay = loadskyoverlay(cloudlayer); });
-FVAR(cloudscrollx, 0);
-FVAR(cloudscrolly, 0);
-FVAR(cloudscale, 1);
-FVAR(spincloudlayer, 0);
-FVAR(yawcloudlayer, 0);
-FVAR(cloudheight, 0.2f);
-FVAR(cloudfade, 0.2f);
-VAR(cloudsubdiv, 4, 16, 64);
-VAR(cloudcolour, 0, 0xFFFFFF, 0xFFFFFF);
+SVARFR(skybox, "", { if(skybox[0]) loadsky(skybox, sky); }); 
+FVARR(spinsky, 0);
+VARR(yawsky, 0, 0, 360);
+SVARFR(cloudbox, "", { if(cloudbox[0]) loadsky(cloudbox, clouds); });
+FVARR(spinclouds, 0);
+VARR(yawclouds, 0, 0, 360);
+FVARR(cloudclip, 0.5f);
+SVARFR(cloudlayer, "", { if(cloudlayer[0]) cloudoverlay = loadskyoverlay(cloudlayer); });
+FVARR(cloudscrollx, 0);
+FVARR(cloudscrolly, 0);
+FVARR(cloudscale, 1);
+FVARR(spincloudlayer, 0);
+FVARR(yawcloudlayer, 0);
+FVARR(cloudheight, 0.2f);
+FVARR(cloudfade, 0.2f);
+VARR(cloudsubdiv, 4, 16, 64);
+VARR(cloudcolour, 0, 0xFFFFFF, 0xFFFFFF);
 
 void draw_envbox_face(float s0, float t0, int x0, int y0, int z0,
                       float s1, float t1, int x1, int y1, int z1,
@@ -309,7 +309,7 @@ void drawskybox(int farplane, bool limited)
     if(fog) glEnable(GL_FOG);
 }
 
-VARN(skytexture, useskytexture, 0, 1, 1);
+VARNR(skytexture, useskytexture, 0, 1, 1);
 
 int explicitsky = 0;
 double skyarea = 0;

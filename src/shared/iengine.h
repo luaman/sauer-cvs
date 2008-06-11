@@ -64,9 +64,9 @@ extern void mpdelcube(selinfo &sel, bool local);
 extern void mpremip(bool local);
 
 // command
-extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
-extern float fvariable(const char *name, float cur, float *storage, void (*fun)(), bool persist);
-extern char *svariable(const char *name, const char *cur, char **storage, void (*fun)(), bool persist);
+extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), int flags);
+extern float fvariable(const char *name, float cur, float *storage, void (*fun)(), int flags);
+extern char *svariable(const char *name, const char *cur, char **storage, void (*fun)(), int flags);
 extern void setvar(const char *name, int i, bool dofunc = false);
 extern void setfvar(const char *name, float f, bool dofunc = false);
 extern void setsvar(const char *name, const char *str, bool dofunc = false);

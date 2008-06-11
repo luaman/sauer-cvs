@@ -277,7 +277,7 @@ struct Reflection
 Reflection *findreflection(int height);
 
 VARP(reflectdist, 0, 2000, 10000);
-VAR(waterfog, 0, 150, 10000);
+VARR(waterfog, 0, 150, 10000);
 
 void getwatercolour(uchar *wcol)
 {
@@ -310,7 +310,7 @@ void waterfallcolour(int *r, int *g, int *b)
 
 COMMAND(waterfallcolour, "iii");
 
-VAR(lavafog, 0, 50, 10000);
+VARR(lavafog, 0, 50, 10000);
 
 void getlavacolour(uchar *lcol)
 {
@@ -393,7 +393,7 @@ void cleanupwaterTMUs(bool refract)
     }
 }
 
-VAR(waterspec, 0, 150, 1000);
+VARR(waterspec, 0, 150, 1000);
 
 Reflection reflections[MAXREFLECTIONS];
 Reflection waterfallrefraction;

@@ -731,8 +731,8 @@ void disablepolygonoffset(GLenum type)
     glMatrixMode(GL_MODELVIEW);
 }
 
-VAR(fog, 16, 4000, 1000024);
-VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
+VARR(fog, 16, 4000, 1000024);
+VARR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
 void setfogplane(const plane &p, bool flush)
 {
