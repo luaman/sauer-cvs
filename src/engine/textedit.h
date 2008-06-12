@@ -208,7 +208,7 @@ struct editor
         loopv(lines) fprintf(file, "%s\n", lines[i].text);
         fclose(file);
     }
-    
+   
     void mark(bool enable) 
     {
         mx = (enable) ? cx : -1;
@@ -280,6 +280,47 @@ struct editor
             b->lines.add().set(line, len);
         }
         if(b->lines.empty()) b->lines.add().set("");
+    }
+
+    char *tostring()
+    {
+        int len = 0;
+        loopv(lines) len += lines[i].len + 1;
+        char *str = newstring(len);
+        int offset = 0;
+        loopv(lines)
+        {
+            editline &l = lines[i];
+            memcpy(&str[offset], l.text, l.len);
+            offset += l.len;
+            str[offset++] = '\n';
+        }
+        str[offset] = '\0';
+        return str;
+    }
+
+    char *selectiontostring()
+    {
+        vector<char> buf;
+        int sx, sy, ex, ey;
+        region(sx, sy, ex, ey);
+        loopi(1+ey-sy)
+        {
+            int y = sy+i;
+            char *line = lines[y].text;
+            int len = lines[y].len;
+            if(y == sy && y == ey)
+            {
+                line += sx;
+                len = ex - sx;
+            }
+            else if(y == sy) line += sx;
+            else if(y == ey) len = ex;
+            buf.put(line, len);
+            buf.add('\n');
+        }
+        buf.add('\0');
+        return newstring(buf.getbuf(), buf.length()-1);
     }
 
     void removelines(int start, int count)
@@ -675,3 +716,10 @@ TEXTCOMMAND(textmark, "i", (int *m),  // (1=mark, 2=unmark), return current mark
 TEXTCOMMAND(textselectall, "", (), top->selectall(););
 TEXTCOMMAND(textclear, "", (), top->clear(););
 TEXTCOMMAND(textcurrentline, "",  (), result(top->currentline().text););
+
+TEXTCOMMAND(textexec, "i", (int *selected), // execute script commands from the buffer (0=all, 1=selected region only)
+    char *script = *selected ? top->selectiontostring() : top->tostring();
+    execute(script);
+    delete[] script;
+);
+
