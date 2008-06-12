@@ -111,6 +111,7 @@ struct clientcom : iclientcom
         addmsg(SV_EDITMODE, "ri", on ? 1 : 0);
         if(player1->state==CS_DEAD) cl.deathstate(player1, true);
         else if(player1->state==CS_EDITING && player1->editstate==CS_DEAD) cl.sb.showscores(false);
+        setvar("zoom", -1, true);
     }
 
     int getclientfocus()
