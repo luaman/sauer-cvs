@@ -41,6 +41,8 @@ struct clientcom : iclientcom
         CCOMMAND(getteam, "", (clientcom *self), result(self->player1->team));
         CCOMMAND(getclientfocus, "", (clientcom *self), intret(self->getclientfocus()));
         CCOMMAND(getclientname, "i", (clientcom *self, int *cn), result(self->getclientname(*cn)));
+        CCOMMAND(getclientnum, "s", (clientcom *self, char *name), intret(name[0] ? self->parseplayer(name) : self->player1->clientnum));
+        CCOMMAND(listclients, "", (clientcom *self), self->listclients());
     }
 
     void switchname(const char *name)
@@ -150,6 +152,21 @@ struct clientcom : iclientcom
             if(o && !strcasecmp(arg, o->name)) return o->clientnum;
         }
         return -1;
+    }
+
+    void listclients()
+    {
+        vector<char> buf;
+        string cn;
+        int numclients = 0;
+        loopv(cl.players) if(cl.players[i])
+        {
+            s_sprintf(cn)("%d", cl.players[i]->clientnum);
+            if(numclients++) buf.add(' ');
+            buf.put(cn, strlen(cn));
+        }
+        buf.add('\0');
+        result(buf.getbuf());
     }
 
     void clearbans()
