@@ -913,7 +913,7 @@ bool g3d_movecursor(int dx, int dy)
 }
 
 VARNP(guifollow, useguifollow, 0, 1, 1);
-VARNP(gui2d, usegui2d, 0, 0, 1);
+VARNP(gui2d, usegui2d, 0, 1, 1);
 
 void g3d_addgui(g3d_callback *cb, vec &origin, int flags)
 {
