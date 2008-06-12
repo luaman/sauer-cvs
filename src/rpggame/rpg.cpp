@@ -134,7 +134,6 @@ struct rpgclient : igameclient, g3d_callback
         glOrtho(0, w, h, 0, -1, 1);
         settexture("data/hud_rpg.png", true);
         
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         quad(0, h-128, 768, 128);        
         settexture("data/hbar.png", true);
@@ -142,7 +141,6 @@ struct rpgclient : igameclient, g3d_callback
         quad(130, h-128+57, 193*os.playerobj->s_hp/os.playerobj->eff_maxhp(), 17);        
         glColor4f(0, 0, 1, 0.5f);
         quad(130, h-128+87, 193*os.playerobj->s_mana/os.playerobj->eff_maxmana(), 17);        
-        glDisable(GL_BLEND);
     }
     
     void drawhudmodel(int anim, float speed = 0, int base = 0)
