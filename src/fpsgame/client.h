@@ -42,7 +42,7 @@ struct clientcom : iclientcom
         CCOMMAND(getclientfocus, "", (clientcom *self), intret(self->getclientfocus()));
         CCOMMAND(getclientname, "i", (clientcom *self, int *cn), result(self->getclientname(*cn)));
         CCOMMAND(getclientnum, "s", (clientcom *self, char *name), intret(name[0] ? self->parseplayer(name) : self->player1->clientnum));
-        CCOMMAND(listclients, "", (clientcom *self), self->listclients());
+        CCOMMAND(listclients, "i", (clientcom *self, int *local), self->listclients(*local!=0));
     }
 
     void switchname(const char *name)
@@ -154,11 +154,17 @@ struct clientcom : iclientcom
         return -1;
     }
 
-    void listclients()
+    void listclients(bool local)
     {
         vector<char> buf;
         string cn;
         int numclients = 0;
+        if(local)
+        {
+            s_sprintf(cn)("%d", player1->clientnum);
+            buf.put(cn, strlen(cn));
+            numclients++;
+        }
         loopv(cl.players) if(cl.players[i])
         {
             s_sprintf(cn)("%d", cl.players[i]->clientnum);
