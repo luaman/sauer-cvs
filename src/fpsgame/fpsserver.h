@@ -2033,7 +2033,6 @@ struct fpsserver : igameserver
         sendf(-1, 1, "ri2", SV_CDIS, n); 
         clients.removeobj(ci);
         if(clients.empty()) bannedips.setsize(0); // bans clear when server empties
-        else checkvotes();
     }
 
     const char *servername() { return "sauerbratenserver"; }
