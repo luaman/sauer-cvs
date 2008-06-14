@@ -189,19 +189,19 @@ struct assassinclient
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         float x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
         glColor3f(1, 1, 1);
-        settexture("data/radar.png");
+        settexture("packages/hud/radar.png");
         glBegin(GL_QUADS);
         drawradar(x, y, s);
         glEnd();
         float scale = radarscale<=0 || radarscale>cl.maxradarscale() ? cl.maxradarscale() : radarscale;
         if(hunters.length())
         {
-            settexture("data/blip_grey.png");
+            settexture("packages/hud/blip_grey.png");
             drawblips(hunters, x, y, s, scale);
         }
         if(targets.length())
         {
-            settexture("data/blip_red.png");
+            settexture("packages/hud/blip_red.png");
             drawblips(targets, x, y, s, scale);
         }
         if(cl.player1->state == CS_DEAD)

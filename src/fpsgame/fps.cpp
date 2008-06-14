@@ -789,7 +789,7 @@ struct fpsclient : igameclient
 
     void drawicon(float tx, float ty, int x, int y)
     {
-        settexture("data/items.png");
+        settexture("packages/hud/items.png");
         glBegin(GL_QUADS);
         tx /= 384;
         ty /= 128;
