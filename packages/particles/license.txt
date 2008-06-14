@@ -1,8 +1,8 @@
 These files:
 
-guioverlay.png
-guiskin.png
-guislider.png
+explosion.jpg
+fire_exp.png
+smoke_exp.png
 
 have been licensed under the
 

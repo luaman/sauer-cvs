@@ -489,9 +489,9 @@ struct decalrenderer
 
 decalrenderer decals[] =
 {
-    decalrenderer("data/scorch.png", DF_ROTATE, 500),
-    decalrenderer("data/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
-    decalrenderer("<decal>data/bullet.png", DF_OVERBRIGHT)
+    decalrenderer("packages/particles/scorch.png", DF_ROTATE, 500),
+    decalrenderer("packages/particles/blood.png", DF_RND4|DF_ROTATE|DF_INVMOD),
+    decalrenderer("<decal>packages/particles/bullet.png", DF_OVERBRIGHT)
 };
 
 void initdecals()
