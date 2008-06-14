@@ -277,13 +277,11 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSString *key;
     while ((key = [e nextObject])) 
     {
-        int skip;
-        if([key hasPrefix:@"editbind"]) skip = 9;
-        else if([key hasPrefix:@"bind"])  skip = 5;
-        else continue;
+        int pos = [key rangeOfString:@"bind."].location;
+        if(pos == NSNotFound || pos > 5) continue;
         [arr addObject:[NSDictionary dictionaryWithObjectsAndKeys: //keys used in nib
-            [key substringFromIndex:skip], @"key",
-            ((skip == 9) ? @"edit" : @""), @"mode",
+            [key substringFromIndex:pos+5], @"key",
+            [key substringToIndex:pos], @"mode",
             [dict objectForKey:key], @"action",
             nil]];
     }
@@ -346,7 +344,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 			
             if([type isEqual:@"name"] || [type isEqual:@"team"] || [type isEqual:@"gamma"]) 
                 [dict setObject:value forKey:type];
-            else if([type isEqual:@"bind"] || [type isEqual:@"editbind"]) 
+            else if([type isEqual:@"bind"] || [type isEqual:@"editbind"] || [type isEqual:@"specbind"]) 
                 [dict setObject:remainder forKey:[NSString stringWithFormat:@"%@.%@", type,value]];
         }
     }
