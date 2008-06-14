@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>cube &raquo; Beginners Guide</title>
-    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <link rel="stylesheet" href="../style.css" type="text/css" />
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
   </head>
   <body>
@@ -21,14 +21,15 @@
 <div style="margin-left: 1em;"><a href="#toc12">help on finding help</a></div>
 <div style="margin-left: 2em;"><a href="#toc13">Grrr!</a></div>
 <div style="margin-left: 2em;"><a href="#toc14">You'll see!</a></div>
-<div style="margin-left: 2em;"><a href="#toc15">See?!??</a></div>
-<div style="margin-left: 2em;"><a href="#toc16">Watch! Listen ... and Learn!</a></div>
+<div style="margin-left: 2em;"><a href="#toc15">Tutorials</a></div>
+<div style="margin-left: 2em;"><a href="#toc16">See?!??</a></div>
+<div style="margin-left: 2em;"><a href="#toc17">Watch! Listen ... and Learn!</a></div>
 </div>
 On this page you will get information about your first steps into the project.<br />
 <br />
 <a name="prepreq"></a><br />
 <h1 id="toc0">requirements</h1>
-When you decide to try out Sauerbraten you should be aware of your operating system, your current graphics chipset (manufacturer and card name) and that this project is still &quot;Work in Progress&quot; (WiP)!<br />
+ When you decide to try out Sauerbraten you should be aware of your operating system, your current graphics chipset (manufacturer and card name) and that this project is still &quot;Work in Progress&quot; (WiP)!<br />
 <br />
 Typically, to run Sauerbraten at playable speeds on minimum settings, you'll need at least:<br />
 1GHz or higher CPU, 256MB RAM and a GeForce 4 MX or equivalent GPU.<br />
@@ -39,7 +40,7 @@ For maximum settings, you'll need at least:<br />
 Before you even download Sauerbraten, make sure you meet the above requirements and have the latest video card drivers installed for your OS. If you're on Linux, make sure you're not using MESA drivers, and if you're on Windows, make sure you're not using the generic drivers.<br />
 <br />
 <h2 id="toc1">graphics cards</h2>
-Be prepared that some graphics cards have problems running with the default configuration.<br />
+ Be prepared that some graphics cards have problems running with the default configuration.<br />
 You should then try to use all toggles to reduce rendering complexity and work yourself up.<br />
 Some example combinations:<br />
 
@@ -52,7 +53,7 @@ Some example combinations:<br />
 See the <a class="wiki_link" href="Performance%20Guide.html">Performance Guide</a> for an in-depth view at what to tweak.<br />
 <br />
 <h2 id="toc2">platform dependencies</h2>
-Due to platform dependencies some stuff works differently depending on your O/S (operating system).<br />
+ Due to platform dependencies some stuff works differently depending on your O/S (operating system).<br />
 For example on linux users can dynamically change their screen resolution, on Win32 this isn't possible.<br />
 Other aspects include driver issues, file formats (jpg, mp3) and naming (Pic1.jpg is <u>not</u> pic1.JPG)<br />
 <br />
@@ -64,7 +65,7 @@ running &quot;glxgears -info&quot; can help and having other OpenGL and/or SDL b
 <br />
 <a name="progstart"></a><br />
 <h1 id="toc3">setup</h1>
-First try running the game out-of-the-box,<br />
+ First try running the game out-of-the-box,<br />
 but in the long run you will want to optimize <a class="wiki_link" href="configuration.html">your setup</a> to your hardware and personal preferences.<br />
 There is a <a class="wiki_link" href="Performance%20Guide.html">plethora of settings</a> for you to do this.<br />
 RTFM : <a class="wiki_link_ext" href="http://sauerbraten.org/docs/config.html" rel="nofollow">config page</a><br />
@@ -121,13 +122,13 @@ like &quot;Medium-Resolution Sauer&quot;, &quot;minimal sauer&quot;, &quot;EyeCa
 <br />
 <a name="download"></a><br />
 <h2 id="toc4">download walk-through</h2>
-Click on the <a class="wiki_link_ext" href="https://sourceforge.net/project/showfiles.php?group_id=102911" rel="nofollow">appropriate download link</a> and select your mirror to download the installation file.<br />
+ Click on the <a class="wiki_link_ext" href="https://sourceforge.net/project/showfiles.php?group_id=102911" rel="nofollow">appropriate download link</a> and select your mirror to download the installation file.<br />
 Currently official clients exist for Win32, *Nix and OS X.<br />
 Pick a local mirror.<br />
 <br />
 <a name="unpacking"></a><br />
 <h2 id="toc5">unpacking</h2>
-
+ 
 <ul>
     <li>There is an installer wrapper for Win32, execute and follow the well known set of dialogs.</li>
     <li>On *Nix untar to your favourite location (say /usr/local/sauerbraten), chmod the binaries +x if required.</li>
@@ -137,7 +138,7 @@ Pick a local mirror.<br />
 <br />
 <a name="autoexec"></a><br />
 <h2 id="toc6">basic configuration</h2>
-Manage your <a class="wiki_link" href="configuration.html">configuration</a> via the &quot;<em>autoexec.cfg</em>&quot;.<br />
+ Manage your <a class="wiki_link" href="configuration.html">configuration</a> via the &quot;<em>autoexec.cfg</em>&quot;.<br />
 If the file does not exist in your base installation folder then create it.<br />
 Two lines are a bare minimum:<br />
 
@@ -162,7 +163,7 @@ Also check out the <a class="wiki_link" href="Scripting%20Guide.html">Scripting 
 <br />
 <a name="firstrun"></a><br />
 <h3 id="toc7">first run</h3>
-
+ 
 <ul>
     <li>Win32 : run the sauerbraten.bat</li>
     <li>*Nix : run the ./sauerbraten_unix script from the base installation folder</li>
@@ -197,9 +198,9 @@ Use your mouse pointer to select the &quot;load map&quot; option<br />
 <br />
 <a name="introRUN"></a><br />
 <h1 id="toc8">engine modes</h1>
-<a name="introSP"></a><br />
+ <a name="introSP"></a><br />
 <h2 id="toc9">a look at SP</h2>
-The SinglePlayer (SP) modes of Sauerbraten enable you to play offline against a range of monsters.<br />
+ The SinglePlayer (SP) modes of Sauerbraten enable you to play offline against a range of monsters.<br />
 Start your SP game via the menu or set your mode and an appropriate map by hand.<br />
 Beware that the so-called <tt>Episode 1</tt> does not currently contain monsters. It is still WiP!<br />
 The single maps for basic SP (<tt>mode -2</tt>) <em>do have</em> monsters, though;<br />
@@ -221,7 +222,7 @@ If you die in this mode the ordeal repeats - either you beat the horde or you do
 <br />
 <a name="introMP"></a><br />
 <h2 id="toc10">a look at MP</h2>
-The integrated server browser is available via the multiplayer menu, be sure to regularly update from master server.<br />
+ The integrated server browser is available via the multiplayer menu, be sure to regularly update from master server.<br />
 The list is sorted by ping for your convenience.<br />
 A &quot;<strong>P</strong>&quot; next to the number of players indicates a <em>private server</em>.<br />
 A &quot;<strong>L</strong>&quot; next to the number of players stands for <em>locked server</em>.<br />
@@ -229,29 +230,43 @@ For details see the <a class="wiki_link" href="Multiplayer%20Guide.html#master">
 <br />
 <a name="introRPG"></a><br />
 <h2 id="toc11">a look at RPG</h2>
-This is still - very much - WiP!<br />
+ This is still - very much - WiP!<br />
 You can have a look at what's cooking by running with a -grpg parameter included.<br />
 So far only some NPC models are visible and the action menu is visible and ready for use. Attacking and trading has been implemented along with an inventory and monetary system, but there is no AI, so nothing fights back. Stay tuned for further progress ...<br />
 ...for example <a class="wiki_link" href="Eisenstern%20Modelling.html">Eisenstern Modelling</a>.<br />
 <br />
 <a name="help-yourself"></a><br />
 <h1 id="toc12">help on finding help</h1>
-<br />
+ <br />
 <h2 id="toc13">Grrr!</h2>
-While getting to know a new piece of software it is often the case that you might need help with an aspect you (personally) don't find intuitive.<br />
+ While getting to know a new piece of software it is often the case that you might need help with an aspect you (personally) don't find intuitive.<br />
 This is perfectly natural and nothing to be ashamed of,<br />
 but the way you go about <em>asking for help</em> can be! So here's some help on getting help:<br />
 <br />
 <h2 id="toc14">You'll see!</h2>
-First thing to do is try finding a help ressource,<br />
+ First thing to do is try finding a help resource,<br />
 try a <a class="wiki_link_ext" href="http://www.google.com" rel="nofollow">google search</a>, try a lot of <a class="wiki_link_ext" href="http://www.google.com/help/refinesearch.html" rel="nofollow">different combinations</a> - try news- and code-searches too!<br />
 Try searching this wiki, or the forums.<br />
 <br />
 Your <em>local manual</em> is accessible via the <tt>README.html</tt> in your installation folder;<br />
 the documentation is also available from <a class="wiki_link_ext" href="http://sauerbraten.org/README.html" rel="nofollow">sauerbraten.org</a>.<br />
 <br />
-<h2 id="toc15">See?!??</h2>
-The game is pretty straight-forward to jump into,<br />
+<h2 id="toc15">Tutorials</h2>
+ The Cube/Cube II community is the place to find guides and tutorials. <br />
+Check out <a class="wiki_link_ext" href="http://www.quadropolis.us/taxonomy/term/21" rel="nofollow">the guides on Quadropolis</a>, <br />
+or use one of the wiki pages below:<br />
+<br />
+
+<ul>
+    <li><a class="wiki_link" href="Mapping%20and%20Editing.html">Mapping and Editing</a></li>
+    <li><a class="wiki_link" href="Cubescript%20Tutorial.html">Cubescript Tutorial</a> (still <tt>Work in progress</tt>)</li>
+    <li><a class="wiki_link" href="Scripting%20Guide.html">Scripting Guide</a> (to be merged with the Tutorials at a later time)</li>
+    <li><a class="wiki_link" href="Modding%20Guide.html">Modding Guide</a></li>
+</ul>
+
+<br />
+<h2 id="toc16">See?!??</h2>
+ The game is pretty straight-forward to jump into,<br />
 so some people seem to overlook the manual -<br />
 don't make that mistake yourself!<br />
 <br />
@@ -265,8 +280,8 @@ maybe it's a bug? Help the project if you can!<br />
 Familiarize yourself with the different aspects that make up the game.<br />
 From OGZ files to CFGs, from ./data/ to ./packages/base/<br />
 <br />
-<h2 id="toc16">Watch! Listen ... and Learn!</h2>
-Even if we first off - as always - hint at RTFM.<br />
+<h2 id="toc17">Watch! Listen ... and Learn!</h2>
+ Even if we first off - as always - hint at RTFM.<br />
 RTFM = Read The Fine Manual<br />
 Even if we hint @ RTFM it seems impossible to stress it hard enough,<br />
 Don't be a <a class="wiki_link_ext" href="http://www.slash7.com/pages" rel="nofollow">Help Vampire</a>.<br />
