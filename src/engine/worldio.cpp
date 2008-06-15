@@ -282,7 +282,7 @@ bool save_world(const char *mname, bool nolms)
     hdr.version = MAPVERSION;
     hdr.numents = 0;
     const vector<extentity *> &ents = et->getents();
-    loopv(ents) if(ents[i]->type!=ET_EMPTY) hdr.numents++;
+    loopv(ents) if(ents[i]->type!=ET_EMPTY || nolms) hdr.numents++;
     hdr.numpvs = nolms ? 0 : getnumviewcells();
     hdr.lightmaps = nolms ? 0 : lightmaps.length();
     header tmp = hdr;
@@ -303,7 +303,7 @@ bool save_world(const char *mname, bool nolms)
     char *ebuf = new char[et->extraentinfosize()];
     loopv(ents)
     {
-        if(ents[i]->type!=ET_EMPTY)
+        if(ents[i]->type!=ET_EMPTY || nolms)
         {
             entity tmp = *ents[i];
             endianswap(&tmp.o, sizeof(int), 3);
