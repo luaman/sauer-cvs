@@ -27,7 +27,6 @@
 		B930D0D20A3DA92300BDFB85 /* map.icns in Resources */ = {isa = PBXBuildFile; fileRef = B930D0D10A3DA92300BDFB85 /* map.icns */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		B94198A509207E810029DAD1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
-		B94198A609207E810029DAD1 /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
 		B94198A809207E810029DAD1 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A47A9E01A0483001D3D55B /* SDLMain.m */; };
 		B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F67ED704C74A3F00A80002 /* OpenGL.framework */; };
@@ -115,6 +114,8 @@
 		D139B59E0D59A8E600AA994D /* assassin.h in Headers */ = {isa = PBXBuildFile; fileRef = D139B59D0D59A8E600AA994D /* assassin.h */; };
 		D167A1970C493AED007F7D96 /* Nomap.png in Resources */ = {isa = PBXBuildFile; fileRef = D167A1960C493AED007F7D96 /* Nomap.png */; };
 		D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16BD00C0D7000EA0053CECE /* dynlight.cpp */; };
+		D16C16920E04812500A522EB /* obj.h in Headers */ = {isa = PBXBuildFile; fileRef = D16C16900E04812500A522EB /* obj.h */; };
+		D16C16930E04812500A522EB /* textedit.h in Headers */ = {isa = PBXBuildFile; fileRef = D16C16910E04812500A522EB /* textedit.h */; };
 		D17E0F2C0BAF1FA9008BB696 /* Keys.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F280BAF1FA9008BB696 /* Keys.gif */; };
 		D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2A0BAF1FA9008BB696 /* Server.gif */; };
 		D17E0F310BAF2031008BB696 /* Help.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F300BAF2031008BB696 /* Help.tiff */; };
@@ -247,6 +248,8 @@
 		D139B59D0D59A8E600AA994D /* assassin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = assassin.h; sourceTree = "<group>"; };
 		D167A1960C493AED007F7D96 /* Nomap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Nomap.png; sourceTree = "<group>"; };
 		D16BD00C0D7000EA0053CECE /* dynlight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dynlight.cpp; sourceTree = "<group>"; };
+		D16C16900E04812500A522EB /* obj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = obj.h; sourceTree = "<group>"; };
+		D16C16910E04812500A522EB /* textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textedit.h; sourceTree = "<group>"; };
 		D17E0F280BAF1FA9008BB696 /* Keys.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Keys.gif; sourceTree = "<group>"; };
 		D17E0F2A0BAF1FA9008BB696 /* Server.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Server.gif; sourceTree = "<group>"; };
 		D17E0F300BAF2031008BB696 /* Help.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Help.tiff; sourceTree = "<group>"; };
@@ -398,6 +401,8 @@
 		B9AC7A830D06DB44005506F8 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				D16C16900E04812500A522EB /* obj.h */,
+				D16C16910E04812500A522EB /* textedit.h */,
 				D18B8FBE0DB0AF8200171439 /* explosion.h */,
 				D18B8FBF0DB0AF8200171439 /* lensflare.h */,
 				D18B8FC00DB0AF8200171439 /* lightning.h */,
@@ -564,6 +569,8 @@
 				D18B8FC10DB0AF8200171439 /* explosion.h in Headers */,
 				D18B8FC20DB0AF8200171439 /* lensflare.h in Headers */,
 				D18B8FC30DB0AF8200171439 /* lightning.h in Headers */,
+				D16C16920E04812500A522EB /* obj.h in Headers */,
+				D16C16930E04812500A522EB /* textedit.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -632,7 +639,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B94198A509207E810029DAD1 /* InfoPlist.strings in Resources */,
-				B94198A609207E810029DAD1 /* sauerbraten.icns in Resources */,
 				B9CACA15092099E700A13F04 /* sauerbraten-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -669,7 +675,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n\n#make the directory which our disk image will be made of\nmkdir sauerbraten\nmkdir sauerbraten/sauerbraten\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app sauerbraten/sauerbraten\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app sauerbraten/\nmv sauerbraten/launcher.app sauerbraten/Sauerbraten.app\nstrip -u -r $TARGET_BUILD_DIR/sauerbraten/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten -o $TARGET_BUILD_DIR/sauerbraten/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten_stripped\nmv $TARGET_BUILD_DIR/sauerbraten/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten $TARGET_BUILD_DIR/sauerbraten_nonstripped\nmv $TARGET_BUILD_DIR/sauerbraten/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten_stripped $TARGET_BUILD_DIR/sauerbraten/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten\n\n\n#install all frameworks into app bundle\nmkdir sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf sauerbraten/sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../../docs sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../data sauerbraten/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../packages sauerbraten/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../src sauerbraten/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../README.html sauerbraten/\nrm -rf sauerbraten/docs/CVS/\nrm -rf sauerbraten/docs/*/CVS/\nrm -rf sauerbraten/docs/*/*/CVS/\nrm -f sauerbraten/docs/.DS_Store\nrm -f sauerbraten/docs/*/.DS_Store\nrm -f sauerbraten/docs/*/*/.DS_Store\nrm -rf sauerbraten/sauerbraten/packages/CVS/\nrm -rf sauerbraten/sauerbraten/packages/*/CVS/\nrm -rf sauerbraten/sauerbraten/packages/*/*/CVS/\nrm -f sauerbraten/sauerbraten/packages/.DS_Store\nrm -f sauerbraten/sauerbraten/packages/*/.DS_Store\nrm -f sauerbraten/sauerbraten/packages/*/*/.DS_Store\nrm -rf sauerbraten/sauerbraten/data/CVS/\nrm -rf sauerbraten/sauerbraten/data/*/CVS/\nrm -f sauerbraten/sauerbraten/data/.DS_Store\nrm -f sauerbraten/sauerbraten/data/*/.DS_Store\n\n#otherwise dog chases tail\nrm -rf sauerbraten/sauerbraten/src/xcode/build/*\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -r sauerbraten";
+			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n\n#make the directory which our disk image will be made of\n#use /tmp as a destination because copying ourself (xcode folder) whilst compling causes the dog to chase its tail\nSAUERPKG=`mktemp -d /tmp/sauerpkg.XXXXXX` || exit 1\nmkdir $SAUERPKG/sauerbraten\n\n#leave indicator of where temp directory is in case things break\nln -sf $SAUERPKG $TARGET_BUILD_DIR/sauerpkg\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app $SAUERPKG/sauerbraten\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app $SAUERPKG/\nmv $SAUERPKG/launcher.app $SAUERPKG/Sauerbraten.app\n\nstrip -u -r $SAUERPKG/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten\n\n#install all frameworks into app bundle\nmkdir $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../../docs $SAUERPKG/\n/Developer/Tools/CpMac -r $SRCROOT/../../data $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../packages $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../src $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../README.html $SAUERPKG/\nfind -d $SAUERPKG -name \"CVS\" -exec rm -rf {} \\;\nfind $SAUERPKG -name \".DS_Store\" -exec rm -f {} \\;\nrm -rf $SAUERPKG/sauerbraten/src/xcode/build\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder $SAUERPKG -volname sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -rf $SAUERPKG\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
