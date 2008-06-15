@@ -1,9 +1,0 @@
-Title: Village
-Author: GARCiA :)
-
-
-Unzip into your Sauerbraten/packages/base folder, and run it in the game by pressing the "~" key, then type: /load village
-
-Enjoy!
-
-	
