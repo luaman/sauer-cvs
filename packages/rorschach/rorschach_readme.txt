@@ -14,3 +14,9 @@ for the use of them as they took some time to make.
 Cheers,
 r.
 
+
+
+----------------------------------
+
+normal, spec, and height maps done by Mayhem
+
