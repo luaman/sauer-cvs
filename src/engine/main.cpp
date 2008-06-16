@@ -264,7 +264,7 @@ void show_out_of_renderloop_progress(float bar1, const char *text1, float bar2, 
     clientkeepalive();      // make sure our connection doesn't time out while loading maps etc.
     
     #ifdef __APPLE__
-    interceptkey(INT_MIN); // keep the event queue awake to avoid 'beachball' cursor
+    interceptkey(SDLK_UNKNOWN); // keep the event queue awake to avoid 'beachball' cursor
     #endif
 
     int w = screen->w, h = screen->h;
