@@ -82,20 +82,27 @@ Specify model M to represent this object visually when placed in the world
 <pre id="Pre3">r_quest N A</pre>
 <p>
 defines a custom action the player can take on this object. N is the tag word that describes the action, visible in
-the objects menu in the game world, and A is the script that gets executed when the player selects it.</p>
-    <p>
-        When A gets executed, the top of the stack will be object on which the action is
-        defined, below that target of the action, and below that the user of the action.
-        For example, the player (user) casts a fireball (object) onto a monster (target).
-        Or, the player (user/target) interacts with an npc (object).</p>
-    <p>
-        A special tag is "use", this is the default action for items to be executed when
-        the user clicks on them in the inventory, or, it is the action that gets executed
-        when the player casts the currently selected spell (also see usetype below).</p>
+the objects menu in the game world, and A is the script that gets executed when the player selects it.
+</p>
 
+<p>
+When A gets executed, the top of the stack will be object on which the action is
+defined, below that target of the action, and below that the user of the action.
+For example, the player (user) casts a fireball (object) onto a monster (target).
+Or, the player (user/target) interacts with an npc (object).
+</p>
+
+<p>
+A special tag is "use", this is the default action for items to be executed when
+the user clicks on them in the inventory, or, it is the action that gets executed
+when the player casts the currently selected spell (also see usetype below).
+</p>
+
+<p>
 r_quest is the same as r_action, except that it also marks the start of a quest, with the action being the resolution of the quest. 
 The quest description is whatever the last r_say command was. Any r_take inside the action with a positive outcome concludes the quest. Quests can be seen
 in the quest log.
+</p>
 
 <pre id="r_say">r_say T</pre>
 <p>

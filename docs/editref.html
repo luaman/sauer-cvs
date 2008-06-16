@@ -1802,23 +1802,21 @@ with any program/engine that uses meshes. The meshes aren't very optimal and don
 have texture/lighting information.
 </p>
 
-<pre >flipnormalmapy D N</pre>
+<pre id="flipnormalmapy">flipnormalmapy D N</pre>
 <p>
 Normalmaps generally come in two kinds, left-handed or righ-handed coordinate systems. If you are
 trying to use normalmaps authored for other engines, you may find that the lighting goes the wrong
 way along one axis, this can be fixed by flipping the Y coordinate of the normal. This command loads normalmap
 N (MUST be 24bit .tga), and writes out a flipped normalmap as D (also tga).
-
 </p>
-<pre >mergenormalmaps H N</pre>
+
+<pre id="mergenormalmaps">mergenormalmaps H N</pre>
+<p>
 Normalmaps authored for Quake 4 often come as a base normal map, with seperate height offset file *_h.tga.
 This is NOT a height file as used for sauerbraten parallax, instead its detail to be blended onto the normals.
 This command takes normalmap N and a _h file H (both MUST be 24bit .tga), and outputs a combined normalmap N
 (it *overwrites* N).  
-<p>
-
 </p>
-
 
 <h2 id="lighting">Lighting</h2>
 
@@ -2341,7 +2339,7 @@ note: +32 to reverse direction of tapes
 <td>red (0..255), green (0..255), blue (0..255)</td>
 <td>sun lens flare with sparkle center</td>
 </tr>
-</table
+</table>
 
 <h2 id="pvs_culling">PVS Culling</h2>
 <p>Sauerbraten provides a precomputed visibility culling system as described in the technical paper "Conservative Volumetric Visibility with Occluder Fusion" by Schaufler et al (see paper for technical details). Basically, Sauerbraten divides the world into small cube-shaped "view cells" of empty space that the player might possibly occupy, and for each of these view cells calculates what other parts of the octree might be visible from it. Since this is calculated ahead of time, Sauerbraten can cheaply look up at runtime whether some part of the octree is possibly visible from the player's current view cell. Once pre-calculated, this PVS (potential visibility set) data is stored within your map and saved along with it, so that Sauerbraten may reuse it during gameplay. This data is only valid for a particular map/octree, and if you change your map, you must recalculate it or otherwise expect culling errors. It is recommended you do this only after you are sure you are finished working on your map and ready to release it, as it can take a very long time to compute this data. If you have a multi-core processor or multi-processor system, Sauerbraten can use multiple threads to speed up the pre-calculation (essentially N processors/cores will calculate N times faster).
