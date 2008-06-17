@@ -216,6 +216,14 @@ static void CustomApplicationMain (int argc, char **argv)
     [SDLApplication sharedApplication];
     
 #ifdef SDL_USE_CPS
+    /* @TODO - use this to get rid of the warnings?
+    {
+        ProcessSerialNumber psn = { 0, kCurrentProcess };
+        if(TransformProcessType(&psn,kProcessTransformToForegroundApplication)==0) //10.3
+            if(SetFrontProcess(&psn) == 0)
+               [SDLApplication sharedApplication];
+    }
+    */
     {
         CPSProcessSerNum PSN;
         /* Tell the dock about us */
