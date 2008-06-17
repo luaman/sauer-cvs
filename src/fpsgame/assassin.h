@@ -185,7 +185,6 @@ struct assassinclient
 
     void drawhud(int w, int h)
     {
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         float x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
         glColor3f(1, 1, 1);
@@ -213,7 +212,6 @@ struct assassinclient
             draw_textf("%d", int((x+s/2)/2-(wait>=10 ? 28 : 16)), int((y+s/2)/2-32), wait);
             glPopMatrix();
         }
-        glDisable(GL_BLEND);
     }
 };
 #endif
