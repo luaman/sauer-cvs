@@ -292,7 +292,6 @@ struct ctfclient : ctfstate
             }
         }
 
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         int x = 1800*w/h*34/40, y = 1800*1/40, s = 1800*w/h*5/40;
         glColor3f(1, 1, 1);
@@ -325,7 +324,6 @@ struct ctfclient : ctfstate
                 glPopMatrix();
             }
         }
-        glDisable(GL_BLEND);
     }
 
     vec interpflagpos(flag &f, float &angle)
