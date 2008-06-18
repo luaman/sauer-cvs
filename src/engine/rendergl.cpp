@@ -1365,11 +1365,12 @@ void drawcrosshair(int w, int h)
     }
     else
     { 
-        int index = 0;
-        if(crosshairfx)
+        int index = cl->selectcrosshair(r, g, b);
+        if(index < 0) return;
+        if(!crosshairfx)
         {
-            index = cl->selectcrosshair(r, g, b);
-            if(index < 0) return;
+            index = 0;
+            r = g = b = 1;
         }
         crosshair = crosshairs[index];
         if(!crosshair) 
