@@ -928,7 +928,11 @@ struct clientcom : iclientcom
                 if(!s) return;
                 if(val)
                 {
-                    if(s==player1 && editmode) toggleedit();
+                    if(s==player1)
+                    {
+                        if(editmode) toggleedit();
+                        if(s->state==CS_DEAD) cl.sb.showscores(false);
+                    }
                     s->state = CS_SPECTATOR;
                 }
                 else if(s->state==CS_SPECTATOR) 

@@ -101,7 +101,6 @@ struct fpsclient : igameclient
             if(following==player1->clientnum) following = -1;
             followdir = 0;
             conoutf("follow %s", following>=0 ? "on" : "off");
-            if(following>=0) sb.showscores(false);
         }
 	}
 
@@ -118,11 +117,7 @@ struct fpsclient : igameclient
             cur = (cur + dir + players.length()) % players.length();
             if(players[cur])
             {
-                if(following<0) 
-                {
-                    conoutf("follow on");
-                    sb.showscores(false);
-                }
+                if(following<0) conoutf("follow on");
                 following = cur;
                 followdir = dir;
                 return;
