@@ -326,6 +326,17 @@ struct ctfclient : ctfstate
         }
     }
 
+    void removeplayer(fpsent *d)
+    {
+        loopv(flags) if(flags[i].owner == d) 
+        {
+            flag &f = flags[i];
+            f.interploc.x = -1;
+            f.interptime = 0;
+            ctfstate::dropflag(i, f.owner->o, 1);
+        }
+    }
+
     vec interpflagpos(flag &f, float &angle)
     {
         vec pos = f.owner ? vec(f.owner->abovehead()).add(vec(0, 0, 1)) : (f.droptime ? f.droploc : f.spawnloc);

@@ -95,9 +95,7 @@ struct clientcom : iclientcom
         player1->lifesequence = 0;
         player1->privilege = PRIV_NONE;
         spectator = false;
-        removetrackedparticles();
-        loopv(cl.players) DELETEP(cl.players[i]);
-        cleardynentcache();
+        loopv(cl.players) if(cl.players[i]) cl.clientdisconnected(i, false);
     }
 
     bool allowedittoggle()

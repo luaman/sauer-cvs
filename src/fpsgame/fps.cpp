@@ -98,6 +98,7 @@ struct fpsclient : igameclient
         if(arg[0] ? player1->state==CS_SPECTATOR : following>=0)
         {
             following = arg[0] ? cc.parseplayer(arg) : -1;
+            if(following==player1->clientnum) following = -1;
             followdir = 0;
             conoutf("follow %s", following>=0 ? "on" : "off");
         }
@@ -547,7 +548,7 @@ struct fpsclient : igameclient
         return players.inrange(cn) ? players[cn] : NULL;
     }
 
-    void clientdisconnected(int cn)
+    void clientdisconnected(int cn, bool notify = true)
     {
         if(!players.inrange(cn)) return;
         if(following==cn) 
@@ -557,11 +558,12 @@ struct fpsclient : igameclient
         }
         fpsent *d = players[cn];
         if(!d) return; 
-        if(d->name[0]) conoutf("player %s disconnected", colorname(d));
+        if(notify && d->name[0]) conoutf("player %s disconnected", colorname(d));
         ws.removebouncers(d);
         ws.removeprojectiles(d);
         removetrackedparticles(d);
         if(m_assassin) asc.removeplayer(d);
+        else if(m_ctf) ctf.removeplayer(d); 
         DELETEP(players[cn]);
         cleardynentcache();
     }
