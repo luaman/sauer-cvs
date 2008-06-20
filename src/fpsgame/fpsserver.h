@@ -810,7 +810,7 @@ struct fpsserver : igameserver
         mapreload = false;
         gamemode = mode;
         gamemillis = 0;
-        minremain = m_teammode ? 15 : 10;
+        minremain = m_teammode && !m_ctf ? 15 : 10;
         gamelimit = minremain*60000;
         interm = 0;
         s_strcpy(smapname, s);

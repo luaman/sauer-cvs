@@ -5,6 +5,7 @@ struct ctfstate
 {
     static const int MAXFLAGS = 100;
     static const int FLAGRADIUS = 16;
+    static const int FLAGLIMIT = 10;
 
     struct flag
     {
@@ -94,6 +95,13 @@ struct ctfstate
         f.owner = NULL;
 #endif
     }
+
+    int totalscore(int team)
+    {
+        int score = 0;
+        loopv(flags) if(flags[i].team==team) score += flags[i].score;
+        return score;
+    }
 };
 
 #ifdef CTFSERV
@@ -159,6 +167,7 @@ struct ctfservmode : ctfstate, servmode
                 returnflag(relay);
                 goal.score++;
                 sendf(-1, 1, "ri5", SV_SCOREFLAG, ci->clientnum, relay, i, goal.score);
+                if(totalscore(goal.team) >= FLAGLIMIT) sv.startintermission();
             }
         }
     }
@@ -510,6 +519,8 @@ struct ctfclient : ctfstate
         }
         conoutf(CON_GAMEINFO, "%s scored for %s team", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGSCORE);
+
+        if(totalscore(f.team) >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s team captured %d flags", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy", FLAGLIMIT);
     }
 
     void takeflag(fpsent *d, int i)

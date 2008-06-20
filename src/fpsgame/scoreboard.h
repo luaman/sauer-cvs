@@ -244,7 +244,7 @@ struct scoreboard : g3d_callback
             {
                 g.pushlist(); // vertical
 
-                if(m_capture && sg.score>=10000) g.textf("%s: WIN", fgcolor, NULL, sg.team);
+                if((m_capture && sg.score>=10000) || (m_ctf && sg.score>=10)) g.textf("%s: WIN", fgcolor, NULL, sg.team);
                 else g.textf("%s: %d", fgcolor, NULL, sg.team, sg.score);
 
                 g.pushlist(); // horizontal
