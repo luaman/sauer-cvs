@@ -798,10 +798,10 @@ struct fpsclient : igameclient
         tx /= 384;
         ty /= 128;
         int s = 120;
-        glTexCoord2f(tx,        ty);        glVertex2i(x,   y);
-        glTexCoord2f(tx+1/6.0f, ty);        glVertex2i(x+s, y);
-        glTexCoord2f(tx+1/6.0f, ty+1/2.0f); glVertex2i(x+s, y+s);
-        glTexCoord2f(tx,        ty+1/2.0f); glVertex2i(x,   y+s);
+        glTexCoord2f(tx,        ty);        glVertex2f(x,   y);
+        glTexCoord2f(tx+1/6.0f, ty);        glVertex2f(x+s, y);
+        glTexCoord2f(tx+1/6.0f, ty+1/2.0f); glVertex2f(x+s, y+s);
+        glTexCoord2f(tx,        ty+1/2.0f); glVertex2f(x,   y+s);
         glEnd();
     }
  
