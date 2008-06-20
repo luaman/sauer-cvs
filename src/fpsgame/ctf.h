@@ -329,7 +329,8 @@ struct ctfclient : ctfstate
                 glPushMatrix();
                 glLoadIdentity();
                 glOrtho(0, w*900/h, 900, 0, -1, 1);
-                draw_textf("%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, wait);
+                bool flash = wait>0 && d==cl.player1 && cl.lastspawnattempt>=d->lastpain && cl.lastmillis < cl.lastspawnattempt+100;
+                draw_textf("%s%d", (x+s/2)/2-(wait>=10 ? 28 : 16), (y+s/2)/2-32, flash ? "\f3" : "", wait);
                 glPopMatrix();
             }
         }
@@ -520,7 +521,8 @@ struct ctfclient : ctfstate
         conoutf(CON_GAMEINFO, "%s scored for %s team", d==cl.player1 ? "you" : cl.colorname(d), f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy");
         playsound(S_FLAGSCORE);
 
-        if(totalscore(f.team) >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s team captured %d flags", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy", FLAGLIMIT);
+        int total = totalscore(f.team);
+        if(total >= FLAGLIMIT) conoutf(CON_GAMEINFO, "%s team captured %d flags", f.team==ctfteamflag(cl.player1->team) ? "your" : "the enemy", total);
     }
 
     void takeflag(fpsent *d, int i)

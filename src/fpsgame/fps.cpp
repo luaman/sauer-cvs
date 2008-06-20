@@ -35,7 +35,7 @@ struct fpsclient : igameclient
     vec swaydir;
     int respawned, suicided;
     int lastslowmohealth, slowmorealtimestart;
-    int lasthit;
+    int lasthit, lastspawnattempt;
 
     int following, followdir;
 
@@ -64,6 +64,7 @@ struct fpsclient : igameclient
           maptime(0), minremain(0), respawnent(-1), 
           swaymillis(0), swaydir(0, 0, 0),
           respawned(-1), suicided(-1), 
+          lasthit(0), lastspawnattempt(0),
           following(-1), followdir(0), openmainmenu(true),
           player1(spawnstate(new fpsent())),
           ws(*this), ms(*this), mo(*this), sb(*this), fr(*this), et(*this), cc(*this), 
@@ -353,7 +354,8 @@ struct fpsclient : igameclient
                 int wait = m_capture ? cpc.respawnwait(player1) : ctf.respawnwait(player1);
                 if(wait>0)
                 {
-                    conoutf(CON_GAMEINFO, "\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
+                    lastspawnattempt = lastmillis; 
+                    //conoutf(CON_GAMEINFO, "\f2you must wait %d second%s before respawn!", wait, wait!=1 ? "s" : "");
                     return;
                 }
             }
