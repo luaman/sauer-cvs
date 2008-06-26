@@ -40,7 +40,7 @@ struct extentity : entity                       // part of the entity that doesn
     extentity() : visible(false), triggerstate(TRIGGER_RESET), lasttrigger(0), attached(NULL) {}
 };
 
-#define MAXENTS 5000
+#define MAXENTS 10000
 
 //extern vector<extentity *> ents;                // map entities
 
