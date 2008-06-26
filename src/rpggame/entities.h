@@ -43,6 +43,7 @@ struct rpgentities : icliententities
     void trigger(extentity &e) {}
 
     extentity *newentity() { return new rpgentity; }
+    void deleteentity(extentity *e) { delete (rpgentity *)e; }
 
     void fixentity(extentity &e)
     {
