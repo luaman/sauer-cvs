@@ -852,6 +852,7 @@ struct captureservmode : capturestate, servmode
             o.x = getint(p)/DMF;
             o.y = getint(p)/DMF;
             o.z = getint(p)/DMF;
+            if(p.overread()) break;
             if(notgotbases) addbase(ammotype>=GUN_SG && ammotype<=GUN_PISTOL ? ammotype : min(ammotype, 0), o);
         }
         if(notgotbases)
