@@ -1368,6 +1368,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\shared\crypto.h"
+				>
+			</File>
+			<File
 				RelativePath="..\shared\cube.h"
 				>
 			</File>
@@ -1577,6 +1581,10 @@
 			>
 			<File
 				RelativePath="..\fpsgame\assassin.h"
+				>
+			</File>
+			<File
+				RelativePath="..\fpsgame\auth.h"
 				>
 			</File>
 			<File
