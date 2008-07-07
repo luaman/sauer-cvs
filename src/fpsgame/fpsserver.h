@@ -183,12 +183,13 @@ struct fpsserver : igameserver
         string name, team, mapvote;
         int modevote;
         int privilege;
-        bool spectator, local, timesync, wantsmaster;
+        bool spectator, local, timesync;
         int gameoffset, lastevent;
         gamestate state;
         vector<gameevent> events;
         vector<uchar> position, messages;
         vector<clientinfo *> targets;
+        uint authreq;
 
         clientinfo() { reset(); }
 
@@ -213,7 +214,8 @@ struct fpsserver : igameserver
         {
             name[0] = team[0] = 0;
             privilege = PRIV_NONE;
-            spectator = local = wantsmaster = false;
+            spectator = local = false;
+            authreq = 0;
             position.setsizenodelete(0);
             messages.setsizenodelete(0);
             mapchange();
@@ -372,7 +374,10 @@ struct fpsserver : igameserver
     ctfservmode ctfmode;
     servmode *smode;
 
-    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(MM_DEFAULT), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), assassinmode(*this), ctfmode(*this), smode(NULL) 
+    #include "auth.h"
+    authserv auth;
+
+    fpsserver() : notgotitems(true), notgotbases(false), gamemode(0), totalmillis(0), interm(0), minremain(0), mapreload(false), lastsend(0), mastermode(MM_OPEN), mastermask(MM_DEFAULT), currentmaster(-1), masterupdate(false), mapdata(NULL), reliablemessages(false), demonextmatch(false), demotmp(NULL), demorecord(NULL), demoplayback(NULL), nextplayback(0), arenamode(*this), capturemode(*this), assassinmode(*this), ctfmode(*this), smode(NULL), auth(*this)
     {
         serverdesc[0] = '\0';
         masterpass[0] = '\0';
@@ -954,7 +959,7 @@ struct fpsserver : igameserver
         // only allow edit messages in coop-edit mode
         if(type>=SV_EDITENT && type<=SV_GETMAP && gamemode!=1) return -1;
         // server only messages
-        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_BASEREGEN, SV_ANNOUNCE, SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER, SV_SENDDEMOLIST, SV_SENDDEMO, SV_DEMOPLAYBACK, SV_SENDMAP, SV_DROPFLAG, SV_SCOREFLAG, SV_RETURNFLAG, SV_CLIENT };
+        static int servtypes[] = { SV_INITS2C, SV_MAPRELOAD, SV_SERVMSG, SV_DAMAGE, SV_HITPUSH, SV_SHOTFX, SV_DIED, SV_SPAWNSTATE, SV_FORCEDEATH, SV_ARENAWIN, SV_ITEMACC, SV_ITEMSPAWN, SV_TIMEUP, SV_CDIS, SV_CURRENTMASTER, SV_PONG, SV_RESUME, SV_TEAMSCORE, SV_BASEINFO, SV_BASEREGEN, SV_ANNOUNCE, SV_CLEARTARGETS, SV_CLEARHUNTERS, SV_ADDTARGET, SV_REMOVETARGET, SV_ADDHUNTER, SV_REMOVEHUNTER, SV_SENDDEMOLIST, SV_SENDDEMO, SV_DEMOPLAYBACK, SV_SENDMAP, SV_DROPFLAG, SV_SCOREFLAG, SV_RETURNFLAG, SV_CLIENT, SV_AUTHCHAL };
         if(ci) loopi(sizeof(servtypes)/sizeof(int)) if(type == servtypes[i]) return -1;
         return type;
     }
@@ -1547,11 +1552,23 @@ struct fpsserver : igameserver
 
             case SV_APPROVEMASTER:
             {
-                int mn = getint(p);
-                if(mastermask&MM_AUTOAPPROVE || ci->state.state==CS_SPECTATOR) break;
-                clientinfo *candidate = (clientinfo *)getinfo(mn);
-                if(!candidate || !candidate->wantsmaster || mn==sender || getclientip(mn)==getclientip(sender)) break;
-                setmaster(candidate, true, "", true);
+                // compat
+                getint(p);
+                break;
+            }
+
+            case SV_AUTHTRY:
+            {
+                getstring(text, p);
+                auth.tryauth(ci, text);
+                break;
+            }
+
+            case SV_AUTHANS:
+            {
+                uint id = (uint)getint(p);
+                getstring(text, p);
+                auth.answerchallenge(ci, id, text);
                 break;
             }
 
@@ -1913,7 +1930,9 @@ struct fpsserver : igameserver
             sendf(-1, 1, "ri3", SV_CURRENTMASTER, currentmaster, m ? m->privilege : 0); 
             masterupdate = false; 
         } 
-    
+   
+        auth.update();
+
         if((gamemode>1 || (gamemode==0 && hasnonlocalclients())) && gamemillis-curtime>0 && gamemillis/60000!=(gamemillis-curtime)/60000) checkintermission();
         if(interm && gamemillis>interm)
         {
@@ -1952,7 +1971,7 @@ struct fpsserver : igameserver
 
     void setmaster(clientinfo *ci, bool val, const char *pass = "", bool approved = false)
     {
-        if(approved && (!val || !ci->wantsmaster)) return;
+        if(approved && !val) return;
         const char *name = "";
         if(val)
         {
@@ -1969,9 +1988,7 @@ struct fpsserver : igameserver
             if(masterpass[0] && !strcmp(masterpass, pass)) ci->privilege = PRIV_ADMIN;
             else if(!approved && !(mastermask&MM_AUTOAPPROVE) && !ci->privilege)
             {
-                ci->wantsmaster = true;
-                s_sprintfd(msg)("%s wants master. Type \"/approve %d\" to approve.", colorname(ci), ci->clientnum);
-                sendservmsg(msg);
+                sendf(ci->clientnum, 1, "ris", SV_SERVMSG, "This server requires you to use the \"/auth\" command to gain master.");
                 return;
             }
             else ci->privilege = PRIV_MASTER;
@@ -1989,7 +2006,6 @@ struct fpsserver : igameserver
         sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;
-        loopv(clients) clients[i]->wantsmaster = false;
     }
 
     void localconnect(int n)
