@@ -55,7 +55,7 @@ struct authserv
         buf.data = &output[outputpos];
         buf.dataLength = output.length() - outputpos;
         int sent = enet_socket_send(socket, NULL, &buf, 1);
-        if(sent > 0) 
+        if(sent >= 0) 
         {
             outputpos += sent;
             if(outputpos >= output.length())
@@ -64,11 +64,14 @@ struct authserv
                 outputpos = 0;
             }
         }
-        else if(sent < 0) disconnect();
+        else disconnect();
     }
 
     void flushinput()
     {
+        enet_uint32 events = ENET_SOCKET_WAIT_RECEIVE;
+        if(enet_socket_wait(socket, &events, 0) < 0 || !events) return;
+
         ENetBuffer buf;
         buf.data = &input[inputpos];
         buf.dataLength = sizeof(input) - inputpos;
@@ -79,7 +82,7 @@ struct authserv
             inputpos += recv;
             processinput();
         }
-        else if(recv < 0) disconnect();
+        else disconnect();
     }
 
     clientinfo *findauth(uint id)
