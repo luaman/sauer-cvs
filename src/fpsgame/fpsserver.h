@@ -190,6 +190,7 @@ struct fpsserver : igameserver
         vector<uchar> position, messages;
         vector<clientinfo *> targets;
         uint authreq;
+        string authname;
 
         clientinfo() { reset(); }
 
@@ -1969,9 +1970,9 @@ struct fpsserver : igameserver
         }
     }
 
-    void setmaster(clientinfo *ci, bool val, const char *pass = "", bool approved = false)
+    void setmaster(clientinfo *ci, bool val, const char *pass = "", const char *authname = NULL)
     {
-        if(approved && !val) return;
+        if(authname && !val) return;
         const char *name = "";
         if(val)
         {
@@ -1983,18 +1984,18 @@ struct fpsserver : igameserver
             loopv(clients) if(ci!=clients[i] && clients[i]->privilege)
             {
                 if(masterpass[0] && !strcmp(masterpass, pass)) clients[i]->privilege = PRIV_NONE;
-                else if(approved && clients[i]->privilege<=PRIV_MASTER) continue;
+                else if(authname && clients[i]->privilege<=PRIV_MASTER) continue;
                 else return;
             }
             if(masterpass[0] && !strcmp(masterpass, pass)) ci->privilege = PRIV_ADMIN;
-            else if(!approved && !(mastermask&MM_AUTOAPPROVE) && !ci->privilege)
+            else if(!authname && !(mastermask&MM_AUTOAPPROVE) && !ci->privilege)
             {
                 sendf(ci->clientnum, 1, "ris", SV_SERVMSG, "This server requires you to use the \"/auth\" command to gain master.");
                 return;
             }
             else 
             {
-                if(approved)
+                if(authname)
                 {
                     loopv(clients) if(ci!=clients[i] && clients[i]->privilege<=PRIV_MASTER) clients[i]->privilege = PRIV_NONE;
                 }
@@ -2010,7 +2011,9 @@ struct fpsserver : igameserver
         }
         mastermode = MM_OPEN;
         allowedips.setsize(0);
-        s_sprintfd(msg)("%s %s %s", colorname(ci), val ? (approved ? "approved for" : "claimed") : "relinquished", name);
+        string msg;
+        if(val && authname) s_sprintf(msg)("%s claimed %s as '\fs\f5%s\fr'", colorname(ci), name, authname);
+        else s_sprintf(msg)("%s %s %s", colorname(ci), val ? "claimed" : "relinquished", name);
         sendservmsg(msg);
         currentmaster = val ? ci->clientnum : -1;
         masterupdate = true;

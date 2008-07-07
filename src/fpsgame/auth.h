@@ -103,7 +103,7 @@ struct authserv
         clientinfo *ci = findauth(id);
         if(!ci) return;
         ci->authreq = 0;
-        sv.setmaster(ci, true, "", true);
+        sv.setmaster(ci, true, "", ci->authname);
     }
 
     void authchallenged(uint id, const char *val)
@@ -133,13 +133,18 @@ struct authserv
         }
         if(!nextauthreq) nextauthreq = 1;
         ci->authreq = nextauthreq++;
-        s_sprintfd(buf)("reqauth %u %s\n", ci->authreq, user);
+        filtertext(ci->authname, user, false, 100);
+        s_sprintfd(buf)("reqauth %u %s\n", ci->authreq, ci->authname);
         addoutput(buf);
     }
 
-    void answerchallenge(clientinfo *ci, uint id, const char *val)
+    void answerchallenge(clientinfo *ci, uint id, char *val)
     {
         if(ci->authreq != id) return;
+        for(char *s = val; *s; s++)
+        {
+            if(!isxdigit(*s)) { *s = '\0'; break; }
+        }
         s_sprintfd(buf)("confauth %u %s\n", id, val);
         addoutput(buf);
     }
