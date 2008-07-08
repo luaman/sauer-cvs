@@ -26,7 +26,6 @@
 		B930D0920A3D9BC700BDFB85 /* ConsoleView.m in Sources */ = {isa = PBXBuildFile; fileRef = B930D0910A3D9BC700BDFB85 /* ConsoleView.m */; };
 		B930D0D20A3DA92300BDFB85 /* map.icns in Resources */ = {isa = PBXBuildFile; fileRef = B930D0D10A3DA92300BDFB85 /* map.icns */; };
 		B941988C09207E810029DAD1 /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
-		B94198A509207E810029DAD1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		B94198A809207E810029DAD1 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A47A9E01A0483001D3D55B /* SDLMain.m */; };
 		B94198C309207E810029DAD1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		B94198C409207E810029DAD1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F67ED704C74A3F00A80002 /* OpenGL.framework */; };
@@ -105,8 +104,6 @@
 		B9AC7B140D06DB44005506F8 /* sbtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = B9AC7ACC0D06DB44005506F8 /* sbtrace.h */; };
 		B9AC7B150D06DB44005506F8 /* tools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC7ACD0D06DB44005506F8 /* tools.cpp */; };
 		B9AC7B160D06DB44005506F8 /* tools.h in Headers */ = {isa = PBXBuildFile; fileRef = B9AC7ACE0D06DB44005506F8 /* tools.h */; };
-		B9CACA13092099DF00A13F04 /* launcher-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9CACA12092099DF00A13F04 /* launcher-Info.plist */; };
-		B9CACA15092099E700A13F04 /* sauerbraten-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9CACA14092099E700A13F04 /* sauerbraten-Info.plist */; };
 		B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
 		D116C0AB0D9F7DB500E8B945 /* rendertarget.h in Headers */ = {isa = PBXBuildFile; fileRef = D116C0AA0D9F7DB500E8B945 /* rendertarget.h */; };
 		D118DEB60D979281000E8C4C /* glare.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D118DEB50D979281000E8C4C /* glare.cpp */; };
@@ -127,6 +124,7 @@
 		D1DE11150E21983700FA387C /* crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = D1DE11140E21983700FA387C /* crypto.h */; };
 		D1DE11190E21986800FA387C /* auth.h in Headers */ = {isa = PBXBuildFile; fileRef = D1DE11170E21986800FA387C /* auth.h */; };
 		D1DE111A0E21986800FA387C /* extinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = D1DE11180E21986800FA387C /* extinfo.h */; };
+		D1E605B90E2416150045244E /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
 		D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */ = {isa = PBXBuildFile; fileRef = D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */; };
 /* End PBXBuildFile section */
 
@@ -650,8 +648,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B94198A509207E810029DAD1 /* InfoPlist.strings in Resources */,
-				B9CACA15092099E700A13F04 /* sauerbraten-Info.plist in Resources */,
+				D1E605B90E2416150045244E /* sauerbraten.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -660,7 +657,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B96D0D630920971300B6C936 /* MainMenu.nib in Resources */,
-				B9CACA13092099DF00A13F04 /* launcher-Info.plist in Resources */,
 				B9CACA2509209A5800A13F04 /* sauerbraten.icns in Resources */,
 				B90357B509D09B9D002C9DC7 /* InfoPlist.strings in Resources */,
 				B930D0D20A3DA92300BDFB85 /* map.icns in Resources */,
@@ -687,7 +683,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n\n#make the directory which our disk image will be made of\n#use /tmp as a destination because copying ourself (xcode folder) whilst compling causes the dog to chase its tail\nSAUERPKG=`mktemp -d /tmp/sauerpkg.XXXXXX` || exit 1\nmkdir $SAUERPKG/sauerbraten\n\n#leave indicator of where temp directory is in case things break\nln -sf $SAUERPKG $TARGET_BUILD_DIR/sauerpkg\n\n#copy sauerbraten there\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app $SAUERPKG/sauerbraten\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app $SAUERPKG/\nmv $SAUERPKG/launcher.app $SAUERPKG/Sauerbraten.app\n\nstrip -u -r $SAUERPKG/sauerbraten/sauerbraten.app/Contents/MacOS/sauerbraten\n\n#install all frameworks into app bundle\nmkdir $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks\n\t\trm -rf $SAUERPKG/sauerbraten/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../../docs $SAUERPKG/\n/Developer/Tools/CpMac -r $SRCROOT/../../data $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../packages $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../src $SAUERPKG/sauerbraten/\n/Developer/Tools/CpMac -r $SRCROOT/../../README.html $SAUERPKG/\nfind -d $SAUERPKG -name \"CVS\" -exec rm -rf {} \\;\nfind $SAUERPKG -name \".DS_Store\" -exec rm -f {} \\;\nrm -rf $SAUERPKG/sauerbraten/src/xcode/build\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder $SAUERPKG -volname sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -rf $SAUERPKG\n";
+			shellScript = "echo $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n\n#ensure old package is gone\nrm -f sauerbraten.dmg\n\n#make the directory which our disk image will be made of\n#use /tmp as a destination because copying ourself (xcode folder) whilst compling causes the dog to chase its tail\nSAUERPKG=`mktemp -d /tmp/sauerpkg.XXXXXX` || exit 1\n\n#leave indicator of where temp directory is in case things break\nln -sf $SAUERPKG $TARGET_BUILD_DIR/sauerpkg\n\n#copy launcher\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/launcher.app $SAUERPKG/Sauerbraten.app\n\n#was GAMEDIR=$SAUERPKG/sauerbraten but now we always hide it inside the launcher\nGAMEDIR=$SAUERPKG/Sauerbraten.app/Contents/gamedata\nmkdir $GAMEDIR\n\n#copy sauerbraten\n/Developer/Tools/CpMac -r $TARGET_BUILD_DIR/sauerbraten.app $GAMEDIR/\nstrip -u -r $GAMEDIR/sauerbraten.app/Contents/MacOS/sauerbraten\n\n#install all frameworks into app bundle\nmkdir $GAMEDIR/sauerbraten.app/Contents/Frameworks\nfor framework in SDL.framework SDL_mixer.framework SDL_image.framework\ndo\n\tif [ -d $LOCAL_LIBRARY_DIR/Frameworks/$framework/ ] \n\tthen\t\n\t\t/Developer/Tools/CpMac -r $LOCAL_LIBRARY_DIR/Frameworks/$framework/ $GAMEDIR/sauerbraten.app/Contents/Frameworks\n\t\trm -rf $GAMEDIR/sauerbraten.app/Contents/Frameworks/$framework/Versions/A/Headers\n\telse\n\t\texit 1\n\tfi\ndone\n\n\n#copy readme and data and remove unneccesary stuff\n/Developer/Tools/CpMac -r $SRCROOT/../../docs $SAUERPKG/\n/Developer/Tools/CpMac -r $SRCROOT/../../data $GAMEDIR/\n/Developer/Tools/CpMac -r $SRCROOT/../../packages $GAMEDIR/\n/Developer/Tools/CpMac -r $SRCROOT/../../src $SAUERPKG/sourcecode\n/Developer/Tools/CpMac -r $SRCROOT/../../README.html $SAUERPKG/\nfind -d $SAUERPKG -name \"CVS\" -exec rm -rf {} \\;\nfind $SAUERPKG -name \".DS_Store\" -exec rm -f {} \\;\nrm -rf $SAUERPKG/sourcecode/xcode/build\n\n#finally make a disk image out of the stuff\nhdiutil create -srcfolder $SAUERPKG -volname sauerbraten sauerbraten.dmg\nhdiutil internet-enable -yes sauerbraten.dmg\n\n#cleanup\nrm -rf $SAUERPKG\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

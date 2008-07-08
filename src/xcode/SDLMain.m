@@ -20,22 +20,6 @@
 /* Use this flag to determine whether we use SDLMain.nib or not */
 #define		SDL_USE_NIB_FILE	0
 
-/* Use this flag to determine whether we use CPS (docking) or not */
-#define		SDL_USE_CPS		1
-#ifdef SDL_USE_CPS
-/* Portions of CPS.h */
-typedef struct CPSProcessSerNum
-{
-	UInt32		lo;
-	UInt32		hi;
-} CPSProcessSerNum;
-
-extern OSErr	CPSGetCurrentProcess( CPSProcessSerNum *psn);
-extern OSErr 	CPSEnableForegroundOperation( CPSProcessSerNum *psn, UInt32 _arg2, UInt32 _arg3, UInt32 _arg4, UInt32 _arg5);
-extern OSErr	CPSSetFrontProcess( CPSProcessSerNum *psn);
-
-#endif /* SDL_USE_CPS */
-
 static int    gArgc;
 static char  **gArgv;
 static BOOL   gFinderLaunch;
@@ -215,24 +199,16 @@ static void CustomApplicationMain (int argc, char **argv)
     /* Ensure the application object is initialised */
     [SDLApplication sharedApplication];
     
-#ifdef SDL_USE_CPS
-    /* @TODO - use this to get rid of the warnings?
-    {
-        ProcessSerialNumber psn = { 0, kCurrentProcess };
-        if(TransformProcessType(&psn,kProcessTransformToForegroundApplication)==0) //10.3
-            if(SetFrontProcess(&psn) == 0)
-               [SDLApplication sharedApplication];
+    BOOL server = NO;
+    int i;
+    for(i = 0; i < argc; i++) if(strcmp(argv[i], "-d") == 0) { server = YES; break; }
+    if(!server) /* stop being an agent program (LSUIElement=1 in plist) and bring forward */
+    {   
+        ProcessSerialNumber psn;
+        GetCurrentProcess(&psn);
+        OSStatus err = TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+        if(SetFrontProcess(&psn) == 0) [SDLApplication sharedApplication];
     }
-    */
-    {
-        CPSProcessSerNum PSN;
-        /* Tell the dock about us */
-        if (!CPSGetCurrentProcess(&PSN))
-            if (!CPSEnableForegroundOperation(&PSN,0x03,0x3C,0x2C,0x1103))
-                if (!CPSSetFrontProcess(&PSN))
-                    [SDLApplication sharedApplication];
-    }
-#endif /* SDL_USE_CPS */
 
     /* Set up the menubar */
     [NSApp setMainMenu:[[NSMenu alloc] init]];

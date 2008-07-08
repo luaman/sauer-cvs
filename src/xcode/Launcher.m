@@ -6,8 +6,6 @@
 
 // User default keys
 #define dkVERSION @"version"
-#define dkUSERDIR @"userdir"
-#define dkNAME @"name"
 #define dkFULLSCREEN @"fullscreen"
 #define dkFSAA @"fsaa"
 #define dkSHADER @"shader"
@@ -92,11 +90,7 @@
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"] encoding:NSASCIIStringEncoding error:&error];
     else
         text = [text initWithContentsOfFile:[path stringByAppendingString:@".txt"]]; //deprecated in 10.4
-    if(!text)
-    {
-        text = user ? @"user " : @"";
-        if(demo) text = [text stringByAppendingString:@"demo"];
-    }
+    if(!text) text = (demo)?@"Recorded demo data":@"";
     return text;
 }
 - (void)setText:(NSString*)text { } // wtf? - damn textfield believes it's editable
@@ -108,6 +102,10 @@
 - (NSString*)hasImage { return [self tickIfExists:@".jpg"]; }
 - (NSString*)hasText { return [self tickIfExists:@".txt"]; }
 - (NSString*)hasCfg { return [self tickIfExists:@".cfg"]; }
+- (NSString*)user { 
+    unichar tickCh = 0x2713; 
+    return (user ? [NSString stringWithCharacters:&tickCh length:1] : @"");
+}
 @end
 
 
@@ -223,10 +221,9 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 /* directory where the executable lives */
 + (NSString *)cwd
 {
-    return [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:kSAUERBRATEN];
+    return [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Contents/gamedata"];
 }
 
-+ (BOOL)hasUserdir { return [[NSUserDefaults standardUserDefaults] boolForKey:dkUSERDIR]; }
 
 /* directory where user files are kept - typically /Users/<name>/Application Support/sauerbraten */
 + (NSString*)userdir 
@@ -238,6 +235,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         path = [(NSURL *)url path];
         CFRelease(url);
         path = [path stringByAppendingPathComponent:kSAUERBRATEN];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        if(![fm fileExistsAtPath:path]) [fm createDirectoryAtPath:path attributes:nil]; //ensure it exists    
     }
     return path;
 }
@@ -303,7 +302,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     int i;
     for(i = 0; i < sizeof(files)/sizeof(NSString*); i++) 
     {
-        NSString *file = [Launcher hasUserdir] ? [Launcher userdir] : [Launcher cwd];
+        NSString *file = [Launcher userdir];
         file = [file stringByAppendingPathComponent:files[i]];
         
         NSArray *lines = [[NSString stringWithContentsOfFile:file] componentsSeparatedByString:@"\n"];
@@ -365,7 +364,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 	
     if (data && [data length])
     {
-        NSString *text = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];		
+        NSString *text = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
         [console appendText:text];
         [text release];					
         [taskOutput readInBackgroundAndNotify]; //wait for more data
@@ -381,7 +380,6 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (BOOL)launchGame:(NSArray *)args {
     NSString *cwd = [Launcher cwd];
-    //NSString *exe = [cwd stringByAppendingPathComponent:[@":s.app/Contents/MacOS/:s" expand]];
     NSString *exe = [[NSBundle bundleWithPath:[cwd stringByAppendingPathComponent:[@":s.app" expand]]] executablePath];
     
     BOOL okay = YES;
@@ -467,11 +465,10 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     [args addObject:[NSString stringWithFormat:@"-a%d", [defs integerForKey:dkFSAA]]];
     [args addObject:[NSString stringWithFormat:@"-f%d", [defs integerForKey:dkSHADER]]];
     
-    if([Launcher hasUserdir]) [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
+    [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
 
     NSMutableArray *cmds = [NSMutableArray array];
-    NSString *name = [defs nonNullStringForKey:dkNAME];
-    if(name) [cmds addObject:[NSString stringWithFormat:@"name \"%@\"", name]];
+    if(forcename) [cmds addObject:[NSString stringWithFormat:@"name \"%@\"", NSUserName()]];
     
     if(filename) 
     {
@@ -502,9 +499,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 - (void)scanMaps:(id)obj //@note threaded!
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    int len = [Launcher hasUserdir] ? 2 : 1;
     int i;
-    for(i = 0; i < len; i++) 
+    for(i = 0; i < 2; i++) 
     {
         NSString *dir = (i==0) ? [Launcher cwd] : [Launcher userdir];
         NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dir];
@@ -565,7 +561,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         while((ext = [exts nextObject])) [fileRoles setObject:role forKey:ext];
     }
 	
-    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];    
     NSFileManager *fm = [NSFileManager defaultManager];
     
     NSString *appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
@@ -583,31 +579,17 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     NSDictionary *dict = [self readConfigFiles];
     [keys addObjects:[self getKeys:dict]];
     
-    if([[defs nonNullStringForKey:dkNAME] isEqual:@""]) 
-    {
-        NSString *name = [dict objectForKey:@"name"];
-        if([name isEqual:@""] || [name isEqual:@"unnamed"]) name = NSUserName();
-        [defs setValue:name forKey:dkNAME];
-    }
-    
-    NSString *dir = [Launcher cwd];
-    if(![fm isWritableFileAtPath:dir]) [defs setBool:YES forKey:dkUSERDIR];  // auto-enable userdir
-	
+    //encourage people not to remain unnamed
+    NSString *name = [dict objectForKey:@"name"];
+    forcename = (!name || [name isEqual:@""] || [name isEqual:@"unnamed"]);
+    	
     [self initMaps];
     [self initResolutions];
     server = -1;
     [NSApp setDelegate:self]; //so can catch the double-click, dropped files, termination
-    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
-    
-    //Listen for changes in the preferences that require the gui to refresh	
-    [defs addObserver:self forKeyPath:dkUSERDIR options:NSKeyValueObservingOptionNew context:nil];
-
+    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];    
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if(![keyPath isEqual:dkUSERDIR]) return;
-    [self initMaps];
-}
 
 #pragma mark -
 #pragma mark application delegate
@@ -637,9 +619,8 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
     if(!role) return NO;
     BOOL demo = [role isEqual:@"Viewer"];
     filename = [filename stringByDeletingPathExtension]; //chop off extension
-    int len = [Launcher hasUserdir] ? 2 : 1;
     int i;
-    for(i = 0; i < len; i++) {
+    for(i = 0; i < 2; i++) {
         NSString *pkg = (i == 0) ? [Launcher cwd] : [Launcher userdir];
         if(!demo) pkg = [pkg stringByAppendingPathComponent:@"packages"];
         if([filename hasPrefix:pkg])
@@ -655,10 +636,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 - (void)openPackageFolder:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo 
 {
     if(returnCode == 0) return;
-    if([Launcher hasUserdir]) //close enough... otherwise need to ensure that sauerbraten/packages folder exists too
-        [self openUserdir:nil]; 
-    else
-        [[NSWorkspace sharedWorkspace] openFile:[Launcher cwd]];
+    [self openUserdir:nil]; 
 }
 
 //we register 'sauerbraten' as a url scheme
@@ -697,7 +675,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         int clients = [defs integerForKey:dkMAXCLIENTS];
         if (clients > 0) [args addObject:[NSString stringWithFormat:@"-c%d", clients]];
         
-        if([Launcher hasUserdir]) [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
+        [args addObject:[NSString stringWithFormat:@"-q%@", [Launcher userdir]]];
         
         [self launchGame:args];
     } 
@@ -733,10 +711,7 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 
 - (IBAction)openUserdir:(id)sender 
 {
-    NSString *dir = [Launcher userdir];
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if(![fm fileExistsAtPath:dir]) [fm createDirectoryAtPath:dir attributes:nil]; //ensure there is a folder to open
-    [[NSWorkspace sharedWorkspace] openFile:dir];
+    [[NSWorkspace sharedWorkspace] openFile:[Launcher userdir]];
 }
 
 @end

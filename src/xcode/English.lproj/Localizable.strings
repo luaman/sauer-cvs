@@ -18,7 +18,7 @@
 "ClientAlertMesg" = "Try moving the game folder contain :s so that the path doesn't contain weird characters, or start :s manually.";
 
 "InitAlertTitle" = "Invalid installation";
-"InitAlertMesg" = "The :s folder must exist alongside this launcher";
+"InitAlertMesg" = "Cannot find gamedata folder within :s";
 
 "FileAlertTitle" = "Invalid file location";
 "FileAlertMesg" = "Can only load files that are within the :s/packages/ folder. Do you want to show this folder?";

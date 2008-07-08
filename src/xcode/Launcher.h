@@ -23,6 +23,7 @@
     NSMutableDictionary *toolBarItems;
     pid_t server;
     NSMutableDictionary *fileRoles;
+    BOOL forcename;
 }
 
 - (IBAction)playAction:(id)sender;
