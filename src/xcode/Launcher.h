@@ -30,10 +30,6 @@
 
 - (IBAction)multiplayerAction:(id)sender;
 
-- (IBAction)helpAction:(id)sender;
-
-- (IBAction)showForum:(id)sender;
-
 - (IBAction)playRpg:(id)sender;
 
 - (IBAction)playMap:(id)sender;

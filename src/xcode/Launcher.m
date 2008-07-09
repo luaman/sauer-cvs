@@ -157,14 +157,16 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
         NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
         int tag = [identifier intValue];
         NSString *name = identifier;
-        SEL action = @selector(helpAction:);
+        SEL action = @selector(showHelp:);
+        id target = NSApp;
         if(tag) {
             NSString *names[] = {tkMAIN, tkMAPS, tkKEYS, tkSERVER, tkEISENSTERN};
             name = names[tag-1];
             action = @selector(switchViews:);
+            target = self;
         }
         [item setTag:tag];
-        [item setTarget:self];
+        [item setTarget:target];
         [item setAction:action];
         [item setLabel:NSLocalizedString(name, @"")];
         [item setImage:[NSImage imageNamed:name]];
@@ -696,17 +698,6 @@ static int numberForKey(CFDictionaryRef desc, CFStringRef key)
 {
     NSArray *sel = [maps selectedObjects];
     if(sel && [sel count] > 0) [self playFile:[[sel objectAtIndex:0] path]];
-}
-
-- (IBAction)helpAction:(id)sender 
-{
-    NSString *file = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"README.html"];
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:file]];
-}
-
-- (IBAction)showForum:(id)sender
-{
-     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:NSLocalizedString(@"forumURL", @"")]];
 }
 
 - (IBAction)openUserdir:(id)sender 
