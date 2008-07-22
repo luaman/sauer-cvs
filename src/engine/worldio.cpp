@@ -574,6 +574,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
 
     cl->preload();
 
+    entitiesinoctanodes();
     initlights();
     allchanged(true);
 
