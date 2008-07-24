@@ -511,8 +511,6 @@ void findorientation()
 
     if(raycubepos(camera1->o, camdir, worldpos, 0, RAY_CLIPMAT|RAY_SKIPFIRST) == -1)
         worldpos = vec(camdir).mul(2*hdr.worldsize).add(camera1->o); //otherwise 3dgui won't work when outside of map
-
-    setviewcell(camera1->o);
 }
 
 void transplayer()
@@ -641,6 +639,8 @@ void recomputecamera()
             if(!moveplayer(camera1, 10, true, thirdpersondistance)) break;
         }
     }
+
+    setviewcell(camera1->o);
 }
 
 void project(float fovy, float aspect, int farplane, bool flipx = false, bool flipy = false, bool swapxy = false)
@@ -1167,6 +1167,7 @@ void gl_drawframe(int w, int h)
     project(fovy, aspect, farplane);
     transplayer();
     readmatrices();
+    findorientation();
 
     glEnable(GL_TEXTURE_2D);
 

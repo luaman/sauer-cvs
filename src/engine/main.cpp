@@ -923,7 +923,6 @@ int main(int argc, char **argv)
 
         // miscellaneous general game effects
         recomputecamera();
-        findorientation();
         entity_particles();
         updatevol();
         checkmapsounds();
