@@ -1138,8 +1138,6 @@ void gl_drawframe(int w, int h)
 {
     defaultshader->set();
 
-    recomputecamera();
-   
     updatedynlights();
 
     aspect = w/float(h);
