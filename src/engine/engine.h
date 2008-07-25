@@ -136,6 +136,7 @@ extern GLuint lookupenvmap(ushort emid);
 extern GLuint lookupenvmap(Slot &slot);
 extern bool reloadtexture(Texture &tex);
 extern bool reloadtexture(const char *name);
+extern void setuptexcompress();
 
 // shadowmap
 
