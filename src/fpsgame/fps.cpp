@@ -261,7 +261,6 @@ struct fpsclient : igameclient
             else if(d->yaw>=360) d->yaw -= 360;
             d->pitch += d->deltapitch*k;
         }
-        d->lastpredict = lastmillis;
     }
          
     void otherplayers(int curtime)
