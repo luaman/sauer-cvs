@@ -1625,6 +1625,7 @@ struct fpsserver : igameserver
                     {
                         enet_packet_resize(packet, packet->dataLength + MAXTRANS);
                         p.buf = packet->data;
+                        p.maxlen = packet->dataLength;
                     }
                 }
                 putint(p, -1);
@@ -1676,6 +1677,7 @@ struct fpsserver : igameserver
                 {
                     enet_packet_resize(packet, packet->dataLength + MAXTRANS);
                     p.buf = packet->data;
+                    p.maxlen = packet->dataLength;
                 }
                 putint(p, oi->clientnum);
                 putint(p, oi->state.state);
@@ -1689,6 +1691,7 @@ struct fpsserver : igameserver
         {
             enet_packet_resize(packet, packet->dataLength + MAXTRANS);
             p.buf = packet->data;
+            p.maxlen = packet->dataLength;
             smode->initclient(ci, p, true);
         }
         return 1;
