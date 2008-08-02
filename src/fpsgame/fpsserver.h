@@ -1353,7 +1353,7 @@ struct fpsserver : igameserver
                 break;
 
             case SV_BASES:
-                if((ci->state.state!=CS_SPECTATOR || ci->privilege) && smode==&capturemode) capturemode.parsebases(p);
+                if(smode==&capturemode) capturemode.parsebases(p, ci->state.state!=CS_SPECTATOR || ci->privilege);
                 break;
 
             case SV_REPAMMO:
@@ -1368,7 +1368,7 @@ struct fpsserver : igameserver
             }
 
             case SV_INITFLAGS:
-                if((ci->state.state!=CS_SPECTATOR || ci->privilege) && smode==&ctfmode) ctfmode.parseflags(p);
+                if(smode==&ctfmode) ctfmode.parseflags(p, ci->state.state!=CS_SPECTATOR || ci->privilege);
                 break;
 
             case SV_PING:
