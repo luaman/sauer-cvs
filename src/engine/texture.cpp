@@ -760,6 +760,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
                     if(b.combined!=index) continue;
                     SDL_Surface *bs = texturedata(NULL, &b);
                     if(!bs) continue;
+                    if(ts->format->BitsPerPixel!=32) ts = creatergbasurface(ts);
                     if(bs->w!=ts->w || bs->h!=ts->h) bs = scalesurface(bs, ts->w, ts->h);
                     switch(b.type)
                     {
