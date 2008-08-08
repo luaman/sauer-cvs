@@ -394,6 +394,29 @@ SDL_Surface *creatergbasurface(SDL_Surface *os)
     return ns;
 }
 
+SDL_Surface *texnormal(SDL_Surface *s, int emphasis)    
+{
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 32, RMASK, GMASK, BMASK, AMASK);
+    if(!d) fatal("create surface"); 
+    uchar *src = (uchar *)s->pixels;
+    uchar *dst = (uchar *)d->pixels;
+    loop(y, s->h) loop(x, s->w)
+    {
+        vec normal = vec(0.0f, 0.0f, 255.0f/emphasis);
+        normal.x += src[(y*s->w+((x+s->w-1)%s->w))*s->format->BytesPerPixel];
+        normal.x -= src[(y*s->w+((x+1)%s->w))*s->format->BytesPerPixel];
+        normal.y += src[(((y+s->h-1)%s->h)*s->w+x)*s->format->BytesPerPixel];
+        normal.y -= src[(((y+1)%s->h)*s->w+x)*s->format->BytesPerPixel];
+        normal.normalize();
+        *dst++ = uchar(128 + normal.x*127);
+        *dst++ = uchar(128 + normal.y*127);
+        *dst++ = uchar(128 + normal.z*127);
+        *dst++ = 255;
+    }
+    SDL_FreeSurface(s);
+    return d;
+}
+
 SDL_Surface *scalesurface(SDL_Surface *os, int w, int h)
 {
     SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, os->format->BitsPerPixel, os->format->Rmask, os->format->Gmask, os->format->Bmask, os->format->Amask);
@@ -479,6 +502,11 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         {
             s = texffmask(s, atoi(arg[0]));
             if(s == &stubsurface) return s;
+        }
+        else if(!strncmp(cmd, "normal", len)) 
+        {
+            int emphasis = atoi(arg[0]);
+            s = texnormal(s, (emphasis>0)?emphasis:3);
         }
         else if(!strncmp(cmd, "dup", len)) texdup(s, atoi(arg[0]), atoi(arg[1]));
         else if(!strncmp(cmd, "decal", len)) s = texdecal(s);
