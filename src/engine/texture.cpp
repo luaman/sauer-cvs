@@ -374,20 +374,16 @@ static Texture *newtexture(Texture *t, const char *rname, SDL_Surface *s, int cl
 }
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-#define RMASK 0xff000000
-#define GMASK 0x00ff0000
-#define BMASK 0x0000ff00
-#define AMASK 0x000000ff
+#define RGBAMASKS 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff
+#define RGBMASKS  0x00ff0000, 0x0000ff00, 0x000000ff, 0
 #else
-#define RMASK 0x000000ff
-#define GMASK 0x0000ff00
-#define BMASK 0x00ff0000
-#define AMASK 0xff000000
+#define RGBAMASKS 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000
+#define RGBMASKS RGBAMASKS
 #endif
 
 SDL_Surface *creatergbasurface(SDL_Surface *os)
 {
-    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, os->w, os->h, 32, RMASK, GMASK, BMASK, AMASK);
+    SDL_Surface *ns = SDL_CreateRGBSurface(SDL_SWSURFACE, os->w, os->h, 32, RGBAMASKS);
     if(!ns) fatal("creatergbsurface");
     SDL_BlitSurface(os, NULL, ns, NULL);
     SDL_FreeSurface(os);
@@ -396,7 +392,7 @@ SDL_Surface *creatergbasurface(SDL_Surface *os)
 
 SDL_Surface *texnormal(SDL_Surface *s, int emphasis)    
 {
-    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 32, RMASK, GMASK, BMASK, AMASK);
+    SDL_Surface *d = SDL_CreateRGBSurface(SDL_SWSURFACE, s->w, s->h, 24, RGBMASKS);
     if(!d) fatal("create surface"); 
     uchar *src = (uchar *)s->pixels;
     uchar *dst = (uchar *)d->pixels;
@@ -408,10 +404,9 @@ SDL_Surface *texnormal(SDL_Surface *s, int emphasis)
         normal.y += src[(((y+s->h-1)%s->h)*s->w+x)*s->format->BytesPerPixel];
         normal.y -= src[(((y+1)%s->h)*s->w+x)*s->format->BytesPerPixel];
         normal.normalize();
-        *dst++ = uchar(128 + normal.x*127);
-        *dst++ = uchar(128 + normal.y*127);
-        *dst++ = uchar(128 + normal.z*127);
-        *dst++ = 255;
+        *dst++ = uchar(127.5 + normal.x*127.5);
+        *dst++ = uchar(127.5 + normal.y*127.5);
+        *dst++ = uchar(127.5 + normal.z*127.5);
     }
     SDL_FreeSurface(s);
     return d;
