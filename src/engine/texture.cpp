@@ -375,10 +375,10 @@ static Texture *newtexture(Texture *t, const char *rname, SDL_Surface *s, int cl
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define RGBAMASKS 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff
-#define RGBMASKS  0x00ff0000, 0x0000ff00, 0x000000ff, 0
+#define RGBMASKS  0xff0000, 0x00ff00, 0x0000ff, 0
 #else
 #define RGBAMASKS 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000
-#define RGBMASKS RGBAMASKS
+#define RGBMASKS  0x0000ff, 0x00ff00, 0xff0000, 0
 #endif
 
 SDL_Surface *creatergbasurface(SDL_Surface *os)
@@ -398,15 +398,15 @@ SDL_Surface *texnormal(SDL_Surface *s, int emphasis)
     uchar *dst = (uchar *)d->pixels;
     loop(y, s->h) loop(x, s->w)
     {
-        vec normal = vec(0.0f, 0.0f, 255.0f/emphasis);
+        vec normal(0.0f, 0.0f, 255.0f/emphasis);
         normal.x += src[(y*s->w+((x+s->w-1)%s->w))*s->format->BytesPerPixel];
         normal.x -= src[(y*s->w+((x+1)%s->w))*s->format->BytesPerPixel];
         normal.y += src[(((y+s->h-1)%s->h)*s->w+x)*s->format->BytesPerPixel];
         normal.y -= src[(((y+1)%s->h)*s->w+x)*s->format->BytesPerPixel];
         normal.normalize();
-        *dst++ = uchar(127.5 + normal.x*127.5);
-        *dst++ = uchar(127.5 + normal.y*127.5);
-        *dst++ = uchar(127.5 + normal.z*127.5);
+        *dst++ = uchar(127.5f + normal.x*127.5f);
+        *dst++ = uchar(127.5f + normal.y*127.5f);
+        *dst++ = uchar(127.5f + normal.z*127.5f);
     }
     SDL_FreeSurface(s);
     return d;
