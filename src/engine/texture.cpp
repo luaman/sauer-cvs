@@ -716,10 +716,20 @@ static void blenddecal(SDL_Surface *c, SDL_Surface *d)
 
 static void mergespec(SDL_Surface *c, SDL_Surface *s)
 {
-    writetex(c,
-        sourcetex(s);
-        dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3;
-    );
+    if(s->format->BitsPerPixel < 24)
+    {
+        writetex(c,
+            sourcetex(s);
+            dst[3] = src[0];
+        );
+    }
+    else
+    {
+        writetex(c,
+            sourcetex(s);
+            dst[3] = (int(src[0]) + int(src[1]) + int(src[2]))/3;
+        );
+    }
 }
 
 static void mergedepth(SDL_Surface *c, SDL_Surface *z)
