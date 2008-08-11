@@ -940,8 +940,11 @@ bool g3d_windowhit(bool on, bool act)
     extern int cleargui(int n);
     if(act) 
     {
-        if(on) { firstx = gui::hitx; firsty = gui::hity; }
-        mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
+        if(actionon || windowhit)
+        {
+            if(on) { firstx = gui::hitx; firsty = gui::hity; }
+            mousebuttons |= (actionon=on) ? G3D_DOWN : G3D_UP;
+        }
     } else if(!on && windowhit) cleargui(1);
     return (guis2d.length() && hascursor) || (windowhit && !windowhit->gui2d);
 }
