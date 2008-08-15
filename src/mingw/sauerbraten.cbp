@@ -1,825 +1,221 @@
-<?xml version="1.0"?>
-<!DOCTYPE CodeBlocks_project_file>
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_project_file>
-	<FileVersion major="1" minor="1"/>
+	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="sauerbraten"/>
-		<Option makefile="Makefile"/>
-		<Option makefile_is_custom="0"/>
-		<Option compiler="0"/>
+		<Option title="sauerbraten" />
+		<Option pch_mode="0" />
+		<Option compiler="gcc" />
 		<Build>
 			<Target title="default">
-				<Option output="..\..\bin\sauerbraten.exe"/>
-				<Option working_dir="..\..\"/>
-				<Option object_output=".objs"/>
-				<Option deps_output=".deps"/>
-				<Option type="1"/>
-				<Option compiler="0"/>
-				<Option parameters="-f0 -w640 -h480 -grpg"/>
-				<Option projectResourceIncludeDirsRelation="1"/>
+				<Option output="..\..\bin\sauerbraten.exe" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="..\..\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-f0 -w640 -h480 -grpg" />
+				<Option projectResourceIncludeDirsRelation="1" />
 			</Target>
 		</Build>
+		<VirtualTargets>
+			<Add alias="All" targets="default;" />
+		</VirtualTargets>
 		<Compiler>
-			<Add option="-fexpensive-optimizations"/>
-			<Add option="-Os"/>
-			<Add option="-O3"/>
-			<Add option="-fsigned-char"/>
-			<Add option="-finline-functions"/>
-			<Add option="-fomit-frame-pointer"/>
-			<Add option="-fno-strict-aliasing"/>
-			<Add option="-DDEVCPP"/>
-			<Add option="-D__GNUWIN32__"/>
-			<Add option="-DNDEBUG"/>
-			<Add option="-D_CONSOLE"/>
-			<Add option="-D_MBCS"/>
-			<Add directory="..\enet\include"/>
-			<Add directory="..\include"/>
-			<Add directory="..\engine"/>
-			<Add directory="..\shared"/>
+			<Add option="-fexpensive-optimizations" />
+			<Add option="-O2" />
+			<Add option="-fsigned-char" />
+			<Add option="-finline-functions" />
+			<Add option="-fomit-frame-pointer" />
+			<Add option="-fno-strict-aliasing" />
+			<Add option="-DDEVCPP" />
+			<Add option="-D__GNUWIN32__" />
+			<Add option="-DNDEBUG" />
+			<Add option="-D_CONSOLE" />
+			<Add option="-D_MBCS" />
+			<Add directory="..\enet\include" />
+			<Add directory="..\include" />
+			<Add directory="..\engine" />
+			<Add directory="..\shared" />
 		</Compiler>
 		<Linker>
-			<Add option="-s"/>
-			<Add library="mingw32"/>
-			<Add library="SDLmain"/>
-			<Add library="SDL"/>
-			<Add library="SDL_image"/>
-			<Add library="SDL_mixer"/>
-			<Add library="z"/>
-			<Add library="opengl32"/>
-			<Add library="glu32"/>
-			<Add library="ws2_32"/>
-			<Add library="winmm"/>
-			<Add directory="lib"/>
+			<Add option="-s" />
+			<Add library="mingw32" />
+			<Add library="SDLmain" />
+			<Add library="SDL" />
+			<Add library="SDL_image" />
+			<Add library="SDL_mixer" />
+			<Add library="z" />
+			<Add library="opengl32" />
+			<Add library="glu32" />
+			<Add library="ws2_32" />
+			<Add library="winmm" />
+			<Add directory="lib" />
 		</Linker>
 		<Unit filename="..\enet\callbacks.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\host.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\enet\include\enet\callbacks.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\enet.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\list.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\protocol.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\time.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\types.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\unix.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\utility.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\enet\include\enet\win32.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
+		<Unit filename="..\enet\include\enet\callbacks.h" />
+		<Unit filename="..\enet\include\enet\enet.h" />
+		<Unit filename="..\enet\include\enet\list.h" />
+		<Unit filename="..\enet\include\enet\protocol.h" />
+		<Unit filename="..\enet\include\enet\time.h" />
+		<Unit filename="..\enet\include\enet\types.h" />
+		<Unit filename="..\enet\include\enet\unix.h" />
+		<Unit filename="..\enet\include\enet\utility.h" />
+		<Unit filename="..\enet\include\enet\win32.h" />
 		<Unit filename="..\enet\list.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\packet.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\peer.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\protocol.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\unix.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\enet\win32.c">
-			<Option compilerVar="CC"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\3dgui.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\animmodel.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\bih.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\bih.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\client.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\command.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\console.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\cubeloader.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\decal.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\dynlight.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\engine.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\explosion.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\glare.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\grass.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\lensflare.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\lightmap.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\lightmap.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\lightning.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\main.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\material.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\md2.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\md3.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\md5.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\menus.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\model.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\normal.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\obj.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\octa.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\octa.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\octaedit.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\octarender.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\physics.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\pvs.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\rendergl.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\rendermodel.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\renderparticles.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\rendersky.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\rendertarget.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\rendertext.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\renderva.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\server.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\serverbrowser.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\shader.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\shadowmap.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\skelmodel.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\sound.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\texture.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\texture.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\tristrip.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\vertmodel.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\water.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\world.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\world.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\engine\worldio.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\assassin.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\capture.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\client.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\ctf.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\entities.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\fps.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\fpsrender.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\fpsserver.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\game.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\monster.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\movable.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\scoreboard.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\fpsgame\weapon.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\GL\glext.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_active.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_audio.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_byteorder.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_cdrom.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_config.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_config_macosx.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_config_win32.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_copying.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_cpuinfo.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_endian.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_error.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_events.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_getenv.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_image.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_joystick.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_keyboard.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_keysym.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_loadso.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_main.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_mixer.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_mouse.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_mutex.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_name.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_opengl.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_platform.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_quit.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_rwops.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_stdinc.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_syswm.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_thread.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_timer.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_types.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_version.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\SDL_video.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\begin_code.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\close_code.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\wincompat.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\zconf.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\include\zlib.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\entities.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\rpg.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\rpgent.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\rpgobj.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\rpgobjset.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\stats.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\rpggame\stubs.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\command.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\cube.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\ents.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\geom.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\geom.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\iengine.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\igame.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\engine\3dgui.cpp" />
+		<Unit filename="..\engine\animmodel.h" />
+		<Unit filename="..\engine\bih.cpp" />
+		<Unit filename="..\engine\bih.h" />
+		<Unit filename="..\engine\client.cpp" />
+		<Unit filename="..\engine\command.cpp" />
+		<Unit filename="..\engine\console.cpp" />
+		<Unit filename="..\engine\cubeloader.cpp" />
+		<Unit filename="..\engine\decal.cpp" />
+		<Unit filename="..\engine\dynlight.cpp" />
+		<Unit filename="..\engine\engine.h" />
+		<Unit filename="..\engine\explosion.h" />
+		<Unit filename="..\engine\glare.cpp" />
+		<Unit filename="..\engine\grass.cpp" />
+		<Unit filename="..\engine\lensflare.h" />
+		<Unit filename="..\engine\lightmap.cpp" />
+		<Unit filename="..\engine\lightmap.h" />
+		<Unit filename="..\engine\lightning.h" />
+		<Unit filename="..\engine\main.cpp" />
+		<Unit filename="..\engine\material.cpp" />
+		<Unit filename="..\engine\md2.h" />
+		<Unit filename="..\engine\md3.h" />
+		<Unit filename="..\engine\md5.h" />
+		<Unit filename="..\engine\menus.cpp" />
+		<Unit filename="..\engine\model.h" />
+		<Unit filename="..\engine\normal.cpp" />
+		<Unit filename="..\engine\obj.h" />
+		<Unit filename="..\engine\octa.cpp" />
+		<Unit filename="..\engine\octa.h" />
+		<Unit filename="..\engine\octaedit.cpp" />
+		<Unit filename="..\engine\octarender.cpp" />
+		<Unit filename="..\engine\physics.cpp" />
+		<Unit filename="..\engine\pvs.cpp" />
+		<Unit filename="..\engine\rendergl.cpp" />
+		<Unit filename="..\engine\rendermodel.cpp" />
+		<Unit filename="..\engine\renderparticles.cpp" />
+		<Unit filename="..\engine\rendersky.cpp" />
+		<Unit filename="..\engine\rendertarget.h" />
+		<Unit filename="..\engine\rendertext.cpp" />
+		<Unit filename="..\engine\renderva.cpp" />
+		<Unit filename="..\engine\server.cpp" />
+		<Unit filename="..\engine\serverbrowser.cpp" />
+		<Unit filename="..\engine\shader.cpp" />
+		<Unit filename="..\engine\shadowmap.cpp" />
+		<Unit filename="..\engine\skelmodel.h" />
+		<Unit filename="..\engine\sound.cpp" />
+		<Unit filename="..\engine\texture.cpp" />
+		<Unit filename="..\engine\texture.h" />
+		<Unit filename="..\engine\tristrip.h" />
+		<Unit filename="..\engine\vertmodel.h" />
+		<Unit filename="..\engine\water.cpp" />
+		<Unit filename="..\engine\world.cpp" />
+		<Unit filename="..\engine\world.h" />
+		<Unit filename="..\engine\worldio.cpp" />
+		<Unit filename="..\fpsgame\assassin.h" />
+		<Unit filename="..\fpsgame\capture.h" />
+		<Unit filename="..\fpsgame\client.h" />
+		<Unit filename="..\fpsgame\ctf.h" />
+		<Unit filename="..\fpsgame\entities.h" />
+		<Unit filename="..\fpsgame\fps.cpp" />
+		<Unit filename="..\fpsgame\fpsrender.h" />
+		<Unit filename="..\fpsgame\fpsserver.h" />
+		<Unit filename="..\fpsgame\game.h" />
+		<Unit filename="..\fpsgame\monster.h" />
+		<Unit filename="..\fpsgame\movable.h" />
+		<Unit filename="..\fpsgame\scoreboard.h" />
+		<Unit filename="..\fpsgame\weapon.h" />
+		<Unit filename="..\include\GL\glext.h" />
+		<Unit filename="..\include\SDL.h" />
+		<Unit filename="..\include\SDL_active.h" />
+		<Unit filename="..\include\SDL_audio.h" />
+		<Unit filename="..\include\SDL_byteorder.h" />
+		<Unit filename="..\include\SDL_cdrom.h" />
+		<Unit filename="..\include\SDL_config.h" />
+		<Unit filename="..\include\SDL_config_macosx.h" />
+		<Unit filename="..\include\SDL_config_win32.h" />
+		<Unit filename="..\include\SDL_copying.h" />
+		<Unit filename="..\include\SDL_cpuinfo.h" />
+		<Unit filename="..\include\SDL_endian.h" />
+		<Unit filename="..\include\SDL_error.h" />
+		<Unit filename="..\include\SDL_events.h" />
+		<Unit filename="..\include\SDL_getenv.h" />
+		<Unit filename="..\include\SDL_image.h" />
+		<Unit filename="..\include\SDL_joystick.h" />
+		<Unit filename="..\include\SDL_keyboard.h" />
+		<Unit filename="..\include\SDL_keysym.h" />
+		<Unit filename="..\include\SDL_loadso.h" />
+		<Unit filename="..\include\SDL_main.h" />
+		<Unit filename="..\include\SDL_mixer.h" />
+		<Unit filename="..\include\SDL_mouse.h" />
+		<Unit filename="..\include\SDL_mutex.h" />
+		<Unit filename="..\include\SDL_name.h" />
+		<Unit filename="..\include\SDL_opengl.h" />
+		<Unit filename="..\include\SDL_platform.h" />
+		<Unit filename="..\include\SDL_quit.h" />
+		<Unit filename="..\include\SDL_rwops.h" />
+		<Unit filename="..\include\SDL_stdinc.h" />
+		<Unit filename="..\include\SDL_syswm.h" />
+		<Unit filename="..\include\SDL_thread.h" />
+		<Unit filename="..\include\SDL_timer.h" />
+		<Unit filename="..\include\SDL_types.h" />
+		<Unit filename="..\include\SDL_version.h" />
+		<Unit filename="..\include\SDL_video.h" />
+		<Unit filename="..\include\begin_code.h" />
+		<Unit filename="..\include\close_code.h" />
+		<Unit filename="..\include\wincompat.h" />
+		<Unit filename="..\include\zconf.h" />
+		<Unit filename="..\include\zlib.h" />
+		<Unit filename="..\rpggame\entities.h" />
+		<Unit filename="..\rpggame\rpg.cpp" />
+		<Unit filename="..\rpggame\rpgent.h" />
+		<Unit filename="..\rpggame\rpgobj.h" />
+		<Unit filename="..\rpggame\rpgobjset.h" />
+		<Unit filename="..\rpggame\stats.h" />
+		<Unit filename="..\rpggame\stubs.h" />
+		<Unit filename="..\shared\command.h" />
+		<Unit filename="..\shared\cube.h" />
+		<Unit filename="..\shared\ents.h" />
+		<Unit filename="..\shared\geom.cpp" />
+		<Unit filename="..\shared\geom.h" />
+		<Unit filename="..\shared\iengine.h" />
+		<Unit filename="..\shared\igame.h" />
 		<Unit filename="..\shared\pch.cpp">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
+			<Option compile="0" />
+			<Option link="0" />
 		</Unit>
-		<Unit filename="..\shared\pch.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\sbtrace.h">
-			<Option compilerVar=""/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\tools.cpp">
-			<Option compilerVar="CPP"/>
-			<Option target="default"/>
-		</Unit>
-		<Unit filename="..\shared\tools.h">
-			<Option compilerVar="CPP"/>
-			<Option compile="0"/>
-			<Option link="0"/>
-			<Option target="default"/>
-		</Unit>
+		<Unit filename="..\shared\pch.h" />
+		<Unit filename="..\shared\sbtrace.h" />
+		<Unit filename="..\shared\tools.cpp" />
+		<Unit filename="..\shared\tools.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
