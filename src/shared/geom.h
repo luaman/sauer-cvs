@@ -443,6 +443,39 @@ struct matrix3x4
         Z = vec4(d.x*d.z*(1-c)-d.y*s, d.y*d.z*(1-c)+d.x*s, d.z*d.z*(1-c)+c, 0);
     }
 
+    #define ROTVEC(V, a, b) \
+    { \
+        float a = V.a, b = V.b; \
+        V.a = a*c + b*s; \
+        V.b = b*c - a*s; \
+    }
+
+    void rotate_around_x(float angle)
+    {
+        float c = cosf(angle), s = sinf(angle);
+        ROTVEC(X, y, z);
+        ROTVEC(Y, y, z);
+        ROTVEC(Z, y, z);
+    }
+
+    void rotate_around_y(float angle)
+    {
+        float c = cosf(angle), s = sinf(angle);
+        ROTVEC(X, z, x);
+        ROTVEC(Y, z, x);
+        ROTVEC(Z, z, x);
+    }
+
+    void rotate_around_z(float angle)
+    {
+        float c = cosf(angle), s = sinf(angle);
+        ROTVEC(X, x, y);
+        ROTVEC(Y, x, y);
+        ROTVEC(Z, x, y);
+    }
+
+    #undef ROTVEC
+
     vec transform(const vec &o) const { return vec(X.dot(o), Y.dot(o), Z.dot(o)); }
     vec transformnormal(const vec &o) const { return vec(X.dot3(o), Y.dot3(o), Z.dot3(o)); }
     vec transposedtransformnormal(const vec &o) const

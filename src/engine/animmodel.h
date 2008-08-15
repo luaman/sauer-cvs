@@ -1077,18 +1077,9 @@ struct animmodel : model
 
     void initmatrix(matrix3x4 &m)
     {
-        if(offsetyaw)
-        {
-            m.rotate(offsetyaw*RAD, vec(0, 0, 1));
-            if(offsetpitch)
-            {
-                matrix3x4 n;
-                n.rotate(offsetpitch*RAD, vec(0, -1, 0));
-                m.mul(n);
-            }
-        }
-        else if(offsetpitch) m.rotate(offsetpitch*RAD, vec(0, -1, 0));
-        else m.identity();
+        m.identity();
+        if(offsetyaw) m.rotate_around_z(offsetyaw*RAD);
+        if(offsetpitch) m.rotate_around_y(-offsetpitch*RAD);
     }
 
     void gentris(int frame, vector<BIH::tri> *tris)
