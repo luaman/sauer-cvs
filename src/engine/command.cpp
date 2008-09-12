@@ -90,7 +90,7 @@ ident *newident(const char *name)
     if(!id)
     {
         ident init(ID_ALIAS, newstring(name), newstring(""), persistidents ? IDF_PERSIST : 0);
-        id = idents->access(init.name, &init);
+        id = &idents->access(init.name, init);
     }
     return id;
 }
@@ -121,7 +121,7 @@ void aliasa(const char *name, char *action)
     {
         ident b(ID_ALIAS, newstring(name), action, persistidents ? IDF_PERSIST : 0);
         if(overrideidents) b.override = OVERRIDDEN;
-        idents->access(b.name, &b);
+        idents->access(b.name, b);
     }
     else if(b->type != ID_ALIAS)
     {
@@ -155,7 +155,7 @@ int variable(const char *name, int min, int cur, int max, int *storage, void (*f
 {
     if(!idents) idents = new identtable;
     ident v(ID_VAR, name, min, cur, max, storage, (void *)fun, flags);
-    idents->access(name, &v);
+    idents->access(name, v);
     return cur;
 }
 
@@ -163,7 +163,7 @@ float fvariable(const char *name, float cur, float *storage, void (*fun)(), int 
 {
     if(!idents) idents = new identtable;
     ident v(ID_FVAR, name, cur, storage, (void *)fun, flags);
-    idents->access(name, &v);
+    idents->access(name, v);
     return cur;
 }
 
@@ -171,7 +171,7 @@ char *svariable(const char *name, const char *cur, char **storage, void (*fun)()
 {
     if(!idents) idents = new identtable;
     ident v(ID_SVAR, name, newstring(cur), storage, (void *)fun, flags);
-    idents->access(name, &v);
+    idents->access(name, v);
     return v.val.s;
 }
 
@@ -238,14 +238,14 @@ bool addcommand(const char *name, void (*fun)(), const char *narg)
 {
     if(!idents) idents = new identtable;
     ident c(ID_COMMAND, name, narg, (void *)fun);
-    idents->access(name, &c);
+    idents->access(name, c);
     return false;
 }
 
 void addident(const char *name, ident *id)
 {
     if(!idents) idents = new identtable;
-    idents->access(name, id);
+    idents->access(name, *id);
 }
 
 static vector<vector<char> *> wordbufs;
