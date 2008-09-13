@@ -1244,6 +1244,12 @@ void modifygravity(physent *pl, bool water, int curtime)
 // moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
 // local is false for multiplayer prediction
 
+void clamproll(physent *pl)
+{
+    if(pl->roll > maxroll) pl->roll = maxroll;
+    if(pl->roll < -maxroll) pl->roll = -maxroll;
+}
+
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
 {
     int material = lookupmaterial(vec(pl->o.x, pl->o.y, pl->o.z + (3*pl->aboveeye - pl->eyeheight)/4));
@@ -1305,8 +1311,7 @@ bool moveplayer(physent *pl, int moveres, bool local, int curtime)
     else
     {
         pl->roll += pl->strafe*curtime/-30.0f;
-        if(pl->roll>maxroll) pl->roll = (float)maxroll;
-        if(pl->roll<-maxroll) pl->roll = (float)-maxroll;
+        clamproll(pl);
     }
 
     // play sounds on water transitions
