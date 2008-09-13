@@ -1247,7 +1247,7 @@ void modifygravity(physent *pl, bool water, int curtime)
 void clamproll(physent *pl)
 {
     if(pl->roll > maxroll) pl->roll = maxroll;
-    if(pl->roll < -maxroll) pl->roll = -maxroll;
+    else if(pl->roll < -maxroll) pl->roll = -maxroll;
 }
 
 bool moveplayer(physent *pl, int moveres, bool local, int curtime)
