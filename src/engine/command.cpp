@@ -811,7 +811,7 @@ struct sleepcmd
 {
     int millis;
     char *command;
-    bool override;
+    bool override, persist;
 };
 vector<sleepcmd> sleepcmds;
 
@@ -821,21 +821,29 @@ void addsleep(int *msec, char *cmd)
     s.millis = *msec+lastmillis;
     s.command = newstring(cmd);
     s.override = overrideidents;
+    s.persist = persistidents;
 }
 
 COMMANDN(sleep, addsleep, "is");
 
 void checksleep(int millis)
 {
+    if(sleepcmds.empty()) return;
     loopv(sleepcmds)
     {
         sleepcmd &s = sleepcmds[i];
         if(s.millis && millis>s.millis)
         {
             char *cmd = s.command; // execute might create more sleep commands
+            s.command = NULL;
+            bool waspersisting = persistidents, wasoverriding = overrideidents;
+            persistidents = s.persist;
+            overrideidents = s.override;
             execute(cmd);
+            persistidents = waspersisting;
+            overrideidents = wasoverriding;
             delete[] cmd;
-            sleepcmds.remove(i--);
+            if(sleepcmds.inrange(i) && !sleepcmds[i].command) sleepcmds.remove(i--);
         }
     }
 }
@@ -843,7 +851,7 @@ void checksleep(int millis)
 void clearsleep(bool clearoverrides)
 {
     int len = 0;
-    loopv(sleepcmds) 
+    loopv(sleepcmds) if(sleepcmds[i].command) 
     {
         if(clearoverrides && !sleepcmds[i].override) sleepcmds[len++] = sleepcmds[i];
         else delete[] sleepcmds[i].command;
