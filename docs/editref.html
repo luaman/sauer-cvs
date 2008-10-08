@@ -2221,11 +2221,13 @@ Like a mapmodel, except that damage done to it will push the entity around. Y is
 Like a mapmodel, except it moves around and carries players, monsters, or other dynamic entities. Y is the yaw of the model and is initially taken from the current camera yaw, it cannot be specified when creating the entity. N determines which mapmodel you want, this depends on "mapmodel" declarations in the maps cfg file. A platform will travel horizontally back and forth along the direction of its yaw, while an elevator will travel only up and down. When they hit an obstacle such as geometry, they will reverse their direction. T is a tag that may be used to start or stop the elevator with the "platform" command; if a non-zero tag is specified, then the platform or elevator will stop upon hitting an obstacle, rather than reversing direction. S is the speed at which the entity moves, in units per second; if S is not specified or 0, it defaults to to 8.
 </p>
 
-<pre id="_monster_">"monster" N</pre>
+<pre id="_monster_">"monster" N [T]</pre>
 <p>
 A monster, currently N = 0..4 (see gameplay docs). Monster entities will be
 spawned when in classic single player mode, and will attack you when you come
-into view. yaw is taken from the current camera yaw.
+into view. yaw is taken from the current camera yaw. T is an optional tag number
+that is assigned to this monster. When the monster dies, the script alias "monster_dead_T"
+will be invoked.
 </p>
 
 <pre id="_respawnpoint_">"respawnpoint"</pre>
