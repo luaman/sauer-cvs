@@ -262,8 +262,16 @@ struct monsterset
         monstertypes = _monstertypes;
 
         CCOMMAND(endsp, "", (monsterset *self), self->endsp(false));
+        CCOMMAND(nummonsters, "ii", (monsterset *self, int *tag, int *dead), intret(self->nummonsters(*tag, *dead!=0))); 
     }
-   
+  
+    int nummonsters(int tag, bool dead)
+    {
+        int n = 0;
+        loopv(monsters) if(monsters[i]->tag==tag && (monsters[i]->state==CS_ALIVE || dead)) n++;
+        return n;
+    }
+
     void preloadmonsters()
     {
         loopi(NUMMONSTERTYPES) loadmodel(monstertypes[i].mdlname, -1, true);
