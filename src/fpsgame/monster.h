@@ -262,13 +262,13 @@ struct monsterset
         monstertypes = _monstertypes;
 
         CCOMMAND(endsp, "", (monsterset *self), self->endsp(false));
-        CCOMMAND(nummonsters, "ii", (monsterset *self, int *tag, int *dead), intret(self->nummonsters(*tag, *dead!=0))); 
+        CCOMMAND(nummonsters, "ii", (monsterset *self, int *tag, int *state), intret(self->nummonsters(*tag, *state))); 
     }
   
-    int nummonsters(int tag, bool dead)
+    int nummonsters(int tag, int state)
     {
         int n = 0;
-        loopv(monsters) if(monsters[i]->tag==tag && (monsters[i]->state==CS_ALIVE || dead)) n++;
+        loopv(monsters) if(monsters[i]->tag==tag && (monsters[i]->state==CS_ALIVE ? state!=1 : state>=1)) n++;
         return n;
     }
 
