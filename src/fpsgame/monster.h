@@ -27,14 +27,14 @@ struct monsterset
         
         int monsterstate;                   // one of M_*, M_NONE means human
     
-        int mtype;                          // see monstertypes table
+        int mtype, tag;                     // see monstertypes table
         fpsent *enemy;                      // monster wants to kill this entity
         float targetyaw;                    // monster wants to look in this direction
         int trigger;                        // millis at which transition to another monsterstate takes place
         vec attacktarget;                   // delayed attacks
         int anger;                          // how many times already hit by fellow monster
     
-        monster(int _type, int _yaw, int _state, int _trigger, int _move, monsterset *_ms) : cl(_ms->cl), monstertypes(_ms->monstertypes), ms(_ms), monsterstate(_state)
+        monster(int _type, int _yaw, int _tag, int _state, int _trigger, int _move, monsterset *_ms) : cl(_ms->cl), monstertypes(_ms->monstertypes), ms(_ms), monsterstate(_state), tag(_tag)
         {
             type = ENT_AI;
             respawn();
@@ -231,6 +231,9 @@ struct monsterset
                 ms->monsterkilled();
                 superdamage = -health;
                 cl.ws.superdamageeffect(vel, this);
+
+                s_sprintfd(id)("monster_dead_%d", tag);
+                if(identexists(id)) execute(id);
             }
             else
             {
@@ -279,7 +282,7 @@ struct monsterset
     {
         int n = rnd(TOTMFREQ), type;
         for(int i = 0; ; i++) if((n -= monstertypes[i].freq)<0) { type = i; break; }
-        monsters.add(new monster(type, rnd(360), M_SEARCH, 1000, 1, this));
+        monsters.add(new monster(type, rnd(360), 0, M_SEARCH, 1000, 1, this));
     }
 
     void monsterclear(int gamemode)     // called after map start or when toggling edit mode to reset/spawn all monsters to initial state
@@ -303,7 +306,7 @@ struct monsterset
             mtimestart = cl.lastmillis;
             loopv(ents) if(ents[i]->type==MONSTER)
             {
-                monster *m = new monster(ents[i]->attr2, ents[i]->attr1, M_SLEEP, 100, 0, this);  
+                monster *m = new monster(ents[i]->attr2, ents[i]->attr1, ents[i]->attr3, M_SLEEP, 100, 0, this);  
                 monsters.add(m);
                 m->o = ents[i]->o;
                 entinmap(m);
