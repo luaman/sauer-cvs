@@ -982,7 +982,7 @@ static void changefogplane(renderstate &cur, int pass, vtxarray *va)
 
 static void changevbuf(renderstate &cur, int pass, vtxarray *va)
 {
-    if(setorigin(va, pass==RENDERPASS_LIGHTMAP && !envmapping))
+    if(setorigin(va, pass==RENDERPASS_LIGHTMAP && !envmapping && !glaring))
     {
         cur.visibledynlights = 0;
         cur.dynlightmask = 0;
@@ -1514,7 +1514,7 @@ void renderva(renderstate &cur, vtxarray *va, int pass = RENDERPASS_LIGHTMAP, bo
                 foggedvas.add(va);
                 break;
             }
-            if(renderpath!=R_FIXEDFUNCTION && !envmapping)
+            if(renderpath!=R_FIXEDFUNCTION && !envmapping && !glaring)
             {
                 va->shadowed = isshadowmapreceiver(va);
                 calcdynlightmask(va);
@@ -1852,7 +1852,7 @@ void rendergeom(float causticspass, bool fogpass)
     if(!doOQ) 
     {
         setupTMUs(cur, causticspass, fogpass);
-        if(shadowmap) pushshadowmap();
+        if(shadowmap && !envmapping && !glaring) pushshadowmap();
     }
 
     finddynlights();
@@ -1954,7 +1954,7 @@ void rendergeom(float causticspass, bool fogpass)
     if(doOQ)
     {
         setupTMUs(cur, causticspass, fogpass);
-        if(shadowmap) 
+        if(shadowmap && !envmapping && !glaring) 
         {
             glPopMatrix();
             glPushMatrix();
@@ -2018,7 +2018,7 @@ void rendergeom(float causticspass, bool fogpass)
         if(foggedvas.empty()) glDepthFunc(GL_LESS);
     }
 
-    if(shadowmap) popshadowmap();
+    if(shadowmap && !envmapping && !glaring) popshadowmap();
 
     cleanupTMUs(cur);
 
