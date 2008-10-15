@@ -422,6 +422,9 @@
 <a href="#ambient"><tt>ambient</tt></a>
 </li>
 <li>
+<a href="#edgetolerance"><tt>edgetolerance</tt></a>
+</li>
+<li>
 <a href="#skylight"><tt>skylight</tt></a>
 </li>
 <li>
@@ -1822,10 +1825,16 @@ This command takes normalmap N and a _h file H (both MUST be 24bit .tga), and ou
 
 <pre id="ambient">ambient N</pre>
 <p>
-This sets the level of ambient light (default: 25), where N is interpreted as a grayscale light value 0..255, or
-rather, the minimum amount of light that will a surface will get, even when no light entities are shine on
-the surface.
+This sets the level of ambient light (default: 25), where N is interpreted as a grayscale light value 0..255, or rather, the minimum amount of light that will a surface will get, even when no light entities are shine on the surface.
 </p>
+
+<pre id="edgetolerance">edgetolerance N</pre>
+<p>
+This controls how far an intersection with some geometry has to be from the surface of the actual triangle in question before it counts as a shadow (default: 4), where N is 1..8; the distance immediately in front of the triangle along the edge where it ignores shadows.
+</p>
+<p>
+When lighting a map, each lightmap pixel is the result of many samples from a grid-pattern, as a result the sampling pattern may go over the edge of one triangle but behind another. Increasing this variable helps alleviate this, especially in terrain heavy maps.
+ </p>
 
 <pre id="skylight">skylight R [G B]</pre>
 <p>
