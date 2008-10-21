@@ -2,7 +2,7 @@
 #include "engine.h"
 
 VARNP(blobs, showblobs, 0, 1, 1);
-VARFP(blobintensity, 0, 100, 100, resetblobs());
+VARFP(blobintensity, 0, 60, 100, resetblobs());
 VARFP(blobheight, 1, 32, 128, resetblobs());
 VARFP(blobfadelow, 1, 8, 32, resetblobs());
 VARFP(blobfadehigh, 1, 8, 32, resetblobs());
