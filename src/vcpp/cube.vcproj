@@ -898,6 +898,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\engine\blob.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\decal.cpp"
 					>
 				</File>
