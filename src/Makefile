@@ -13,6 +13,7 @@ CLIENT_OBJS= \
 	shared/geom.o \
 	engine/3dgui.o \
 	engine/bih.o \
+	engine/blob.o \
 	engine/client.o	\
 	engine/command.o \
 	engine/console.o \

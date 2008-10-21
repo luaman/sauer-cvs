@@ -1548,6 +1548,7 @@ void allchanged(bool load)
     setupmaterials();
     invalidatepostfx();
     updatevabbs(true);
+    resetblobs();
     if(load) genenvmaps();
 }
 
