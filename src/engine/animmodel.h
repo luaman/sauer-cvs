@@ -735,15 +735,9 @@ struct animmodel : model
             float pitchamount = calcpitchaxis(anim, pitch, raxis, rdir, rcampos, rfogplane);
             if(pitchamount)
             {
-                glPushMatrix();
-                glRotatef(pitchamount, axis.x, axis.y, axis.z);
-                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
-                {
-                    glMatrixMode(GL_TEXTURE);
-                    glPushMatrix();
-                    glRotatef(pitchamount, axis.x, axis.y, axis.z);
-                    glMatrixMode(GL_MODELVIEW);
-                }
+                ++matrixpos;
+                matrixstack[matrixpos] = matrixstack[matrixpos-1];
+                matrixstack[matrixpos].rotate(pitchamount*RAD, axis);
             }
 
             if(!(anim&ANIM_NOSKIN))
@@ -769,13 +763,33 @@ struct animmodel : model
                 }
             }
 
+            glPushMatrix();
+            glMultMatrixf(matrixstack[matrixpos].v);
+            if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
+            {
+                glMatrixMode(GL_TEXTURE);
+                glLoadMatrixf(matrixstack[matrixpos].v);
+                glMatrixMode(GL_MODELVIEW);
+            }
+
             meshes->render(as, pitch, axis, this);
+
+            glPopMatrix();
+            if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
+            {
+                glMatrixMode(GL_TEXTURE);
+                glPopMatrix();
+                glMatrixMode(GL_MODELVIEW);
+            }
 
             if(!(anim&ANIM_REUSE)) 
             {
                 loopv(links)
                 {
                     linkedpart &link = links[i];
+
+                    matrixpos++;
+                    matrixstack[matrixpos].mul(matrixstack[matrixpos-1], link.matrix);
 
                     vec naxis(raxis), ndir(rdir), ncampos(rcampos);
                     plane nfogplane(rfogplane);
@@ -787,15 +801,6 @@ struct animmodel : model
                         link.matrix.invertplane(nfogplane);
                     }
 
-                    glPushMatrix();
-                    glMultMatrixf(link.matrix.v);
-                    if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
-                    {
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glMultMatrixf(link.matrix.v);
-                        glMatrixMode(GL_MODELVIEW);
-                    }
                     int nanim = anim, nbasetime = basetime;
                     if(link.anim>=0)
                     {
@@ -803,26 +808,12 @@ struct animmodel : model
                         nbasetime = link.basetime;
                     }
                     link.p->render(nanim, speed, nbasetime, pitch, naxis, d, ndir, ncampos, nfogplane);
-                    if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
-                    {
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
-                        glMatrixMode(GL_MODELVIEW);
-                    }
-                    glPopMatrix();
+
+                    matrixpos--;
                 }
             }
 
-            if(pitchamount)
-            {
-                glPopMatrix();
-                if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
-                {
-                    glMatrixMode(GL_TEXTURE);
-                    glPopMatrix();
-                    glMatrixMode(GL_MODELVIEW);
-                }
-            }
+            if(pitchamount) matrixpos--;
         }
 
         void setanim(int animpart, int num, int frame, int range, float speed, int priority = 0)
@@ -917,6 +908,11 @@ struct animmodel : model
         yaw += offsetyaw + spin*lastmillis/1000.0f;
         pitch += offsetpitch;
 
+        matrixpos = 0;
+        matrixstack[0].identity();
+        matrixstack[0].translate(o);
+        matrixstack[0].rotate_around_z((yaw+180)*RAD);
+
         if(!(anim&ANIM_NOSKIN))
         {
             fogplane = plane(0, 0, 1, o.z-reflectz);
@@ -945,31 +941,20 @@ struct animmodel : model
             if(renderpath==R_FIXEDFUNCTION)
             {
                 if(fogging) envmaptmu = 3;
+
                 glActiveTexture_(GL_TEXTURE0_ARB+envmaptmu);
-            }
-            glMatrixMode(GL_TEXTURE);
-            if(renderpath==R_FIXEDFUNCTION)
-            {
                 setuptmu(envmaptmu, "T , P @ Pa", anim&ANIM_TRANSLUCENT ? "= Ka" : NULL);
 
                 glmatrixf mmtrans = mvmatrix;
                 if(reflecting) mmtrans.reflectz(reflectz);
                 mmtrans.transpose();
-                glLoadMatrixf(mmtrans.v);
-            }
-            else
-            {
-                glLoadIdentity();
-                glTranslatef(o.x, o.y, o.z);
-                glRotatef(yaw+180, 0, 0, 1);
-            }
-            glMatrixMode(GL_MODELVIEW);
-            if(renderpath==R_FIXEDFUNCTION) glActiveTexture_(GL_TEXTURE0_ARB);
-        }
 
-        glPushMatrix();
-        glTranslatef(o.x, o.y, o.z);
-        glRotatef(yaw+180, 0, 0, 1);
+                glMatrixMode(GL_TEXTURE);
+                glLoadMatrixf(mmtrans.v);
+                glMatrixMode(GL_MODELVIEW);
+                glActiveTexture_(GL_TEXTURE0_ARB);
+            }
+        }
 
         if(anim&ANIM_TRANSLUCENT)
         {
@@ -999,8 +984,6 @@ struct animmodel : model
         }
 
         if(anim&ANIM_TRANSLUCENT) glDepthFunc(GL_LESS);
-
-        glPopMatrix();
 
         if(d) d->lastrendered = lastmillis;
     }
@@ -1176,7 +1159,8 @@ struct animmodel : model
     static void *lastvbuf, *lasttcbuf, *lastmtcbuf, *lastnbuf, *lastbbuf, *lastsdata, *lastbdata;
     static GLuint lastebuf, lastenvmaptex, closestenvmaptex;
     static Texture *lasttex, *lastmasks, *lastnormalmap;
-    static int envmaptmu, fogtmu;
+    static int envmaptmu, fogtmu, matrixpos;
+    static glmatrixf matrixstack[64];
 
     void startrender()
     {
@@ -1313,5 +1297,7 @@ float animmodel::lastalphatest = -1;
 void *animmodel::lastvbuf = NULL, *animmodel::lasttcbuf = NULL, *animmodel::lastmtcbuf = NULL, *animmodel::lastnbuf = NULL, *animmodel::lastbbuf = NULL, *animmodel::lastsdata = NULL, *animmodel::lastbdata = NULL;
 GLuint animmodel::lastebuf = 0, animmodel::lastenvmaptex = 0, animmodel::closestenvmaptex = 0;
 Texture *animmodel::lasttex = NULL, *animmodel::lastmasks = NULL, *animmodel::lastnormalmap = NULL;
-int animmodel::envmaptmu = -1, animmodel::fogtmu = -1;
+int animmodel::envmaptmu = -1, animmodel::fogtmu = -1, animmodel::matrixpos = 0;
+glmatrixf animmodel::matrixstack[64];
+
 
