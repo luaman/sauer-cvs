@@ -775,12 +775,6 @@ struct animmodel : model
             meshes->render(as, pitch, axis, this);
 
             glPopMatrix();
-            if(renderpath!=R_FIXEDFUNCTION && anim&ANIM_ENVMAP)
-            {
-                glMatrixMode(GL_TEXTURE);
-                glPopMatrix();
-                glMatrixMode(GL_MODELVIEW);
-            }
 
             if(!(anim&ANIM_REUSE)) 
             {
