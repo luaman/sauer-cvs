@@ -1052,7 +1052,6 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg)
     t->h = t->ys = tsize;
     resizetexture(t->w, t->h, mipit, GL_TEXTURE_CUBE_MAP_ARB, t->w, t->h);
     glGenTextures(1, &t->id);
-    uchar *pixels = NULL;
     loopi(6)
     {
         cubemapside &side = cubemapsides[i];
@@ -1060,7 +1059,6 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg)
         createtexture(!i ? t->id : 0, t->w, t->h, s->pixels, 3, mipit, format, side.target, compress, true, side.swapxy ? s->w : s->h, side.swapxy ? s->w : s->h);
         SDL_FreeSurface(s);
     }
-    if(pixels) delete[] pixels;
     return t;
 }
 
