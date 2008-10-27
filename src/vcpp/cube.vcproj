@@ -1123,6 +1123,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\engine\scale.h"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\shader.cpp"
 					>
 					<FileConfiguration
