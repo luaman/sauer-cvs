@@ -676,7 +676,8 @@ void project(float fovy, float aspect, int farplane, bool flipx = false, bool fl
     glLoadIdentity();
     if(swapxy) glRotatef(90, 0, 0, 1);
     if(flipx || flipy!=swapxy) glScalef(flipx ? -1 : 1, flipy!=swapxy ? -1 : 1, 1);
-    gluPerspective(fovy, aspect, 0.54f, farplane);
+    GLdouble ydist = 0.54 * tan(fovy/2*RAD), xdist = ydist * aspect;
+    glFrustum(-xdist, xdist, -ydist, ydist, 0.54, farplane);
     glMatrixMode(GL_MODELVIEW);
 }
 
