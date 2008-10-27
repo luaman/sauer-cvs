@@ -262,7 +262,7 @@ void resizetexture(int w, int h, bool mipmap, GLenum target, int &tw, int &th)
         sizelimit = mipmap && maxtexsize ? min(maxtexsize, hwlimit) : hwlimit;
     w = min(w, sizelimit);
     h = min(h, sizelimit);
-    if(mipmap || (!hasNP2 && (w&(w-1) || h&(h-1))))
+    if(mipmap || (!hasNP2 && target!=GL_TEXTURE_RECTANGLE_ARB && (w&(w-1) || h&(h-1))))
     {
         tw = th = 1;
         while(tw < w) tw *= 2;
