@@ -67,7 +67,7 @@ static void FUNCNAME(scaletexture)(uchar *src, uint sw, uint sh, uchar *dst, uin
             #define OP(c, n) c##t = 0
             DEFPIXEL
             #undef OP
-            for(uchar *ycur = &src[xi*BPP], *xend = &ycur[max(iw, 1U)*BPP], *yend = &ycur[stride*(yhigh ? ih+1 : ih)]; 
+            for(uchar *ycur = &src[xi*BPP], *xend = &ycur[max(iw, 1U)*BPP], *yend = &ycur[stride*(max(ih, 1U) + (yhigh ? 1 : 0))]; 
                 ycur < yend; 
                 ycur += stride, xend += stride, iy++)
             {
