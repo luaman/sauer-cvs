@@ -128,6 +128,7 @@
 		D1DE11190E21986800FA387C /* auth.h in Headers */ = {isa = PBXBuildFile; fileRef = D1DE11170E21986800FA387C /* auth.h */; };
 		D1DE111A0E21986800FA387C /* extinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = D1DE11180E21986800FA387C /* extinfo.h */; };
 		D1E605B90E2416150045244E /* sauerbraten.icns in Resources */ = {isa = PBXBuildFile; fileRef = B97E99CE085F4B3E002F9BC6 /* sauerbraten.icns */; };
+		D1ECC14B0EB6969300ACE078 /* scale.h in Headers */ = {isa = PBXBuildFile; fileRef = D1ECC14A0EB6969300ACE078 /* scale.h */; };
 		D1F0AC200BB0688A00CE4E84 /* Maps.gif in Resources */ = {isa = PBXBuildFile; fileRef = D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */; };
 /* End PBXBuildFile section */
 
@@ -268,6 +269,7 @@
 		D1DE11140E21983700FA387C /* crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypto.h; sourceTree = "<group>"; };
 		D1DE11170E21986800FA387C /* auth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = auth.h; sourceTree = "<group>"; };
 		D1DE11180E21986800FA387C /* extinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = extinfo.h; sourceTree = "<group>"; };
+		D1ECC14A0EB6969300ACE078 /* scale.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scale.h; sourceTree = "<group>"; };
 		D1F0AC1F0BB0688A00CE4E84 /* Maps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Maps.gif; sourceTree = "<group>"; };
 		F5A47A9D01A0482F01D3D55B /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = SOURCE_ROOT; };
 		F5A47A9E01A0483001D3D55B /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = SOURCE_ROOT; };
@@ -412,6 +414,7 @@
 		B9AC7A830D06DB44005506F8 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				D1ECC14A0EB6969300ACE078 /* scale.h */,
 				D1D6C6AC0EAEA703009B1A5C /* blob.cpp */,
 				D1D6C6AD0EAEA703009B1A5C /* depthfx.h */,
 				D16C16900E04812500A522EB /* obj.h */,
@@ -591,6 +594,7 @@
 				D1DE11190E21986800FA387C /* auth.h in Headers */,
 				D1DE111A0E21986800FA387C /* extinfo.h in Headers */,
 				D1D6C6AF0EAEA703009B1A5C /* depthfx.h in Headers */,
+				D1ECC14B0EB6969300ACE078 /* scale.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
