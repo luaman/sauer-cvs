@@ -9,7 +9,7 @@ struct scoreboard : g3d_callback
 
     IVARP(scoreboard2d, 0, 1, 1);
     IVARP(showclientnum, 0, 0, 1);
-    IVARP(showpj, 0, 1, 1);
+    IVARP(showpj, 0, 0, 1);
     IVARP(showping, 0, 1, 1);
     IVARP(showspectators, 0, 1, 1);
     IVARP(highlightscore, 0, 1, 1);
@@ -279,7 +279,11 @@ struct scoreboard : g3d_callback
                     g.pushlist();
                     g.text("ping", fgcolor);
                     g.strut(6);
-                    loopscoregroup(o, g.textf("%d", 0xFFFFDD, NULL, o->ping));
+                    loopscoregroup(o, 
+                    {
+                        if(!showpj() && o->state==CS_LAGGED) g.text("LAG", 0xFFFFDD);
+                        else g.textf("%d", 0xFFFFDD, NULL, o->ping);
+                    });
                     g.poplist();
                 }
             }
