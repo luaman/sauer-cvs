@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "engine.h"
 
-bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3 = false, hasAF = false, hasVP2 = false, hasVP3 = false, hasPP = false, hasMDA = false, hasTE3 = false, hasTE4 = false, hasVP = false, hasFP = false, hasGLSL = false, hasGM = false, hasNVFB = false, hasSGIDT = false, hasSGISH = false, hasDT = false, hasSH = false, hasNVPCF = false;
+bool hasVBO = false, hasDRE = false, hasOQ = false, hasTR = false, hasFBO = false, hasDS = false, hasTF = false, hasBE = false, hasBC = false, hasCM = false, hasNP2 = false, hasTC = false, hasTE = false, hasMT = false, hasD3 = false, hasAF = false, hasVP2 = false, hasVP3 = false, hasPP = false, hasMDA = false, hasTE3 = false, hasTE4 = false, hasVP = false, hasFP = false, hasGLSL = false, hasGM = false, hasNVFB = false, hasSGIDT = false, hasSGISH = false, hasDT = false, hasSH = false, hasNVPCF = false;
 int hasstencil = 0;
 
 VAR(renderpath, 1, 0, 0);
@@ -83,6 +83,9 @@ PFNGLDRAWRANGEELEMENTSEXTPROC glDrawRangeElements_ = NULL;
 
 // GL_EXT_blend_minmax
 PFNGLBLENDEQUATIONEXTPROC glBlendEquation_ = NULL;
+
+// GL_EXT_blend_color
+PFNGLBLENDCOLOREXTPROC glBlendColor_ = NULL;
 
 // GL_EXT_multi_draw_arrays
 PFNGLMULTIDRAWARRAYSEXTPROC   glMultiDrawArrays_ = NULL;
@@ -254,7 +257,7 @@ void gl_checkextensions()
         waterreflect = 0;
     }
 
-    extern int reservedynlighttc, reserveshadowmaptc, maxtexsize, batchlightmaps;
+    extern int reservedynlighttc, reserveshadowmaptc, maxtexsize, batchlightmaps, ffdynlights;
     if(strstr(vendor, "ATI"))
     {
         floatvtx = 1;
@@ -289,6 +292,7 @@ void gl_checkextensions()
         maxtexsize = 256;
         reservevpparams = 20;
         batchlightmaps = 0;
+        ffdynlights = 0;
 
         if(!hasOQ) waterrefract = 0;
 
@@ -303,6 +307,7 @@ void gl_checkextensions()
         maxtexsize = 256;
         reservevpparams = 20;
         batchlightmaps = 0;
+        ffdynlights = 0;
 
         if(!hasOQ) waterrefract = 0;
     }
@@ -392,6 +397,13 @@ void gl_checkextensions()
         hasBE = true;
         if(strstr(vendor, "ATI")) ati_minmax_bug = 1;
         //conoutf(CON_INIT, "Using GL_EXT_blend_minmax extension.");
+    }
+
+    if(strstr(exts, "GL_EXT_blend_color"))
+    {
+        glBlendColor_ = (PFNGLBLENDCOLOREXTPROC) getprocaddress("glBlendColorEXT");
+        hasBC = true;
+        //conoutf(CON_INIT, "Using GL_EXT_blend_color extension.");
     }
 
     if(strstr(exts, "GL_ARB_texture_cube_map"))
@@ -755,6 +767,94 @@ void disablepolygonoffset(GLenum type)
     if(clipped) glLoadMatrixf(clipmatrix.v);
     else glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
+}
+
+void calcspherescissor(const vec &center, float size, float &sx1, float &sy1, float &sx2, float &sy2)
+{
+    vec worldpos(center);
+    if(reflecting) worldpos.z = 2*reflectz - worldpos.z; 
+    vec e(mvmatrix.transformx(worldpos),
+          mvmatrix.transformy(worldpos),
+          mvmatrix.transformz(worldpos));
+    float zz = e.z*e.z, xx = e.x*e.x, yy = e.y*e.y, rr = size*size,
+          dx = zz*(xx + zz) - rr*zz, dy = zz*(yy + zz) - rr*zz,
+          focaldist = 1.0f/tan(fovy*0.5f*RAD);
+    sx1 = sy1 = -1;
+    sx2 = sy2 = 1;
+    #define CHECKPLANE(c, dir, focaldist, low, high) \
+    do { \
+        float nc = (size*e.c dir drt)/(c##c + zz), \
+              nz = (size - nc*e.c)/e.z, \
+              pz = (c##c + zz - rr)/(e.z - nz/nc*e.c); \
+        if(pz < 0) \
+        { \
+            float c = nz*(focaldist)/nc, \
+                  pc = -pz*nz/nc; \
+            if(pc < e.c) low = c; \
+            else if(pc > e.c) high = c; \
+        } \
+    } while(0)
+    if(dx > 0)
+    {
+        float drt = sqrt(dx);
+        CHECKPLANE(x, -, focaldist/aspect, sx1, sx2);
+        CHECKPLANE(x, +, focaldist/aspect, sx1, sx2);
+    }
+    if(dy > 0)
+    {
+        float drt = sqrt(dy);
+        CHECKPLANE(y, -, focaldist, sy1, sy2);
+        CHECKPLANE(y, +, focaldist, sy1, sy2);
+    }
+}
+
+static int scissoring = 0;
+static GLint oldscissor[4];
+
+int pushscissor(float sx1, float sy1, float sx2, float sy2)
+{
+    scissoring = 0;
+
+    if(sx1 <= -1 && sy1 <= -1 && sx2 >= 1 && sy2 >= 1) return 0;
+
+    sx1 = max(sx1, -1.0f);
+    sy1 = max(sy1, -1.0f);
+    sx2 = min(sx2, 1.0f);
+    sy2 = min(sy2, 1.0f);
+
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    int sx = viewport[0] + int(floor((sx1+1)*0.5f*viewport[2])),
+        sy = viewport[1] + int(floor((sy1+1)*0.5f*viewport[3])),
+        sw = viewport[0] + int(ceil((sx2+1)*0.5f*viewport[2])) - sx,
+        sh = viewport[1] + int(ceil((sy2+1)*0.5f*viewport[3])) - sy;
+    if(sw <= 0 || sh <= 0) return 0;
+
+    if(glIsEnabled(GL_SCISSOR_TEST))
+    {
+        glGetIntegerv(GL_SCISSOR_BOX, oldscissor);
+        sw += sx;
+        sh += sy;
+        sx = max(sx, int(oldscissor[0]));
+        sy = max(sy, int(oldscissor[1]));
+        sw = min(sw, int(oldscissor[0] + oldscissor[2])) - sx;
+        sh = min(sh, int(oldscissor[1] + oldscissor[3])) - sy;
+        if(sw <= 0 || sh <= 0) return 0;
+        scissoring = 2;
+    }
+    else scissoring = 1;
+
+    glScissor(sx, sy, sw, sh);
+    if(scissoring<=1) glEnable(GL_SCISSOR_TEST);
+    
+    return scissoring;
+}
+
+void popscissor()
+{
+    if(scissoring>1) glScissor(oldscissor[0], oldscissor[1], oldscissor[2], oldscissor[3]);
+    else if(scissoring) glDisable(GL_SCISSOR_TEST);
+    scissoring = 0;
 }
 
 VARR(fog, 16, 4000, 1000024);
