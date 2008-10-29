@@ -32,8 +32,9 @@ freely, subject to the following restrictions:
 LICENSE NOTES
 =============
 The license covers the source code found in the "src" directory of this
-archive, the included enet network library which sauerbraten uses is covered by
-an MIT-style license, which is however compatible with the above license for all 
+archive as well as the .cfg files under the "data" directory. The included 
+enet network library which sauerbraten uses is covered by an MIT-style 
+license, which is however compatible with the above license for all 
 practical purposes.
 
 Game media included in the game (maps, textures, sounds, models etc.)
