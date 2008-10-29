@@ -8,6 +8,7 @@ extern void cleanshadowmap();
 VARFP(shadowmapsize, 7, 9, 11, cleanshadowmap());
 VARP(shadowmapradius, 64, 96, 256);
 VAR(shadowmapheight, 0, 32, 128);
+VARP(ffshadowmapdist, 128, 1024, 4096);
 VARP(shadowmapdist, 128, 256, 512);
 VARFP(fpshadowmap, 0, 0, 1, cleanshadowmap());
 VARFP(shadowmapprecision, 0, 0, 1, cleanshadowmap());
@@ -140,7 +141,9 @@ static struct shadowmaptexture : rendertarget
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(-shadowmapradius, shadowmapradius, -shadowmapradius, shadowmapradius, -shadowmapdist, shadowmapdist);
+        glOrtho(-shadowmapradius, shadowmapradius, -shadowmapradius, shadowmapradius, 
+            renderpath==R_FIXEDFUNCTION ? 0 : -shadowmapdist, 
+            renderpath==R_FIXEDFUNCTION ? ffshadowmapdist : shadowmapdist);
 
         glMatrixMode(GL_MODELVIEW);
 
