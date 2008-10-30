@@ -40,7 +40,7 @@ struct rpgclient : igameclient, g3d_callback
 
     void updateworld(vec &pos, int curtime, int lm)
     {
-        if(!maptime) { maptime = lm + curtime; return; }
+        if(!maptime) { maptime = lm; return; }
         lastmillis = lm;
         if(!curtime) return;
         physicsframe();

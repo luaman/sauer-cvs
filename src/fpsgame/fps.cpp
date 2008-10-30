@@ -309,7 +309,7 @@ struct fpsclient : igameclient
     {
         if(!maptime)
         {
-            maptime = lm + curtime;
+            maptime = lm;
             extern int totalmillis;
             slowmorealtimestart = totalmillis;
             return;

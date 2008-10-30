@@ -1339,7 +1339,7 @@ int physsteps = 0, physframetime = PHYSFRAMETIME, lastphysframe = 0;
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
-    int diff = lastmillis + curtime - lastphysframe;
+    int diff = lastmillis - lastphysframe;
     if(diff <= 0) physsteps = 0;
     else
     {
@@ -1357,7 +1357,7 @@ void interppos(physent *pl)
 {
     pl->o = pl->newpos;
 
-    int diff = lastphysframe - (lastmillis + curtime); 
+    int diff = lastphysframe - lastmillis;
     if(diff <= 0 || !physinterp) return;
         
     vec deltapos(pl->deltapos);

@@ -905,15 +905,13 @@ int main(int argc, char **argv)
             if(curtime>200) curtime = 200;
             if(paused) curtime = 0;
         }
-
-        checkinput();
-
-        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
-       
-        menuprocess();
-
         lastmillis += curtime;
         totalmillis = millis;
+
+        checkinput();
+        menuprocess();
+
+        if(lastmillis) cl->updateworld(worldpos, curtime, lastmillis);
 
         checksleep(lastmillis);
 
