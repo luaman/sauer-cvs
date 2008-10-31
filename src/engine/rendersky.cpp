@@ -31,20 +31,20 @@ Texture *loadskyoverlay(const char *basename)
 }
 
 SVARFR(skybox, "", { if(skybox[0]) loadsky(skybox, sky); }); 
-FVARR(spinsky, 0);
+FVARR(spinsky, -720, 0, 720);
 VARR(yawsky, 0, 0, 360);
 SVARFR(cloudbox, "", { if(cloudbox[0]) loadsky(cloudbox, clouds); });
-FVARR(spinclouds, 0);
+FVARR(spinclouds, -720, 0, 720);
 VARR(yawclouds, 0, 0, 360);
-FVARR(cloudclip, 0.5f);
+FVARR(cloudclip, 0, 0.5f, 1);
 SVARFR(cloudlayer, "", { if(cloudlayer[0]) cloudoverlay = loadskyoverlay(cloudlayer); });
-FVARR(cloudscrollx, 0);
-FVARR(cloudscrolly, 0);
-FVARR(cloudscale, 1);
-FVARR(spincloudlayer, 0);
-FVARR(yawcloudlayer, 0);
-FVARR(cloudheight, 0.2f);
-FVARR(cloudfade, 0.2f);
+FVARR(cloudscrollx, -16, 0, 16);
+FVARR(cloudscrolly, -16, 0, 16);
+FVARR(cloudscale, 0, 1, 64);
+FVARR(spincloudlayer, -720, 0, 720);
+VARR(yawcloudlayer, 0, 0, 60);
+FVARR(cloudheight, -1, 0.2f, 1);
+FVARR(cloudfade, 0, 0.2f, 1);
 VARR(cloudsubdiv, 4, 16, 64);
 VARR(cloudcolour, 0, 0xFFFFFF, 0xFFFFFF);
 

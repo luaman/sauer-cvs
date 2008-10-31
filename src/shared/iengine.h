@@ -78,7 +78,7 @@ extern void mpremip(bool local);
 
 // command
 extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), int flags);
-extern float fvariable(const char *name, float cur, float *storage, void (*fun)(), int flags);
+extern float fvariable(const char *name, float min, float cur, float max, float *storage, void (*fun)(), int flags);
 extern char *svariable(const char *name, const char *cur, char **storage, void (*fun)(), int flags);
 extern void setvar(const char *name, int i, bool dofunc = false);
 extern void setfvar(const char *name, float f, bool dofunc = false);

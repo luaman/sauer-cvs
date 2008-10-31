@@ -607,10 +607,9 @@ void computezoom()
     }
 }
 
-VARP(zoomsens, 1, 1, 10000);
+FVARP(zoomsens, 1e-3f, 1, 100);
 VARP(zoomautosens, 0, 1, 1);
-VARP(sensitivity, 0, 3, 10000);
-VARP(sensitivityscale, 1, 1, 10000);
+FVARP(sensitivity, 1e-3f, 3, 1000);
 VARP(invmouse, 0, 0, 1);
 
 VAR(thirdperson, 0, 0, 2);
@@ -636,7 +635,7 @@ void mousemove(int dx, int dy)
         if(zoomautosens) cursens = float(sensitivity*zoomfov)/fov;
         else cursens = zoomsens;
     }
-    cursens /= 33.0f*sensitivityscale;
+    cursens /= 33.0f;
     camera1->yaw += dx*cursens;
     camera1->pitch -= dy*cursens*(invmouse ? -1 : 1);
     fixcamerarange();
@@ -729,9 +728,9 @@ void undoclipmatrix()
     glMatrixMode(GL_MODELVIEW);
 }
 
-FVAR(polygonoffsetfactor, -3.0f);
-FVAR(polygonoffsetunits, -3.0f);
-FVAR(depthoffset, 0.01f);
+FVAR(polygonoffsetfactor, -1e4f, -3.0f, 1e4f);
+FVAR(polygonoffsetunits, -1e4f, -3.0f, 1e4f);
+FVAR(depthoffset, -1e4f, 0.01f, 1e4f);
 
 void enablepolygonoffset(GLenum type)
 {
