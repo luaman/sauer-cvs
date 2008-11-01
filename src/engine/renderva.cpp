@@ -1678,14 +1678,14 @@ static GLuint createattenztex(int size)
 
 #define NUMCAUSTICS 32
 
-VARR(causticscale, 0, 100, 10000);
-VARR(causticmillis, 0, 75, 1000);
-VARP(caustics, 0, 1, 1);
-
 static Texture *caustictex[NUMCAUSTICS] = { NULL };
 
-void loadcaustics()
+void loadcaustics(bool force)
 {
+    static bool needcaustics = false;
+    if(force) needcaustics = true;
+    if(!caustics || !needcaustics) return;
+    useshaderbyname("caustic");
     if(caustictex[0]) return;
     loopi(NUMCAUSTICS)
     {
@@ -1708,10 +1708,12 @@ void cleanupva()
     loopi(NUMCAUSTICS) caustictex[i] = NULL;
 }
 
+VARR(causticscale, 0, 100, 10000);
+VARR(causticmillis, 0, 75, 1000);
+VARFP(caustics, 0, 1, 1, loadcaustics());
+
 void setupcaustics(int tmu, float blend, GLfloat *color = NULL)
 {
-    if(!caustictex[0]) loadcaustics();
-
     GLfloat s[4] = { 0.011f, 0, 0.0066f, 0 };
     GLfloat t[4] = { 0, 0.011f, 0.0066f, 0 };
     loopk(3)
