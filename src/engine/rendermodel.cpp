@@ -289,6 +289,12 @@ model *loadmodel(const char *name, int i, bool msg)
     return m;
 }
 
+void preloadmodelshaders()
+{
+    if(initing) return;
+    enumerate(mdllookup, model *, m, m->preloadshaders());
+}
+
 void clear_mdls()
 {
     enumerate(mdllookup, model *, m, delete m);

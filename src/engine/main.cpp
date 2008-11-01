@@ -57,7 +57,7 @@ int totalmillis = 0, lastmillis = 0;
 
 dynent *player = NULL;
 
-static int initing = NOT_INITING;
+int initing = NOT_INITING;
 static bool restoredinits = false;
 
 bool initwarning(const char *desc, int level, int type)

@@ -416,6 +416,8 @@ enum
     INIT_LOAD,
     INIT_RESET
 };
+extern int initing;
+
 enum
 {
     CHANGE_GFX   = 1<<0,
@@ -475,6 +477,7 @@ extern void loadskin(const char *dir, const char *altdir, Texture *&skin, Textur
 extern mapmodelinfo &getmminfo(int i);
 extern void startmodelquery(occludequery *query);
 extern void endmodelquery();
+extern void preloadmodelshaders();
 
 // renderparticles
 extern void particleinit();
