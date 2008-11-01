@@ -593,7 +593,6 @@ Shader *newshader(int type, const char *name, const char *vs, const char *ps, Sh
     s.psstr = newstring(ps);
     DELETEA(s.defer);
     s.type = type;
-    s.standard = standardshader;
     s.variantshader = variant;
     s.standard = standardshader;
     s.forced = forceshaders;
