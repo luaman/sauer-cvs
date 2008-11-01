@@ -42,7 +42,7 @@ FVARR(cloudscrollx, -16, 0, 16);
 FVARR(cloudscrolly, -16, 0, 16);
 FVARR(cloudscale, 0, 1, 64);
 FVARR(spincloudlayer, -720, 0, 720);
-VARR(yawcloudlayer, 0, 0, 60);
+VARR(yawcloudlayer, 0, 0, 360);
 FVARR(cloudheight, -1, 0.2f, 1);
 FVARR(cloudfade, 0, 0.2f, 1);
 VARR(cloudsubdiv, 4, 16, 64);
