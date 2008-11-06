@@ -521,7 +521,7 @@ static SDL_Surface *texturedata(const char *tname, Slot::Tex *tex = NULL, bool m
         if(renderpath==R_FIXEDFUNCTION && !strncmp(cmds, "<noff>", 6)) return &stubsurface;
     }
     
-    if(msg) show_out_of_renderloop_progress(0, file);
+    if(msg) show_out_of_renderloop_progress(loadprogress, file);
 
     SDL_Surface *s = IMG_Load(findfile(file, "rb"));
     if(!s) { if(msg) conoutf(CON_ERROR, "could not load texture %s", file); return NULL; }

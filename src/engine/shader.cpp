@@ -1157,7 +1157,7 @@ void shader(int *type, char *name, char *vs, char *ps)
     if(renderpath!=R_FIXEDFUNCTION)
     {
         s_sprintfd(info)("shader %s", name);
-        show_out_of_renderloop_progress(0.0, info);
+        show_out_of_renderloop_progress(loadprogress, info);
         if(mesa_program_bug && initshaders)
         {
             glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -1195,7 +1195,7 @@ void variantshader(int *type, char *name, int *row, char *vs, char *ps)
 
     s_sprintfd(varname)("<variant:%d,%d>%s", s->variants[*row].length(), *row, name);
     //s_sprintfd(info)("shader %s", varname);
-    //show_out_of_renderloop_progress(0.0, info);
+    //show_out_of_renderloop_progress(loadprogress, info);
     extern int mesa_program_bug;
     if(renderpath!=R_FIXEDFUNCTION && mesa_program_bug && initshaders)
     {

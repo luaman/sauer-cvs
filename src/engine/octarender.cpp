@@ -1524,8 +1524,21 @@ void octarender()                               // creates va s for all leaf cub
     }
 }
 
-void precachetextures(vtxarray *va) { loopi(va->texs) lookuptexture(va->eslist[i].texture); }
-void precacheall() { loopv(valist) precachetextures(valist[i]); }
+void precachetextures()
+{
+    vector<int> texs;
+    loopv(valist)
+    {
+        vtxarray *va = valist[i];
+        loopj(va->texs) if(texs.find(va->eslist[j].texture) < 0) texs.add(va->eslist[j].texture);
+    }
+    loopv(texs)
+    {
+        loadprogress = float(i+1)/texs.length();
+        lookuptexture(texs[i]);
+    }
+    loadprogress = 0;
+}
 
 void allchanged(bool load)
 {
@@ -1545,7 +1558,7 @@ void allchanged(bool load)
         edgegroups.clear();
     }
     octarender();
-    if(load) precacheall();
+    if(load) precachetextures();
     setupmaterials();
     invalidatepostfx();
     updatevabbs(true);
