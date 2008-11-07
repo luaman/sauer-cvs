@@ -23,7 +23,7 @@ struct movableset
             etype(e.type),
             mapmodel(e.attr2),
             health(e.type==BARREL ? (e.attr4 ? e.attr4 : BARRELHEALTH) : 0), 
-            weight(e.type==PLATFORM || e.type==ELEVATOR ? PLATFORMWEIGHT : (e.type==e.attr3 ? e.attr3 : (e.type==BARREL ? BARRELWEIGHT : BOXWEIGHT))), 
+            weight(e.type==PLATFORM || e.type==ELEVATOR ? PLATFORMWEIGHT : (e.attr3 ? e.attr3 : (e.type==BARREL ? BARRELWEIGHT : BOXWEIGHT))), 
             explode(0),
             tag(e.type==PLATFORM || e.type==ELEVATOR ? e.attr3 : 0),
             dir(e.type==PLATFORM || e.type==ELEVATOR ? (e.attr4 < 0 ? -1 : 1) : 0),
