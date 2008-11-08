@@ -434,7 +434,6 @@ bool ellipsecollide(physent *d, const vec &dir, const vec &o, float yaw, float x
 
 bool rectcollide(physent *d, const vec &dir, const vec &o, float xr, float yr,  float hi, float lo, uchar visible = 0xFF, bool collideonly = true, float cutoff = 0)
 {
-    if(collideonly && !visible) return true;
     vec s(d->o);
     s.sub(o);
     float dxr = d->collidetype==COLLIDE_ELLIPSE ? d->radius : d->xradius, dyr = d->collidetype==COLLIDE_ELLIPSE ? d->radius : d->yradius;
