@@ -1311,7 +1311,7 @@ void genreservedlightmaptexs()
     createtexture(lightmaptexs[LMID_AMBIENT].id, 1, 1, unlit, 0, false);
     bvec front(128, 128, 255);
     createtexture(lightmaptexs[LMID_AMBIENT1].id, 1, 1, &front, 0, false);
-    uchar bright[3] = { 128, 128, 128 };
+    uchar bright[3] = { fullbrightlevel, fullbrightlevel, fullbrightlevel };
     createtexture(lightmaptexs[LMID_BRIGHT].id, 1, 1, bright, 0, false);
     createtexture(lightmaptexs[LMID_BRIGHT1].id, 1, 1, &front, 0, false);
     uchar dark[3] = { 0, 0, 0 };
