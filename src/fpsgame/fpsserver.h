@@ -1662,6 +1662,7 @@ struct fpsserver : igameserver
                 putint(p, SV_SETTEAM);
                 putint(p, ci->clientnum);
                 sendstring(worst, p);
+                s_strncpy(ci->team, worst, MAXTEAMLEN+1);
             }
         }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
