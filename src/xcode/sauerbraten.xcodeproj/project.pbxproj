@@ -113,6 +113,7 @@
 		D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16BD00C0D7000EA0053CECE /* dynlight.cpp */; };
 		D16C16920E04812500A522EB /* obj.h in Headers */ = {isa = PBXBuildFile; fileRef = D16C16900E04812500A522EB /* obj.h */; };
 		D16C16930E04812500A522EB /* textedit.h in Headers */ = {isa = PBXBuildFile; fileRef = D16C16910E04812500A522EB /* textedit.h */; };
+		D16E4E140ED107C300C401A2 /* blend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D16E4E130ED107C300C401A2 /* blend.cpp */; };
 		D17E0F2C0BAF1FA9008BB696 /* Keys.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F280BAF1FA9008BB696 /* Keys.gif */; };
 		D17E0F2E0BAF1FA9008BB696 /* Server.gif in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F2A0BAF1FA9008BB696 /* Server.gif */; };
 		D17E0F310BAF2031008BB696 /* Help.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D17E0F300BAF2031008BB696 /* Help.tiff */; };
@@ -255,6 +256,7 @@
 		D16BD00C0D7000EA0053CECE /* dynlight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dynlight.cpp; sourceTree = "<group>"; };
 		D16C16900E04812500A522EB /* obj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = obj.h; sourceTree = "<group>"; };
 		D16C16910E04812500A522EB /* textedit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = textedit.h; sourceTree = "<group>"; };
+		D16E4E130ED107C300C401A2 /* blend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blend.cpp; sourceTree = "<group>"; };
 		D17E0F280BAF1FA9008BB696 /* Keys.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Keys.gif; sourceTree = "<group>"; };
 		D17E0F2A0BAF1FA9008BB696 /* Server.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Server.gif; sourceTree = "<group>"; };
 		D17E0F300BAF2031008BB696 /* Help.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Help.tiff; sourceTree = "<group>"; };
@@ -414,6 +416,7 @@
 		B9AC7A830D06DB44005506F8 /* engine */ = {
 			isa = PBXGroup;
 			children = (
+				D16E4E130ED107C300C401A2 /* blend.cpp */,
 				D1ECC14A0EB6969300ACE078 /* scale.h */,
 				D1D6C6AC0EAEA703009B1A5C /* blob.cpp */,
 				D1D6C6AD0EAEA703009B1A5C /* depthfx.h */,
@@ -758,6 +761,7 @@
 				D16BD00D0D7000EA0053CECE /* dynlight.cpp in Sources */,
 				D118DEB60D979281000E8C4C /* glare.cpp in Sources */,
 				D1D6C6AE0EAEA703009B1A5C /* blob.cpp in Sources */,
+				D16E4E140ED107C300C401A2 /* blend.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
