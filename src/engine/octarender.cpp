@@ -326,7 +326,8 @@ struct vacollect : verthash
             loopi(max(firstlit[offset], firstlit[offset+1]))
             {
                 sortkey &k = texs[i];
-                if(k.lmid!=LMID_AMBIENT && (j ? !(k.layer&LAYER_BLEND) : k.layer&LAYER_BLEND)) continue;
+                if(j ? !(k.layer&LAYER_BLEND) : k.layer&LAYER_BLEND) continue;
+                if(k.lmid!=LMID_AMBIENT) continue;
                 Shader *s = lookuptexture(k.tex, false).shader;
                 if(!s) continue;
                 int type = offset + (s->type&SHADER_NORMALSLMS ? LM_BUMPMAP0 : LM_DIFFUSE);
