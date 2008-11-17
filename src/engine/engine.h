@@ -278,6 +278,7 @@ extern void pasteundoents(undoblock *u);
 extern void cancelsel();
 extern void render_texture_panel(int w, int h);
 extern void addundo(undoblock *u);
+extern void commitchanges(bool force = false);
 
 // octarender
 extern void octarender();

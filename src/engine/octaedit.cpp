@@ -499,9 +499,9 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
     }
 }
 
-void commitchanges()
+void commitchanges(bool force)
 {
-    if(!haschanged) return;
+    if(!force && !haschanged) return;
     haschanged = false;
 
     extern vector<vtxarray *> valist;
