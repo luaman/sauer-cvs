@@ -85,6 +85,7 @@
 		<Unit filename="..\engine\animmodel.h" />
 		<Unit filename="..\engine\bih.cpp" />
 		<Unit filename="..\engine\bih.h" />
+		<Unit filename="..\engine\blend.cpp" />
         <Unit filename="..\engine\blob.cpp" />
 		<Unit filename="..\engine\client.cpp" />
 		<Unit filename="..\engine\command.cpp" />
