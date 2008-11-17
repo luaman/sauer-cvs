@@ -79,15 +79,13 @@ void show_calclight_progress()
     // only update once a sec (4 * 250 ms ticks) to not kill performance
     if(progresstex && !calclight_canceled) 
     {
-        loopvrev(lightmaps) switch(lightmaps[i].type&LM_TYPE)
+        loopvrev(lightmaps) if((lightmaps[i].type&LM_TYPE)!=LM_BUMPMAP1)
         {
-            case LM_DIFFUSE:
-            case LM_BUMPMAP0:
-                if(progresstexticks++ % 4) break;
-                glBindTexture(GL_TEXTURE_2D, progresstex);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LM_PACKW, LM_PACKH, 
-                    lightmaps[i].type&LM_ALPHA ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lightmaps[i].data);
-                break;
+            if(progresstexticks++ % 4) break;
+            glBindTexture(GL_TEXTURE_2D, progresstex);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LM_PACKW, LM_PACKH, 
+            lightmaps[i].type&LM_ALPHA ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lightmaps[i].data);
+            break;
         }
     }
     show_out_of_renderloop_progress(bar1, text1, bar2, text2, progresstexticks ? progresstex : 0);
