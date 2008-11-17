@@ -352,6 +352,10 @@
 				Name="world"
 				>
 				<File
+					RelativePath="..\engine\blend.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\engine\cubeloader.cpp"
 					>
 					<FileConfiguration
