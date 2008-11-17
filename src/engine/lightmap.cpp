@@ -1114,6 +1114,7 @@ void removelmalpha()
         dst[2] = src[2];
     }
     lmtype &= ~LM_ALPHA;
+    lmbpp = 3;
 }
 
 void setup_surfaces(cube &c, int cx, int cy, int cz, int size)
