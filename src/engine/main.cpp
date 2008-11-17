@@ -489,6 +489,7 @@ void resetgl()
     extern void cleanupmodels();
     extern void cleanuptextures();
     extern void cleanuplightmaps();
+    extern void cleanupblendmap();
     extern void cleanshadowmap();
     extern void cleanreflections();
     extern void cleanupglare();
@@ -500,6 +501,7 @@ void resetgl()
     cleanupmodels();
     cleanuptextures();
     cleanuplightmaps();
+    cleanupblendmap();
     cleanshadowmap();
     cleanreflections();
     cleanupglare();

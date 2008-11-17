@@ -233,7 +233,7 @@ extern bool threeplaneintersect(plane &pl1, plane &pl2, plane &pl3, vec &dest);
 extern void freemergeinfo(cube &c);
 extern void genmergedverts(cube &cu, int orient, const ivec &co, int size, const mergeinfo &m, vvec *vv, plane *p = NULL);
 extern int calcmergedsize(int orient, const ivec &co, int size, const mergeinfo &m, const vvec *vv);
-extern void invalidatemerges(cube &c);
+extern void invalidatemerges(cube &c, bool msg);
 extern void calcmerges();
 
 struct cubeface : mergeinfo
@@ -531,4 +531,17 @@ extern void updatemumble();
 
 // grass
 extern void rendergrass();
+
+// blendmap
+extern bool setblendmaporigin(const ivec &o, int size);
+extern bool hasblendmap();
+extern uchar lookupblendmap(const vec &pos);
+extern void resetblendmap();
+extern void enlargeblendmap();
+extern void optimizeblendmap();
+extern void renderblendbrush(GLuint tex, float x, float y, float w, float h);
+extern void renderblendbrush();
+extern bool loadblendmap(gzFile f);
+extern void saveblendmap(gzFile f);
+extern uchar shouldsaveblendmap();
 

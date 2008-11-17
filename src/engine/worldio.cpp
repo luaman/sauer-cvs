@@ -138,15 +138,24 @@ void savec(cube *c, gzFile f, bool nolms)
             }
             else
             {
-                loopj(6) if(c[i].ext->surfaces[j].lmid >= LMID_RESERVED) mask |= 1 << j;
+                int numsurfs = 6;
+                loopj(6) 
+                {
+                    surfaceinfo &surface = c[i].ext->surfaces[j];
+                    if(surface.lmid >= LMID_RESERVED || surface.layer!=LAYER_TOP) 
+                    {
+                        mask |= 1 << j;
+                        if(surface.layer&LAYER_BLEND) numsurfs++;
+                    }
+                }
                 gzputc(f, mask);
                 if(c[i].ext->material != MAT_AIR) gzputc(f, c[i].ext->material);
-                loopj(6) if(mask & (1 << j))
+                loopj(numsurfs) if(j >= 6 || mask & (1 << j))
                 {
                     surfaceinfo tmp = c[i].ext->surfaces[j];
-                    endianswap(&tmp.x, sizeof(ushort), 3);
+                    endianswap(&tmp.x, sizeof(ushort), 2);
                     gzwrite(f, &tmp, sizeof(surfaceinfo));
-                    if(c[i].ext->normals) gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
+                    if(j < 6 && c[i].ext->normals) gzwrite(f, &c[i].ext->normals[j], sizeof(surfacenormals));
                 }
             }
             if(c[i].ext && c[i].ext->merged)
@@ -207,35 +216,39 @@ void loadc(gzFile f, cube &c)
         if(mask & 0x3F)
         {
             uchar lit = 0, bright = 0;
-            newsurfaces(c);
+            static surfaceinfo surfaces[12];
+            memset(surfaces, 0, 6*sizeof(surfaceinfo));
             if(mask & 0x40) newnormals(c);
-            loopi(6)
+            int numsurfs = 6;
+            loopi(numsurfs)
             {
-                if(mask & (1 << i))
+                if(i >= 6 || mask & (1 << i))
                 {
-                    gzread(f, &c.ext->surfaces[i], sizeof(surfaceinfo));
-                    endianswap(&c.ext->surfaces[i].x, sizeof(ushort), 3);
-                    if(hdr.version < 10) ++c.ext->surfaces[i].lmid;
+                    gzread(f, &surfaces[i], sizeof(surfaceinfo));
+                    endianswap(&surfaces[i].x, sizeof(ushort), 2);
+                    if(hdr.version < 10) ++surfaces[i].lmid;
                     if(hdr.version < 18)
                     {
-                        if(c.ext->surfaces[i].lmid >= LMID_AMBIENT1) ++c.ext->surfaces[i].lmid;
-                        if(c.ext->surfaces[i].lmid >= LMID_BRIGHT1) ++c.ext->surfaces[i].lmid;
+                        if(surfaces[i].lmid >= LMID_AMBIENT1) ++surfaces[i].lmid;
+                        if(surfaces[i].lmid >= LMID_BRIGHT1) ++surfaces[i].lmid;
                     }
                     if(hdr.version < 19)
                     {
-                        if(c.ext->surfaces[i].lmid >= LMID_DARK) c.ext->surfaces[i].lmid += 2;
+                        if(surfaces[i].lmid >= LMID_DARK) surfaces[i].lmid += 2;
                     }
-                    if(mask & 0x40) gzread(f, &c.ext->normals[i], sizeof(surfacenormals));
+                    if(i < 6)
+                    {
+                        if(mask & 0x40) gzread(f, &c.ext->normals[i], sizeof(surfacenormals));
+                        if(surfaces[i].layer != LAYER_TOP) lit |= 1 << i;
+                        else if(surfaces[i].lmid == LMID_BRIGHT) bright |= 1 << i;
+                        else if(surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
+                        if(surfaces[i].layer&LAYER_BLEND) numsurfs++;
+                    }
                 }
-                else c.ext->surfaces[i].lmid = LMID_AMBIENT;
-                if(c.ext->surfaces[i].lmid == LMID_BRIGHT) bright |= 1 << i;
-                else if(c.ext->surfaces[i].lmid != LMID_AMBIENT) lit |= 1 << i;
+                else surfaces[i].lmid = LMID_AMBIENT;
             }
-            if(!lit) 
-            {
-                freesurfaces(c);
-                if(bright) brightencube(c);
-            }
+            if(lit) newsurfaces(c, surfaces, numsurfs);
+            else if(bright) brightencube(c);
         }
         if(hdr.version >= 20)
         {
@@ -293,6 +306,7 @@ bool save_world(const char *mname, bool nolms)
     const vector<extentity *> &ents = et->getents();
     loopv(ents) if(ents[i]->type!=ET_EMPTY || nolms) hdr.numents++;
     hdr.numpvs = nolms ? 0 : getnumviewcells();
+    hdr.blendmap = nolms ? 0 : shouldsaveblendmap();
     hdr.lightmaps = nolms ? 0 : lightmaps.length();
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 9);
@@ -336,9 +350,10 @@ bool save_world(const char *mname, bool nolms)
                 writeushort(f, ushort(lm.unlitx));
                 writeushort(f, ushort(lm.unlity));
             }
-            gzwrite(f, lm.data, sizeof(lm.data));
+            gzwrite(f, lm.data, lm.bpp*LM_PACKW*LM_PACKH);
         }
         if(getnumviewcells()>0) savepvs(f);
+        if(shouldsaveblendmap()) saveblendmap(f);
     }
 
     gzclose(f);
@@ -399,7 +414,6 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     setvar("lighterror", hdr.maple ? hdr.maple : 8);
     setvar("bumperror", hdr.mapbe ? hdr.mapbe : 3);
     setvar("lightlod", hdr.mapllod);
-    setvar("lodsize", hdr.mapwlod);
     setvar("ambient", hdr.ambient);
     setvar("fullbright", 0);
     setvar("lerpangle", hdr.lerpangle);
@@ -534,18 +548,21 @@ bool load_world(const char *mname, const char *cname)        // still supports a
         if(hdr.version >= 17)
         {
             int type = gzgetc(f);
-            lm.type = type&0xF;
+            lm.type = type&0x7F;
             if(hdr.version >= 20 && type&0x80)
             {
                 lm.unlitx = readushort(f);
                 lm.unlity = readushort(f);
             }
         }
-        gzread(f, lm.data, 3 * LM_PACKW * LM_PACKH);
+        if(lm.type&LM_ALPHA) lm.bpp = 4;
+        lm.data = new uchar[lm.bpp*LM_PACKW*LM_PACKH];
+        gzread(f, lm.data, lm.bpp * LM_PACKW * LM_PACKH);
         lm.finalize();
     }
 
     if(hdr.version >= 25 && hdr.numpvs > 0) loadpvs(f);
+    if(hdr.version >= 28 && hdr.blendmap) loadblendmap(f);
 
     gzclose(f);
 

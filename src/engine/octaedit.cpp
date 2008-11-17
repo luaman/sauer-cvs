@@ -466,7 +466,7 @@ void cursorupdate()
 
 //////////// ready changes to vertex arrays ////////////
 
-static bool invalidatedmerges = false, haschanged = false;
+static bool haschanged = false;
 
 void readychanges(block3 &b, cube *c, const ivec &cor, int size)
 {
@@ -480,15 +480,7 @@ void readychanges(block3 &b, cube *c, const ivec &cor, int size)
                 int hasmerges = c[i].ext->va->hasmerges;
                 destroyva(c[i].ext->va);
                 c[i].ext->va = NULL;
-                if(hasmerges) 
-                {
-                    if(!invalidatedmerges)
-                    {
-                        show_out_of_renderloop_progress(0, "invalidating merged surfaces...");
-                        invalidatedmerges = true;
-                    }
-                    invalidatemerges(c[i]);
-                }
+                if(hasmerges) invalidatemerges(c[i], true); 
             }
             freeoctaentities(c[i]);
             c[i].ext->tjoints = -1;
@@ -511,7 +503,6 @@ void commitchanges()
 {
     if(!haschanged) return;
     haschanged = false;
-    invalidatedmerges = false;
 
     extern vector<vtxarray *> valist;
     int oldlen = valist.length();
@@ -1652,17 +1643,22 @@ struct texturegui : g3d_callback
                     int ti = (i*TEXTURE_HEIGHT+j)*TEXTURE_WIDTH+k;
                     if(ti<curtexnum) 
                     {
-                        Texture *tex = notexture, *glowtex = NULL;
+                        Texture *tex = notexture, *glowtex = NULL, *layertex = NULL;
                         Slot &slot = lookuptexture(texmru[ti], false);
                         if(slot.sts.empty()) continue;
                         else if(slot.loaded) 
                         {
                             tex = slot.sts[0].t;
                             if(slot.texmask&(1<<TEX_GLOW)) { loopv(slot.sts) if(slot.sts[i].type==TEX_GLOW) { glowtex = slot.sts[i].t; break; } }
+                            if(slot.layer)
+                            {
+                                Slot &layer = lookuptexture(slot.layer);
+                                if(!layer.sts.empty()) layertex = layer.sts[0].t;
+                            }
                         }
                         else if(slot.thumbnail) tex = slot.thumbnail;
                         else if(totalmillis-lastthumbnail>=thumbtime) { tex = loadthumbnail(slot); lastthumbnail = totalmillis; }
-                        if(g.texture(tex, 1.0, slot.rotation, slot.xoffset, slot.yoffset, glowtex, slot.glowcolor)&G3D_UP && (slot.loaded || tex!=notexture)) 
+                        if(g.texture(tex, 1.0, slot.rotation, slot.xoffset, slot.yoffset, glowtex, slot.glowcolor, layertex)&G3D_UP && (slot.loaded || tex!=notexture)) 
                             edittex(ti);
                     }
                     else
@@ -1725,10 +1721,15 @@ void render_texture_panel(int w, int h)
             if(ti>=0 && ti<curtexnum)
             {
                 Slot &slot = lookuptexture(texmru[ti]);
-                Texture *tex = slot.sts[0].t, *glowtex = NULL;
+                Texture *tex = slot.sts[0].t, *glowtex = NULL, *layertex = NULL;
                 if(slot.texmask&(1<<TEX_GLOW))
                 {
                     loopvj(slot.sts) if(slot.sts[j].type==TEX_GLOW) { glowtex = slot.sts[j].t; break; }
+                }
+                if(slot.layer)
+                {
+                    Slot &layer = lookuptexture(slot.layer);
+                    layertex = layer.sts[0].t;
                 }
                 float sx = min(1.0f, tex->xs/(float)tex->ys), sy = min(1.0f, tex->ys/(float)tex->xs);
                 int x = width-s-50, r = s;
@@ -1757,6 +1758,16 @@ void render_texture_panel(int w, int h)
                     glTexCoord2fv(tc[2]); glVertex2f(x+r, y+r);
                     glTexCoord2fv(tc[3]); glVertex2f(x,   y+r);
                     glEnd();
+                    if(j==1 && layertex)
+                    {
+                        glBindTexture(GL_TEXTURE_2D, layertex->id);
+                        glBegin(GL_QUADS);
+                        glTexCoord2fv(tc[0]); glVertex2f(x+r/2, y+r/2);
+                        glTexCoord2fv(tc[1]); glVertex2f(x+r,   y+r/2);
+                        glTexCoord2fv(tc[2]); glVertex2f(x+r,   y+r);
+                        glTexCoord2fv(tc[3]); glVertex2f(x+r/2, y+r);
+                        glEnd();
+                    }
                     xtraverts += 4;
                     if(!j)
                     {

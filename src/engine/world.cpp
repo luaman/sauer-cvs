@@ -960,6 +960,7 @@ void resetmap()
     clearoverrides();
     clearmapsounds();
     cleanreflections();
+    resetblendmap();
     resetlightmaps();
     clearpvs();
     clearparticles();
@@ -1001,6 +1002,7 @@ bool emptymap(int scale, bool force, const char *mname)    // main empty world c
     hdr.mapprec = 32;
     hdr.mapllod = 0;
     hdr.numpvs = 0;
+    hdr.blendmap = 0;
     hdr.lightmaps = 0;
     memset(hdr.skylight, 0, sizeof(hdr.skylight));
     memset(hdr.reserved, 0, sizeof(hdr.reserved));
@@ -1010,6 +1012,8 @@ bool emptymap(int scale, bool force, const char *mname)    // main empty world c
     loopi(4) solidfaces(worldroot[i]);
 
     if(hdr.worldsize > VVEC_INT_MASK+1) splitocta(worldroot, hdr.worldsize>>1);
+
+    enlargeblendmap();
 
     clearlights();
     allchanged();
