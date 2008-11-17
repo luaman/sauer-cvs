@@ -288,8 +288,8 @@ struct vacollect : verthash
 
     void remapunlit(vector<sortkey> &remap)
     {
-        uint lastlmid[4] = { LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT }, 
-             firstlmid[4] = { LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT };
+        uint lastlmid[4] = { LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT }, 
+             firstlmid[4] = { LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT, LMID_AMBIENT };
         int firstlit[4] = { -1, -1, -1, -1 };
         loopv(texs)
         {
@@ -326,7 +326,7 @@ struct vacollect : verthash
             loopi(max(firstlit[offset], firstlit[offset+1]))
             {
                 sortkey &k = texs[i];
-                if(k.lmid!=LMID_AMBIENT && (j ? k.layer&LAYER_BLEND : !(k.layer&LAYER_BLEND))) continue;
+                if(k.lmid!=LMID_AMBIENT && (j ? !(k.layer&LAYER_BLEND) : k.layer&LAYER_BLEND)) continue;
                 Shader *s = lookuptexture(k.tex, false).shader;
                 if(!s) continue;
                 int type = offset + (s->type&SHADER_NORMALSLMS ? LM_BUMPMAP0 : LM_DIFFUSE);
