@@ -159,8 +159,8 @@ uchar lookupblendmap(const vec &pos)
     if(curbm.type==BM_SOLID) return curbm.solid->val;
     
     uchar vals[4], *val = vals;
-    int bx = pos.x/(1<<BM_SCALE) - 0.5f, by = pos.y/(1<<BM_SCALE) - 0.5f,
-        ix = (int)floor(bx), iy = (int)floor(by),
+    float bx = pos.x/(1<<BM_SCALE) - 0.5f, by = pos.y/(1<<BM_SCALE) - 0.5f;
+    int ix = (int)floor(bx), iy = (int)floor(by),
         rx = ix-curbmo.x, ry = iy-curbmo.y;
     loop(vy, 2) loop(vx, 2)
     {
