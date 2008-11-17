@@ -84,7 +84,7 @@ void show_calclight_progress()
             if(progresstexticks++ % 4) break;
             glBindTexture(GL_TEXTURE_2D, progresstex);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LM_PACKW, LM_PACKH, 
-            lightmaps[i].type&LM_ALPHA ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lightmaps[i].data);
+                            lightmaps[i].type&LM_ALPHA ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lightmaps[i].data);
             break;
         }
     }
@@ -385,7 +385,7 @@ void generate_lumel(const float tolerance, const vector<const extentity *> &ligh
         g += intensity * float(light.attr3);
         b += intensity * float(light.attr4);
     }
-    switch(lmtype)
+    switch(lmtype&LM_TYPE)
     {
         case LM_BUMPMAP0:
             if(avgray.iszero()) break;
@@ -462,7 +462,7 @@ VARR(blurskylight, 0, 0, 2);
 
 void blurlightmap(int n)
 {
-    static uchar blur[3*LM_MAXW*LM_MAXH];
+    static uchar blur[4*LM_MAXW*LM_MAXH];
     static const int matrix3x3[9] =
     {
         1, 2, 1,
@@ -1750,32 +1750,32 @@ static void findunlit(int i)
 {
     LightMap &lm = lightmaps[i];
     if(lm.unlitx>=0) return;
-    else if(lm.type==LM_BUMPMAP0)
+    else if((lm.type&LM_TYPE)==LM_BUMPMAP0)
     {
-        if(i+1>=lightmaps.length() || lightmaps[i+1].type!=LM_BUMPMAP1) return;
+        if(i+1>=lightmaps.length() || (lightmaps[i+1].type&LM_TYPE)!=LM_BUMPMAP1) return;
     }
-    else if(lm.type!=LM_DIFFUSE) return;
+    else if((lm.type&LM_TYPE)!=LM_DIFFUSE) return;
     uchar *data = lm.data;
     loop(y, 2) loop(x, LM_PACKW)
     {
         if(!data[0] && !data[1] && !data[2])
         {
             data[0] = data[1] = data[2] = hdr.ambient;
-            if(lm.type==LM_BUMPMAP0) ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] = bvec(128, 128, 255);
+            if((lm.type&LM_TYPE)==LM_BUMPMAP0) ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] = bvec(128, 128, 255);
             lm.unlitx = x;
             lm.unlity = y;
             return;
         }
         if(data[0]==hdr.ambient && data[1]==hdr.ambient && data[2]==hdr.ambient)
         {
-            if(lm.type!=LM_BUMPMAP0 || ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] == bvec(128, 128, 255))
+            if((lm.type&LM_TYPE)!=LM_BUMPMAP0 || ((bvec *)lightmaps[i+1].data)[y*LM_PACKW + x] == bvec(128, 128, 255))
             {
                 lm.unlitx = x;
                 lm.unlity = y;
                 return;
             }
         }
-        data += 3;
+        data += lm.bpp;
     }
 }
 
@@ -2077,8 +2077,15 @@ void dumplms()
         {
             for(int idx = 0; idx<LM_PACKH; idx++)
             {
-                uchar *dest = (uchar *)temp->pixels+temp->pitch*idx;
-                memcpy(dest, lightmaps[i].data+3*LM_PACKW*(LM_PACKH-1-idx), 3*LM_PACKW);
+                uchar *dest = (uchar *)temp->pixels+temp->pitch*idx,
+                      *src = lightmaps[i].data+lightmaps[i].bpp*LM_PACKW*(LM_PACKH-1-idx);
+                switch(lightmaps[i].bpp)
+                {
+                    case 3: memcpy(dest, src, 3*LM_PACKW); break;
+                    case 4:
+                        loopj(LM_PACKW) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest += 3; src += 4; }
+                        break;
+                }
             }
             char *map = cl->getclientmap(), *name = strrchr(map, '/');
             s_sprintfd(buf)("lightmap_%s_%d.bmp", name ? name+1 : map, i);

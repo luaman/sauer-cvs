@@ -680,6 +680,6 @@ void saveblendmap(gzFile f)
 
 uchar shouldsaveblendmap()
 {
-    return blendmap.solid!=&bmsolids[0xFF];
+    return blendmap.solid!=&bmsolids[0xFF] ? 1 : 0;
 }
     

@@ -1758,6 +1758,7 @@ void render_texture_panel(int w, int h)
                     glTexCoord2fv(tc[2]); glVertex2f(x+r, y+r);
                     glTexCoord2fv(tc[3]); glVertex2f(x,   y+r);
                     glEnd();
+                    xtraverts += 4;
                     if(j==1 && layertex)
                     {
                         glBindTexture(GL_TEXTURE_2D, layertex->id);
@@ -1767,8 +1768,8 @@ void render_texture_panel(int w, int h)
                         glTexCoord2fv(tc[2]); glVertex2f(x+r,   y+r);
                         glTexCoord2fv(tc[3]); glVertex2f(x+r/2, y+r);
                         glEnd();
+                        xtraverts += 4;
                     }
-                    xtraverts += 4;
                     if(!j)
                     {
                         r -= 10;
