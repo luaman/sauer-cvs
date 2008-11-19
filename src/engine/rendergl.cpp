@@ -1509,13 +1509,15 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
 {
     if(editmode && !hidehud)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDepthMask(GL_FALSE);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         cursorupdate();
-        glDepthMask(GL_TRUE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         renderblendbrush();
+
+        glDepthMask(GL_TRUE);
     }
 
     glDisable(GL_DEPTH_TEST);
