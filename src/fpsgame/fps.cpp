@@ -927,12 +927,12 @@ struct fpsclient : igameclient
             }
         }
 
-        if(d->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
-        else if(!crosshair && r && g && b && !editmode && !m_noitemsrail)
+        if(!crosshair && r && g && b && !editmode && !m_noitemsrail)
         {
             if(d->health<=25) { r = 1.0f; g = b = 0; }
             else if(d->health<=50) { r = 1.0f; g = 0.5f; b = 0; }
         }
+        if(d->gunwait) { r *= 0.5f; g *= 0.5f; b *= 0.5f; }
         return crosshair;
     }
 
