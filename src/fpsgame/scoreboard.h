@@ -292,9 +292,12 @@ struct scoreboard : g3d_callback
             g.text("name", fgcolor);
             loopscoregroup(o, 
             {
-                int status = 0xFFFFDD;
-                if(o->privilege) status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
-                else if(o->state==CS_DEAD) status = 0x606060;
+                int status = o->state!=CS_DEAD ? 0xFFFFDD : 0x606060;
+                if(o->privilege)
+                {
+                    status = o->privilege>=PRIV_ADMIN ? 0xFF8000 : 0x40FF80;
+                    if(o->state==CS_DEAD) status = (status>>1)&0x7F7F7F;
+                }
                 g.text(cl.colorname(o), status);
             });
             g.poplist();
