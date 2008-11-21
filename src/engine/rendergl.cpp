@@ -981,6 +981,48 @@ static void blendfogoverlay(int fogmat, float blend, float *overlay)
     }
 }
 
+void drawfogoverlay(int fogmat, float fogblend, int abovemat)
+{
+    glDisable(GL_DEPTH_TEST);
+
+    notextureshader->set();
+    glDisable(GL_TEXTURE_2D);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+    float overlay[3] = { 0, 0, 0 };
+    blendfogoverlay(fogmat, fogblend, overlay);
+    blendfogoverlay(abovemat, 1-fogblend, overlay);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glColor3fv(overlay);
+    glBegin(GL_QUADS);
+    glVertex2f(-1, -1);
+    glVertex2f(1, -1);
+    glVertex2f(1, 1);
+    glVertex2f(-1, 1);
+    glEnd();
+    glDisable(GL_BLEND);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glEnable(GL_TEXTURE_2D);
+    defaultshader->set();
+
+    glEnable(GL_DEPTH_TEST);
+}
+
 bool renderedgame = false;
 
 void rendergame()
@@ -1340,6 +1382,7 @@ void gl_drawframe(int w, int h)
     glDisable(GL_CULL_FACE);
 
     addglare();
+    if(fogmat==MAT_WATER || fogmat==MAT_LAVA) drawfogoverlay(fogmat, fogblend, abovemat);
     renderpostfx();
 
     defaultshader->set();
@@ -1379,10 +1422,10 @@ void damagecompass(int n, const vec &loc)
     if(dcompass[dir]>1) dcompass[dir] = 1;
 
 }
-void drawdamagecompass()
+void drawdamagecompass(int w, int h)
 {
     int dirs = 0;
-    float size = damagecompasssize/100.0f*min(screen->h, screen->w)/2.0f;
+    float size = damagecompasssize/100.0f*min(h, w)/2.0f;
     loopi(4) if(dcompass[i]>0)
     {
         if(!dirs)
@@ -1393,9 +1436,9 @@ void drawdamagecompass()
         dirs++;
 
         glPushMatrix();
-        glTranslatef(screen->w/2, screen->h/2, 0);
+        glTranslatef(w/2, h/2, 0);
         glRotatef(i*90, 0, 0, 1);
-        glTranslatef(0, -size/2.0f-min(screen->h, screen->w)/4.0f, 0);
+        glTranslatef(0, -size/2.0f-min(h, w)/4.0f, 0);
         float logscale = 32,
               scale = log(1 + (logscale - 1)*dcompass[i]) / log(logscale);
         glScalef(size*scale, size*scale, 0);
@@ -1413,11 +1456,49 @@ void drawdamagecompass()
     }
 }
 
-VARNP(damageblend, usedamageblend, 0, 1, 1);
-VARP(damageblendfactor, 1, 300, 1000);
+int damageblendmillis = 0;
 
-float dblend = 0;
-void damageblend(int n) { if(usedamageblend) dblend += n; }
+VARFP(damagescreen, 0, 1, 1, { if(!damagescreen) damageblendmillis = 0; });
+VARP(damagescreenfactor, 1, 7, 100);
+VARP(damagescreenalpha, 1, 45, 100);
+VARP(damagescreenfade, 0, 125, 1000);
+VARP(damagescreenmin, 1, 10, 1000);
+VARP(damagescreenmax, 1, 100, 1000);
+
+void damageblend(int n)
+{
+    if(!damagescreen) return;
+    if(lastmillis > damageblendmillis) damageblendmillis = lastmillis;
+    damageblendmillis += clamp(n, damagescreenmin, damagescreenmax)*damagescreenfactor;
+}
+
+void drawdamagescreen(int w, int h)
+{
+    if(lastmillis >= damageblendmillis) return;
+
+    defaultshader->set();
+    glEnable(GL_TEXTURE_2D);
+
+    static Texture *damagetex = NULL;
+    if(!damagetex) damagetex = textureload("packages/hud/damage.png", 3);
+
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glBindTexture(GL_TEXTURE_2D, damagetex->id);
+    float fade = damagescreenalpha/100.0f;
+    if(damageblendmillis - lastmillis < damagescreenfade)
+        fade *= float(damageblendmillis - lastmillis)/damagescreenfade;
+    glColor4f(fade, fade, fade, fade);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(0, 0);
+    glTexCoord2f(1, 0); glVertex2f(w, 0);
+    glTexCoord2f(1, 1); glVertex2f(w, h);
+    glTexCoord2f(0, 1); glVertex2f(0, h);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    notextureshader->set();
+}
 
 VARP(hidestats, 0, 0, 1);
 VARP(hidehud, 0, 0, 1);
@@ -1558,31 +1639,8 @@ void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
 
     glEnable(GL_BLEND);
     
-    if(dblend || fogmat==MAT_WATER || fogmat==MAT_LAVA)
-    {
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-        if(dblend) 
-        {
-            glColor3f(1.0f, 0.1f, 0.1f);
-            dblend -= curtime*(100.0f/damageblendfactor);
-            if(dblend<0) dblend = 0;
-        }
-        else
-        {
-            float overlay[3] = { 0, 0, 0 };
-            blendfogoverlay(fogmat, fogblend, overlay);
-            blendfogoverlay(abovemat, 1-fogblend, overlay); 
-            glColor3fv(overlay);
-        }
-        glBegin(GL_QUADS);
-        glVertex2f(0, 0);
-        glVertex2f(w, 0);
-        glVertex2f(w, h);
-        glVertex2f(0, h);
-        glEnd();
-    }
-
-    drawdamagecompass();
+    drawdamagescreen(w, h);
+    drawdamagecompass(w, h);
 
     glEnable(GL_TEXTURE_2D);
     defaultshader->set();
