@@ -6,6 +6,7 @@ struct capturestate
     static const int CAPTUREHEIGHT = 24;
     static const int OCCUPYPOINTS = 15;
     static const int OCCUPYLIMIT = 100;
+    static const int STEALSCORE = 1;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
     static const int AMMOSECS = 15;
@@ -710,14 +711,21 @@ struct captureservmode : capturestate, servmode
             baseinfo &b = bases[i];
             if(b.enemy[0])
             {
-                if((!b.owners || !b.enemies) && b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*(b.enemies ? b.enemies : -(1+b.owners))*t)==1) addscore(b.owner, CAPTURESCORE);
+                if(!b.owners || !b.enemies) switch(b.occupy(b.enemy, (m_noitemsrail ? OCCUPYPOINTS*2 : OCCUPYPOINTS)*(b.enemies ? b.enemies : -(1+b.owners))*t))
+                {
+                    case 0: addscore(b.enemy, STEALSCORE); break;
+                    case 1: addscore(b.owner, CAPTURESCORE); break;
+                }
                 sendbaseinfo(i);
             }
             else if(b.owner[0])
             {
                 b.capturetime += t;
-                int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS;
-                if(score) addscore(b.owner, score);
+                if(!m_regencapture)
+                {
+                    int score = b.capturetime/SCORESECS - (b.capturetime-t)/SCORESECS;
+                    if(score) addscore(b.owner, score);
+                }
                 if(m_noitems)
                 {
                     if(!m_noitemsrail)
