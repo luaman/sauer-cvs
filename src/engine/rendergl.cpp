@@ -1280,7 +1280,7 @@ void readmatrices()
     invmvmatrix.invert(mvmatrix);
 }
 
-void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat);
+void gl_drawhud(int w, int h);
 
 int xtraverts, xtravertsva;
 
@@ -1391,7 +1391,7 @@ void gl_drawframe(int w, int h)
     glDisable(GL_TEXTURE_2D);
     notextureshader->set();
 
-    gl_drawhud(w, h, fogmat, fogblend, abovemat);
+    gl_drawhud(w, h);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
@@ -1586,7 +1586,7 @@ VARP(showfpsrange, 0, 0, 1);
 VAR(showeditstats, 0, 0, 1);
 VAR(statrate, 0, 200, 1000);
 
-void gl_drawhud(int w, int h, int fogmat, float fogblend, int abovemat)
+void gl_drawhud(int w, int h)
 {
     if(editmode && !hidehud)
     {
