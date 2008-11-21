@@ -6,7 +6,7 @@ struct capturestate
     static const int CAPTUREHEIGHT = 24;
     static const int OCCUPYPOINTS = 15;
     static const int OCCUPYLIMIT = 100;
-    static const int STEALSCORE = 1;
+    static const int STEALSCORE = 2;
     static const int CAPTURESCORE = 1;
     static const int SCORESECS = 10;
     static const int AMMOSECS = 15;
@@ -136,6 +136,16 @@ struct capturestate
         bases.setsize(0);
         scores.setsize(0);
         captures = 0;
+    }
+
+    int getscoretotal(const char *team)
+    {
+        loopv(scores)
+        {
+            score &cs = scores[i];
+            if(!strcmp(cs.team, team)) return cs.total;
+        }
+        return 0;
     }
 
     score &findscore(const char *team)
@@ -511,12 +521,20 @@ struct captureclient : capturestate
             { 
                 conoutf(CON_GAMEINFO, "\f2%s captured %s", owner, b.name); 
                 if(!strcmp(owner, cl.player1->team)) playsound(S_V_BASECAP); 
+                s_sprintfd(msg)("@%d (+%d)", getscoretotal(owner), CAPTURESCORE);
+                vec above(b.ammopos);
+                above.z += FIREBALLRADIUS+1.0f;
+                particle_text(above, msg, strcmp(owner, cl.player1->team) ? 8 : 34);
             }
         }
         else if(b.owner[0]) 
         { 
             conoutf(CON_GAMEINFO, "\f2%s lost %s", b.owner, b.name); 
             if(!strcmp(b.owner, cl.player1->team)) playsound(S_V_BASELOST); 
+            s_sprintfd(msg)("@%d (+%d)", getscoretotal(enemy), STEALSCORE);
+            vec above(b.ammopos);
+            above.z += FIREBALLRADIUS+1.0f;
+            particle_text(above, msg, strcmp(enemy, cl.player1->team) ? 8 : 34);
         }
         if(strcmp(b.owner, owner)) particle_splash(0, 200, 250, b.ammopos);
         s_strcpy(b.owner, owner);
