@@ -772,7 +772,7 @@ void recalcdir(physent *d, const vec &oldvel, vec &dir)
 void slideagainst(physent *d, vec &dir, const vec &obstacle, bool foundfloor)
 {
     vec wall(obstacle);
-    if(foundfloor && wall.z)
+    if(foundfloor && wall.z > 0)
     {
         wall.z = 0;
         if(!wall.iszero()) wall.normalize();
@@ -800,7 +800,7 @@ void switchfloor(physent *d, vec &dir, const vec &floor)
     recalcdir(d, oldvel, dir);
 }
 
-bool trystepup(physent *d, vec &dir, float maxstep)
+bool trystepup(physent *d, vec &dir, const vec &obstacle, float maxstep, const vec &floor)
 {
     vec old(d->o);
     /* check if there is space atop the stair to move to */
@@ -814,6 +814,50 @@ bool trystepup(physent *d, vec &dir, float maxstep)
             return false;
         }
     }
+
+    d->o = old;
+    vec stairdir = (obstacle.z >= 0 && obstacle.z < SLOPEZ ? vec(-obstacle.x, -obstacle.y, 0) : vec(dir.x, dir.y, 0)).normalize();
+    stairdir.z += 1;
+    stairdir.mul(maxstep);
+    d->o.add(stairdir);
+    if(!collide(d, stairdir))
+    {
+        if(collide(d, vec(0, 0, -1), SLOPEZ))
+        {
+            d->o = old;
+            return false;
+        }
+    }
+
+    /* try stepping up half as much as forward */
+    d->o = old;
+    vec smoothdir(dir.x, dir.y, 0);
+    float magxy = smoothdir.magnitude();
+    if(magxy > 1e-9f)
+    {
+        if(magxy > 2*dir.z)
+        {
+            smoothdir.mul(1/magxy);
+            smoothdir.z = 0.5f;
+            smoothdir.mul(dir.magnitude()*STEPSPEED/smoothdir.magnitude());
+        }
+        else smoothdir.z = dir.z;
+        d->o.add(smoothdir);
+        d->o.z += maxstep + 0.1f;
+        if(collide(d, smoothdir))
+        {
+            d->o.z -= maxstep + 0.1f;
+            if(d->physstate == PHYS_FALL || d->floor != floor)
+            {
+                d->timeinair = 0;
+                d->floor = floor;
+                switchfloor(d, dir, d->floor);
+            }
+            d->physstate = PHYS_STEP_UP;
+            return true;
+        }
+    }
+
     /* try stepping up */
     d->o = old;
     d->o.z += dir.magnitude()*STEPSPEED;
@@ -876,7 +920,7 @@ void falling(physent *d, vec &dir, const vec &floor)
     else d->physstate = PHYS_FALL;
 }
 
-void landing(physent *d, vec &dir, const vec &floor)
+void landing(physent *d, vec &dir, const vec &floor, bool collided)
 {
 #if 0
     if(d->physstate == PHYS_FALL)
@@ -887,8 +931,8 @@ void landing(physent *d, vec &dir, const vec &floor)
 #endif
     switchfloor(d, dir, floor);
     d->timeinair = 0;
-    if(floor.z >= FLOORZ) d->physstate = PHYS_FLOOR;
-    else d->physstate = PHYS_SLOPE;
+    if(d->physstate!=PHYS_STEP_UP || !collided)
+        d->physstate = floor.z >= FLOORZ ? PHYS_FLOOR : PHYS_SLOPE;
     d->floor = floor;
 }
 
@@ -918,7 +962,6 @@ bool findfloor(physent *d, bool collided, const vec &obstacle, bool &slide, vec 
     }
     else if(d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f)
     {
-        d->o.z -= d->radius;
         if(!collide(d, vec(d->floor).neg(), 0.95f) || !collide(d, vec(0, 0, -1)))
         {
             floor = wall;
@@ -963,15 +1006,13 @@ bool move(physent *d, vec &dir)
         }
         d->o = old;
         if(d->type == ENT_CAMERA) return false;
-        float stepdist = (d->physstate >= PHYS_SLOPE && d->floor.z < 1.0f ? d->radius+0.1f : STAIRHEIGHT);
-        d->o.z -= stepdist;
-        d->zmargin = -stepdist;
+        d->o.z -= STAIRHEIGHT;
+        d->zmargin = -STAIRHEIGHT;
         if(d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR || (!collide(d, vec(0, 0, -1), SLOPEZ) && (d->physstate==PHYS_STEP_UP || wall.z>=FLOORZ)))
         {
             d->o = old;
             d->zmargin = 0;
-            float floorz = (d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor.z : wall.z);
-            if(trystepup(d, dir, floorz < 1.0f ? d->radius+0.1f : STAIRHEIGHT)) return true;
+            if(trystepup(d, dir, obstacle, STAIRHEIGHT, d->physstate == PHYS_SLOPE || d->physstate == PHYS_FLOOR ? d->floor : vec(wall))) return true;
         }
         else 
         {
@@ -980,6 +1021,15 @@ bool move(physent *d, vec &dir)
         }
         /* can't step over the obstacle, so just slide against it */
         collided = true;
+    }
+    else if(d->physstate == PHYS_STEP_UP)
+    {
+        if(!collide(d, vec(0, 0, -1), SLOPEZ))
+        {
+            d->o = old;
+            if(trystepup(d, dir, vec(0, 0, 1), STAIRHEIGHT, vec(wall))) return true;
+            d->o.add(dir);
+        }
     }
     vec floor(0, 0, 0);
     bool slide = collided,
@@ -992,7 +1042,7 @@ bool move(physent *d, vec &dir)
     if(found)
     {
         if(d->type == ENT_CAMERA) return false;
-        landing(d, dir, floor);
+        landing(d, dir, floor, collided);
     }
     else falling(d, dir, floor);
     return !collided;
@@ -1185,14 +1235,13 @@ void modifyvelocity(physent *pl, bool local, bool water, bool floating, int curt
     {
         vecfromyawpitch(pl->yaw, floating || water || pl->type==ENT_CAMERA ? pl->pitch : 0, pl->move, pl->strafe, m);
 
-        if(!floating && pl->physstate >= PHYS_SLIDE)
+        if(!floating && pl->physstate >= PHYS_SLOPE)
         {
             /* move up or down slopes in air
              * but only move up slopes in water
              */
             float dz = -(m.x*pl->floor.x + m.y*pl->floor.y)/pl->floor.z;
-            if(water) m.z = max(m.z, dz);
-            else if(pl->floor.z >= WALLZ) m.z = dz;
+            m.z = water ? max(m.z, dz) : dz;
         }
 
         m.normalize();
@@ -1419,25 +1468,19 @@ void updatephysstate(physent *d)
     {
         case PHYS_SLOPE:
         case PHYS_FLOOR:
-            d->o.z -= 0.1f;
+            d->o.z -= 0.15f;
             if(!collide(d, vec(0, 0, -1), d->physstate == PHYS_SLOPE ? SLOPEZ : FLOORZ))
                 d->floor = wall;
-            else if(d->physstate == PHYS_SLOPE)
-            {
-                d->o.z -= d->radius;
-                if(!collide(d, vec(0, 0, -1), SLOPEZ))
-                    d->floor = wall;
-            }
             break;
 
         case PHYS_STEP_UP:
-            d->o.z -= STAIRHEIGHT+0.1f;
+            d->o.z -= STAIRHEIGHT+0.15f;
             if(!collide(d, vec(0, 0, -1), SLOPEZ))
                 d->floor = wall;
             break;
 
         case PHYS_SLIDE:
-            d->o.z -= d->radius+0.1f;
+            d->o.z -= 0.15f;
             if(!collide(d, vec(0, 0, -1)) && wall.z < SLOPEZ)
                 d->floor = wall;
             break;
@@ -1446,33 +1489,13 @@ void updatephysstate(physent *d)
     d->o = old;
 }
 
-bool intersect(physent *d, vec &from, vec &to)   // if lineseg hits entity bounding box
+bool intersect(physent *d, const vec &from, const vec &to)   // if lineseg hits entity bounding box
 {
-    vec v = to, w = d->o, *p;
-    v.sub(from);
-    w.sub(from);
-    float c1 = w.dot(v);
-
-    if(c1<=0) p = &from;
-    else
-    {
-        float c2 = v.dot(v);
-        if(c2<=c1) p = &to;
-        else
-        {
-            float f = c1/c2;
-            v.mul(f);
-            v.add(from);
-            p = &v;
-        }
-    }
-
-    return p->x <= d->o.x+d->radius
-        && p->x >= d->o.x-d->radius
-        && p->y <= d->o.y+d->radius
-        && p->y >= d->o.y-d->radius
-        && p->z <= d->o.z+d->aboveeye
-        && p->z >= d->o.z-d->eyeheight;
+    float dist;
+    vec bottom(d->o), top(d->o);
+    bottom.z -= d->eyeheight;
+    top.z += d->aboveeye;
+    return linecylinderintersect(from, to, bottom, top, d->radius, dist);
 }
 
 const float PLATFORMMARGIN = 0.2f;
